@@ -1,6 +1,6 @@
 # Omnichannel Chat SDK
 
-Chat SDK to interact with Omnichannel and IC3 services to help build your own chat widget.
+Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel Services.
 
 ## Installation
 
