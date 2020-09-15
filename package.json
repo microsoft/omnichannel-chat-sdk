@@ -22,6 +22,6 @@
   },
   "dependencies": {
     "@microsoft/ocsdk": "0.1.0-main.bf2cd30",
-    "@microsoft/omnichannel-ic3core": "https://inapp.blob.core.windows.net/omnichannelchatsdk/dev/microsoft-omnichannel-ic3core-0.1.0-main.f981d84.tgz"
+    "@microsoft/omnichannel-ic3core": "0.1.0-main.fef9a6f"
   }
 }
