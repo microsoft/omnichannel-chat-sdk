@@ -23,9 +23,9 @@ Chat SDK to interact with Omnichannel and IC3 services to help build your own ch
 | OmnichannelChatSDK.getChatToken() | Get chat token | |
 | OmnichannelChatSDK.getMessages() | Get all messages | |
 | OmnichannelChatSDK.sendMessage() | Send message | |
-| OmnichannelChatSDK.onNewMessage() | Handles system message, client/agent messages, adaptive cards, attachments download | |
+| OmnichannelChatSDK.onNewMessage() | Handles system message, client/agent messages, adaptive cards, attachments to download | |
 | OmnichannelChatSDK.onTypingEvent() | Handles agent typing event | |
-| OmnichannelChatSDK.onAgentEndSession() | Handler when session ends | |
+| OmnichannelChatSDK.onAgentEndSession() | Handler when agent ends session | |
 | OmnichannelChatSDK.sendTypingEvent() | Sends customer typing event | |
 | OmnichannelChatSDK.emailLiveChatTranscript() | Email transcript | |
 | OmnichannelChatSDK.getLiveChatTranscript() | Get transcript data (JSON) | |
