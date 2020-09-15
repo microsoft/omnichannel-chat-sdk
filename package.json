@@ -12,8 +12,18 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://dynamicscrm@dev.azure.com/dynamicscrm/OneCRM/_git/CRM.Omnichannel.InApp"
+    "url": "https://github.com/microsoft/omnichannel-chat-sdk"
   },
+  "homepage": "https://github.com/microsoft/omnichannel-chat-sdk#readme",
+  "keywords": [
+    "SDK",
+    "chat",
+    "livechat",
+    "support",
+    "bot",
+    "headless",
+    "customer"
+  ],
   "devDependencies": {
     "@types/jest": "^26.0.10",
     "jest": "^26.4.2",
