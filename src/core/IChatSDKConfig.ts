@@ -4,7 +4,8 @@ interface IDataMaskingSDKConfig {
 }
 
 interface IChatSDKConfig {
-    dataMasking: IDataMaskingSDKConfig
+    dataMasking: IDataMaskingSDKConfig,
+    getAuthToken?: () => Promise<string|null>
 }
 
 export {
