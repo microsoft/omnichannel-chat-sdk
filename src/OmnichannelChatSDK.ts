@@ -448,7 +448,7 @@ class OmnichannelChatSDK {
 
             if (this.authSettings){
                 if (this.chatSDKConfig.getAuthToken){
-                    this.debug && console.log("OmnichannelChatSDK/getChatConfig/auth settings", this.authSettings);
+                    this.debug && console.log("OmnichannelChatSDK/getChatConfig/auth settings with auth and getAuthToken!", this.authSettings, this.chatSDKConfig.getAuthToken);
                     const token = await this.chatSDKConfig.getAuthToken();
                     if (token) {
                         this.authenticatedUserToken = token;
