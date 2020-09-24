@@ -20,6 +20,10 @@ import IOmnichannelConfig from "./core/IOmnichannelConfig";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
 import IRawThread from "@microsoft/omnichannel-ic3core/lib/interfaces/IRawThread";
 import ISessionInitOptionalParams from "@microsoft/ocsdk/lib/Interfaces/ISessionInitOptionalParams";
+import ISessionCloseOptionalParams from "@microsoft/ocsdk/lib/Interfaces/ISessionCloseOptionalParams";
+import IGetChatTokenOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTokenOptionalParams";
+import IGetChatTranscriptsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTranscriptsOptionalParams";
+import IEmailTranscriptOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IEmailTranscriptOptionalParams";
 import IStartChatOptionalParams from "./core/IStartChatOptionalParams";
 import MessageContentType from "@microsoft/omnichannel-ic3core/lib/model/MessageContentType";
 import MessageType from "@microsoft/omnichannel-ic3core/lib/model/MessageType";
@@ -89,9 +93,8 @@ class OmnichannelChatSDK {
             sessionInitOptionalParams.initContext!.preChatResponse = optionalParams.preChatResponse;
         }
 
-        if (optionalParams.authenticatedUserToken) {
-            this.authenticatedUserToken = optionalParams.authenticatedUserToken;
-            sessionInitOptionalParams.authenticatedUserToken = optionalParams.authenticatedUserToken;
+        if (this.authenticatedUserToken) {
+            sessionInitOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
         }
 
         try {
@@ -121,8 +124,13 @@ class OmnichannelChatSDK {
     }
 
     public async endChat() {
+        const sessionCloseOptionalParams: ISessionCloseOptionalParams = {};
+        if (this.authenticatedUserToken) {
+            sessionCloseOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
+        }
+
         try {
-            await this.OCClient.sessionClose(this.requestId);
+            await this.OCClient.sessionClose(this.requestId, sessionCloseOptionalParams);
             this.conversation!.disconnect();
             this.conversation = null;
             this.requestId = uuidv4();
@@ -168,7 +176,11 @@ class OmnichannelChatSDK {
     public async getChatToken(cached: boolean = true): Promise<IChatToken> {
         if (!cached) {
             try {
-                const chatToken = await this.OCClient.getChatToken(this.requestId);
+                const getChatTokenOptionalParams: IGetChatTokenOptionalParams = {};
+                if (this.authenticatedUserToken) {
+                    getChatTokenOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
+                }
+                const chatToken = await this.OCClient.getChatToken(this.requestId, getChatTokenOptionalParams);
                 const {ChatId: chatId, Token: token, RegionGtms: regionGtms} = chatToken;
                 this.chatToken = {
                     chatId,
@@ -310,17 +322,33 @@ class OmnichannelChatSDK {
     }
 
     public async emailLiveChatTranscript(body: IChatTranscriptBody) {
+        const emailTranscriptOptionalParams: IEmailTranscriptOptionalParams = {};
+        if (this.authenticatedUserToken) {
+            emailTranscriptOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
+        }
         const emailRequestBody = {
             ChatId: this.chatToken.chatId,
             EmailAddress: body.emailAddress,
             DefaultAttachmentMessage: body.attachmentMessage,
             CustomerLocale: body.locale
         };
-        return this.OCClient.emailTranscript(this.requestId, this.chatToken.token, emailRequestBody);
+        return this.OCClient.emailTranscript(
+            this.requestId,
+            this.chatToken.token,
+            emailRequestBody,
+            emailTranscriptOptionalParams);
     }
 
     public async getLiveChatTranscript() {
-        return this.OCClient.getChatTranscripts(this.requestId, this.chatToken.chatId, this.chatToken.token);
+        const getChatTranscriptOptionalParams: IGetChatTranscriptsOptionalParams = {};
+        if (this.authenticatedUserToken) {
+            getChatTranscriptOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
+        }
+        return this.OCClient.getChatTranscripts(
+            this.requestId,
+            this.chatToken.chatId,
+            this.chatToken.token,
+            getChatTranscriptOptionalParams);
     }
 
     public async createChatAdapter(protocol: string = ChatAdapterProtocols.IC3) {
@@ -418,8 +446,20 @@ class OmnichannelChatSDK {
                 this.preChatSurvey = preChatSurvey;
             }
 
-            if (this.authSettings) {
-                this.debug && console.log("Authenticated chat!");
+            if (this.authSettings){
+                if (this.chatSDKConfig.getAuthToken){
+                    this.debug && console.log("OmnichannelChatSDK/getChatConfig/auth settings with auth and getAuthToken!", this.authSettings, this.chatSDKConfig.getAuthToken);
+                    const token = await this.chatSDKConfig.getAuthToken();
+                    if (token) {
+                        this.authenticatedUserToken = token;
+                    }
+                    else {
+                        console.warn("OmnichannelChatSDK/getChatConfig/auth, chat requires auth, but getAuthToken() returned null");
+                    }
+                }
+                else {
+                    console.warn("OmnichannelChatSDK/getChatConfig/auth, chat requires auth, but getAuthToken() is missing");
+                }
             }
 
             if (this.preChatSurvey) {

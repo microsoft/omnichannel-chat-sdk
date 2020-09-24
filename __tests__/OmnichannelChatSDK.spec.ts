@@ -187,7 +187,13 @@ describe('Omnichannel Chat SDK', () => {
         });
 
         it('ChatSDK.startChat() with authenticatedUserToken should pass it to OCClient.sessionInit() call\'s optional parameters', async() => {
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            const chatSDKConfig = {
+                getAuthToken: async () => {
+                    return 'authenticatedUserToken'
+                }
+            };
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            const oldGetChatConfig = chatSDK.getChatConfig;
             chatSDK.getChatConfig = jest.fn();
 
             await chatSDK.initialize();
@@ -201,6 +207,13 @@ describe('Omnichannel Chat SDK', () => {
                 authenticatedUserToken: 'authenticatedUserToken'
             }
 
+            jest.spyOn(chatSDK.OCClient, 'getChatConfig').mockResolvedValue(Promise.resolve({
+                DataMaskingInfo: { setting: { msdyn_maskforcustomer: false } },
+                LiveWSAndLiveChatEngJoin: { PreChatSurvey: { msdyn_prechatenabled: false } },
+                LiveChatConfigAuthSettings: {}
+            }));
+
+
             jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
                 ChatId: '',
                 Token: '',
@@ -209,11 +222,17 @@ describe('Omnichannel Chat SDK', () => {
 
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
 
-            await chatSDK.startChat(optionaParams);
+            chatSDK.getChatConfig = oldGetChatConfig;
+            await chatSDK.getChatConfig();
+
+            await chatSDK.startChat({});
 
             const sessionInitOptionalParams = {
-                authenticatedUserToken: optionaParams.authenticatedUserToken
+                authenticatedUserToken: optionaParams.authenticatedUserToken,
+                initContext: {}
             }
+
+            // console.warn(chatSDK.OCClient.sessionInit.mock.calls[0][1]);
 
             expect(chatSDK.OCClient.sessionInit.mock.calls[0][1]).toMatchObject(sessionInitOptionalParams);
         });
