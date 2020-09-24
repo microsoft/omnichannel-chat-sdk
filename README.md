@@ -119,7 +119,7 @@ Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel
     })
 ```
 
-###
+### Get Messages
 ```ts
     const messages = await chatSDK.getMessages();
 ```
@@ -242,12 +242,36 @@ Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel
     const optionalParams = {};
     optionalParams.liveChatContext = liveChatContext;
 
-    await chatSDK.startChat(); // Reconnects to EXISTING chat
+    await chatSDK.startChat(optionalParams); // Reconnects to EXISTING chat
 
     ...
 
     const messages = await chatSDK.getMessages(); // Gets all messages from EXISTING chat
     messages.reverse().forEach((message: any) => renderMessage(message)); // Logic to render all messages to UI
+```
+
+### Authenticated Chat
+
+```ts
+    // add if using against an authenticated chat endpoint
+    // see https://docs.microsoft.com/en-us/dynamics365/omnichannel/administrator/create-chat-auth-settings on how to set up an authenticated chat widget
+
+    const chatSDKConfig = {
+        getAuthToken: async () => {
+            const response = await fetch("http://contosohelp.com/token");
+            if (response.ok) {
+                return await response.text();
+            }
+            else {
+                return null
+            }
+        }
+    }
+
+    const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+    await chatSDK.initialize();
+
+    // from this point, this acts like a regular chat widget
 ```
 
 ### Use [BotFramework-WebChat](https://github.com/microsoft/BotFramework-WebChat)
