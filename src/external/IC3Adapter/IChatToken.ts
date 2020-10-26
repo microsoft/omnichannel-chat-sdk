@@ -3,4 +3,7 @@ export default interface IChatToken {
     regionGTMS?: any;
     requestId?: string;
     token?: string;
+    expiresIn?: string;
+    visitorId?: string;
+    voiceVideoCallToken?: any;
 }
