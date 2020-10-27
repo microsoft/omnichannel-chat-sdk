@@ -181,12 +181,15 @@ class OmnichannelChatSDK {
                     getChatTokenOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
                 }
                 const chatToken = await this.OCClient.getChatToken(this.requestId, getChatTokenOptionalParams);
-                const {ChatId: chatId, Token: token, RegionGtms: regionGtms} = chatToken;
+                const {ChatId: chatId, Token: token, RegionGtms: regionGtms, ExpiresIn: expiresIn, VisitorId: visitorId, VoiceVideoCallToken: voiceVideoCallToken} = chatToken;
                 this.chatToken = {
                     chatId,
                     regionGTMS: JSON.parse(regionGtms),
                     requestId: this.requestId,
-                    token
+                    token,
+                    expiresIn,
+                    visitorId,
+                    voiceVideoCallToken
                 };
             } catch (error) {
                 console.error(`OmnichannelChatSDK/getChatToken/error ${error}`);
