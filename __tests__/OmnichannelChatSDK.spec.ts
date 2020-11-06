@@ -22,7 +22,7 @@ describe('Omnichannel Chat SDK', () => {
                 expect(error).toBeInstanceOf(Error);
             }
         });
-    })
+    });
 
     describe('Functionalities', () => {
         const omnichannelConfig = {
