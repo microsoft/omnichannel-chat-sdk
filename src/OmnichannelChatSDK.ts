@@ -263,11 +263,10 @@ class OmnichannelChatSDK {
     public async sendTypingEvent() {
         const typingPayload = `{isTyping: 0}`;
         try {
-            this.conversation!.indicateTypingStatus(0);
-            this.conversation!.getMembers().then((members: any) => {
-                const botMembers = members.filter((member: any) => member.type === PersonType.Bot);
-                this.conversation!.sendMessageToBot(botMembers[0].id, {payload: typingPayload});
-            });
+            await this.conversation!.indicateTypingStatus(0);
+            const members: any = await this.conversation!.getMembers();
+            const botMembers = members.filter((member: any) => member.type === PersonType.Bot);
+            await this.conversation!.sendMessageToBot(botMembers[0].id, {payload: typingPayload});
         } catch (error) {
             console.error("OmnichannelChatSDK/sendTypingEvent/error");
             return error;
