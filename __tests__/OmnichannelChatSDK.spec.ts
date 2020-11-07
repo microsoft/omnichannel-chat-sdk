@@ -1,4 +1,8 @@
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
+import IFileInfo from "@microsoft/omnichannel-ic3core/lib/interfaces/IFileInfo";
+import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/FileSharingProtocolType";
+import IFileMetadata from "@microsoft/omnichannel-ic3core/lib/model/IFileMetadata";
+import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 
 describe('Omnichannel Chat SDK', () => {
@@ -468,6 +472,34 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.conversation.indicateTypingStatus).toHaveBeenCalledTimes(1);
             expect(chatSDK.conversation.getMembers).toHaveBeenCalledTimes(1);
             expect(chatSDK.conversation.sendMessageToBot).toHaveBeenCalledTimes(1);
+        });
+
+        it('ChatSDK.uploadFileAttachment() should call conversation.sendFileData() & conversation.sendFileMessage()', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendFileData: (fileInfo: IFileInfo, fileSharingProtocolType: FileSharingProtocolType) => {},
+                sendFileMessage: (fileMetaData: IFileMetadata, message: IMessage) => {}
+            }));
+
+            await chatSDK.startChat();
+
+            jest.spyOn(chatSDK.conversation, 'sendFileData').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.conversation, 'sendFileMessage').mockResolvedValue(Promise.resolve());
+
+            const fileInfo = {};
+            await chatSDK.uploadFileAttachment(fileInfo);
+            expect(chatSDK.conversation.sendFileData).toHaveBeenCalledTimes(1);
+            expect(chatSDK.conversation.sendFileMessage).toHaveBeenCalledTimes(1);
         });
 
         it('ChatSDK.downloadFileAttachment() should call conversation.downloadFile()', async() => {
