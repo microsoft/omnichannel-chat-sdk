@@ -213,7 +213,6 @@ describe('Omnichannel Chat SDK', () => {
                 LiveChatConfigAuthSettings: {}
             }));
 
-
             jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
                 ChatId: '',
                 Token: '',
@@ -235,6 +234,33 @@ describe('Omnichannel Chat SDK', () => {
             // console.warn(chatSDK.OCClient.sessionInit.mock.calls[0][1]);
 
             expect(chatSDK.OCClient.sessionInit.mock.calls[0][1]).toMatchObject(sessionInitOptionalParams);
+        });
+
+        it('ChatSDK.getCurrentLiveChatContext() should return chat session data', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.IC3Client = {
+                initialize: jest.fn(),
+                joinConversation: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+
+            await chatSDK.startChat();
+
+            const chatContext = await chatSDK.getCurrentLiveChatContext();
+
+            expect(Object.keys(chatContext).includes('chatToken')).toBe(true);
+            expect(Object.keys(chatContext).includes('requestId')).toBe(true);
         });
 
         it('ChatSDK.sendMessage() should mask characters if enabled', async () => {
