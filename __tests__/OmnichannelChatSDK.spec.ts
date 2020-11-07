@@ -264,6 +264,30 @@ describe('Omnichannel Chat SDK', () => {
             expect(Object.keys(chatContext).includes('requestId')).toBe(true);
         });
 
+        it('ChatSDK.getMessages should call conversation.getMessages()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
+                getMessages: () => {}
+            }));
+
+            await chatSDK.startChat();
+
+            jest.spyOn(chatSDK.conversation, 'getMessages').mockResolvedValue(Promise.resolve());
+
+            await chatSDK.getMessages();
+            expect(chatSDK.conversation.getMessages).toHaveBeenCalledTimes(1);
+        });
+
         it('ChatSDK.sendMessage() should mask characters if enabled', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
