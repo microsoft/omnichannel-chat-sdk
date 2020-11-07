@@ -476,5 +476,55 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.conversation).toBe(null);
             expect(chatSDK.chatToken).toMatchObject({});
         });
+
+        it('ChatSDK.endChat() with authenticatedUserToken should pass it to OCClient.sessionClose() call\'s optional parameters', async () => {
+            const chatSDKConfig = {
+                getAuthToken: async () => {
+                    return 'authenticatedUserToken'
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.IC3Client.initialize = jest.fn();
+            chatSDK.IC3Client.joinConversation = jest.fn();
+
+            const optionaParams = {
+                authenticatedUserToken: 'authenticatedUserToken'
+            }
+
+            jest.spyOn(chatSDK.OCClient, 'getChatConfig').mockResolvedValue(Promise.resolve({
+                DataMaskingInfo: { setting: { msdyn_maskforcustomer: false } },
+                LiveWSAndLiveChatEngJoin: { PreChatSurvey: { msdyn_prechatenabled: false } },
+                LiveChatConfigAuthSettings: {}
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'sessionClose').mockResolvedValue(Promise.resolve());
+
+            await chatSDK.startChat();
+
+            chatSDK.authenticatedUserToken = optionaParams.authenticatedUserToken;
+            chatSDK.conversation = {
+                disconnect: jest.fn()
+            };
+
+            const sessionCloseOptionalParams = {
+                authenticatedUserToken: optionaParams.authenticatedUserToken
+            }
+
+            await chatSDK.endChat();
+            expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(1);
+            expect(chatSDK.OCClient.sessionClose.mock.calls[0][1]).toMatchObject(sessionCloseOptionalParams);
+        });
     });
 })
