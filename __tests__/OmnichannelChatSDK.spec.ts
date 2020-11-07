@@ -1,4 +1,5 @@
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
+import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 
 describe('Omnichannel Chat SDK', () => {
     describe('Configurations', () => {
@@ -411,7 +412,41 @@ describe('Omnichannel Chat SDK', () => {
             expect((chatSDK.conversation.sendMessage.mock.calls[0][0] as any).timestamp).toEqual(messageToSend.timestamp);
         });
 
-        it('ChatSDK.emailLiveChatTranscript() should call OCClient.emailTranscript()', async() => {
+        it('ChatSDK.sendTypingEvent() should call conversation.sendMessageToBot()', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
+                indicateTypingStatus: (value: number) => {},
+                getMembers: () => {},
+                sendMessageToBot: (botId: string, message: any) => {}
+            }));
+
+            await chatSDK.startChat();
+
+            const members = [
+                {id: 'id', type: PersonType.Bot}
+            ];
+
+            jest.spyOn(chatSDK.conversation, 'indicateTypingStatus').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.conversation, 'getMembers').mockResolvedValue(Promise.resolve(members));
+            jest.spyOn(chatSDK.conversation, 'sendMessageToBot').mockResolvedValue(Promise.resolve());
+
+            await chatSDK.sendTypingEvent();
+            expect(chatSDK.conversation.indicateTypingStatus).toHaveBeenCalledTimes(1);
+            expect(chatSDK.conversation.getMembers).toHaveBeenCalledTimes(1);
+            expect(chatSDK.conversation.sendMessageToBot).toHaveBeenCalledTimes(1);
+        });
+
+        it('ChatSDK.emailLiveChatTranscript() should call OCClient.emailTranscript()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
@@ -438,7 +473,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.emailTranscript).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.getLiveChatTranscript() should call OCClient.getChatTranscripts()', async() => {
+        it('ChatSDK.getLiveChatTranscript() should call OCClient.getChatTranscripts()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
