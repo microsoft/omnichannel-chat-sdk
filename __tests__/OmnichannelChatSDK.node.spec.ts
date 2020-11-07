@@ -1,8 +1,8 @@
-const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
-
 /**
  * @jest-environment node
  */
+
+const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 
 describe('Omnichannel Chat SDK (Node)', () => {
     const omnichannelConfig = {

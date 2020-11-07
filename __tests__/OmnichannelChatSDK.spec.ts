@@ -411,6 +411,33 @@ describe('Omnichannel Chat SDK', () => {
             expect((chatSDK.conversation.sendMessage.mock.calls[0][0] as any).timestamp).toEqual(messageToSend.timestamp);
         });
 
+        it('ChatSDK.emailLiveChatTranscript() should send a transcript to a specific email', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'emailTranscript').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendMessage: (message: any) => {}
+            }));
+
+            await chatSDK.startChat();
+
+            const emailBody = {
+                emailAddress: 'sample@microsoft.com',
+                attachmentMessage: 'sample',
+                CustomerLocale: 'sample'
+            };
+
+            await chatSDK.emailLiveChatTranscript(emailBody);
+
+            expect(chatSDK.OCClient.emailTranscript).toHaveBeenCalledTimes(1);
+        })
+
         it('ChatSDK.getIC3Client() should return IC3Core if platform is Node', async () => {
             const IC3SDKProvider = require('@microsoft/omnichannel-ic3core').SDKProvider;
             const platform = require('../src/utils/platform').default;
