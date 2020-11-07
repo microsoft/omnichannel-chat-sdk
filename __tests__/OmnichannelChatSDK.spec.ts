@@ -353,6 +353,64 @@ describe('Omnichannel Chat SDK', () => {
             expect((chatSDK.conversation.sendMessage.mock.calls[0][0] as any).content).toBe(messageToSend.content);
         });
 
+        it('ChatSDK.sendMessage() should send message with custom tags if set', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendMessage: (message: any) => {}
+            }));
+
+            await chatSDK.startChat();
+            jest.spyOn(chatSDK.conversation, 'sendMessage').mockResolvedValue(Promise.resolve());
+
+            const messageToSend = {
+                content: 'sample',
+                tags: ['system']
+            }
+
+            await chatSDK.sendMessage(messageToSend);
+            expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
+            expect((chatSDK.conversation.sendMessage.mock.calls[0][0] as any).tags.length).not.toBe(0);
+        });
+
+        it('ChatSDK.sendMessage() should send message with custom timestamp if set', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendMessage: (message: any) => {}
+            }));
+
+            await chatSDK.startChat();
+            jest.spyOn(chatSDK.conversation, 'sendMessage').mockResolvedValue(Promise.resolve());
+
+            const messageToSend = {
+                content: 'sample',
+                timestamp: 'timestamp'
+            }
+
+            await chatSDK.sendMessage(messageToSend);
+            expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
+            expect((chatSDK.conversation.sendMessage.mock.calls[0][0] as any).timestamp).toEqual(messageToSend.timestamp);
+        });
+
         it('ChatSDK.getIC3Client() should return IC3Core if platform is Node', async () => {
             const IC3SDKProvider = require('@microsoft/omnichannel-ic3core').SDKProvider;
             const platform = require('../src/utils/platform').default;
