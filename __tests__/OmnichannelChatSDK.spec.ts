@@ -179,6 +179,35 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.IC3Client.joinConversation).toHaveBeenCalledTimes(0);
         });
 
+        it('ChatSDK.startChat() should fail if IC3Client.joinConversation() fails', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockRejectedValue(Promise.reject());
+
+            jest.spyOn(console, 'error');
+
+            try {
+                await chatSDK.startChat();
+            } catch (error) {
+                expect(console.error).toHaveBeenCalled();
+            }
+
+            expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
+            expect(chatSDK.IC3Client.initialize).toHaveBeenCalledTimes(1);
+            expect(chatSDK.IC3Client.joinConversation).toHaveBeenCalledTimes(1);
+        });
+
         it('ChatSDK.startchat() with existing liveChatContext should not call OCClient.getChatToken()', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
