@@ -594,6 +594,60 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.emailTranscript).toHaveBeenCalledTimes(1);
         });
 
+
+        it('ChatSDK.emailLiveChatTranscript() with authenticatedUserToken should pass it to OCClient.emailTranscript()', async () => {
+            const chatSDKConfig = {
+                getAuthToken: async () => {
+                    return 'authenticatedUserToken'
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.IC3Client.initialize = jest.fn();
+            chatSDK.IC3Client.joinConversation = jest.fn();
+
+            const optionaParams = {
+                authenticatedUserToken: 'authenticatedUserToken'
+            }
+
+            jest.spyOn(chatSDK.OCClient, 'getChatConfig').mockResolvedValue(Promise.resolve({
+                DataMaskingInfo: { setting: { msdyn_maskforcustomer: false } },
+                LiveWSAndLiveChatEngJoin: { PreChatSurvey: { msdyn_prechatenabled: false } },
+                LiveChatConfigAuthSettings: {}
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'emailTranscript').mockResolvedValue(Promise.resolve());
+
+            await chatSDK.startChat();
+            chatSDK.authenticatedUserToken = optionaParams.authenticatedUserToken;
+
+            const emailBody = {
+                emailAddress: 'sample@microsoft.com',
+                attachmentMessage: 'sample',
+                CustomerLocale: 'sample'
+            };
+
+            const emailTranscriptOptionalParams = {
+                authenticatedUserToken: optionaParams.authenticatedUserToken
+            }
+
+            await chatSDK.emailLiveChatTranscript(emailBody);
+
+            expect(chatSDK.OCClient.emailTranscript).toHaveBeenCalledTimes(1);
+            expect(chatSDK.OCClient.emailTranscript.mock.calls[0][3]).toMatchObject(emailTranscriptOptionalParams);
+        });
+
         it('ChatSDK.getLiveChatTranscript() should call OCClient.getChatTranscripts()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
