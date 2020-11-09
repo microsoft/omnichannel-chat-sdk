@@ -601,6 +601,47 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.conversation.sendMessageToBot).toHaveBeenCalledTimes(1);
         });
 
+        it('ChatSDK.sendTypingEvent() should fail if conversation.sendMessageToBot() fails', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
+                indicateTypingStatus: (value: number) => {},
+                getMembers: () => {},
+                sendMessageToBot: (botId: string, message: any) => {}
+            }));
+
+            await chatSDK.startChat();
+
+            const members = [
+                {id: 'id', type: PersonType.Bot}
+            ];
+
+            jest.spyOn(chatSDK.conversation, 'indicateTypingStatus').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.conversation, 'getMembers').mockResolvedValue(Promise.resolve(members));
+            jest.spyOn(chatSDK.conversation, 'sendMessageToBot').mockRejectedValue(Promise.reject());
+
+            jest.spyOn(console, 'error');
+
+            try {
+                await chatSDK.sendTypingEvent();
+            } catch (error) {
+                expect(console.error).toHaveBeenCalled();
+            }
+
+            expect(chatSDK.conversation.indicateTypingStatus).toHaveBeenCalledTimes(1);
+            expect(chatSDK.conversation.getMembers).toHaveBeenCalledTimes(1);
+            expect(chatSDK.conversation.sendMessageToBot).toHaveBeenCalledTimes(1);
+        });
+
         it('ChatSDK.uploadFileAttachment() should call conversation.sendFileData() & conversation.sendFileMessage()', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
