@@ -668,6 +668,55 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.getChatTranscripts).toHaveBeenCalledTimes(1);
         });
 
+        it('ChatSDK.getLiveChatTranscript() with authenticatedUserToken should pass it to OCClient.getChatTranscripts()', async () => {
+            const chatSDKConfig = {
+                getAuthToken: async () => {
+                    return 'authenticatedUserToken'
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.IC3Client.initialize = jest.fn();
+            chatSDK.IC3Client.joinConversation = jest.fn();
+
+            const optionaParams = {
+                authenticatedUserToken: 'authenticatedUserToken'
+            }
+
+            jest.spyOn(chatSDK.OCClient, 'getChatConfig').mockResolvedValue(Promise.resolve({
+                DataMaskingInfo: { setting: { msdyn_maskforcustomer: false } },
+                LiveWSAndLiveChatEngJoin: { PreChatSurvey: { msdyn_prechatenabled: false } },
+                LiveChatConfigAuthSettings: {}
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'getChatTranscripts').mockResolvedValue(Promise.resolve());
+
+            await chatSDK.startChat();
+            chatSDK.authenticatedUserToken = optionaParams.authenticatedUserToken;
+
+            await chatSDK.startChat();
+
+            const getChatTranscriptOptionalParams = {
+                authenticatedUserToken: optionaParams.authenticatedUserToken
+            }
+
+            await chatSDK.getLiveChatTranscript();
+
+            expect(chatSDK.OCClient.getChatTranscripts).toHaveBeenCalledTimes(1);
+            expect(chatSDK.OCClient.getChatTranscripts.mock.calls[0][3]).toMatchObject(getChatTranscriptOptionalParams);
+        });
+
         it('ChatSDK.getIC3Client() should return IC3Core if platform is Node', async () => {
             const IC3SDKProvider = require('@microsoft/omnichannel-ic3core').SDKProvider;
             const platform = require('../src/utils/platform').default;
