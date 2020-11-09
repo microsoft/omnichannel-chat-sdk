@@ -954,6 +954,31 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.chatToken).toMatchObject({});
         });
 
+        it('ChatSDK.endChat() should fail if OCClient.sessionClose() fails', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+
+            await chatSDK.initialize();
+            await chatSDK.startChat();
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
+                disconnect: () => {}
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'sessionClose').mockRejectedValue(Promise.reject());
+
+            try {
+                await chatSDK.endChat();
+            } catch (error) {
+                expect(console.error).toHaveBeenCalled();
+            }
+
+            expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(1);
+        });
+
         it('ChatSDK.endChat() with authenticatedUserToken should pass it to OCClient.sessionClose() call\'s optional parameters', async () => {
             const chatSDKConfig = {
                 getAuthToken: async () => {
