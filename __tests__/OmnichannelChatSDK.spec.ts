@@ -157,6 +157,20 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.IC3Client.joinConversation).toHaveBeenCalledTimes(1);
         });
 
+        it('ChatSDK.getLiveChatConfig() should return the cached value by default', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            chatSDK.liveChatConfig = {
+                id: 0
+            }
+
+            const liveChatConfig = await chatSDK.getLiveChatConfig();
+
+            expect(liveChatConfig.id).toBe(chatSDK.liveChatConfig.id);
+            expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(0);
+        });
+
         it('ChatSDK.startChat() with preChatResponse should pass it to OCClient.sessionInit() call\'s optional parameters', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
