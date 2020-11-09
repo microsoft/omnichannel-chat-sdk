@@ -386,6 +386,7 @@ class OmnichannelChatSDK {
         });
     }
 
+    /* istanbul ignore next */
     public setDebug(flag: boolean) {
         this.debug = flag;
     }
