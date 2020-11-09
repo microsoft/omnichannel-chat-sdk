@@ -268,6 +268,32 @@ describe('Omnichannel Chat SDK', () => {
             expect(Object.keys(chatContext).includes('requestId')).toBe(true);
         });
 
+        it('ChatSDK.getCurrentLiveChatContext() with empty chatToken should return an empty chat sesssion data', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.IC3Client = {
+                initialize: jest.fn(),
+                joinConversation: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+
+            const chatContext = await chatSDK.getCurrentLiveChatContext();
+
+            expect(Object.keys(chatContext).length).toBe(0);
+            expect(Object.keys(chatContext).includes('chatToken')).toBe(false);
+            expect(Object.keys(chatContext).includes('requestId')).toBe(false);
+        });
+
         it('ChatSDK.getMessages should call conversation.getMessages()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
