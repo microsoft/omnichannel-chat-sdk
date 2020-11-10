@@ -18,7 +18,6 @@ describe('Omnichannel Chat SDK (Node)', () => {
     it('ChatSDK.createChatAdapter() should not work on React Native platform', async () => {
         (global as any).navigator = {};
         (global.navigator as any).product = 'ReactNative';
-        const errorMessage = 'ChatAdapter is only supported on browser';
 
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
@@ -35,7 +34,7 @@ describe('Omnichannel Chat SDK (Node)', () => {
         try {
             await chatSDK.createChatAdapter();
         } catch (error) {
-            expect(error).toEqual(errorMessage);
+            expect(error).toEqual('ChatAdapter is only supported on browser');
         }
     });
 
