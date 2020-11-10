@@ -369,7 +369,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(Object.keys(chatContext).includes('requestId')).toBe(true);
         });
 
-        it('ChatSDK.getCurrentLiveChatContext() with empty chatToken should return an empty chat sesssion data', async () => {
+        it('ChatSDK.getCurrentLiveChatContext() with empty chatToken should return an empty chat session data', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
