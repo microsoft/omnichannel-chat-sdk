@@ -2,6 +2,8 @@
  * @jest-environment jsdom
  */
 
+export {}; // Fix for "Cannot redeclare block-scoped variable 'OmnichannelChatSDK'"
+
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 
 describe('Omnichannel Chat SDK (Web)', () => {
