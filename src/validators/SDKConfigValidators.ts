@@ -13,12 +13,10 @@ const defaultChatSDKConfig: IChatSDKConfig = {
  */
 const validateDataMaskingConfig = (dataMaskingConfig: IDataMaskingSDKConfig) => {
     if (typeof dataMaskingConfig.disable !== "boolean") {
-        // console.warn('Data masking config disable flag must be true/false');
         dataMaskingConfig.disable = defaultChatSDKConfig.dataMasking.disable;
     }
 
     if (typeof dataMaskingConfig.maskingCharacter !== "string" || dataMaskingConfig.maskingCharacter.length !== 1) {
-        // console.warn('Data masking config masking character value must be a string of length 1');
         dataMaskingConfig.maskingCharacter = defaultChatSDKConfig.dataMasking.maskingCharacter;
     }
 }
