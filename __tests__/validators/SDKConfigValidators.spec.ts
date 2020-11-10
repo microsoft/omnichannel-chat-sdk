@@ -7,8 +7,7 @@ describe('SDKConfigValidators', () => {
 
         validateSDKConfig(chatSDKConfig);
 
-        expect(chatSDKConfig.dataMasking.disable).toBe(defaultChatSDKConfig.dataMasking.disable);
-        expect(chatSDKConfig.dataMasking.maskingCharacter).toBe(defaultChatSDKConfig.dataMasking.maskingCharacter);
+        expect(chatSDKConfig.dataMasking).toStrictEqual(defaultChatSDKConfig.dataMasking);
     });
 
     it('Data masking SDK config should to default values if not valid', () => {
