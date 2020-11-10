@@ -14,8 +14,7 @@ describe('Platform', () => {
         (global as any).navigator = {};
         (global.navigator as any).product = 'ReactNative';
 
-        const isReactNative = platform.isReactNative();
-        expect(isReactNative).toBe(true);
+        expect(platform.isReactNative()).toBe(true);
     });
 
     afterEach(() => {
