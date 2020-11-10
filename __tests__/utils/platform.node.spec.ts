@@ -15,6 +15,7 @@ describe('Platform', () => {
         (global.navigator as any).product = 'ReactNative';
 
         expect(platform.isReactNative()).toBe(true);
+        expect(platform.isBrowser()).toBe(false)
     });
 
     afterEach(() => {

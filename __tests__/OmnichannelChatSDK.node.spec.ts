@@ -34,7 +34,6 @@ describe('Omnichannel Chat SDK (Node)', () => {
 
         try {
             await chatSDK.createChatAdapter();
-            console.log(chatSDK.createChatAdapter().rejects);
         } catch (error) {
             expect(error).toEqual(errorMessage);
         }
