@@ -1,6 +1,7 @@
 # Omnichannel Chat SDK
 
 [![npm version](https://badge.fury.io/js/%40microsoft%2Fomnichannel-chat-sdk.svg)](https://badge.fury.io/js/%40microsoft%2Fomnichannel-chat-sdk)
+![Release CI](https://github.com/microsoft/omnichannel-chat-sdk/workflows/Release%20CI/badge.svg)
 
 Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel Services.
 
