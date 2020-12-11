@@ -161,11 +161,11 @@ class OmnichannelChatSDK {
      * Gets PreChat Survey.
      * @param parse Whether to parse PreChatSurvey to JSON or not.
      */
-    public async getPreChatSurvey(parse: boolean = true) {
+    public async getPreChatSurvey(parse = true) {
         return parse ? JSON.parse(this.preChatSurvey) : this.preChatSurvey;
     }
 
-    public async getLiveChatConfig(cached: boolean = true) {
+    public async getLiveChatConfig(cached = true) {
         if (cached) {
             return this.liveChatConfig;
         }
@@ -173,7 +173,7 @@ class OmnichannelChatSDK {
         return this.getChatConfig();
     }
 
-    public async getChatToken(cached: boolean = true): Promise<IChatToken> {
+    public async getChatToken(cached = true): Promise<IChatToken> {
         if (!cached) {
             try {
                 const getChatTokenOptionalParams: IGetChatTokenOptionalParams = {};
@@ -211,8 +211,8 @@ class OmnichannelChatSDK {
             for (const maskingRule of Object.values(this.dataMaskingRules)) {
                 const regex = new RegExp(maskingRule as string, 'g');
                 let match;
-                while (match = regex.exec(content)) {
-                    let replaceStr = match[0].replace(/./g, maskingCharacter);
+                while (match = regex.exec(content)) {  // eslint-disable-line no-cond-assign
+                    const replaceStr = match[0].replace(/./g, maskingCharacter);
                     content = content.replace(match[0], replaceStr);
                 }
             }
