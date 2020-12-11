@@ -1,5 +1,5 @@
 export default interface IChatConfig {
-    DataMaskingInfo: any;
-    LiveChatConfigAuthSettings: any;
-    LiveWSAndLiveChatEngJoin: any;
+    DataMaskingInfo: unknown;
+    LiveChatConfigAuthSettings: unknown;
+    LiveWSAndLiveChatEngJoin: unknown;
 }
