@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export default interface IChatToken {
     chatId?: string;
     regionGTMS?: any;

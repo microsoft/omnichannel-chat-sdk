@@ -21,7 +21,7 @@ const validateDataMaskingConfig = (dataMaskingConfig: IDataMaskingSDKConfig) => 
     }
 }
 
-const validateSDKConfig = (chatSDKConfig: IChatSDKConfig) => {
+const validateSDKConfig = (chatSDKConfig: IChatSDKConfig): void => {
     if (chatSDKConfig.dataMasking) {
         validateDataMaskingConfig(chatSDKConfig.dataMasking);
     }

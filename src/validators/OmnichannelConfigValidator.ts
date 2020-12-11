@@ -2,7 +2,7 @@ import IOmnichannelConfig from "../core/IOmnichannelConfig";
 
 const requiredOmnichannelConfigParams = ["orgUrl", "orgId", "widgetId"];
 
-const validateOmnichannelConfig = (omnichannelConfig: IOmnichannelConfig) => {
+const validateOmnichannelConfig = (omnichannelConfig: IOmnichannelConfig): void => {
     if (!omnichannelConfig) {
       throw new Error(`OmnichannelConfiguration not found`);
     }

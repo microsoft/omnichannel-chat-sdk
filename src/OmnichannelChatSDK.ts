@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import {SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
 import {SDKProvider as IC3SDKProvider} from '@microsoft/omnichannel-ic3core';
 import ChatAdapterProtocols from "./core/ChatAdapterProtocols";
@@ -13,16 +15,19 @@ import IChatTranscriptBody from "./core/IChatTranscriptBody";
 import IConversation from "@microsoft/omnichannel-ic3core/lib/model/IConversation";
 import IFileInfo from "@microsoft/omnichannel-ic3core/lib/interfaces/IFileInfo";
 import IFileMetadata from "@microsoft/omnichannel-ic3core/lib/model/IFileMetadata";
+import IGetChatTokenOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTokenOptionalParams";
+import IGetChatTranscriptsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTranscriptsOptionalParams";
 import IIC3AdapterOptions from "./external/IC3Adapter/IIC3AdapterOptions";
 import ILiveChatContext from "./core/ILiveChatContext";
+import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import InitContext from "@microsoft/ocsdk/lib/Model/InitContext";
 import IOmnichannelConfig from "./core/IOmnichannelConfig";
+import IOmnichannelConfiguration from "@microsoft/ocsdk/lib/Interfaces/IOmnichannelConfiguration";
+import IPerson from "@microsoft/omnichannel-ic3core/lib/model/IPerson";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
 import IRawThread from "@microsoft/omnichannel-ic3core/lib/interfaces/IRawThread";
 import ISessionInitOptionalParams from "@microsoft/ocsdk/lib/Interfaces/ISessionInitOptionalParams";
 import ISessionCloseOptionalParams from "@microsoft/ocsdk/lib/Interfaces/ISessionCloseOptionalParams";
-import IGetChatTokenOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTokenOptionalParams";
-import IGetChatTranscriptsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTranscriptsOptionalParams";
 import IEmailTranscriptOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IEmailTranscriptOptionalParams";
 import IStartChatOptionalParams from "./core/IStartChatOptionalParams";
 import MessageContentType from "@microsoft/omnichannel-ic3core/lib/model/MessageContentType";
@@ -34,21 +39,22 @@ import libraries from "./utils/libraries";
 import {isCustomerMessage} from "./utils/utilities";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 import validateSDKConfig, {defaultChatSDKConfig} from "./validators/SDKConfigValidators";
+import ISDKConfiguration from "@microsoft/ocsdk/lib/Interfaces/ISDKConfiguration";
 
 class OmnichannelChatSDK {
-    public OCSDKProvider: any;
-    public IC3SDKProvider: any;
-    public OCClient: any;
-    public IC3Client: any;
+    public OCSDKProvider: unknown;
+    public IC3SDKProvider: unknown;
+    public OCClient: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    public IC3Client: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     public omnichannelConfig: IOmnichannelConfig;
     public chatSDKConfig: IChatSDKConfig;
     public requestId: string;
     private chatToken: IChatToken;
-    private liveChatConfig: any;
-    private dataMaskingRules: any;
+    private liveChatConfig: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    private dataMaskingRules: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private authSettings: IAuthSettings | null = null;
     private authenticatedUserToken: string | null = null;
-    private preChatSurvey: any;
+    private preChatSurvey: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private conversation: IConversation | null = null;
     private debug: boolean;
 
@@ -67,14 +73,14 @@ class OmnichannelChatSDK {
         validateSDKConfig(chatSDKConfig);
     }
 
-    public async initialize() {
+    public async initialize(): Promise<IChatConfig> {
         this.OCSDKProvider = OCSDKProvider;
-        this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as any, {} as any, undefined as any);
+        this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, {} as ISDKConfiguration, undefined as any); // eslint-disable-line @typescript-eslint/no-explicit-any
         this.IC3Client = await this.getIC3Client();
         return this.getChatConfig();
     }
 
-    public async startChat(optionalParams: IStartChatOptionalParams = {}) {
+    public async startChat(optionalParams: IStartChatOptionalParams = {}): Promise<void> {
 
         if (optionalParams.liveChatContext) {
             this.chatToken = optionalParams.liveChatContext.chatToken || {};
@@ -123,7 +129,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async endChat() {
+    public async endChat(): Promise<void> {
         const sessionCloseOptionalParams: ISessionCloseOptionalParams = {};
         if (this.authenticatedUserToken) {
             sessionCloseOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
@@ -141,7 +147,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async getCurrentLiveChatContext() {
+    public async getCurrentLiveChatContext(): Promise<ILiveChatContext | {}> {
         const chatToken = await this.getChatToken();
         const {requestId} = this;
 
@@ -161,11 +167,11 @@ class OmnichannelChatSDK {
      * Gets PreChat Survey.
      * @param parse Whether to parse PreChatSurvey to JSON or not.
      */
-    public async getPreChatSurvey(parse: boolean = true) {
+    public async getPreChatSurvey(parse = true): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
         return parse ? JSON.parse(this.preChatSurvey) : this.preChatSurvey;
     }
 
-    public async getLiveChatConfig(cached: boolean = true) {
+    public async getLiveChatConfig(cached = true): Promise<IChatConfig> {
         if (cached) {
             return this.liveChatConfig;
         }
@@ -173,7 +179,7 @@ class OmnichannelChatSDK {
         return this.getChatConfig();
     }
 
-    public async getChatToken(cached: boolean = true): Promise<IChatToken> {
+    public async getChatToken(cached = true): Promise<IChatToken> {
         if (!cached) {
             try {
                 const getChatTokenOptionalParams: IGetChatTokenOptionalParams = {};
@@ -199,11 +205,11 @@ class OmnichannelChatSDK {
         return this.chatToken;
     }
 
-    public async getMessages() {
+    public async getMessages(): Promise<IMessage[] | undefined> {
         return this.conversation?.getMessages();
     }
 
-    public async sendMessage(message: IChatSDKMessage) {
+    public async sendMessage(message: IChatSDKMessage): Promise<void> {
         const {disable, maskingCharacter} = this.chatSDKConfig.dataMasking;
 
         let {content} = message;
@@ -211,8 +217,8 @@ class OmnichannelChatSDK {
             for (const maskingRule of Object.values(this.dataMaskingRules)) {
                 const regex = new RegExp(maskingRule as string, 'g');
                 let match;
-                while (match = regex.exec(content)) {
-                    let replaceStr = match[0].replace(/./g, maskingCharacter);
+                while (match = regex.exec(content)) {  // eslint-disable-line no-cond-assign
+                    const replaceStr = match[0].replace(/./g, maskingCharacter);
                     content = content.replace(match[0], replaceStr);
                 }
             }
@@ -245,8 +251,8 @@ class OmnichannelChatSDK {
         return this.conversation!.sendMessage(messageToSend);
     }
 
-    public onNewMessage(onNewMessageCallback: CallableFunction) {
-        this.conversation?.registerOnNewMessage((message: any) => {
+    public onNewMessage(onNewMessageCallback: CallableFunction): void {
+        this.conversation?.registerOnNewMessage((message: IRawMessage) => {
             const {messageType} = message;
 
             // Filter out customer messages
@@ -260,12 +266,12 @@ class OmnichannelChatSDK {
         });
     }
 
-    public async sendTypingEvent() {
+    public async sendTypingEvent(): Promise<void> {
         const typingPayload = `{isTyping: 0}`;
         try {
             await this.conversation!.indicateTypingStatus(0);
-            const members: any = await this.conversation!.getMembers();
-            const botMembers = members.filter((member: any) => member.type === PersonType.Bot);
+            const members: IPerson[] = await this.conversation!.getMembers();
+            const botMembers = members.filter((member: IPerson) => member.type === PersonType.Bot);
             await this.conversation!.sendMessageToBot(botMembers[0].id, {payload: typingPayload});
         } catch (error) {
             console.error("OmnichannelChatSDK/sendTypingEvent/error");
@@ -273,8 +279,8 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async onTypingEvent(onTypingEventCallback: CallableFunction) {
-        this.conversation?.registerOnNewMessage((message: any) => {
+    public async onTypingEvent(onTypingEventCallback: CallableFunction): Promise<void> {
+        this.conversation?.registerOnNewMessage((message: IRawMessage) => {
             const {messageType} = message;
 
             // Filter out customer messages
@@ -288,11 +294,11 @@ class OmnichannelChatSDK {
         });
     }
 
-    public async onAgentEndSession(onAgentEndSessionCallback: (message: IRawThread) => void) {
+    public async onAgentEndSession(onAgentEndSessionCallback: (message: IRawThread) => void): Promise<void> {
         this.conversation?.registerOnThreadUpdate(onAgentEndSessionCallback);
     }
 
-    public async uploadFileAttachment(fileInfo: IFileInfo) {
+    public async uploadFileAttachment(fileInfo: IFileInfo): Promise<IRawMessage> {
         const fileMetadata: IFileMetadata = await this.conversation!.sendFileData(fileInfo, FileSharingProtocolType.AmsBasedFileSharing);
 
         const messageToSend: IRawMessage = {
@@ -319,11 +325,11 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async downloadFileAttachment(fileMetadata: IFileMetadata) {
+    public async downloadFileAttachment(fileMetadata: IFileMetadata): Promise<Blob> {
         return this.conversation!.downloadFile(fileMetadata);
     }
 
-    public async emailLiveChatTranscript(body: IChatTranscriptBody) {
+    public async emailLiveChatTranscript(body: IChatTranscriptBody): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
         const emailTranscriptOptionalParams: IEmailTranscriptOptionalParams = {};
         if (this.authenticatedUserToken) {
             emailTranscriptOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
@@ -341,7 +347,7 @@ class OmnichannelChatSDK {
             emailTranscriptOptionalParams);
     }
 
-    public async getLiveChatTranscript() {
+    public async getLiveChatTranscript(): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
         const getChatTranscriptOptionalParams: IGetChatTranscriptsOptionalParams = {};
         if (this.authenticatedUserToken) {
             getChatTranscriptOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
@@ -353,7 +359,7 @@ class OmnichannelChatSDK {
             getChatTranscriptOptionalParams);
     }
 
-    public async createChatAdapter(protocol: string = ChatAdapterProtocols.IC3) {
+    public async createChatAdapter(protocol: string = ChatAdapterProtocols.IC3): Promise<unknown> {
         if (platform.isNode() || platform.isReactNative()) {
             return Promise.reject('ChatAdapter is only supported on browser');
         }
@@ -387,7 +393,7 @@ class OmnichannelChatSDK {
     }
 
     /* istanbul ignore next */
-    public setDebug(flag: boolean) {
+    public setDebug(flag: boolean): void {
         this.debug = flag;
     }
 
