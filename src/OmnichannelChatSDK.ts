@@ -23,6 +23,7 @@ import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import InitContext from "@microsoft/ocsdk/lib/Model/InitContext";
 import IOmnichannelConfig from "./core/IOmnichannelConfig";
 import IOmnichannelConfiguration from "@microsoft/ocsdk/lib/Interfaces/IOmnichannelConfiguration";
+import IPerson from "@microsoft/omnichannel-ic3core/lib/model/IPerson";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
 import IRawThread from "@microsoft/omnichannel-ic3core/lib/interfaces/IRawThread";
 import ISessionInitOptionalParams from "@microsoft/ocsdk/lib/Interfaces/ISessionInitOptionalParams";
@@ -166,7 +167,7 @@ class OmnichannelChatSDK {
      * Gets PreChat Survey.
      * @param parse Whether to parse PreChatSurvey to JSON or not.
      */
-    public async getPreChatSurvey(parse = true): Promise<any> {
+    public async getPreChatSurvey(parse = true): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
         return parse ? JSON.parse(this.preChatSurvey) : this.preChatSurvey;
     }
 
@@ -269,8 +270,8 @@ class OmnichannelChatSDK {
         const typingPayload = `{isTyping: 0}`;
         try {
             await this.conversation!.indicateTypingStatus(0);
-            const members: any = await this.conversation!.getMembers();
-            const botMembers = members.filter((member: any) => member.type === PersonType.Bot);
+            const members: IPerson[] = await this.conversation!.getMembers();
+            const botMembers = members.filter((member: IPerson) => member.type === PersonType.Bot);
             await this.conversation!.sendMessageToBot(botMembers[0].id, {payload: typingPayload});
         } catch (error) {
             console.error("OmnichannelChatSDK/sendTypingEvent/error");
@@ -328,7 +329,7 @@ class OmnichannelChatSDK {
         return this.conversation!.downloadFile(fileMetadata);
     }
 
-    public async emailLiveChatTranscript(body: IChatTranscriptBody): Promise<any> {
+    public async emailLiveChatTranscript(body: IChatTranscriptBody): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
         const emailTranscriptOptionalParams: IEmailTranscriptOptionalParams = {};
         if (this.authenticatedUserToken) {
             emailTranscriptOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
@@ -346,7 +347,7 @@ class OmnichannelChatSDK {
             emailTranscriptOptionalParams);
     }
 
-    public async getLiveChatTranscript(): Promise<any> {
+    public async getLiveChatTranscript(): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
         const getChatTranscriptOptionalParams: IGetChatTranscriptsOptionalParams = {};
         if (this.authenticatedUserToken) {
             getChatTranscriptOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
