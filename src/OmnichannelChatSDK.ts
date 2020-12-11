@@ -15,6 +15,7 @@ import IFileInfo from "@microsoft/omnichannel-ic3core/lib/interfaces/IFileInfo";
 import IFileMetadata from "@microsoft/omnichannel-ic3core/lib/model/IFileMetadata";
 import IIC3AdapterOptions from "./external/IC3Adapter/IIC3AdapterOptions";
 import ILiveChatContext from "./core/ILiveChatContext";
+import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import InitContext from "@microsoft/ocsdk/lib/Model/InitContext";
 import IOmnichannelConfig from "./core/IOmnichannelConfig";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
@@ -67,14 +68,14 @@ class OmnichannelChatSDK {
         validateSDKConfig(chatSDKConfig);
     }
 
-    public async initialize() {
+    public async initialize(): Promise<IChatConfig> {
         this.OCSDKProvider = OCSDKProvider;
         this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as any, {} as any, undefined as any);
         this.IC3Client = await this.getIC3Client();
         return this.getChatConfig();
     }
 
-    public async startChat(optionalParams: IStartChatOptionalParams = {}) {
+    public async startChat(optionalParams: IStartChatOptionalParams = {}): Promise<void> {
 
         if (optionalParams.liveChatContext) {
             this.chatToken = optionalParams.liveChatContext.chatToken || {};
@@ -123,7 +124,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async endChat() {
+    public async endChat(): Promise<void> {
         const sessionCloseOptionalParams: ISessionCloseOptionalParams = {};
         if (this.authenticatedUserToken) {
             sessionCloseOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
@@ -141,7 +142,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async getCurrentLiveChatContext() {
+    public async getCurrentLiveChatContext(): Promise<any> {
         const chatToken = await this.getChatToken();
         const {requestId} = this;
 
@@ -161,11 +162,11 @@ class OmnichannelChatSDK {
      * Gets PreChat Survey.
      * @param parse Whether to parse PreChatSurvey to JSON or not.
      */
-    public async getPreChatSurvey(parse = true) {
+    public async getPreChatSurvey(parse = true): Promise<any> {
         return parse ? JSON.parse(this.preChatSurvey) : this.preChatSurvey;
     }
 
-    public async getLiveChatConfig(cached = true) {
+    public async getLiveChatConfig(cached = true): Promise<IChatConfig> {
         if (cached) {
             return this.liveChatConfig;
         }
@@ -199,11 +200,11 @@ class OmnichannelChatSDK {
         return this.chatToken;
     }
 
-    public async getMessages() {
+    public async getMessages(): Promise<IMessage[] | undefined> {
         return this.conversation?.getMessages();
     }
 
-    public async sendMessage(message: IChatSDKMessage) {
+    public async sendMessage(message: IChatSDKMessage): Promise<void> {
         const {disable, maskingCharacter} = this.chatSDKConfig.dataMasking;
 
         let {content} = message;
@@ -245,7 +246,7 @@ class OmnichannelChatSDK {
         return this.conversation!.sendMessage(messageToSend);
     }
 
-    public onNewMessage(onNewMessageCallback: CallableFunction) {
+    public onNewMessage(onNewMessageCallback: CallableFunction): void {
         this.conversation?.registerOnNewMessage((message: any) => {
             const {messageType} = message;
 
@@ -260,7 +261,7 @@ class OmnichannelChatSDK {
         });
     }
 
-    public async sendTypingEvent() {
+    public async sendTypingEvent(): Promise<void> {
         const typingPayload = `{isTyping: 0}`;
         try {
             await this.conversation!.indicateTypingStatus(0);
@@ -288,11 +289,11 @@ class OmnichannelChatSDK {
         });
     }
 
-    public async onAgentEndSession(onAgentEndSessionCallback: (message: IRawThread) => void) {
+    public async onAgentEndSession(onAgentEndSessionCallback: (message: IRawThread) => void): Promise<void> {
         this.conversation?.registerOnThreadUpdate(onAgentEndSessionCallback);
     }
 
-    public async uploadFileAttachment(fileInfo: IFileInfo) {
+    public async uploadFileAttachment(fileInfo: IFileInfo): Promise<IRawMessage> {
         const fileMetadata: IFileMetadata = await this.conversation!.sendFileData(fileInfo, FileSharingProtocolType.AmsBasedFileSharing);
 
         const messageToSend: IRawMessage = {
@@ -319,11 +320,11 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async downloadFileAttachment(fileMetadata: IFileMetadata) {
+    public async downloadFileAttachment(fileMetadata: IFileMetadata): Promise<Blob> {
         return this.conversation!.downloadFile(fileMetadata);
     }
 
-    public async emailLiveChatTranscript(body: IChatTranscriptBody) {
+    public async emailLiveChatTranscript(body: IChatTranscriptBody): Promise<any> {
         const emailTranscriptOptionalParams: IEmailTranscriptOptionalParams = {};
         if (this.authenticatedUserToken) {
             emailTranscriptOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
@@ -341,7 +342,7 @@ class OmnichannelChatSDK {
             emailTranscriptOptionalParams);
     }
 
-    public async getLiveChatTranscript() {
+    public async getLiveChatTranscript(): Promise<any> {
         const getChatTranscriptOptionalParams: IGetChatTranscriptsOptionalParams = {};
         if (this.authenticatedUserToken) {
             getChatTranscriptOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
@@ -353,7 +354,7 @@ class OmnichannelChatSDK {
             getChatTranscriptOptionalParams);
     }
 
-    public async createChatAdapter(protocol: string = ChatAdapterProtocols.IC3) {
+    public async createChatAdapter(protocol: string = ChatAdapterProtocols.IC3): Promise<unknown> {
         if (platform.isNode() || platform.isReactNative()) {
             return Promise.reject('ChatAdapter is only supported on browser');
         }
@@ -387,7 +388,7 @@ class OmnichannelChatSDK {
     }
 
     /* istanbul ignore next */
-    public setDebug(flag: boolean) {
+    public setDebug(flag: boolean): void {
         this.debug = flag;
     }
 
