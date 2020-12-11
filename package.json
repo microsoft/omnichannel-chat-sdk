@@ -6,7 +6,8 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "build:tsc": "tsc",
-    "test": "jest"
+    "test": "jest",
+    "lint": "eslint src --ext .ts"
   },
   "author": "Microsoft Corporation",
   "license": "MIT",
@@ -26,6 +27,9 @@
   ],
   "devDependencies": {
     "@types/jest": "^26.0.10",
+    "@typescript-eslint/eslint-plugin": "^4.9.1",
+    "@typescript-eslint/parser": "^4.9.1",
+    "eslint": "^7.15.0",
     "jest": "^26.4.2",
     "ts-jest": "^26.3.0",
     "typescript": "^3.9.5"
