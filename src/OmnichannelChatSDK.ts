@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import {SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
 import {SDKProvider as IC3SDKProvider} from '@microsoft/omnichannel-ic3core';
 import ChatAdapterProtocols from "./core/ChatAdapterProtocols";
@@ -274,7 +276,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async onTypingEvent(onTypingEventCallback: CallableFunction) {
+    public async onTypingEvent(onTypingEventCallback: CallableFunction): Promise<void> {
         this.conversation?.registerOnNewMessage((message: any) => {
             const {messageType} = message;
 
