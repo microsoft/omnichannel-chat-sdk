@@ -249,7 +249,7 @@ class OmnichannelChatSDK {
     }
 
     public onNewMessage(onNewMessageCallback: CallableFunction): void {
-        this.conversation?.registerOnNewMessage((message: any) => {
+        this.conversation?.registerOnNewMessage((message: IRawMessage) => {
             const {messageType} = message;
 
             // Filter out customer messages
@@ -277,7 +277,7 @@ class OmnichannelChatSDK {
     }
 
     public async onTypingEvent(onTypingEventCallback: CallableFunction): Promise<void> {
-        this.conversation?.registerOnNewMessage((message: any) => {
+        this.conversation?.registerOnNewMessage((message: IRawMessage) => {
             const {messageType} = message;
 
             // Filter out customer messages
