@@ -43,14 +43,14 @@ import ISDKConfiguration from "@microsoft/ocsdk/lib/Interfaces/ISDKConfiguration
 class OmnichannelChatSDK {
     public OCSDKProvider: unknown;
     public IC3SDKProvider: unknown;
-    public OCClient: any;
-    public IC3Client: any;
+    public OCClient: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    public IC3Client: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     public omnichannelConfig: IOmnichannelConfig;
     public chatSDKConfig: IChatSDKConfig;
     public requestId: string;
     private chatToken: IChatToken;
-    private liveChatConfig: any;
-    private dataMaskingRules: any;
+    private liveChatConfig: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    private dataMaskingRules: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private authSettings: IAuthSettings | null = null;
     private authenticatedUserToken: string | null = null;
     private preChatSurvey: any; // eslint-disable-line @typescript-eslint/no-explicit-any
