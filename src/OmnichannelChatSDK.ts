@@ -15,17 +15,18 @@ import IChatTranscriptBody from "./core/IChatTranscriptBody";
 import IConversation from "@microsoft/omnichannel-ic3core/lib/model/IConversation";
 import IFileInfo from "@microsoft/omnichannel-ic3core/lib/interfaces/IFileInfo";
 import IFileMetadata from "@microsoft/omnichannel-ic3core/lib/model/IFileMetadata";
+import IGetChatTokenOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTokenOptionalParams";
+import IGetChatTranscriptsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTranscriptsOptionalParams";
 import IIC3AdapterOptions from "./external/IC3Adapter/IIC3AdapterOptions";
 import ILiveChatContext from "./core/ILiveChatContext";
 import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import InitContext from "@microsoft/ocsdk/lib/Model/InitContext";
 import IOmnichannelConfig from "./core/IOmnichannelConfig";
+import IOmnichannelConfiguration from "@microsoft/ocsdk/lib/Interfaces/IOmnichannelConfiguration";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
 import IRawThread from "@microsoft/omnichannel-ic3core/lib/interfaces/IRawThread";
 import ISessionInitOptionalParams from "@microsoft/ocsdk/lib/Interfaces/ISessionInitOptionalParams";
 import ISessionCloseOptionalParams from "@microsoft/ocsdk/lib/Interfaces/ISessionCloseOptionalParams";
-import IGetChatTokenOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTokenOptionalParams";
-import IGetChatTranscriptsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTranscriptsOptionalParams";
 import IEmailTranscriptOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IEmailTranscriptOptionalParams";
 import IStartChatOptionalParams from "./core/IStartChatOptionalParams";
 import MessageContentType from "@microsoft/omnichannel-ic3core/lib/model/MessageContentType";
@@ -37,10 +38,11 @@ import libraries from "./utils/libraries";
 import {isCustomerMessage} from "./utils/utilities";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 import validateSDKConfig, {defaultChatSDKConfig} from "./validators/SDKConfigValidators";
+import ISDKConfiguration from "@microsoft/ocsdk/lib/Interfaces/ISDKConfiguration";
 
 class OmnichannelChatSDK {
-    public OCSDKProvider: any;
-    public IC3SDKProvider: any;
+    public OCSDKProvider: unknown;
+    public IC3SDKProvider: unknown;
     public OCClient: any;
     public IC3Client: any;
     public omnichannelConfig: IOmnichannelConfig;
@@ -51,7 +53,7 @@ class OmnichannelChatSDK {
     private dataMaskingRules: any;
     private authSettings: IAuthSettings | null = null;
     private authenticatedUserToken: string | null = null;
-    private preChatSurvey: any;
+    private preChatSurvey: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private conversation: IConversation | null = null;
     private debug: boolean;
 
@@ -72,7 +74,7 @@ class OmnichannelChatSDK {
 
     public async initialize(): Promise<IChatConfig> {
         this.OCSDKProvider = OCSDKProvider;
-        this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as any, {} as any, undefined as any);
+        this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, {} as ISDKConfiguration, undefined as any); // eslint-disable-line @typescript-eslint/no-explicit-any
         this.IC3Client = await this.getIC3Client();
         return this.getChatConfig();
     }
@@ -144,7 +146,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async getCurrentLiveChatContext(): Promise<any> {
+    public async getCurrentLiveChatContext(): Promise<ILiveChatContext | {}> {
         const chatToken = await this.getChatToken();
         const {requestId} = this;
 
