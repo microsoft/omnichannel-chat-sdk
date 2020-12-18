@@ -40,7 +40,7 @@ const ChatScreen = (props: ChatScreenProps) => {
         }
       });
 
-      dispatch({type: ActionType.SET_CHAT_STARTED, payload: false})
+      dispatch({type: ActionType.SET_CHAT_STARTED, payload: false});
     }
 
     if (buttonId === buttons.startChat.id) {
@@ -56,7 +56,7 @@ const ChatScreen = (props: ChatScreenProps) => {
       });
     }
 
-    dispatch({type: ActionType.SET_CHAT_STARTED, payload: true})
+    dispatch({type: ActionType.SET_CHAT_STARTED, payload: true});
   }, [state]);
 
   useEffect(() => {
@@ -80,7 +80,7 @@ const ChatScreen = (props: ChatScreenProps) => {
 
   const init = useCallback(async () => {
     console.log('StartChat');
-    dispatch({type: ActionType.SET_CHAT_STARTED, payload: true})
+    dispatch({type: ActionType.SET_CHAT_STARTED, payload: true});
   }, [state]);
 
   useDidAppearListener((data) => {
@@ -90,6 +90,7 @@ const ChatScreen = (props: ChatScreenProps) => {
       return;
     }
 
+    // Starts NEW chat only if chat screen is visible & chat has not started
     const {hasChatStarted} = state;
     !hasChatStarted && init();
   }, [state]);
