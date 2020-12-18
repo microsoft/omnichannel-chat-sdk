@@ -219,6 +219,17 @@ const ChatScreen = (props: ChatScreenProps) => {
     );
   };
 
+  const onInputTextChanged = useCallback(async (text: string) => {
+    const { hasChatStarted } = state;
+
+    if (!hasChatStarted) {
+      return;
+    }
+
+    console.log('[SendTyping]');
+    await chatSDK?.sendTypingEvent();
+  }, [state, chatSDK]);
+
   return (
     <>
       {/* <View style={styles.view}>
@@ -231,7 +242,8 @@ const ChatScreen = (props: ChatScreenProps) => {
         messages={state.messages}
         // isTyping={state.isTyping}
         renderFooter={renderTypingIndicator}
-        onSend={messages => onSend(messages)}
+        onSend={onSend}
+        onInputTextChanged={onInputTextChanged}
         user={{
           _id: 2,
           name: 'Customer',
