@@ -36,7 +36,7 @@ const createGiftedChatMessage = (message: any): IMessage => {
     user: {
       _id: 1,
       name: 'Agent',
-      avatar: 'https://placeimg.com/140/140/any'
+      avatar: 'https://placeimg.com/140/140/people'
     }
   }
 }
@@ -249,6 +249,7 @@ const ChatScreen = (props: ChatScreenProps) => {
           name: 'Customer',
           avatar: 'https://placeimg.com/140/140/any'
         }}
+        showUserAvatar
       />
     </>
   )
