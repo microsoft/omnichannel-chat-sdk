@@ -6,7 +6,15 @@ import {
 } from 'react-native';
 import { Navigation } from "react-native-navigation";
 
-const ChatScreen = () => {
+type ChatScreenProps = {
+  componentId: string;
+}
+
+const ChatScreen = (props: ChatScreenProps) => {
+  useEffect(() => {
+    console.log(props);
+  }, []);
+
   return (
     <View style={styles.view}>
       <Text> Chat </Text>

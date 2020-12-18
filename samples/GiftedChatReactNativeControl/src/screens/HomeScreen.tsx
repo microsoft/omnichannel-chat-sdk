@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useEffect } from "react"
 import {
   StyleSheet,
   View,
@@ -6,7 +6,15 @@ import {
 } from 'react-native';
 import { Navigation } from "react-native-navigation";
 
-const HomeScreen = () => {
+type HomeScreenProps = {
+  componentId: string;
+}
+
+const HomeScreen = (props: HomeScreenProps) => {
+  useEffect(() => {
+    console.log(props);
+  }, []);
+
   return (
     <View style={styles.view}>
       <Text> Home </Text>
