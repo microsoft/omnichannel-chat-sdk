@@ -4,6 +4,7 @@ import { Navigation } from "react-native-navigation";
 import { useDidAppearListener, useNavigationButtonPressedListener } from '../utils/hooks';
 import { ActionType, Store } from '../context';
 import {orgId, orgUrl, widgetId} from '@env';
+import { GiftedChat } from 'react-native-gifted-chat'
 
 const buttons = {
   endChat: {
@@ -101,9 +102,12 @@ const ChatScreen = (props: ChatScreenProps) => {
   }, [state]);
 
   return (
-    <View style={styles.view}>
-      <Text> Chat </Text>
-    </View>
+    <>
+      {/* <View style={styles.view}>
+        <Text>Chat</Text>
+      </View> */}
+      <GiftedChat />
+    </>
   )
 }
 
