@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Navigation } from "react-native-navigation";
 import { useDidAppearListener, useNavigationButtonPressedListener } from '../utils/hooks';
 import { ActionType, Store } from '../context';
+import {orgId, orgUrl, widgetId} from '@env';
 
 const buttons = {
   endChat: {
@@ -61,7 +62,11 @@ const ChatScreen = (props: ChatScreenProps) => {
 
   useEffect(() => {
     const init = async () => {
-      console.log(props);
+      // console.log(props);
+      console.info('Chat Widget Config');
+      console.info(`orgId: ${orgId}`);
+      console.info(`orgUrl: ${orgUrl}`);
+      console.info(`widgetId: ${widgetId}`);
     }
 
     Navigation.mergeOptions(props.componentId, {
