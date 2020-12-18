@@ -57,13 +57,13 @@ const ChatScreen = (props: ChatScreenProps) => {
     }
 
     if (isSystemMessage(message)) {
-      messages.push({...giftedChatMessage});
+      messages.push(giftedChatMessage);
     } else {
-      messages.push({...giftedChatMessage});
+      messages.push(giftedChatMessage);
     }
 
     // console.log(messages);
-    dispatch({type: ActionType.SET_MESSAGES, payload: [...messages].reverse()});
+    dispatch({type: ActionType.SET_MESSAGES, payload: GiftedChat.append([], [...messages]).reverse()});
   }, [state, chatSDK]);
 
   const onTypingEvent = useCallback(() => {
@@ -91,6 +91,7 @@ const ChatScreen = (props: ChatScreenProps) => {
       });
 
       dispatch({type: ActionType.SET_CHAT_STARTED, payload: false});
+      dispatch({type: ActionType.SET_MESSAGES, payload: GiftedChat.append([], [])});
     }
 
     if (buttonId === buttons.startChat.id) {
