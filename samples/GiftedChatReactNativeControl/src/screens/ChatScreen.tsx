@@ -58,9 +58,19 @@ const ChatScreen = (props: ChatScreenProps) => {
     }
 
     if (isSystemMessage(message)) {
-      messages.push(giftedChatMessage);
+      const extraMetaData = {
+        isSystemMessage: true,
+        isAgentMessage: false,
+        isAttachment: false
+      };
+      messages.push({...giftedChatMessage, ...extraMetaData});
     } else {
-      messages.push(giftedChatMessage);
+      const extraMetaData = {
+        isSystemMessage: false,
+        isAgentMessage: true,
+        isAttachment: false
+      };
+      messages.push({...giftedChatMessage, ...extraMetaData});
     }
 
     // console.log(messages);
