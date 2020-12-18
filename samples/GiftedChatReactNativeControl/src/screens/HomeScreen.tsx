@@ -1,6 +1,6 @@
-import React, { useEffect } from "react"
+import React, { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Navigation } from "react-native-navigation";
+import { Navigation } from 'react-native-navigation';
 
 type HomeScreenProps = {
   componentId: string;

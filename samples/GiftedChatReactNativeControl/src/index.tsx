@@ -1,11 +1,19 @@
 
+import React from 'react';
 import { Navigation } from 'react-native-navigation';
 import HomeScreen from './screens/HomeScreen';
 import ChatScreen from './screens/ChatScreen';
+import { StateProvider } from './context';
 
 const registerScreens = () => {
   Navigation.registerComponent('Home', () => HomeScreen);
-  Navigation.registerComponent('Chat', () => ChatScreen);
+  Navigation.registerComponent('Chat',
+  () => (props) => (
+    <StateProvider>
+      <ChatScreen {...props}/>
+    </StateProvider>
+  ),
+  () => ChatScreen);
 };
 
 const setDefaultOptions = () => {
