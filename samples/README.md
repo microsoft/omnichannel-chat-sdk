@@ -5,5 +5,5 @@ Here you can find all samples app using [Omnichannel Chat SDK](https://github.co
 ## Samples List
 
 | Sample Name | Description |
-| --- | --- | --- |
+| --- | --- |
 | [Gifted Chat React Native Control](GiftedChatReactNativeControl/) | Demonstrates how to use Chat SDK with Gifted Chat React Native Control |
