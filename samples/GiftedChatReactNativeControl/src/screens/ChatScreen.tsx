@@ -22,6 +22,7 @@ const buttons = {
 
 type ChatScreenProps = {
   componentId: string;
+  inverted: boolean;
 }
 
 const createGiftedChatMessage = (message: any): IMessage => {
@@ -40,7 +41,6 @@ const createGiftedChatMessage = (message: any): IMessage => {
   }
 }
 
-// TODO: Fix onNewMessage not getting the latest messages from context
 const ChatScreen = (props: ChatScreenProps) => {
   const {state, dispatch} = useContext(Store);
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
@@ -64,14 +64,14 @@ const ChatScreen = (props: ChatScreenProps) => {
         isAgentMessage: false,
         isAttachment: false
       };
-      messages.push({...giftedChatMessage, ...extraMetaData});
+      messages.unshift({...giftedChatMessage, ...extraMetaData});
     } else {
       const extraMetaData = {
         isSystemMessage: false,
         isAgentMessage: true,
         isAttachment: false
       };
-      messages.push({...giftedChatMessage, ...extraMetaData});
+      messages.unshift({...giftedChatMessage, ...extraMetaData});
     }
 
     // console.log(messages);
@@ -204,7 +204,7 @@ const ChatScreen = (props: ChatScreenProps) => {
         isAttachment: false
       };
       outboundMessage.sent = true;
-      messages.push({...outboundMessage, ...extraMetaData});
+      messages.unshift({...outboundMessage, ...extraMetaData});
       dispatch({type: ActionType.SET_MESSAGES, payload: messages});
     } catch {
       console.error(`Failed to send message '${outboundMessage.text}' with _id ${messageId}`);
@@ -225,7 +225,7 @@ const ChatScreen = (props: ChatScreenProps) => {
         <Text>Chat</Text>
       </View> */}
       <GiftedChat
-        inverted={false}
+        inverted={props.inverted}
         placeholder={'Type your message here'}
         alwaysShowSend
         messages={state.messages}
@@ -261,6 +261,10 @@ ChatScreen.options = {
       text: 'Chat'
     }
   }
+}
+
+ChatScreen.defaultProps = {
+  inverted: true
 }
 
 export default ChatScreen;
