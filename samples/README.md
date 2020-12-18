@@ -1,6 +1,6 @@
 # Chat SDK Sample Apps
 
-Here you can find all samples app using [Omnichannel Chat SDK](https://github.com/microsoft/omnichannel-chat-sdk)
+Here you can find all sample apps using [Omnichannel Chat SDK](https://github.com/microsoft/omnichannel-chat-sdk)
 
 ## Samples List
 

@@ -1,7 +1,7 @@
 import React, {useEffect} from 'react';
-import { Navigation } from "react-native-navigation";
+import { ComponentDidAppearEvent, Navigation, NavigationButtonPressedEvent } from "react-native-navigation";
 
-export function useDidAppearListener(handler: (event: any) => void, inputs: any[]) {
+export function useDidAppearListener(handler: (event: ComponentDidAppearEvent) => void, inputs: any[]) {
     useEffect(
         () => {
             const subsNBP = Navigation.events().registerComponentDidAppearListener(
@@ -16,7 +16,7 @@ export function useDidAppearListener(handler: (event: any) => void, inputs: any[
     );
 }
 
-export function useNavigationButtonPressedListener(handler: (event: any) => void, inputs: any[]) {
+export function useNavigationButtonPressedListener(handler: (event: NavigationButtonPressedEvent) => void, inputs: any[]) {
     useEffect(
         () => {
             const subsNBP = Navigation.events().registerNavigationButtonPressedListener(

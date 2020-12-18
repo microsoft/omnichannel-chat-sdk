@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Navigation } from 'react-native-navigation';
+import { Navigation, NavigationButtonPressedEvent } from 'react-native-navigation';
 import { GiftedChat } from 'react-native-gifted-chat';
 import { orgId, orgUrl, widgetId } from '@env';
 import { OmnichannelChatSDK } from '@microsoft/omnichannel-chat-sdk';
@@ -26,7 +26,7 @@ const ChatScreen = (props: ChatScreenProps) => {
   const {state, dispatch} = useContext(Store);
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
 
-  useNavigationButtonPressedListener(async (event: any) => {
+  useNavigationButtonPressedListener(async (event) => {
     const {buttonId, componentId} = event;
     if (componentId !== props.componentId) {
       return;
@@ -103,8 +103,8 @@ const ChatScreen = (props: ChatScreenProps) => {
     dispatch({type: ActionType.SET_CHAT_STARTED, payload: true});
   }, [state, chatSDK]);
 
-  useDidAppearListener((data) => {
-    const { componentId } = data;
+  useDidAppearListener((event) => {
+    const { componentId } = event;
 
     if (componentId !== props.componentId ) {
       return;
