@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState, } from 'react';
+import React, { useCallback, useContext, useEffect, useState, } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Navigation, NavigationButtonPressedEvent } from 'react-native-navigation';
 import { GiftedChat, IMessage } from 'react-native-gifted-chat';
@@ -8,7 +8,7 @@ import { ActionType, Store } from '../context';
 import { useDidAppearListener, useNavigationButtonPressedListener } from '../utils/hooks';
 import TypingIndicator from '../components/TypingIndicator/TypingIndicator';
 
-const typingAnimationDuration = 3000;
+const typingAnimationDuration = 1500;
 const buttons = {
   endChat: {
     id: 'CLOSE',
@@ -33,13 +33,14 @@ const createGiftedChatMessage = (message: any): IMessage => {
     // received: true,
     // sent: true,
     user: {
-      _id: 2,
+      _id: 1,
       name: 'Agent',
       avatar: 'https://placeimg.com/140/140/any'
     }
   }
 }
 
+// TODO: Fix onNewMessage not getting the latest messages from context
 const ChatScreen = (props: ChatScreenProps) => {
   const {state, dispatch} = useContext(Store);
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
@@ -74,7 +75,7 @@ const ChatScreen = (props: ChatScreenProps) => {
     }
 
     // console.log(messages);
-    dispatch({type: ActionType.SET_MESSAGES, payload: GiftedChat.append([], [...messages]).reverse()});
+    dispatch({type: ActionType.SET_MESSAGES, payload: GiftedChat.append([], [...messages])});
   }, [state, chatSDK]);
 
   const onTypingEvent = useCallback(() => {
@@ -84,7 +85,7 @@ const ChatScreen = (props: ChatScreenProps) => {
     setTimeout(() => {
       dispatch({type: ActionType.SET_TYPING, payload: false});
     }, typingAnimationDuration);
-  }, [state, dispatch]);
+  }, [state]);
 
   useNavigationButtonPressedListener(async (event) => {
     const {buttonId, componentId} = event;
@@ -181,6 +182,35 @@ const ChatScreen = (props: ChatScreenProps) => {
     !hasChatStarted && init();
   }, [state, chatSDK]);
 
+  const onSend = useCallback(async (outboundMessages: IMessage[]) => {
+    const { hasChatStarted, messages } = state;
+
+    if (!hasChatStarted) {
+      return;
+    }
+
+    // console.info(outboundMessages);
+    const outboundMessage = outboundMessages[0];
+    const messageId = outboundMessage._id;
+    const messageToSend = {
+      content: outboundMessage.text
+    };
+
+    try {
+      await chatSDK?.sendMessage(messageToSend);
+      const extraMetaData = {
+        isSystemMessage: false,
+        isAgentMessage: false,
+        isAttachment: false
+      };
+      outboundMessage.sent = true;
+      messages.push({...outboundMessage, ...extraMetaData});
+      dispatch({type: ActionType.SET_MESSAGES, payload: GiftedChat.append([], [...messages])});
+    } catch {
+      console.error(`Failed to send message '${outboundMessage.text}' with _id ${messageId}`);
+    }
+  }, [state, chatSDK, onNewMessage]);
+
   const renderTypingIndicator = () => {
     return state.isTyping && (
       <View style={styles.typingContainer}>
@@ -195,11 +225,18 @@ const ChatScreen = (props: ChatScreenProps) => {
         <Text>Chat</Text>
       </View> */}
       <GiftedChat
+        inverted={false}
         placeholder={'Type your message here'}
         alwaysShowSend
         messages={state.messages}
         // isTyping={state.isTyping}
         renderFooter={renderTypingIndicator}
+        onSend={messages => onSend(messages)}
+        user={{
+          _id: 2,
+          name: 'Customer',
+          avatar: 'https://placeimg.com/140/140/any'
+        }}
       />
     </>
   )
