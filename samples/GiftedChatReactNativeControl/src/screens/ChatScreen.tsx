@@ -79,7 +79,7 @@ const ChatScreen = (props: ChatScreenProps) => {
   }, [state, chatSDK]);
 
   const onTypingEvent = useCallback(() => {
-    console.log("[onTypingEvent]");
+    console.info("[onTypingEvent]");
 
     dispatch({type: ActionType.SET_TYPING, payload: true});
     setTimeout(() => {
@@ -112,7 +112,7 @@ const ChatScreen = (props: ChatScreenProps) => {
     }
 
     if (buttonId === buttons.startChat.id) {
-      console.info('StartChat');
+      console.info('[ClickStartChat]');
       await chatSDK!.startChat();
       chatSDK!.onNewMessage(onNewMessage);
       chatSDK!.onTypingEvent(onTypingEvent);
@@ -161,8 +161,8 @@ const ChatScreen = (props: ChatScreenProps) => {
     init();
   }, []);
 
-  const init = useCallback(async () => {
-    console.info('StartChat');
+  const startNewChat = useCallback(async () => {
+    console.info('[StartNEWChat]');
     await chatSDK!.startChat();
     chatSDK!.onNewMessage(onNewMessage);
     chatSDK!.onTypingEvent(onTypingEvent);
@@ -179,7 +179,7 @@ const ChatScreen = (props: ChatScreenProps) => {
 
     // Starts NEW chat only if chat screen is visible & chat has not started
     const {hasChatStarted} = state;
-    !hasChatStarted && init();
+    !hasChatStarted && startNewChat();
   }, [state, chatSDK]);
 
   const onSend = useCallback(async (outboundMessages: IMessage[]) => {
