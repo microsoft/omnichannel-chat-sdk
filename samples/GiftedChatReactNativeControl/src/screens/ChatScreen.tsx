@@ -27,7 +27,7 @@ const createGiftedChatMessage = (message: any): IMessage => {
     _id: message.clientmessageid,
     text: message.content,
     createdAt: new Date(),
-    // system: message.tags?.includes("system"),
+    system: isSystemMessage(message),
     // received: true,
     // sent: true,
     user: {
@@ -37,7 +37,6 @@ const createGiftedChatMessage = (message: any): IMessage => {
     }
   }
 }
-
 
 const ChatScreen = (props: ChatScreenProps) => {
   const {state, dispatch} = useContext(Store);
@@ -170,7 +169,11 @@ const ChatScreen = (props: ChatScreenProps) => {
       {/* <View style={styles.view}>
         <Text>Chat</Text>
       </View> */}
-      <GiftedChat messages={state.messages}/>
+      <GiftedChat
+        placeholder={'Type your message here'}
+        alwaysShowSend
+        messages={state.messages}
+      />
     </>
   )
 }
