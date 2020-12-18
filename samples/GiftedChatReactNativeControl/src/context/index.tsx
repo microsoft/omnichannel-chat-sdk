@@ -1,11 +1,13 @@
 import React, {createContext, useReducer, Context} from 'react';
 
 enum ActionType {
-  SET_CHAT_STARTED
+  SET_CHAT_STARTED,
+  SET_MESSAGES
 }
 
 interface IState {
-  hasChatStarted: boolean
+  hasChatStarted: boolean,
+  messages: any[]
 }
 
 interface StoreContext {
@@ -14,7 +16,8 @@ interface StoreContext {
 }
 
 const initialState = {
-  hasChatStarted: false
+  hasChatStarted: false,
+  messages: [] as any
 };
 
 const Reducer = (state: any, action: any) => {
@@ -25,6 +28,12 @@ const Reducer = (state: any, action: any) => {
         type: action.type,
         hasChatStarted: action.payload
       }
+    case ActionType.SET_MESSAGES:
+      return {
+          ...state,
+          type: action.type,
+          messages: action.payload
+      };
     default:
       return state;
   }

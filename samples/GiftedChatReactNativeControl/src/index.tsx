@@ -7,13 +7,15 @@ import { StateProvider } from './context';
 
 const registerScreens = () => {
   Navigation.registerComponent('Home', () => HomeScreen);
-  Navigation.registerComponent('Chat',
-  () => (props) => (
-    <StateProvider>
-      <ChatScreen {...props}/>
-    </StateProvider>
-  ),
-  () => ChatScreen);
+  Navigation.registerComponent(
+    'Chat',
+    () => (props) => (
+      <StateProvider>
+        <ChatScreen {...props}/>
+      </StateProvider>
+    ),
+    () => ChatScreen
+  );
 };
 
 const setDefaultOptions = () => {
