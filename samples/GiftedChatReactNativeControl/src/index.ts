@@ -23,6 +23,10 @@ const setDefaultOptions = () => {
       background: {
         color: '#4d089a'
       }
+    },
+    bottomTab: {
+      fontSize: 14,
+      selectedFontSize: 16
     }
   });
 }
@@ -33,13 +37,41 @@ const setRoot = () => {
       bottomTabs: {
         children: [
           {
-            component: {
-              name: 'Home'
+            stack: {
+              children: [
+                {
+                  component: {
+                    id: 'HOME',
+                    name: 'Home'
+                  }
+                }
+              ],
+              options: {
+                bottomTab: {
+                  text: 'Home',
+                  icon: require('./assets/img/home.png'),
+                  selectedIcon: require('./assets/img/home-solid.png')
+                }
+              }
             }
           },
           {
-            component: {
-              name: 'Chat'
+            stack: {
+              children: [
+                {
+                  component: {
+                    id: 'CHAT',
+                    name: 'Chat'
+                  }
+                }
+              ],
+              options: {
+                bottomTab: {
+                  text: 'Chat',
+                  icon: require('./assets/img/chat.png'),
+                  selectedIcon: require('./assets/img/chat-solid.png')
+                }
+              }
             }
           }
         ]

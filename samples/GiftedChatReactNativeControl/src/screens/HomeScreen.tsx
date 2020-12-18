@@ -4,6 +4,7 @@ import {
   View,
   Text
 } from 'react-native';
+import { Navigation } from "react-native-navigation";
 
 const HomeScreen = () => {
   return (
@@ -20,11 +21,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   }
 });
-
-HomeScreen.options = {
-  bottomTab: {
-    text: 'Home'
-  }
-}
 
 export default HomeScreen;
