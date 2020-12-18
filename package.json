@@ -35,7 +35,7 @@
     "typescript": "^3.9.5"
   },
   "dependencies": {
-    "@microsoft/ocsdk": "^0.1.1-main.bc13c15",
-    "@microsoft/omnichannel-ic3core": "^0.1.1-main.7873ef8"
+    "@microsoft/ocsdk": "^0.1.0",
+    "@microsoft/omnichannel-ic3core": "^0.1.0"
   }
 }
