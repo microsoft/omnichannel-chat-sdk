@@ -50,6 +50,7 @@ const ChatScreen = (props: ChatScreenProps) => {
     }
 
     if (buttonId === buttons.startChat.id) {
+      console.info('StartChat');
       chatSDK!.startChat();
 
       Navigation.mergeOptions(props.componentId, {
