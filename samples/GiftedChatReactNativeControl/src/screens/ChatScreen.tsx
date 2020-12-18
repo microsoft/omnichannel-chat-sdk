@@ -75,7 +75,6 @@ const ChatScreen = (props: ChatScreenProps) => {
     }
 
     // console.log(messages);
-    // dispatch({type: ActionType.SET_MESSAGES, payload: GiftedChat.append([], [...messages])});
     dispatch({type: ActionType.SET_MESSAGES, payload: messages});
   }, [state, chatSDK]);
 
@@ -206,7 +205,6 @@ const ChatScreen = (props: ChatScreenProps) => {
       };
       outboundMessage.sent = true;
       messages.push({...outboundMessage, ...extraMetaData});
-      // dispatch({type: ActionType.SET_MESSAGES, payload: GiftedChat.append([], [...messages])});
       dispatch({type: ActionType.SET_MESSAGES, payload: messages});
     } catch {
       console.error(`Failed to send message '${outboundMessage.text}' with _id ${messageId}`);
