@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState, } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Navigation, NavigationButtonPressedEvent } from 'react-native-navigation';
 import { GiftedChat, IMessage } from 'react-native-gifted-chat';
@@ -6,7 +6,9 @@ import { orgId, orgUrl, widgetId } from '@env';
 import { IRawMessage, isSystemMessage, OmnichannelChatSDK } from '@microsoft/omnichannel-chat-sdk';
 import { ActionType, Store } from '../context';
 import { useDidAppearListener, useNavigationButtonPressedListener } from '../utils/hooks';
+import TypingIndicator from '../components/TypingIndicator/TypingIndicator';
 
+const typingAnimationDuration = 3000;
 const buttons = {
   endChat: {
     id: 'CLOSE',
@@ -67,7 +69,12 @@ const ChatScreen = (props: ChatScreenProps) => {
 
   const onTypingEvent = useCallback(() => {
     console.log("[onTypingEvent]");
-  }, [state]);
+
+    dispatch({type: ActionType.SET_TYPING, payload: true});
+    setTimeout(() => {
+      dispatch({type: ActionType.SET_TYPING, payload: false});
+    }, typingAnimationDuration);
+  }, [state, dispatch]);
 
   useNavigationButtonPressedListener(async (event) => {
     const {buttonId, componentId} = event;
@@ -164,6 +171,14 @@ const ChatScreen = (props: ChatScreenProps) => {
     !hasChatStarted && init();
   }, [state, chatSDK]);
 
+  const renderTypingIndicator = () => {
+    return state.isTyping && (
+      <View style={styles.typingContainer}>
+        <TypingIndicator name={'Agent'} />
+      </View>
+    );
+  };
+
   return (
     <>
       {/* <View style={styles.view}>
@@ -173,6 +188,8 @@ const ChatScreen = (props: ChatScreenProps) => {
         placeholder={'Type your message here'}
         alwaysShowSend
         messages={state.messages}
+        // isTyping={state.isTyping}
+        renderFooter={renderTypingIndicator}
       />
     </>
   )
@@ -183,6 +200,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center'
+  },
+  typingContainer: {
+    paddingTop: 5,
+    left: 5,
+    bottom: 10
   }
 });
 
