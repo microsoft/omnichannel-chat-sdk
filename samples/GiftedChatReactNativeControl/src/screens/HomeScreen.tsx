@@ -1,9 +1,5 @@
 import React, { useEffect } from "react"
-import {
-  StyleSheet,
-  View,
-  Text
-} from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Navigation } from "react-native-navigation";
 
 type HomeScreenProps = {
