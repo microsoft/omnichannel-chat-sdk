@@ -22,4 +22,12 @@ const styles = StyleSheet.create({
   }
 });
 
+ChatScreen.options = {
+  topBar: {
+    title: {
+      text: 'Chat'
+    }
+  }
+}
+
 export default ChatScreen;

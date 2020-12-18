@@ -22,4 +22,12 @@ const styles = StyleSheet.create({
   }
 });
 
+HomeScreen.options = {
+  topBar: {
+    title: {
+      text: 'Home'
+    }
+  }
+}
+
 export default HomeScreen;
