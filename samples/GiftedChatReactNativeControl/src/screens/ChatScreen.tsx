@@ -1,10 +1,11 @@
-import React, { useCallback, useContext, useEffect } from "react"
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Navigation } from "react-native-navigation";
-import { useDidAppearListener, useNavigationButtonPressedListener } from '../utils/hooks';
+import { Navigation } from 'react-native-navigation';
+import { GiftedChat } from 'react-native-gifted-chat';
+import { orgId, orgUrl, widgetId } from '@env';
+import { OmnichannelChatSDK } from '@microsoft/omnichannel-chat-sdk';
 import { ActionType, Store } from '../context';
-import {orgId, orgUrl, widgetId} from '@env';
-import { GiftedChat } from 'react-native-gifted-chat'
+import { useDidAppearListener, useNavigationButtonPressedListener } from '../utils/hooks';
 
 const buttons = {
   endChat: {
@@ -23,6 +24,7 @@ type ChatScreenProps = {
 
 const ChatScreen = (props: ChatScreenProps) => {
   const {state, dispatch} = useContext(Store);
+  const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
 
   useNavigationButtonPressedListener(async (event: any) => {
     const {buttonId, componentId} = event;
@@ -31,6 +33,8 @@ const ChatScreen = (props: ChatScreenProps) => {
     }
 
     if (buttonId === buttons.endChat.id) {
+      chatSDK!.endChat();
+
       Navigation.mergeOptions(props.componentId, {
         topBar: {
           rightButtons: [{
@@ -46,6 +50,8 @@ const ChatScreen = (props: ChatScreenProps) => {
     }
 
     if (buttonId === buttons.startChat.id) {
+      chatSDK!.startChat();
+
       Navigation.mergeOptions(props.componentId, {
         topBar: {
           rightButtons: [{
@@ -56,18 +62,24 @@ const ChatScreen = (props: ChatScreenProps) => {
           }],
         }
       });
-    }
 
-    dispatch({type: ActionType.SET_CHAT_STARTED, payload: true});
-  }, [state]);
+      dispatch({type: ActionType.SET_CHAT_STARTED, payload: true});
+    }
+  }, [state, chatSDK]);
 
   useEffect(() => {
     const init = async () => {
       // console.log(props);
-      console.info('Chat Widget Config');
-      console.info(`orgId: ${orgId}`);
-      console.info(`orgUrl: ${orgUrl}`);
-      console.info(`widgetId: ${widgetId}`);
+      const omnichannelConfig  = {
+        orgId,
+        orgUrl,
+        widgetId
+      };
+
+      console.info(omnichannelConfig);
+      const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+      await chatSDK.initialize();
+      setChatSDK(chatSDK);
     }
 
     Navigation.mergeOptions(props.componentId, {
@@ -85,9 +97,10 @@ const ChatScreen = (props: ChatScreenProps) => {
   }, []);
 
   const init = useCallback(async () => {
-    console.log('StartChat');
+    console.info('StartChat');
+    chatSDK!.startChat();
     dispatch({type: ActionType.SET_CHAT_STARTED, payload: true});
-  }, [state]);
+  }, [state, chatSDK]);
 
   useDidAppearListener((data) => {
     const { componentId } = data;
@@ -99,7 +112,7 @@ const ChatScreen = (props: ChatScreenProps) => {
     // Starts NEW chat only if chat screen is visible & chat has not started
     const {hasChatStarted} = state;
     !hasChatStarted && init();
-  }, [state]);
+  }, [state, chatSDK]);
 
   return (
     <>
