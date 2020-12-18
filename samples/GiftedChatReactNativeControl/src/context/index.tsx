@@ -30,9 +30,9 @@ const Reducer = (state: any, action: any) => {
       }
     case ActionType.SET_MESSAGES:
       return {
-          ...state,
-          type: action.type,
-          messages: action.payload
+        ...state,
+        type: action.type,
+        messages: action.payload
       };
     default:
       return state;

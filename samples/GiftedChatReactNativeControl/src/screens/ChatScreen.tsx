@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Navigation, NavigationButtonPressedEvent } from 'react-native-navigation';
-import { GiftedChat } from 'react-native-gifted-chat';
+import { GiftedChat, IMessage } from 'react-native-gifted-chat';
 import { orgId, orgUrl, widgetId } from '@env';
 import { IRawMessage, isSystemMessage, OmnichannelChatSDK } from '@microsoft/omnichannel-chat-sdk';
 import { ActionType, Store } from '../context';
@@ -22,17 +22,18 @@ type ChatScreenProps = {
   componentId: string;
 }
 
-const createGiftedChatMessage = (message: any) => {
+const createGiftedChatMessage = (message: any): IMessage => {
   return {
     _id: message.clientmessageid,
     text: message.content,
     createdAt: new Date(),
-    system: message.tags?.includes("system"),
-    received: true,
-    sent: true,
+    // system: message.tags?.includes("system"),
+    // received: true,
+    // sent: true,
     user: {
       _id: 2,
-      name: 'Agent'
+      name: 'Agent',
+      avatar: 'https://placeimg.com/140/140/any'
     }
   }
 }
@@ -43,7 +44,6 @@ const ChatScreen = (props: ChatScreenProps) => {
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
   // const [messages, setMessages] = useState([]);
 
-  // TODO: Fix messages from context not updating
   const onNewMessage = useCallback((message: IRawMessage) => {
     console.log(`[onNewMessage] Received message: '${message.content}'`);
     // console.log(message);
@@ -57,13 +57,13 @@ const ChatScreen = (props: ChatScreenProps) => {
     }
 
     if (isSystemMessage(message)) {
-      // messages.push({...giftedChatMessage, isSystemMessage: true, isAgentMessage: false, isAttachment: false});
+      messages.push({...giftedChatMessage});
     } else {
-      // messages.push({...giftedChatMessage, isSystemMessage: false, isAgentMessage: true, isAttachment: false});
+      messages.push({...giftedChatMessage});
     }
 
     // console.log(messages);
-    dispatch({type: ActionType.SET_MESSAGES, payload: GiftedChat.append(messages, [giftedChatMessage])});
+    dispatch({type: ActionType.SET_MESSAGES, payload: [...messages].reverse()});
   }, [state, chatSDK]);
 
   const onTypingEvent = useCallback(() => {
