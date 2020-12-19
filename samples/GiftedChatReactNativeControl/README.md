@@ -2,6 +2,23 @@
 
 Sample react-native app using [Omnichannel Chat SDK](https://github.com/microsoft/omnichannel-chat-sdk) with [gifted-chat](https://github.com/FaridSafi/react-native-gifted-chat) as third party react-native control.
 
+## Scenario Checklist
+
+The sample app includes the following scenarios:
+
+- [x] Start Chat
+- [x] End Chat
+- [x] Incoming messages
+- [x] Incoming image attachments
+- [ ] Incoming file attachments of other supported formats
+- [x] Outgoing messages
+- [ ] Outgoing file attachments
+- [x] Receive typing
+- [x] Send typing
+- [ ] Download transcript
+- [ ] Email transcript
+- [ ] Pre-Chat Survey
+
 ## Prerequisites
 - [React Native v0.61.5](https://reactnative.dev/)
 
