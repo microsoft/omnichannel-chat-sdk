@@ -1,7 +1,7 @@
-import React, { useCallback, useContext, useEffect, useState, } from 'react';
+import React, { Component, useCallback, useContext, useEffect, useState, } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Navigation, NavigationButtonPressedEvent } from 'react-native-navigation';
-import { GiftedChat, IMessage } from 'react-native-gifted-chat';
+import { GiftedChat, IMessage, Composer, Send } from 'react-native-gifted-chat';
 import { orgId, orgUrl, widgetId } from '@env';
 import { IRawMessage, isSystemMessage, OmnichannelChatSDK } from '@microsoft/omnichannel-chat-sdk';
 import { ActionType, Store } from '../context';
@@ -100,6 +100,12 @@ const ChatScreen = (props: ChatScreenProps) => {
     }, typingAnimationDuration);
   }, [state]);
 
+  const onAgentEndSession = useCallback(() => {
+    console.info("[onAgentEndSession]");
+
+    dispatch({type: ActionType.SET_AGENT_END_SESSION_EVENT, payload: true});
+  }, [state]);
+
   useNavigationButtonPressedListener(async (event) => {
     const {buttonId, componentId} = event;
     if (componentId !== props.componentId) {
@@ -122,6 +128,7 @@ const ChatScreen = (props: ChatScreenProps) => {
 
       dispatch({type: ActionType.SET_CHAT_STARTED, payload: false});
       dispatch({type: ActionType.SET_MESSAGES, payload: GiftedChat.append([], [])});
+      dispatch({type: ActionType.SET_AGENT_END_SESSION_EVENT, payload: false});
     }
 
     if (buttonId === buttons.startChat.id) {
@@ -129,6 +136,7 @@ const ChatScreen = (props: ChatScreenProps) => {
       await chatSDK!.startChat();
       chatSDK!.onNewMessage(onNewMessage);
       chatSDK!.onTypingEvent(onTypingEvent);
+      chatSDK!.onAgentEndSession(onAgentEndSession);
 
       Navigation.mergeOptions(props.componentId, {
         topBar: {
@@ -142,6 +150,7 @@ const ChatScreen = (props: ChatScreenProps) => {
       });
 
       dispatch({type: ActionType.SET_CHAT_STARTED, payload: true});
+      dispatch({type: ActionType.SET_AGENT_END_SESSION_EVENT, payload: false});
     }
   }, [state, chatSDK, onNewMessage]);
 
@@ -179,6 +188,7 @@ const ChatScreen = (props: ChatScreenProps) => {
     await chatSDK!.startChat();
     chatSDK!.onNewMessage(onNewMessage);
     chatSDK!.onTypingEvent(onTypingEvent);
+    chatSDK!.onAgentEndSession(onAgentEndSession);
 
     dispatch({type: ActionType.SET_CHAT_STARTED, payload: true});
   }, [state, chatSDK, onNewMessage]);
@@ -243,6 +253,22 @@ const ChatScreen = (props: ChatScreenProps) => {
     await chatSDK?.sendTypingEvent();
   }, [state, chatSDK]);
 
+  const renderComposer = (props: any) => {
+    // Hides composer on agent ending the session
+    if (state.agentEndSessionEvent) {
+      return null;
+    }
+    return <Composer {...props}/>;
+  }
+
+  const renderSend = (props: any) => {
+    // Hides send button on agent ending the session
+    if (state.agentEndSessionEvent) {
+      return null;
+    }
+    return <Send {...props}/>;
+  }
+
   return (
     <>
       {/* <View style={styles.view}>
@@ -255,6 +281,8 @@ const ChatScreen = (props: ChatScreenProps) => {
         messages={state.messages}
         // isTyping={state.isTyping}
         renderFooter={renderTypingIndicator}
+        renderComposer={renderComposer}
+        renderSend={renderSend}
         onSend={onSend}
         onInputTextChanged={onInputTextChanged}
         user={{

@@ -3,13 +3,15 @@ import React, {createContext, useReducer, Context} from 'react';
 enum ActionType {
   SET_CHAT_STARTED,
   SET_MESSAGES,
-  SET_TYPING
+  SET_TYPING,
+  SET_AGENT_END_SESSION_EVENT
 }
 
 interface IState {
   hasChatStarted: boolean,
   messages: any[],
-  isTyping: boolean
+  isTyping: boolean,
+  agentEndSessionEvent: boolean
 }
 
 interface StoreContext {
@@ -20,7 +22,8 @@ interface StoreContext {
 const initialState = {
   hasChatStarted: false,
   messages: [] as any,
-  isTyping: false
+  isTyping: false,
+  agentEndSessionEvent: false
 };
 
 const Reducer = (state: any, action: any) => {
@@ -42,6 +45,12 @@ const Reducer = (state: any, action: any) => {
         ...state,
         type: action.type,
         isTyping: action.payload
+      }
+    case ActionType.SET_AGENT_END_SESSION_EVENT:
+      return {
+        ...state,
+        type: action.type,
+        agentEndSessionEvent: action.payload
       }
     default:
       return state;

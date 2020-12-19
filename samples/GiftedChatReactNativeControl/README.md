@@ -15,6 +15,7 @@ The sample app includes the following scenarios:
 - [ ] Outgoing file attachments
 - [x] Receive typing
 - [x] Send typing
+- [x] Receive agent end session event
 - [ ] Download transcript
 - [ ] Email transcript
 - [ ] Pre-Chat Survey
