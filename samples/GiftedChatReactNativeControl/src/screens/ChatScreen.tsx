@@ -46,15 +46,35 @@ const ChatScreen = (props: ChatScreenProps) => {
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
   // const [messages, setMessages] = useState([]);
 
-  const onNewMessage = useCallback((message: IRawMessage) => {
+  const onNewMessage = useCallback(async (message: IRawMessage) => {
     console.log(`[onNewMessage] Received message: '${message.content}'`);
     // console.log(message);
 
     const { messages } = state;
     const giftedChatMessage = createGiftedChatMessage(message);
 
+    // Handles file attachments
     if(message.fileMetadata) {
-      // Handles file attachments
+      try {
+        const blobResponse = await chatSDK!.downloadFileAttachment(message.fileMetadata);
+        const fileReaderInstance = new FileReader();
+        fileReaderInstance.readAsDataURL(blobResponse);
+        fileReaderInstance.onload = () => {
+          const base64data = fileReaderInstance.result;
+          giftedChatMessage.image = base64data;
+
+          const extraMetaData = {
+            isSystemMessage: false,
+            isAgentMessage: false,
+            isAttachment: true
+          };
+          messages.unshift({...giftedChatMessage, ...extraMetaData});
+          dispatch({type: ActionType.SET_MESSAGES, payload: messages});
+        };
+      } catch (error) {
+        console.error('[downloadFileAttachment] Failed!');
+        console.error(error);
+      }
       return;
     }
 
