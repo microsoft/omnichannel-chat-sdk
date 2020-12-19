@@ -112,6 +112,7 @@ const ChatScreen = (props: ChatScreenProps) => {
       return;
     }
 
+    // Handles clicking end chat button
     if (buttonId === buttons.endChat.id) {
       await chatSDK!.endChat();
 
@@ -131,6 +132,7 @@ const ChatScreen = (props: ChatScreenProps) => {
       dispatch({type: ActionType.SET_AGENT_END_SESSION_EVENT, payload: false});
     }
 
+    // Handles clicking start chat button
     if (buttonId === buttons.startChat.id) {
       console.info('[ClickStartChat]');
       await chatSDK!.startChat();
