@@ -69,16 +69,12 @@ const ChatScreen = (props: ChatScreenProps) => {
             isAttachment: true
           };
           messages.unshift({...giftedChatMessage, ...extraMetaData});
-          dispatch({type: ActionType.SET_MESSAGES, payload: messages});
         };
       } catch (error) {
         console.error('[downloadFileAttachment] Failed!');
         console.error(error);
       }
-      return;
-    }
-
-    if (isSystemMessage(message)) {
+    } else if (isSystemMessage(message)) {
       const extraMetaData = {
         isSystemMessage: true,
         isAgentMessage: false,
