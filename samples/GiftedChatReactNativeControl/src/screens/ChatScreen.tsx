@@ -53,6 +53,12 @@ const ChatScreen = (props: ChatScreenProps) => {
     const { messages } = state;
     const giftedChatMessage = createGiftedChatMessage(message);
 
+    const extraMetaData = {
+      isSystemMessage: false,
+      isAgentMessage: false,
+      isAttachment: false
+    };
+
     // Handles file attachments
     if(message.fileMetadata) {
       try {
@@ -61,13 +67,13 @@ const ChatScreen = (props: ChatScreenProps) => {
         fileReaderInstance.readAsDataURL(blobResponse);
         fileReaderInstance.onload = () => {
           const base64data = fileReaderInstance.result;
+
+          // TODO: Handle specific attachments format (video, pdf, etc)
           giftedChatMessage.image = base64data;
 
-          const extraMetaData = {
-            isSystemMessage: false,
-            isAgentMessage: false,
-            isAttachment: true
-          };
+          extraMetaData.isAttachment = true;
+
+          // Wait until image is downloaded succesfully before updating messages
           messages.unshift({...giftedChatMessage, ...extraMetaData});
         };
       } catch (error) {
@@ -75,22 +81,13 @@ const ChatScreen = (props: ChatScreenProps) => {
         console.error(error);
       }
     } else if (isSystemMessage(message)) {
-      const extraMetaData = {
-        isSystemMessage: true,
-        isAgentMessage: false,
-        isAttachment: false
-      };
+      extraMetaData.isSystemMessage = true;
       messages.unshift({...giftedChatMessage, ...extraMetaData});
     } else {
-      const extraMetaData = {
-        isSystemMessage: false,
-        isAgentMessage: true,
-        isAttachment: false
-      };
+      extraMetaData.isAgentMessage = true;
       messages.unshift({...giftedChatMessage, ...extraMetaData});
     }
 
-    // console.log(messages);
     dispatch({type: ActionType.SET_MESSAGES, payload: messages});
   }, [state, chatSDK]);
 
