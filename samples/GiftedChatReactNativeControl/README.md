@@ -1,6 +1,6 @@
 # Gifted Chat React Native Control
 
-Sample react-native app using [Omnichannel Chat SDK](https://github.com/microsoft/omnichannel-chat-sdk) with [gifted-chat](https://github.com/FaridSafi/react-native-gifted-chat) as react-native control.
+Sample react-native app using [Omnichannel Chat SDK](https://github.com/microsoft/omnichannel-chat-sdk) with [gifted-chat](https://github.com/FaridSafi/react-native-gifted-chat) as third party react-native control.
 
 ## Prerequisites
 - [React Native v0.61.5](https://reactnative.dev/)
