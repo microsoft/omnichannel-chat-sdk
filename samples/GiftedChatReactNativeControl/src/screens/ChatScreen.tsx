@@ -1,7 +1,7 @@
 import React, { Component, useCallback, useContext, useEffect, useState, } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import { Navigation, NavigationButtonPressedEvent } from 'react-native-navigation';
-import { GiftedChat, IMessage, Composer, Send } from 'react-native-gifted-chat';
+import { GiftedChat, IMessage, Composer, Send, Actions } from 'react-native-gifted-chat';
 import { orgId, orgUrl, widgetId } from '@env';
 import { IRawMessage, isSystemMessage, OmnichannelChatSDK } from '@microsoft/omnichannel-chat-sdk';
 import { ActionType, Store } from '../context';
@@ -271,6 +271,37 @@ const ChatScreen = (props: ChatScreenProps) => {
     return <Send {...props}/>;
   }
 
+  const renderActions = (props: any) => {
+    return (
+      <Actions
+        {...props}
+        containerStyle={{
+          width: 44,
+          height: 44,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginLeft: 4,
+          marginRight: 4,
+          marginBottom: 0,
+        }}
+        icon={() => ( // Attachment Upload button
+          <Image
+            style={styles.attachmentIcon}
+            source={require("../assets/img/attachment.png")} />
+        )}
+        options={{
+          'Choose From Library': () => {
+            console.log('Choose From Library');
+          },
+          Cancel: () => {
+            console.log('Cancel');
+          },
+        }}
+        optionTintColor="#222B45"
+      />
+    )
+  }
+
   return (
     <>
       {/* <View style={styles.view}>
@@ -284,6 +315,7 @@ const ChatScreen = (props: ChatScreenProps) => {
         // isTyping={state.isTyping}
         renderFooter={renderTypingIndicator}
         renderComposer={renderComposer}
+        renderActions={renderActions}
         renderSend={renderSend}
         onSend={onSend}
         onInputTextChanged={onInputTextChanged}
@@ -308,6 +340,10 @@ const styles = StyleSheet.create({
     paddingTop: 5,
     left: 5,
     bottom: 10
+  },
+  attachmentIcon: {
+    width: 32,
+    height: 32
   }
 });
 
