@@ -1,5 +1,5 @@
 import React, { Component, useCallback, useContext, useEffect, useState, } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Navigation, NavigationButtonPressedEvent } from 'react-native-navigation';
 import { GiftedChat, IMessage, Composer, Send, Actions } from 'react-native-gifted-chat';
 import { orgId, orgUrl, widgetId } from '@env';
@@ -305,12 +305,16 @@ const ChatScreen = (props: ChatScreenProps) => {
   const renderAccessory = () => {
     return (
       <View style={styles.accessoryContainer}>
-        <Image
-          style={styles.downloadIcon}
-          source={require("../assets/img/download.png")} />
-        <Image
-          style={styles.mailIcon}
-          source={require("../assets/img/mail.png")} />
+        <TouchableOpacity>
+          <Image
+            style={styles.downloadIcon}
+            source={require("../assets/img/download.png")} />
+        </TouchableOpacity>
+        <TouchableOpacity>
+          <Image
+            style={styles.mailIcon}
+            source={require("../assets/img/mail.png")} />
+        </TouchableOpacity>
       </View>
     )
   }
