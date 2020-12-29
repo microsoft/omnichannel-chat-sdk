@@ -1,5 +1,5 @@
 import React, { Component, useCallback, useContext, useEffect, useState, } from 'react';
-import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Navigation, NavigationButtonPressedEvent } from 'react-native-navigation';
 import { GiftedChat, IMessage, Composer, Send, Actions } from 'react-native-gifted-chat';
 import { orgId, orgUrl, widgetId, email } from '@env';
@@ -8,7 +8,7 @@ import { ActionType, Store } from '../context';
 import { useDidAppearListener, useNavigationButtonPressedListener } from '../utils/hooks';
 import TypingIndicator from '../components/TypingIndicator/TypingIndicator';
 import DocumentPicker from 'react-native-document-picker';
-import { readFile } from 'react-native-fs';
+import { readFile, LibraryDirectoryPath, ExternalDirectoryPath, writeFile, DownloadDirectoryPath } from 'react-native-fs';
 import { Buffer } from 'buffer';
 
 const typingAnimationDuration = 1500;
@@ -322,7 +322,7 @@ const ChatScreen = (props: ChatScreenProps) => {
       await chatSDK!.uploadFileAttachment(fileInfo);
 
       // Displays message tick
-      // It only updates if the attachemnt is the last message
+      // It only updates if the attachment is the last message
       // Known issue: https://github.com/FaridSafi/react-native-gifted-chat/issues/654
       const messageToUpdate = messages.find((message) => message._id === inboundMessage._id);
       messageToUpdate.sent = true;
@@ -395,10 +395,35 @@ const ChatScreen = (props: ChatScreenProps) => {
     }
   }, [state, chatSDK]);
 
+  const onDownloadTranscript = useCallback(async () => {
+    const {hasChatStarted} = state;
+
+    if (!hasChatStarted) {
+      return;
+    }
+
+    const transcriptResponse = await chatSDK?.getLiveChatTranscript();
+    console.log('[DownloadTranscript] Download transcript succeeded!');
+
+    const rootPath = Platform.OS.toLowerCase() === 'ios'? LibraryDirectoryPath: ExternalDirectoryPath;
+    // const rootPath = DownloadDirectoryPath; // Requires storage permission
+    const transcriptPath = `${rootPath}/transcript.txt`;
+    console.info(transcriptPath);
+
+    const content = JSON.stringify(transcriptResponse);
+    try {
+      await writeFile(transcriptPath, content, 'utf8');
+      console.log('[DownloadTranscript] Write transcript succeeded!');
+    } catch(err) {
+      console.error(`[DownloadTranscript] Unable to write transcript`);
+      console.error(`${err}`);
+    }
+  }, [state, chatSDK]);
+
   const renderAccessory = () => {
     return (
       <View style={styles.accessoryContainer}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={onDownloadTranscript}>
           <Image
             style={styles.downloadIcon}
             source={require("../assets/img/download.png")} />
