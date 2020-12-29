@@ -302,6 +302,19 @@ const ChatScreen = (props: ChatScreenProps) => {
     )
   }
 
+  const renderAccessory = () => {
+    return (
+      <View style={styles.accessoryContainer}>
+        <Image
+          style={styles.downloadIcon}
+          source={require("../assets/img/download.png")} />
+        <Image
+          style={styles.mailIcon}
+          source={require("../assets/img/mail.png")} />
+      </View>
+    )
+  }
+
   return (
     <>
       {/* <View style={styles.view}>
@@ -317,6 +330,7 @@ const ChatScreen = (props: ChatScreenProps) => {
         renderComposer={renderComposer}
         renderActions={renderActions}
         renderSend={renderSend}
+        renderAccessory={renderAccessory}
         onSend={onSend}
         onInputTextChanged={onInputTextChanged}
         user={{
@@ -344,6 +358,23 @@ const styles = StyleSheet.create({
   attachmentIcon: {
     width: 32,
     height: 32
+  },
+  accessoryContainer: {
+    flexDirection: 'row',
+    height: 44,
+    width: '100%',
+    alignItems: 'center',
+    marginLeft: 15
+  },
+  downloadIcon: {
+    width: 24,
+    height: 24,
+    marginRight: 7
+  },
+  mailIcon: {
+    width: 24,
+    height: 24,
+    marginLeft: 7
   }
 });
 
