@@ -12,7 +12,7 @@ The sample app includes the following scenarios:
 - [x] Incoming image attachments
 - [ ] Incoming file attachments of other supported formats
 - [x] Outgoing messages
-- [ ] Outgoing file attachments
+- [x] Outgoing file attachments
 - [x] Receive typing
 - [x] Send typing
 - [x] Receive agent end session event

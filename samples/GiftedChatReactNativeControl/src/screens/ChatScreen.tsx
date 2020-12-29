@@ -3,10 +3,13 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Navigation, NavigationButtonPressedEvent } from 'react-native-navigation';
 import { GiftedChat, IMessage, Composer, Send, Actions } from 'react-native-gifted-chat';
 import { orgId, orgUrl, widgetId } from '@env';
-import { IRawMessage, isSystemMessage, OmnichannelChatSDK } from '@microsoft/omnichannel-chat-sdk';
+import { IFileInfo, IRawMessage, isSystemMessage, OmnichannelChatSDK, uuidv4 } from '@microsoft/omnichannel-chat-sdk';
 import { ActionType, Store } from '../context';
 import { useDidAppearListener, useNavigationButtonPressedListener } from '../utils/hooks';
 import TypingIndicator from '../components/TypingIndicator/TypingIndicator';
+import DocumentPicker from 'react-native-document-picker';
+import { readFile } from 'react-native-fs';
+import { Buffer } from 'buffer';
 
 const typingAnimationDuration = 1500;
 const buttons = {
@@ -271,6 +274,54 @@ const ChatScreen = (props: ChatScreenProps) => {
     return <Send {...props}/>;
   }
 
+  const onAttachmentUpload = useCallback(async () => {
+    // Handles file attachment uploads
+
+    try {
+      const fileResult = await DocumentPicker.pick({
+        type: [DocumentPicker.types.allFiles]
+      });
+
+      const fileRNFS = await readFile(fileResult.uri, "base64");
+      const fileBuffer = Buffer.from(fileRNFS, 'base64');
+
+      const fileInfo: IFileInfo = {
+        name: fileResult.name,
+        type: fileResult.type,
+        size: fileResult.size,
+        data: fileBuffer
+      };
+
+      await chatSDK!.uploadFileAttachment(fileInfo);
+
+      const { messages } = state;
+      const inboundMessage: any = {
+        _id: uuidv4(),
+        text: '',
+        createdAt: new Date(),
+        user: {
+          _id: 2,
+          name: 'Customer',
+          avatar: 'https://placeimg.com/140/140/any'
+        }
+      };
+
+      inboundMessage.image = `data:image/png;base64,${fileBuffer.toString('base64')}`;
+      inboundMessage.sent = true;
+
+      const extraMetaData = {
+        isSystemMessage: false,
+        isAgentMessage: false,
+        isAttachment: false
+      };
+
+      messages.unshift({...inboundMessage, ...extraMetaData});
+      dispatch({type: ActionType.SET_MESSAGES, payload: messages});
+    } catch (error) {
+      console.error(`[FileAttachmentUpload] Failed with error ${error}`);
+    }
+  }, [state, chatSDK]);
+
   const renderActions = (props: any) => {
     return (
       <Actions
@@ -292,6 +343,7 @@ const ChatScreen = (props: ChatScreenProps) => {
         options={{
           'Choose From Library': () => {
             console.log('Choose From Library');
+            onAttachmentUpload();
           },
           Cancel: () => {
             console.log('Cancel');

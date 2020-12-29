@@ -11,9 +11,12 @@
   },
   "dependencies": {
     "@microsoft/omnichannel-chat-sdk": "^0.1.1-main.fadb071",
+    "buffer": "^6.0.3",
     "react": "16.9.0",
     "react-native": "0.61.5",
+    "react-native-document-picker": "^4.2.0",
     "react-native-dotenv": "^2.4.3",
+    "react-native-fs": "^2.16.6",
     "react-native-gifted-chat": "^0.16.3",
     "react-native-navigation": "^7.6.0"
   },
