@@ -322,6 +322,8 @@ const ChatScreen = (props: ChatScreenProps) => {
       await chatSDK!.uploadFileAttachment(fileInfo);
 
       // Displays message tick
+      // It only updates if the attachemnt is the last message
+      // Known issue: https://github.com/FaridSafi/react-native-gifted-chat/issues/654
       const messageToUpdate = messages.find((message) => message._id === inboundMessage._id);
       messageToUpdate.sent = true;
 
