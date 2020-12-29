@@ -316,9 +316,11 @@ const ChatScreen = (props: ChatScreenProps) => {
       dispatch({type: ActionType.SET_MESSAGES, payload: messages});
 
       await chatSDK!.uploadFileAttachment(fileInfo);
-      inboundMessage.sent = true;
 
-      messages.unshift({...inboundMessage, ...extraMetaData});
+      // Displays message tick
+      const messageToUpdate = messages.find((message) => message._id === inboundMessage._id);
+      messageToUpdate.sent = true;
+
       dispatch({type: ActionType.SET_MESSAGES, payload: messages});
     } catch (error) {
       console.error(`[FileAttachmentUpload] Failed with error ${error}`);
