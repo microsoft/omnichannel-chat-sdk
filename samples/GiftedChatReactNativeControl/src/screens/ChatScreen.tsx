@@ -276,6 +276,7 @@ const ChatScreen = (props: ChatScreenProps) => {
 
   const onAttachmentUpload = useCallback(async () => {
     // Handles file attachment uploads
+    const { messages } = state;
 
     try {
       const fileResult = await DocumentPicker.pick({
@@ -292,9 +293,6 @@ const ChatScreen = (props: ChatScreenProps) => {
         data: fileBuffer
       };
 
-      await chatSDK!.uploadFileAttachment(fileInfo);
-
-      const { messages } = state;
       const inboundMessage: any = {
         _id: uuidv4(),
         text: '',
@@ -307,13 +305,18 @@ const ChatScreen = (props: ChatScreenProps) => {
       };
 
       inboundMessage.image = `data:image/png;base64,${fileBuffer.toString('base64')}`;
-      inboundMessage.sent = true;
 
       const extraMetaData = {
         isSystemMessage: false,
         isAgentMessage: false,
         isAttachment: false
       };
+
+      messages.unshift({...inboundMessage, ...extraMetaData});
+      dispatch({type: ActionType.SET_MESSAGES, payload: messages});
+
+      await chatSDK!.uploadFileAttachment(fileInfo);
+      inboundMessage.sent = true;
 
       messages.unshift({...inboundMessage, ...extraMetaData});
       dispatch({type: ActionType.SET_MESSAGES, payload: messages});
