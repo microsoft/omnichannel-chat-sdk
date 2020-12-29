@@ -408,13 +408,19 @@ const ChatScreen = (props: ChatScreenProps) => {
 
       const rootPath = Platform.OS.toLowerCase() === 'ios'? LibraryDirectoryPath: ExternalDirectoryPath;
       // const rootPath = DownloadDirectoryPath; // Requires storage permission
-      const transcriptPath = `${rootPath}/transcript.txt`;
+      const fileName = `transcript.txt`;
+      const transcriptPath = `${rootPath}/${fileName}`;
       console.info(transcriptPath);
 
+      // TODO: Parse transcript
       const content = JSON.stringify(transcriptResponse);
       try {
         await writeFile(transcriptPath, content, 'utf8');
         console.log('[DownloadTranscript] Write transcript succeeded!');
+        Alert.alert(
+          'Download Transcript',
+          `Transcript downloaded successfully at '${transcriptPath}'`
+        );
       } catch(err) {
         console.error(`[DownloadTranscript] Unable to write transcript`);
         console.error(`${err}`);
