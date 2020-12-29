@@ -323,6 +323,11 @@ const ChatScreen = (props: ChatScreenProps) => {
   }, [state, chatSDK]);
 
   const renderActions = (props: any) => {
+    // Hides actions on agent ending the session
+    if (state.agentEndSessionEvent) {
+      return null;
+    }
+
     return (
       <Actions
         {...props}
