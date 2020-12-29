@@ -254,8 +254,12 @@ const ChatScreen = (props: ChatScreenProps) => {
       return;
     }
 
-    console.log('[SendTyping]');
-    await chatSDK?.sendTypingEvent();
+    console.info('[SendTyping]');
+    try {
+      await chatSDK?.sendTypingEvent();
+    } catch {
+      console.error('[SendTyping] Failure');
+    }
   }, [state, chatSDK]);
 
   const renderComposer = (props: any) => {
