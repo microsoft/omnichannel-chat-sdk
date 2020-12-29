@@ -1,5 +1,5 @@
 import React, { Component, useCallback, useContext, useEffect, useState, } from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Navigation, NavigationButtonPressedEvent } from 'react-native-navigation';
 import { GiftedChat, IMessage, Composer, Send, Actions } from 'react-native-gifted-chat';
 import { orgId, orgUrl, widgetId } from '@env';
@@ -370,6 +370,31 @@ const ChatScreen = (props: ChatScreenProps) => {
     )
   }
 
+  const onEmailTranscript = useCallback(async () => {
+    const {hasChatStarted} = state;
+
+    if (!hasChatStarted) {
+      return;
+    }
+
+    const body = {
+      emailAddress: '[Email Address]',
+      attachmentMessage: 'Sample Message',
+      locale: 'en-us'
+    }
+
+    try {
+      await chatSDK!.emailLiveChatTranscript(body);
+      console.info('[EmailLiveChatTranscript]');
+      Alert.alert(
+        'Email Transcript',
+        'Success!'
+      );
+    } catch {
+      console.error(`[EmailLiveChatTranscript]: Failure`);
+    }
+  }, [state, chatSDK]);
+
   const renderAccessory = () => {
     return (
       <View style={styles.accessoryContainer}>
@@ -378,7 +403,7 @@ const ChatScreen = (props: ChatScreenProps) => {
             style={styles.downloadIcon}
             source={require("../assets/img/download.png")} />
         </TouchableOpacity>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={onEmailTranscript}>
           <Image
             style={styles.mailIcon}
             source={require("../assets/img/mail.png")} />
