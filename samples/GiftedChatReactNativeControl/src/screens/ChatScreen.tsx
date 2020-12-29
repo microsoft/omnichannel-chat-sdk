@@ -2,7 +2,7 @@ import React, { Component, useCallback, useContext, useEffect, useState, } from 
 import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Navigation, NavigationButtonPressedEvent } from 'react-native-navigation';
 import { GiftedChat, IMessage, Composer, Send, Actions } from 'react-native-gifted-chat';
-import { orgId, orgUrl, widgetId } from '@env';
+import { orgId, orgUrl, widgetId, email } from '@env';
 import { IFileInfo, IRawMessage, isSystemMessage, OmnichannelChatSDK, uuidv4 } from '@microsoft/omnichannel-chat-sdk';
 import { ActionType, Store } from '../context';
 import { useDidAppearListener, useNavigationButtonPressedListener } from '../utils/hooks';
@@ -378,7 +378,7 @@ const ChatScreen = (props: ChatScreenProps) => {
     }
 
     const body = {
-      emailAddress: '[Email Address]',
+      emailAddress: email,
       attachmentMessage: 'Sample Message',
       locale: 'en-us'
     }
