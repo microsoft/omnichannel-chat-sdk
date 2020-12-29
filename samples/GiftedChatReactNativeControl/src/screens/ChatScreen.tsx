@@ -402,21 +402,25 @@ const ChatScreen = (props: ChatScreenProps) => {
       return;
     }
 
-    const transcriptResponse = await chatSDK?.getLiveChatTranscript();
-    console.log('[DownloadTranscript] Download transcript succeeded!');
-
-    const rootPath = Platform.OS.toLowerCase() === 'ios'? LibraryDirectoryPath: ExternalDirectoryPath;
-    // const rootPath = DownloadDirectoryPath; // Requires storage permission
-    const transcriptPath = `${rootPath}/transcript.txt`;
-    console.info(transcriptPath);
-
-    const content = JSON.stringify(transcriptResponse);
     try {
-      await writeFile(transcriptPath, content, 'utf8');
-      console.log('[DownloadTranscript] Write transcript succeeded!');
-    } catch(err) {
-      console.error(`[DownloadTranscript] Unable to write transcript`);
-      console.error(`${err}`);
+      const transcriptResponse = await chatSDK?.getLiveChatTranscript();
+      console.log('[DownloadTranscript] Download transcript succeeded!');
+
+      const rootPath = Platform.OS.toLowerCase() === 'ios'? LibraryDirectoryPath: ExternalDirectoryPath;
+      // const rootPath = DownloadDirectoryPath; // Requires storage permission
+      const transcriptPath = `${rootPath}/transcript.txt`;
+      console.info(transcriptPath);
+
+      const content = JSON.stringify(transcriptResponse);
+      try {
+        await writeFile(transcriptPath, content, 'utf8');
+        console.log('[DownloadTranscript] Write transcript succeeded!');
+      } catch(err) {
+        console.error(`[DownloadTranscript] Unable to write transcript`);
+        console.error(`${err}`);
+      }
+    } catch {
+      console.error('[DownloadTranscript] Download transcript failed.');
     }
   }, [state, chatSDK]);
 
