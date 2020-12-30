@@ -1,6 +1,6 @@
-import React, { Component, useCallback, useContext, useEffect, useState, } from 'react';
+import React, { useCallback, useContext, useEffect, useState, } from 'react';
 import { Alert, Image, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Navigation, NavigationButtonPressedEvent } from 'react-native-navigation';
+import { Navigation } from 'react-native-navigation';
 import { GiftedChat, IMessage, Composer, Send, Actions } from 'react-native-gifted-chat';
 import { orgId, orgUrl, widgetId, email } from '@env';
 import { IFileInfo, IRawMessage, isSystemMessage, OmnichannelChatSDK, uuidv4 } from '@microsoft/omnichannel-chat-sdk';
@@ -120,6 +120,7 @@ const ChatScreen = (props: ChatScreenProps) => {
     if (buttonId === buttons.endChat.id) {
       await chatSDK!.endChat();
 
+      // Switch TopBar button to start chat
       Navigation.mergeOptions(props.componentId, {
         topBar: {
           rightButtons: [{
@@ -144,6 +145,7 @@ const ChatScreen = (props: ChatScreenProps) => {
       chatSDK!.onTypingEvent(onTypingEvent);
       chatSDK!.onAgentEndSession(onAgentEndSession);
 
+      // Switch TopBar button to end chat
       Navigation.mergeOptions(props.componentId, {
         topBar: {
           rightButtons: [{
@@ -175,6 +177,7 @@ const ChatScreen = (props: ChatScreenProps) => {
       setChatSDK(chatSDK);
     }
 
+    // Switch TopBar button to end chat
     Navigation.mergeOptions(props.componentId, {
       topBar: {
         rightButtons: [{
