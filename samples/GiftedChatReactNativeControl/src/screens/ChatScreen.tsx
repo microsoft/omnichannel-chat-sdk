@@ -10,6 +10,7 @@ import TypingIndicator from '../components/TypingIndicator/TypingIndicator';
 import DocumentPicker from 'react-native-document-picker';
 import { readFile, LibraryDirectoryPath, ExternalDirectoryPath, writeFile, DownloadDirectoryPath } from 'react-native-fs';
 import { Buffer } from 'buffer';
+import { parseTranscript } from '../utils/parser';
 
 const typingAnimationDuration = 1500;
 const buttons = {
@@ -412,8 +413,7 @@ const ChatScreen = (props: ChatScreenProps) => {
       const transcriptPath = `${rootPath}/${fileName}`;
       console.info(transcriptPath);
 
-      // TODO: Parse transcript
-      const content = JSON.stringify(transcriptResponse);
+      const content = parseTranscript(transcriptResponse);
       try {
         await writeFile(transcriptPath, content, 'utf8');
         console.log('[DownloadTranscript] Write transcript succeeded!');
