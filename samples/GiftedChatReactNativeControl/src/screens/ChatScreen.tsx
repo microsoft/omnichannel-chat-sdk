@@ -11,6 +11,7 @@ import DocumentPicker from 'react-native-document-picker';
 import { readFile, LibraryDirectoryPath, ExternalDirectoryPath, writeFile, DownloadDirectoryPath } from 'react-native-fs';
 import { Buffer } from 'buffer';
 import { parseTranscript } from '../utils/parser';
+import AdaptiveCard from "adaptivecards-reactnative";
 
 const typingAnimationDuration = 1500;
 const buttons = {
@@ -48,14 +49,15 @@ const createGiftedChatMessage = (message: any): IMessage => {
 const ChatScreen = (props: ChatScreenProps) => {
   const {state, dispatch} = useContext(Store);
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
-  // const [messages, setMessages] = useState([]);
+  const [preChatSurvey, setPreChatSurvey] = useState(null);
+  const [preChatResponse, setPreChatResponse] = useState(null);
 
   const onNewMessage = useCallback(async (message: IRawMessage) => {
     console.log(`[onNewMessage] Received message: '${message.content}'`);
     // console.log(message);
 
     const { messages } = state;
-    const giftedChatMessage = createGiftedChatMessage(message);
+    const giftedChatMessage: any = createGiftedChatMessage(message);
 
     const extraMetaData = {
       isSystemMessage: false,
@@ -120,18 +122,25 @@ const ChatScreen = (props: ChatScreenProps) => {
     if (buttonId === buttons.endChat.id) {
       await chatSDK!.endChat();
 
-      // Switch TopBar button to start chat
+      const rightButtons: any = [];
+
+      if (!preChatSurvey) {
+        // Switch TopBar button to start chat
+        rightButtons.push({
+          enabled: true,
+          id: buttons.startChat.id,
+          text: buttons.startChat.text,
+          color: '#fff'
+        });
+      }
+
       Navigation.mergeOptions(props.componentId, {
         topBar: {
-          rightButtons: [{
-            enabled: true,
-            id: buttons.startChat.id,
-            text: buttons.startChat.text,
-            color: '#fff'
-          }],
+          rightButtons
         }
       });
 
+      setPreChatResponse(null);
       dispatch({type: ActionType.SET_CHAT_STARTED, payload: false});
       dispatch({type: ActionType.SET_MESSAGES, payload: GiftedChat.append([], [])});
       dispatch({type: ActionType.SET_AGENT_END_SESSION_EVENT, payload: false});
@@ -160,7 +169,7 @@ const ChatScreen = (props: ChatScreenProps) => {
       dispatch({type: ActionType.SET_CHAT_STARTED, payload: true});
       dispatch({type: ActionType.SET_AGENT_END_SESSION_EVENT, payload: false});
     }
-  }, [state, chatSDK, onNewMessage]);
+  }, [state, chatSDK, onNewMessage, preChatSurvey]);
 
   useEffect(() => {
     const init = async () => {
@@ -175,7 +184,26 @@ const ChatScreen = (props: ChatScreenProps) => {
       const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
       await chatSDK.initialize();
       setChatSDK(chatSDK);
+
+      const preChatSurvey = await chatSDK.getPreChatSurvey();
+      if (preChatSurvey) {
+        console.info('[PreChatSurvey]');
+        console.log(preChatSurvey);
+        setPreChatSurvey(preChatSurvey);
+      }
     }
+
+    init();
+  }, []);
+
+  const startNewChat = useCallback(async (optionalParams = {}) => {
+    console.info('[StartNEWChat]');
+    await chatSDK!.startChat(optionalParams);
+    chatSDK!.onNewMessage(onNewMessage);
+    chatSDK!.onTypingEvent(onTypingEvent);
+    chatSDK!.onAgentEndSession(onAgentEndSession);
+
+    dispatch({type: ActionType.SET_CHAT_STARTED, payload: true});
 
     // Switch TopBar button to end chat
     Navigation.mergeOptions(props.componentId, {
@@ -188,20 +216,9 @@ const ChatScreen = (props: ChatScreenProps) => {
         }],
       }
     });
-
-    init();
-  }, []);
-
-  const startNewChat = useCallback(async () => {
-    console.info('[StartNEWChat]');
-    await chatSDK!.startChat();
-    chatSDK!.onNewMessage(onNewMessage);
-    chatSDK!.onTypingEvent(onTypingEvent);
-    chatSDK!.onAgentEndSession(onAgentEndSession);
-
-    dispatch({type: ActionType.SET_CHAT_STARTED, payload: true});
   }, [state, chatSDK, onNewMessage]);
 
+  // Triggered only if chat screen is visible
   useDidAppearListener((event) => {
     const { componentId } = event;
 
@@ -211,8 +228,8 @@ const ChatScreen = (props: ChatScreenProps) => {
 
     // Starts NEW chat only if chat screen is visible & chat has not started
     const {hasChatStarted} = state;
-    !hasChatStarted && startNewChat();
-  }, [state, chatSDK]);
+    !hasChatStarted && !preChatSurvey && startNewChat();
+  }, [state, chatSDK, preChatSurvey]);
 
   const onSend = useCallback(async (outboundMessages: IMessage[]) => {
     const { hasChatStarted, messages } = state;
@@ -450,33 +467,53 @@ const ChatScreen = (props: ChatScreenProps) => {
     )
   }
 
-  return (
-    <>
-      {/* <View style={styles.view}>
-        <Text>Chat</Text>
-      </View> */}
-      <GiftedChat
-        inverted={props.inverted}
-        placeholder={'Type your message here'}
-        alwaysShowSend
-        messages={state.messages}
-        // isTyping={state.isTyping}
-        renderFooter={renderTypingIndicator}
-        renderComposer={renderComposer}
-        renderActions={renderActions}
-        renderSend={renderSend}
-        renderAccessory={renderAccessory}
-        onSend={onSend}
-        onInputTextChanged={onInputTextChanged}
-        user={{
-          _id: 2,
-          name: 'Customer',
-          avatar: 'https://placeimg.com/140/140/any'
-        }}
-        showUserAvatar
-      />
-    </>
-  )
+  const renderChatWidget = () => {
+    if (preChatSurvey && !preChatResponse) {
+      const onExecuteAction = async (action: any) => {
+        const {data: preChatResponse} = action;
+        const optionalParams: any = {
+          preChatResponse
+        };
+
+        setPreChatResponse(preChatResponse);
+        startNewChat(optionalParams);
+      }
+
+      return (
+        <AdaptiveCard payload={preChatSurvey} onExecuteAction={onExecuteAction}/>
+      )
+    }
+
+    return (
+      <>
+        {/* <View style={styles.view}>
+          <Text>Chat</Text>
+        </View> */}
+        <GiftedChat
+          inverted={props.inverted}
+          placeholder={'Type your message here'}
+          alwaysShowSend
+          messages={state.messages}
+          // isTyping={state.isTyping}
+          renderFooter={renderTypingIndicator}
+          renderComposer={renderComposer}
+          renderActions={renderActions}
+          renderSend={renderSend}
+          renderAccessory={renderAccessory}
+          onSend={onSend}
+          onInputTextChanged={onInputTextChanged}
+          user={{
+            _id: 2,
+            name: 'Customer',
+            avatar: 'https://placeimg.com/140/140/any'
+          }}
+          showUserAvatar
+        />
+      </>
+    )
+  }
+
+  return renderChatWidget();
 }
 
 const styles = StyleSheet.create({

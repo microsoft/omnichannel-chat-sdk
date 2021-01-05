@@ -18,7 +18,7 @@ The sample app includes the following scenarios:
 - [x] Receive agent end session event
 - [x] Download transcript
 - [x] Email transcript
-- [ ] Pre-Chat Survey
+- [x] Pre-Chat Survey
 
 ## Prerequisites
 - [React Native v0.61.5](https://reactnative.dev/)
