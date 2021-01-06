@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState, } from 'react';
-import { Alert, Image, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Navigation } from 'react-native-navigation';
 import { GiftedChat, IMessage, Composer, Send, Actions } from 'react-native-gifted-chat';
 import { orgId, orgUrl, widgetId, email } from '@env';
@@ -491,9 +491,6 @@ const ChatScreen = (props: ChatScreenProps) => {
 
     return (
       <>
-        {/* <View style={styles.view}>
-          <Text>Chat</Text>
-        </View> */}
         <GiftedChat
           inverted={props.inverted}
           placeholder={'Type your message here'}
