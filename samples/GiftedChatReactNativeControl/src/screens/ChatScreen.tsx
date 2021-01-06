@@ -31,6 +31,7 @@ type ChatScreenProps = {
 }
 
 const createGiftedChatMessage = (message: any): IMessage => {
+  const agentName = message.sender?.displayName;
   return {
     _id: message.clientmessageid,
     text: message.content,
@@ -40,7 +41,7 @@ const createGiftedChatMessage = (message: any): IMessage => {
     // sent: true,
     user: {
       _id: 1,
-      name: 'Agent',
+      name: agentName || 'Agent',
       avatar: 'https://placeimg.com/140/140/people'
     }
   }
@@ -62,7 +63,6 @@ const ChatScreen = (props: ChatScreenProps) => {
 
     const { messages } = state;
     const giftedChatMessage: any = createGiftedChatMessage(message);
-
     const extraMetaData = {
       isSystemMessage: false,
       isAgentMessage: false,
@@ -513,6 +513,8 @@ const ChatScreen = (props: ChatScreenProps) => {
             avatar: 'https://placeimg.com/140/140/any'
           }}
           showUserAvatar
+          showAvatarForEveryMessage
+          renderUsernameOnMessage
         />
       </>
     )
