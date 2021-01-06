@@ -46,6 +46,10 @@ const createGiftedChatMessage = (message: any): IMessage => {
   }
 }
 
+const patchAdaptiveCard = (adaptiveCard: any) => {
+  return JSON.parse(JSON.stringify(adaptiveCard).replace("&#42;", "*"));  // HTML entities '&#42;' is not unescaped for some reason
+}
+
 const ChatScreen = (props: ChatScreenProps) => {
   const {state, dispatch} = useContext(Store);
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
@@ -185,9 +189,10 @@ const ChatScreen = (props: ChatScreenProps) => {
       await chatSDK.initialize();
       setChatSDK(chatSDK);
 
-      const preChatSurvey = await chatSDK.getPreChatSurvey();
+      let preChatSurvey = await chatSDK.getPreChatSurvey();
       if (preChatSurvey) {
         console.info('[PreChatSurvey]');
+        preChatSurvey = patchAdaptiveCard(preChatSurvey);
         console.log(preChatSurvey);
         setPreChatSurvey(preChatSurvey);
       }
