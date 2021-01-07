@@ -301,7 +301,14 @@ class OmnichannelChatSDK {
     }
 
     public async onAgentEndSession(onAgentEndSessionCallback: (message: IRawThread) => void): Promise<void> {
-        this.conversation?.registerOnThreadUpdate(onAgentEndSessionCallback);
+        this.conversation?.registerOnThreadUpdate((message: IRawThread) => {
+            const {members} = message;
+
+            // Agent ending conversation would have 1 member left in the chat thread
+            if (members.length === 1) {
+                onAgentEndSessionCallback(message);
+            }
+        });
     }
 
     public async uploadFileAttachment(fileInfo: IFileInfo): Promise<IRawMessage> {
