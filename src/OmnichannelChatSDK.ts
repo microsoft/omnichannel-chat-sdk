@@ -43,6 +43,7 @@ import ISDKConfiguration from "@microsoft/ocsdk/lib/Interfaces/ISDKConfiguration
 import { loadScript } from "./utils/WebUtils";
 
 class OmnichannelChatSDK {
+    private debug: boolean;
     public OCSDKProvider: unknown;
     public IC3SDKProvider: unknown;
     public OCClient: any; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -57,9 +58,9 @@ class OmnichannelChatSDK {
     private authenticatedUserToken: string | null = null;
     private preChatSurvey: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private conversation: IConversation | null = null;
-    private debug: boolean;
 
     constructor(omnichannelConfig: IOmnichannelConfig, chatSDKConfig: IChatSDKConfig = defaultChatSDKConfig) {
+        this.debug = false;
         this.omnichannelConfig = omnichannelConfig;
         this.chatSDKConfig = chatSDKConfig;
         this.requestId = uuidv4();
@@ -68,10 +69,14 @@ class OmnichannelChatSDK {
         this.dataMaskingRules = {};
         this.authSettings = null;
         this.preChatSurvey = null;
-        this.debug = false;
 
         validateOmnichannelConfig(omnichannelConfig);
         validateSDKConfig(chatSDKConfig);
+    }
+
+    /* istanbul ignore next */
+    public setDebug(flag: boolean): void {
+        this.debug = flag;
     }
 
     public async initialize(): Promise<IChatConfig> {
@@ -393,7 +398,7 @@ class OmnichannelChatSDK {
         });
     }
 
-    public async createVoiceVideoCalling(): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+    public async getVoiceVideoCalling(params: any = {}): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
         if (platform.isNode() || platform.isReactNative()) {
             return Promise.reject('VoiceVideoCalling is only supported on browser');
         }
@@ -416,19 +421,13 @@ class OmnichannelChatSDK {
                 await loadScript(LiveChatWidgetLibCDNUrl, async () => {
                     this.debug && console.debug(`${LiveChatWidgetLibCDNUrl} loaded!`);
                     const {VoiceVideoCalling} = window.Microsoft.OmniChannel.SDK;
-                    await VoiceVideoCalling.getInstance().load({});
-                    this.debug && console.debug(VoiceVideoCalling);
-                    resolve(VoiceVideoCalling);
+                    await VoiceVideoCalling.getInstance().load(params);
+                    resolve(VoiceVideoCalling.getInstance());
                 }, async () => {
                     reject('Failed to load VoiceVideoCalling');
                 });
             });
         }
-    }
-
-    /* istanbul ignore next */
-    public setDebug(flag: boolean): void {
-        this.debug = flag;
     }
 
     private async getIC3Client() {
