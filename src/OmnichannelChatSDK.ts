@@ -40,6 +40,7 @@ import {isCustomerMessage} from "./utils/utilities";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 import validateSDKConfig, {defaultChatSDKConfig} from "./validators/SDKConfigValidators";
 import ISDKConfiguration from "@microsoft/ocsdk/lib/Interfaces/ISDKConfiguration";
+import { loadScript } from "./utils/WebUtils";
 
 class OmnichannelChatSDK {
     public OCSDKProvider: unknown;
@@ -390,6 +391,39 @@ class OmnichannelChatSDK {
                 reject(`Failed to load IC3Adapter`);
             });
         });
+    }
+
+    public async createVoiceVideoCalling(): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+        if (platform.isNode() || platform.isReactNative()) {
+            return Promise.reject('VoiceVideoCalling is only supported on browser');
+        }
+
+        const chatConfig = await this.getChatConfig();
+        const {LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin} = chatConfig;
+        const {msdyn_widgetsnippet} = liveWSAndLiveChatEngJoin;
+
+        // Find src attribute with its url in code snippet
+        const widgetSnippetSourceRegex = new RegExp(`src="(https:\\/\\/[\\w-.]+)[\\w-.\\/]+"`);
+        const result = msdyn_widgetsnippet.match(widgetSnippetSourceRegex);
+        if (result) {
+            return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
+                const spoolSDKCDNUrl = `${result[1]}/livechatwidget/WebChatControl/lib/spool-sdk/sdk.bundle.js`;
+                await loadScript(spoolSDKCDNUrl, () => {
+                    this.debug && console.debug(`${spoolSDKCDNUrl} loaded!`);
+                });
+
+                const LiveChatWidgetLibCDNUrl = `${result[1]}/livechatwidget/WebChatControl/lib/LiveChatWidgetLibs.min.js`;
+                await loadScript(LiveChatWidgetLibCDNUrl, async () => {
+                    this.debug && console.debug(`${LiveChatWidgetLibCDNUrl} loaded!`);
+                    const {VoiceVideoCalling} = window.Microsoft.OmniChannel.SDK;
+                    await VoiceVideoCalling.getInstance().load({});
+                    this.debug && console.debug(VoiceVideoCalling);
+                    resolve(VoiceVideoCalling);
+                }, async () => {
+                    reject('Failed to load VoiceVideoCalling');
+                });
+            });
+        }
     }
 
     /* istanbul ignore next */
