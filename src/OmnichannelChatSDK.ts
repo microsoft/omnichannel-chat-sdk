@@ -422,6 +422,8 @@ class OmnichannelChatSDK {
                 const spoolSDKCDNUrl = `${result[1]}/livechatwidget/WebChatControl/lib/spool-sdk/sdk.bundle.js`;
                 await loadScript(spoolSDKCDNUrl, () => {
                     this.debug && console.debug(`${spoolSDKCDNUrl} loaded!`);
+                }, () => {
+                    reject('Failed to load SpoolSDK');
                 });
 
                 const LiveChatWidgetLibCDNUrl = `${result[1]}/livechatwidget/WebChatControl/lib/LiveChatWidgetLibs.min.js`;
