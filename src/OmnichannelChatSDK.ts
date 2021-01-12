@@ -448,13 +448,12 @@ class OmnichannelChatSDK {
         } else {
             this.debug && console.debug('IC3Client');
             // Use IC3Client if browser is detected
-            const scriptElement = document.createElement('script');
-            scriptElement.setAttribute('src', libraries.getIC3ClientCDNUrl());
-            document.head.appendChild(scriptElement);
+            return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
+                const ic3ClientCDNUrl = libraries.getIC3ClientCDNUrl();
 
-            return new Promise((resolve) => {
                 window.addEventListener("ic3:sdk:load", async () => {
                     // Use FramedBridge from IC3Client
+                    this.debug && console.debug('ic3:sdk:load');
                     const {SDK: ic3sdk} = window.Microsoft.CRM.Omnichannel.IC3Client;
                     const {SDKProvider: IC3SDKProvider} = ic3sdk;
                     this.IC3SDKProvider = IC3SDKProvider;
@@ -463,6 +462,12 @@ class OmnichannelChatSDK {
                         protocolType: ProtocolType.IC3V1SDK
                     });
                     resolve(IC3Client);
+                });
+
+                await loadScript(ic3ClientCDNUrl, () => {
+                    this.debug && console.debug('IC3Client loaded!');
+                }, () => {
+                    reject('Failed to load IC3Adapter');
                 });
             });
         }
