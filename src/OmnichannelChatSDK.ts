@@ -381,12 +381,9 @@ class OmnichannelChatSDK {
             return Promise.reject(`ChatAdapter for protocol ${protocol} currently not supported`);
         }
 
-        const scriptElement = document.createElement('script');
-        scriptElement.setAttribute('src', libraries.getIC3AdapterCDNUrl());
-        document.head.appendChild(scriptElement);
-
-        return new Promise((resolve, reject) => {
-            scriptElement.addEventListener('load', () => {
+        return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
+            const ic3AdapterCDNUrl = libraries.getIC3AdapterCDNUrl();
+            await loadScript(ic3AdapterCDNUrl, () => {
                 this.debug && console.debug('IC3Adapter loaded!');
                 const adapterConfig: IIC3AdapterOptions = {
                     chatToken: this.chatToken,
@@ -397,10 +394,8 @@ class OmnichannelChatSDK {
 
                 const adapter = new window.Microsoft.BotFramework.WebChat.IC3Adapter(adapterConfig);
                 resolve(adapter);
-            });
-
-            scriptElement.addEventListener('error', () => {
-                reject(`Failed to load IC3Adapter`);
+            }, () => {
+                reject('Failed to load IC3Adapter');
             });
         });
     }
