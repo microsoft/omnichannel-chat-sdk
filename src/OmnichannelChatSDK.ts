@@ -425,7 +425,7 @@ class OmnichannelChatSDK {
                 const LiveChatWidgetLibCDNUrl = `${result[1]}/livechatwidget/WebChatControl/lib/LiveChatWidgetLibs.min.js`;
                 await loadScript(LiveChatWidgetLibCDNUrl, async () => {
                     this.debug && console.debug(`${LiveChatWidgetLibCDNUrl} loaded!`);
-                    const VoiceVideoCalling = await createVoiceVideoCalling();
+                    const VoiceVideoCalling = await createVoiceVideoCalling(params);
                     resolve(VoiceVideoCalling);
                 }, async () => {
                     reject('Failed to load VoiceVideoCalling');

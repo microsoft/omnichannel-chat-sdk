@@ -1,8 +1,26 @@
+import IChatToken from "../external/IC3Adapter/IChatToken";
+
+interface IVoiceVideoCallingParams {
+    environment?: string;
+    logger?: any;
+    chatToken: IChatToken;
+    OCClient: any;
+    selfVideoHTMLElementId: string;
+    remoteVideoHTMLElementId: string;
+}
+
+interface IAcceptCallConfig {
+    withVideo?: boolean;
+}
+
 class VoiceVideoCallingProxy {
     private static _instance: VoiceVideoCallingProxy;
+    private debug: boolean;
     private proxy: any;
+    private callingParams?: IVoiceVideoCallingParams;
 
     private constructor() {
+        this.debug = false;
         this.proxy = window.Microsoft.OmniChannel.SDK.VoiceVideoCalling;
     }
 
@@ -13,6 +31,10 @@ class VoiceVideoCallingProxy {
         return this._instance;
     }
 
+    public setDebug(flag: boolean) {
+        this.debug = flag;
+    };
+
     public async load(params: any = {}): Promise<void> {
         this.proxy.getInstance().load(params);
     }
@@ -21,62 +43,88 @@ class VoiceVideoCallingProxy {
         return this.proxy.getInstance().isInitialized();
     }
 
-    public async initialize(params: any = {}): Promise<void> {
-        this.proxy.getInstance().load(params);
+    public async initialize(params: IVoiceVideoCallingParams): Promise<void> {
+        this.debug && console.debug(`VoiceVideoCallingParams: ${params}`);
+        this.callingParams = params;
+        this.proxy.getInstance().initialize({
+            skypeid: this.callingParams?.chatToken.visitorId,
+            accesstoken: this.callingParams?.chatToken.token,
+            environment: this.callingParams?.environment || 'prod',
+            selfVideoHTMLElementId: this.callingParams?.selfVideoHTMLElementId,
+            remoteVideoHTMLElementId: this.callingParams?.selfVideoHTMLElementId
+        });
     }
 
     public registerEvent(eventName: string, callback: Function): void {
-        this.proxy.getInstance().registerEvent(eventName, callback);
+        this.proxy.getInstance().registerEvent(eventName, (params: any) => {
+            const {callId} = params;
+            this.debug && console.log(`${callId}: callId`);
+            if (callId !== this.callingParams?.chatToken.chatId) {
+                return;
+            }
+            callback(params);
+        });
     }
 
-    public isMicrophoneMuted(params: any): boolean {
-        return this.proxy.getInstance().isMicrophoneMuted(params);
+    public isMicrophoneMuted(): boolean {
+        const callId = this.callingParams?.chatToken.chatId;
+        return this.proxy.getInstance().isMicrophoneMuted({callId});
     }
 
-    public async acceptCall(params: any): Promise<void> {
-        this.proxy.getInstance().acceptCall(params);
+    public async acceptCall(params: IAcceptCallConfig): Promise<void> {
+        const callId = this.callingParams?.chatToken.chatId;
+        this.proxy.getInstance().acceptCall({callId, withVideo: params.withVideo || false});
     }
 
-    public async rejectCall(params: any): Promise<void> {
-        this.proxy.getInstance().rejectCall(params);
+    public async rejectCall(): Promise<void> {
+        const callId = this.callingParams?.chatToken.chatId;
+        this.proxy.getInstance().rejectCall({callId});
     }
 
-    public async toggleMute(params: any): Promise<void> {
-        this.proxy.getInstance().toggleMute(params);
+    public async toggleMute(): Promise<void> {
+        const callId = this.callingParams?.chatToken.chatId;
+        this.proxy.getInstance().toggleMute({callId});
     }
 
-    public isRemoteVideoEnabled(params: any): boolean {
-        return this.proxy.getInstance().isRemoteVideoEnabled(params);
+    public isRemoteVideoEnabled(): boolean {
+        const callId = this.callingParams?.chatToken.chatId;
+        return this.proxy.getInstance().isRemoteVideoEnabled({callId});
     }
 
-    public isLocalVideoEnabled(params: any): boolean {
-        return this.proxy.getInstance().isLocalVideoEnabled(params);
+    public isLocalVideoEnabled(): boolean {
+        const callId = this.callingParams?.chatToken.chatId;
+        return this.proxy.getInstance().isLocalVideoEnabled({callId});
     }
 
-    public async toggleLocalVideo(params: any): Promise<void> {
-        return this.proxy.getInstance().toggleLocalVideo(params);
+    public async toggleLocalVideo(): Promise<void> {
+        const callId = this.callingParams?.chatToken.chatId;
+        return this.proxy.getInstance().toggleLocalVideo({callId});
     }
 
-    public isInACall(params: any): boolean {
-        return this.proxy.getInstance().isInACall(params);
+    public isInACall(): boolean {
+        const callId = this.callingParams?.chatToken.chatId;
+        return this.proxy.getInstance().isInACall({callId});
     }
 
-    public renderVideoStreams(params: any): void {
-        return this.proxy.getInstance().renderVideoStreams(params);
+    public renderVideoStreams(): void {
+        const callId = this.callingParams?.chatToken.chatId;
+        return this.proxy.getInstance().renderVideoStreams({callId});
     }
 
-    public disposeVideoRenderers(params: any): void {
-        return this.proxy.getInstance().disposeVideoRenderers(params);
+    public disposeVideoRenderers(): void {
+        const callId = this.callingParams?.chatToken.chatId;
+        return this.proxy.getInstance().disposeVideoRenderers({callId});
     }
 
     public dispose(): void {
         this.proxy.getInstance().dispose();
+        this.callingParams = undefined;
     }
 }
 
 const createVoiceVideoCalling = async (params: any = {}) => {
     const proxy = VoiceVideoCallingProxy.getInstance();
-    await proxy.load(params);
+    await proxy.load(params.loader);
     return Promise.resolve(proxy);
 }
 
