@@ -41,6 +41,7 @@ import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 import validateSDKConfig, {defaultChatSDKConfig} from "./validators/SDKConfigValidators";
 import ISDKConfiguration from "@microsoft/ocsdk/lib/Interfaces/ISDKConfiguration";
 import { loadScript } from "./utils/WebUtils";
+import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -424,9 +425,8 @@ class OmnichannelChatSDK {
                 const LiveChatWidgetLibCDNUrl = `${result[1]}/livechatwidget/WebChatControl/lib/LiveChatWidgetLibs.min.js`;
                 await loadScript(LiveChatWidgetLibCDNUrl, async () => {
                     this.debug && console.debug(`${LiveChatWidgetLibCDNUrl} loaded!`);
-                    const {VoiceVideoCalling} = window.Microsoft.OmniChannel.SDK;
-                    await VoiceVideoCalling.getInstance().load(params);
-                    resolve(VoiceVideoCalling.getInstance());
+                    const VoiceVideoCalling = await createVoiceVideoCalling();
+                    resolve(VoiceVideoCalling);
                 }, async () => {
                     reject('Failed to load VoiceVideoCalling');
                 });
