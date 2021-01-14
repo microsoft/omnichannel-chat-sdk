@@ -18,6 +18,7 @@ class VoiceVideoCallingProxy {
     private debug: boolean;
     private proxy: any;
     private callingParams?: IVoiceVideoCallingParams;
+    private logger: any;
 
     private constructor() {
         this.debug = false;
@@ -36,6 +37,10 @@ class VoiceVideoCallingProxy {
     };
 
     public async load(params: any = {}): Promise<void> {
+        if (params.logger) {
+            this.logger = params.logger;
+        }
+
         this.proxy.getInstance().load(params);
     }
 
@@ -44,8 +49,14 @@ class VoiceVideoCallingProxy {
     }
 
     public async initialize(params: IVoiceVideoCallingParams): Promise<void> {
-        this.debug && console.debug(`VoiceVideoCallingParams: ${params}`);
+        this.debug && console.debug(`[VoiceVideoCallingProxy] VoiceVideoCallingParams: ${JSON.stringify(params)}`);
         this.callingParams = params;
+
+        this.debug && console.debug(`[VoiceVideoCallingProxy][initialize] _isLoaded: ${this.proxy.getInstance()._isLoaded}`);
+        if (!this.proxy.getInstance()._isLoaded) {
+            await this.proxy.getInstance().load(this.logger || {});
+        }
+
         this.proxy.getInstance().initialize({
             skypeid: this.callingParams?.chatToken.visitorId,
             accesstoken: this.callingParams?.chatToken.token,
@@ -58,7 +69,7 @@ class VoiceVideoCallingProxy {
     public registerEvent(eventName: string, callback: Function): void {
         this.proxy.getInstance().registerEvent(eventName, (params: any) => {
             const {callId} = params;
-            this.debug && console.log(`${callId}: callId`);
+            this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}] callId: ${callId}`);
             if (callId !== this.callingParams?.chatToken.chatId) {
                 return;
             }
