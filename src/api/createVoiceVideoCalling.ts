@@ -9,8 +9,26 @@ interface IVoiceVideoCallingParams {
     remoteVideoHTMLElementId: string;
 }
 
+interface IEventPayload {
+    callId: string;
+    spoolCallId: string;
+}
+
 interface IAcceptCallConfig {
     withVideo?: boolean;
+}
+
+enum SecondaryChannelType {
+    Voice = 192370000,
+    Video = 192380000,
+    Cobrowse = 192390000
+}
+
+enum SecondaryChannelEvents {
+    Accept = 'accept',
+    Reject = 'reject',
+    Connect = 'connect',
+    End = 'end'
 }
 
 class VoiceVideoCallingProxy {
@@ -67,7 +85,7 @@ class VoiceVideoCallingProxy {
     }
 
     public registerEvent(eventName: string, callback: Function): void {
-        this.proxy.getInstance().registerEvent(eventName, (params: any) => {
+        this.proxy.getInstance().registerEvent(eventName, (params: IEventPayload) => {
             const {callId} = params;
             this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}] callId: ${callId}`);
             if (callId !== this.callingParams?.chatToken.chatId) {
@@ -82,14 +100,42 @@ class VoiceVideoCallingProxy {
         return this.proxy.getInstance().isMicrophoneMuted({callId});
     }
 
-    public async acceptCall(params: IAcceptCallConfig): Promise<void> {
+    public async acceptCall(params: IAcceptCallConfig = {}): Promise<void> {
         const callId = this.callingParams?.chatToken.chatId;
+        this.debug && console.log(`[VoiceVideoCallingProxy][acceptCall] callId: ${callId}`);
+
         this.proxy.getInstance().acceptCall({callId, withVideo: params.withVideo || false});
+
+        const body = {
+            SecondaryChannelType: params.withVideo? SecondaryChannelType.Video: SecondaryChannelType.Voice,
+            SecondaryChannelEventType: SecondaryChannelEvents.Accept
+        }
+
+        try {
+            this.callingParams?.OCClient.makeSecondaryChannelEventRequest(this.callingParams?.chatToken.requestId, body);
+            this.debug && console.log(`[VoiceVideoCallingProxy][acceptCall][makeSecondaryChannelEventRequest]`);
+        } catch (e) {
+            console.error(`[VoiceVideoCallingProxy][acceptCall][makeSecondaryChannelEventRequest] Failure ${e}`);
+        }
     }
 
     public async rejectCall(): Promise<void> {
         const callId = this.callingParams?.chatToken.chatId;
+        this.debug && console.log(`[VoiceVideoCallingProxy][rejectCall] callId: ${callId}`);
+
         this.proxy.getInstance().rejectCall({callId});
+
+        const body = {
+            SecondaryChannelType: this.isRemoteVideoEnabled()? SecondaryChannelType.Video: SecondaryChannelType.Voice,
+            SecondaryChannelEventType: SecondaryChannelEvents.Reject
+        }
+
+        try {
+            this.callingParams?.OCClient.makeSecondaryChannelEventRequest(this.callingParams?.chatToken.requestId, body);
+            this.debug && console.log(`[VoiceVideoCallingProxy][rejectCall][makeSecondaryChannelEventRequest]`);
+        } catch (e) {
+            console.error(`[VoiceVideoCallingProxy][rejectCall][makeSecondaryChannelEventRequest] Failure ${e}`);
+        }
     }
 
     public async toggleMute(): Promise<void> {
@@ -165,7 +211,22 @@ class VoiceVideoCallingProxy {
     public onCallDisconnected(callback: Function): void {
         const eventName = 'callDisconnected';
         this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
-        this.registerEvent(eventName, callback);
+        this.registerEvent(eventName, async (params: IEventPayload) => {
+
+            const body = {
+                SecondaryChannelType: SecondaryChannelType.Voice,
+                SecondaryChannelEventType: SecondaryChannelEvents.End
+            }
+
+            try {
+                this.callingParams?.OCClient.makeSecondaryChannelEventRequest(this.callingParams?.chatToken.requestId, body);
+                this.debug && console.log(`[VoiceVideoCallingProxy][onCallDisconnected][makeSecondaryChannelEventRequest]`);
+            } catch (e) {
+                console.error(`[VoiceVideoCallingProxy][onCallDisconnected][makeSecondaryChannelEventRequest] Failure ${e}`);
+            }
+
+            callback(params);
+        });
     }
 }
 
