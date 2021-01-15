@@ -131,6 +131,42 @@ class VoiceVideoCallingProxy {
         this.proxy.getInstance().dispose();
         this.callingParams = undefined;
     }
+
+    public onCallAdded(callback: Function): void {
+        const eventName = 'callAdded';
+        this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
+        this.registerEvent(eventName, callback);
+    }
+
+    public onLocalVideoStreamAdded(callback: Function): void {
+        const eventName = 'localVideoStreamAdded';
+        this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
+        this.registerEvent(eventName, callback);
+    }
+
+    public onLocalVideoStreamRemoved(callback: Function): void {
+        const eventName = 'localVideoStreamRemoved';
+        this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
+        this.registerEvent(eventName, callback);
+    }
+
+    public onRemoteVideoStreamAdded(callback: Function): void {
+        const eventName = 'remoteVideoStreamAdded';
+        this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
+        this.registerEvent(eventName, callback);
+    }
+
+    public onRemoteVideoStreamRemoved(callback: Function): void {
+        const eventName = 'remoteVideoStreamRemoved';
+        this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
+        this.registerEvent(eventName, callback);
+    }
+
+    public onCallDisconnected(callback: Function): void {
+        const eventName = 'callDisconnected';
+        this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
+        this.registerEvent(eventName, callback);
+    }
 }
 
 const createVoiceVideoCalling = async (params: any = {}) => {
