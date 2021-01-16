@@ -42,6 +42,7 @@ import validateSDKConfig, {defaultChatSDKConfig} from "./validators/SDKConfigVal
 import ISDKConfiguration from "@microsoft/ocsdk/lib/Interfaces/ISDKConfiguration";
 import { loadScript } from "./utils/WebUtils";
 import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
+import CallingOptionsOptionSetNumber from "./core/CallingOptionsOptionSetNumber";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -59,6 +60,7 @@ class OmnichannelChatSDK {
     private authenticatedUserToken: string | null = null;
     private preChatSurvey: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private conversation: IConversation | null = null;
+    private callingOption: CallingOptionsOptionSetNumber = CallingOptionsOptionSetNumber.NoCalling;
 
     constructor(omnichannelConfig: IOmnichannelConfig, chatSDKConfig: IChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
@@ -406,6 +408,10 @@ class OmnichannelChatSDK {
             return Promise.reject('VoiceVideoCalling is only supported on browser');
         }
 
+        if (this.callingOption.toString() === CallingOptionsOptionSetNumber.NoCalling.toString()) {
+            return Promise.reject('Voice and video call is not enabled');
+        }
+
         const chatConfig = await this.getChatConfig();
         const {LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin} = chatConfig;
         const {msdyn_widgetsnippet} = liveWSAndLiveChatEngJoin;
@@ -491,7 +497,7 @@ class OmnichannelChatSDK {
                 this.authSettings = authSettings;
             }
 
-            const {PreChatSurvey: preChatSurvey, msdyn_prechatenabled} = liveWSAndLiveChatEngJoin;
+            const {PreChatSurvey: preChatSurvey, msdyn_prechatenabled, msdyn_callingoptions} = liveWSAndLiveChatEngJoin;
             const isPreChatEnabled = msdyn_prechatenabled === true || msdyn_prechatenabled == "true";
             if (isPreChatEnabled && preChatSurvey && preChatSurvey.trim().length > 0) {
                 this.preChatSurvey = preChatSurvey;
@@ -517,6 +523,7 @@ class OmnichannelChatSDK {
                 this.debug && console.log('Prechat Survey!');
             }
 
+            this.callingOption = msdyn_callingoptions;
             this.liveChatConfig = liveChatConfig;
             return this.liveChatConfig;
         } catch (error) {
