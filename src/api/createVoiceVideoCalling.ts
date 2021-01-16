@@ -50,6 +50,7 @@ class VoiceVideoCallingProxy {
         return this._instance;
     }
 
+    /* istanbul ignore next */
     public setDebug(flag: boolean) {
         this.debug = flag;
     };
@@ -232,7 +233,7 @@ class VoiceVideoCallingProxy {
 
 const createVoiceVideoCalling = async (params: any = {}) => {
     const proxy = VoiceVideoCallingProxy.getInstance();
-    await proxy.load(params.loader);
+    await proxy.load(params.logger);
     return Promise.resolve(proxy);
 }
 
