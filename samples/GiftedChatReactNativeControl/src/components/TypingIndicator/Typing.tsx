@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Animated,
-  Text,
   View,
   Platform,
   AppState,
