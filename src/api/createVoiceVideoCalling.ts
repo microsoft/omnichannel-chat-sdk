@@ -2,9 +2,9 @@ import IChatToken from "../external/IC3Adapter/IChatToken";
 
 interface IVoiceVideoCallingParams {
     environment?: string;
-    logger?: any;
+    logger?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     chatToken: IChatToken;
-    OCClient: any;
+    OCClient: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     selfVideoHTMLElementId: string;
     remoteVideoHTMLElementId: string;
 }
@@ -31,12 +31,12 @@ enum SecondaryChannelEvents {
     End = 'end'
 }
 
-class VoiceVideoCallingProxy {
+export class VoiceVideoCallingProxy {
     private static _instance: VoiceVideoCallingProxy;
     private debug: boolean;
-    private proxy: any;
+    private proxy: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private callingParams?: IVoiceVideoCallingParams;
-    private logger: any;
+    private logger: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
     private constructor() {
         this.debug = false;
@@ -51,11 +51,11 @@ class VoiceVideoCallingProxy {
     }
 
     /* istanbul ignore next */
-    public setDebug(flag: boolean) {
+    public setDebug(flag: boolean): void {
         this.debug = flag;
-    };
+    }
 
-    public async load(params: any = {}): Promise<void> {
+    public async load(params: any = {}): Promise<void> { // eslint-disable-line @typescript-eslint/no-explicit-any
         if (params.logger) {
             this.logger = params.logger;
         }
@@ -231,7 +231,7 @@ class VoiceVideoCallingProxy {
     }
 }
 
-const createVoiceVideoCalling = async (params: any = {}) => {
+const createVoiceVideoCalling = async (params: any = {}): Promise<VoiceVideoCallingProxy> => { // eslint-disable-line @typescript-eslint/no-explicit-any
     const proxy = VoiceVideoCallingProxy.getInstance();
     await proxy.load(params.logger);
     return Promise.resolve(proxy);
