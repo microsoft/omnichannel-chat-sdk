@@ -1,17 +1,17 @@
+import { IFileInfo, IRawMessage, isSystemMessage, OmnichannelChatSDK, uuidv4 } from '@microsoft/omnichannel-chat-sdk';
+import AdaptiveCard from "adaptivecards-reactnative";
+import { Buffer } from 'buffer';
 import React, { useCallback, useContext, useEffect, useState, } from 'react';
 import { Alert, Image, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
+import DocumentPicker from 'react-native-document-picker';
+import { DownloadDirectoryPath, ExternalDirectoryPath, LibraryDirectoryPath, readFile, writeFile } from 'react-native-fs';
+import { Actions, Composer, GiftedChat, IMessage, Send } from 'react-native-gifted-chat';
 import { Navigation } from 'react-native-navigation';
-import { GiftedChat, IMessage, Composer, Send, Actions } from 'react-native-gifted-chat';
 import { orgId, orgUrl, widgetId, email } from '@env';
-import { IFileInfo, IRawMessage, isSystemMessage, OmnichannelChatSDK, uuidv4 } from '@microsoft/omnichannel-chat-sdk';
+import TypingIndicator from '../components/TypingIndicator/TypingIndicator';
 import { ActionType, Store } from '../context';
 import { useDidAppearListener, useNavigationButtonPressedListener } from '../utils/hooks';
-import TypingIndicator from '../components/TypingIndicator/TypingIndicator';
-import DocumentPicker from 'react-native-document-picker';
-import { readFile, LibraryDirectoryPath, ExternalDirectoryPath, writeFile, DownloadDirectoryPath } from 'react-native-fs';
-import { Buffer } from 'buffer';
 import { parseTranscript } from '../utils/parser';
-import AdaptiveCard from "adaptivecards-reactnative";
 
 const typingAnimationDuration = 1500;
 const buttons = {
