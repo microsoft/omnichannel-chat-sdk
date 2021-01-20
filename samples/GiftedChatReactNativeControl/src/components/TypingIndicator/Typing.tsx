@@ -57,7 +57,7 @@ const UpAndDown = ({
   });
   const transform: any = [];
   let opacityAnim: boolean = false;
-  const trsf = (Array.isArray(transformation)
+  const transformationList = (Array.isArray(transformation)
     ? transformation
     : [transformation]
   ).forEach(trsf => {
