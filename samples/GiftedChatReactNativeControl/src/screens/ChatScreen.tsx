@@ -12,6 +12,7 @@ import TypingIndicator from '../components/TypingIndicator/TypingIndicator';
 import { ActionType, Store } from '../context';
 import { useDidAppearListener, useNavigationButtonPressedListener } from '../utils/hooks';
 import { parseTranscript } from '../utils/parser';
+import attachementImage from '../assets/img/attachment.png';
 
 const typingAnimationDuration = 1500;
 const buttons = {
@@ -380,7 +381,7 @@ const ChatScreen = (props: ChatScreenProps) => {
         icon={() => ( // Attachment Upload button
           <Image
             style={styles.attachmentIcon}
-            source={require("../assets/img/attachment.png")} />
+            source={attachementImage} />
         )}
         options={{
           'Choose From Library': () => {
