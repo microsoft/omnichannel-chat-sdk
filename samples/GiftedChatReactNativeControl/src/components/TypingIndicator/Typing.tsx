@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import {
   Animated,
-  View,
-  Platform,
   AppState,
   Easing,
+  Platform,
+  View,
   ViewProps,
 } from 'react-native';
 
