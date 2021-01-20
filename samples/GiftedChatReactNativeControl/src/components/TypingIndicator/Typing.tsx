@@ -62,9 +62,6 @@ const UpAndDown = ({
     : [transformation]
   ).forEach(trsf => {
     switch (trsf) {
-      case 'translateY':
-        transform.push({ translateY });
-        break;
       case 'scale':
         transform.push({ scale });
         break;
