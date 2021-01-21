@@ -26,7 +26,7 @@ function App() {
 
     init();
 
-    (window as any).feather.replace();
+    (window as any).feather && (window as any).feather.replace();
   }, []);
 
   const startChat = useCallback(async () => {
@@ -37,7 +37,8 @@ function App() {
     setChatAdapter(chatAdapter);
 
     setHasChatStarted(true);
-    (window as any).feather.replace();
+
+    (window as any).feather && (window as any).feather.replace();
   }, [chatSDK]);
 
   const endChat = useCallback(async () => {
@@ -46,7 +47,7 @@ function App() {
     setChatAdapter(undefined);
     setHasChatStarted(false);
 
-    (window as any).feather.replace();
+    (window as any).feather && (window as any).feather.replace();
   }, [chatSDK]);
 
   const startChatIconStyle = {
