@@ -387,6 +387,7 @@ class OmnichannelChatSDK {
         return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
             const ic3AdapterCDNUrl = libraries.getIC3AdapterCDNUrl();
             await loadScript(ic3AdapterCDNUrl, () => {
+                /* istanbul ignore next */
                 this.debug && console.debug('IC3Adapter loaded!');
                 const adapterConfig: IIC3AdapterOptions = {
                     chatToken: this.chatToken,
@@ -423,6 +424,7 @@ class OmnichannelChatSDK {
             return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
                 const spoolSDKCDNUrl = `${result[1]}/livechatwidget/WebChatControl/lib/spool-sdk/sdk.bundle.js`;
                 await loadScript(spoolSDKCDNUrl, () => {
+                    /* istanbul ignore next */
                     this.debug && console.debug(`${spoolSDKCDNUrl} loaded!`);
                 }, () => {
                     reject('Failed to load SpoolSDK');
@@ -459,6 +461,7 @@ class OmnichannelChatSDK {
 
                 window.addEventListener("ic3:sdk:load", async () => {
                     // Use FramedBridge from IC3Client
+                    /* istanbul ignore next */
                     this.debug && console.debug('ic3:sdk:load');
                     const {SDK: ic3sdk} = window.Microsoft.CRM.Omnichannel.IC3Client;
                     const {SDKProvider: IC3SDKProvider} = ic3sdk;
