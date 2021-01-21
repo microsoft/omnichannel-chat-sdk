@@ -183,7 +183,9 @@ export class VoiceVideoCallingProxy {
         return this.proxyInstance.disposeVideoRenderers({callId});
     }
 
-    public dispose(): void {
+    public close(): void {
+        /* istanbul ignore next */
+        this.debug && console.log(`[VoiceVideoCallingProxy][close]`);
         this.proxyInstance.dispose();
         this.callingParams = undefined;
     }
