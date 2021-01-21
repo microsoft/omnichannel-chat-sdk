@@ -12,8 +12,10 @@ describe('createVoiceVideoCalling', () => {
     (window as any).Microsoft.OmniChannel.SDK.VoiceVideoCalling = {};
     (window as any).Microsoft.OmniChannel.SDK.VoiceVideoCalling.getInstance = () => ({
         load: jest.fn().mockResolvedValue(Promise.resolve()),
+        initialize: jest.fn(),
         isInitialized: jest.fn().mockResolvedValue(true),
-        registerEvent: jest.fn((eventName: string, callback: Function) => {})
+        registerEvent: jest.fn((eventName: string, callback: Function) => {}),
+        isMicrophoneMuted: jest.fn()
     });
 
     describe('Functionalities', () => {
@@ -42,6 +44,30 @@ describe('createVoiceVideoCalling', () => {
             await createVoiceVideoCalling({logger});
             expect(proxy.load).toHaveBeenCalledTimes(1);
             expect(proxy.load.mock.calls[0][0]).toMatchObject(logger);
+        });
+
+        it('VoiceVideoCallingProxy.isMicrophoneMuted() should have ChatId defined', async() => {
+            const proxy = await createVoiceVideoCalling();
+
+            const params = {
+                environment: 'prod',
+                logger: {
+                    logInfo: () => {}
+                },
+                chatToken: {chatId: 'chatId'},
+                OCClient: {
+                    makeSecondaryChannelEventRequest: () => {}
+                },
+                selfVideoHTMLElementId: 'selfVideoHTMLElementId',
+                remoteVideoHTMLElementId: 'remoteVideoHTMLElementId'
+            };
+
+            await proxy.initialize(params);
+            jest.spyOn(proxy, 'isMicrophoneMuted');
+
+            proxy.isMicrophoneMuted();
+
+            expect((proxy as typeof VoiceVideoCallingProxy).callingParams.chatToken.chatId).not.toBe(undefined);
         });
 
         it('VoiceVideoCallingProxy.onCallAdded() should call VoiceVideoCallingProxy.addEventListener()', async () => {
