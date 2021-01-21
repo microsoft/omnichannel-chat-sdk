@@ -294,7 +294,7 @@ describe('createVoiceVideoCalling', () => {
             expect((proxy as typeof VoiceVideoCallingProxy).callingParams.chatToken.chatId).not.toBe(undefined);
         });
 
-        it('VoiceVideoCallingProxy.dispose() should have callingParams undefined', async() => {
+        it('VoiceVideoCallingProxy.close() should have callingParams undefined', async() => {
             const proxy = await createVoiceVideoCalling();
 
             const params = {
@@ -311,9 +311,9 @@ describe('createVoiceVideoCalling', () => {
             };
 
             await proxy.initialize(params);
-            jest.spyOn(proxy, 'dispose');
+            jest.spyOn(proxy, 'close');
 
-            proxy.dispose();
+            proxy.close();
 
             expect((proxy as typeof VoiceVideoCallingProxy).callingParams).toBe(undefined);
         });
