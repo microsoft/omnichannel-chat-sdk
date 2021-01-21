@@ -85,7 +85,7 @@ export class VoiceVideoCallingProxy {
         });
     }
 
-    public registerEvent(eventName: string, callback: Function): void {
+    public addEventListener(eventName: string, callback: Function): void {
         this.proxy.getInstance().registerEvent(eventName, (params: IEventPayload) => {
             const {callId} = params;
             this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}] callId: ${callId}`);
@@ -182,37 +182,37 @@ export class VoiceVideoCallingProxy {
     public onCallAdded(callback: Function): void {
         const eventName = 'callAdded';
         this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
-        this.registerEvent(eventName, callback);
+        this.addEventListener(eventName, callback);
     }
 
     public onLocalVideoStreamAdded(callback: Function): void {
         const eventName = 'localVideoStreamAdded';
         this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
-        this.registerEvent(eventName, callback);
+        this.addEventListener(eventName, callback);
     }
 
     public onLocalVideoStreamRemoved(callback: Function): void {
         const eventName = 'localVideoStreamRemoved';
         this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
-        this.registerEvent(eventName, callback);
+        this.addEventListener(eventName, callback);
     }
 
     public onRemoteVideoStreamAdded(callback: Function): void {
         const eventName = 'remoteVideoStreamAdded';
         this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
-        this.registerEvent(eventName, callback);
+        this.addEventListener(eventName, callback);
     }
 
     public onRemoteVideoStreamRemoved(callback: Function): void {
         const eventName = 'remoteVideoStreamRemoved';
         this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
-        this.registerEvent(eventName, callback);
+        this.addEventListener(eventName, callback);
     }
 
     public onCallDisconnected(callback: Function): void {
         const eventName = 'callDisconnected';
         this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
-        this.registerEvent(eventName, async (params: IEventPayload) => {
+        this.addEventListener(eventName, async (params: IEventPayload) => {
 
             const body = {
                 SecondaryChannelType: SecondaryChannelType.Voice,
