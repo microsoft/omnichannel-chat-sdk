@@ -1,46 +1,67 @@
-# Getting Started with Create React App
+# BotFramework-WebChat Control
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Sample react app using [Omnichannel Chat SDK](https://github.com/microsoft/omnichannel-chat-sdk) with [BotFramework-WebChat](https://github.com/microsoft/BotFramework-WebChat) as third party web control.
 
-## Available Scripts
+## Scenario Checklist
 
-In the project directory, you can run:
+The sample app includes the following scenarios:
 
-### `yarn start`
+- [x] Start Chat
+- [x] End Chat
+- [ ] Incoming messages
+- [ ] Incoming image attachments
+- [ ] Incoming file attachments of other supported formats
+- [ ] Outgoing messages
+- [ ] Outgoing file attachments
+- [ ] Receive typing
+- [ ] Send typing
+- [ ] Receive agent end session event
+- [ ] Download transcript
+- [ ] Email transcript
+- [ ] Pre-Chat Survey
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## Prerequisites
+- [React](https://reactjs.org/)
+- [BotFramework-WebChat v4.9.2](https://github.com/microsoft/BotFramework-WebChat)
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Getting Started
 
-### `yarn test`
+### 1. Configure a chat widget
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+If you haven't set up a chat widget yet. Please follow these instructions on:
 
-### `yarn build`
+https://docs.microsoft.com/en-us/dynamics365/omnichannel/administrator/add-chat-widget
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 2. **Copy** the widget snippet code from the **Code snippet** section and save it somewhere. It will be needed later on.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+It should look similar to this:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```html
+<script
+    id="Microsoft_Omnichannel_LCWidget"
+    src="[your-src]"
+    data-app-id="[your-app-id]"
+    data-org-id="[your-org-id]"
+    data-org-url="[your-org-url]"
+>
+</script>
+```
 
-### `yarn eject`
+### 3. **Copy** of [.env.config](.env.config) to [.env](.env)
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+```
+cp .env.config .env
+```
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Notice [.env](.env) is in [.gitignore](.gitignore)
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+### 4. **Add** your chat widget config to [.env](.env)
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+```
+# Chat Widget Config
+REACT_APP_orgId='[your-org-id]'
+REACT_APP_orgUrl='[your-org-url]'
+REACT_APP_widgetId='[your-app-id]'
+```
 
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+### 5. Install the project with `npm install` and run the application with `npm run start`
