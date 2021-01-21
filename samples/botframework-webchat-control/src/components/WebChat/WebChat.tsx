@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import ReactWebChat from 'botframework-webchat';
 import { OmnichannelChatSDK } from '@microsoft/omnichannel-chat-sdk';
+import { MessageCircle, X} from 'react-feather';
 import './WebChat.css';
 
 
@@ -25,8 +26,6 @@ function WebChat() {
     }
 
     init();
-
-    (window as any).feather && (window as any).feather.replace();
   }, []);
 
   const startChat = useCallback(async () => {
@@ -37,8 +36,6 @@ function WebChat() {
     setChatAdapter(chatAdapter);
 
     setHasChatStarted(true);
-
-    (window as any).feather && (window as any).feather.replace();
   }, [chatSDK]);
 
   const endChat = useCallback(async () => {
@@ -46,24 +43,14 @@ function WebChat() {
     await chatSDK?.endChat();
     setChatAdapter(undefined);
     setHasChatStarted(false);
-
-    (window as any).feather && (window as any).feather.replace();
   }, [chatSDK]);
-
-  const startChatIconStyle = {
-    color: 'white'
-  };
-
-  const endChatIconStyle = {
-    color: 'black'
-  }
 
   return (
     <>
       <div>
       {
         !hasChatStarted && <div className="chat-button" onClick={startChat}>
-          <i data-feather="message-circle" style={startChatIconStyle}></i>
+          <MessageCircle color='white' />
         </div>
       }
       </div>
@@ -72,7 +59,7 @@ function WebChat() {
           <div className="chat-header">
             <span> Chat </span>
             <div onClick={endChat}>
-              <i data-feather="x" style={endChatIconStyle}></i>
+              <X />
             </div>
           </div>
           <ReactWebChat
