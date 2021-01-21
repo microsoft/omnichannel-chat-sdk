@@ -23,11 +23,17 @@ function App() {
   const directLine = useMemo(() => createDirectLine({ token }), [token]);
 
   return (
-    <div style={chatStyle}>
-      <ReactWebChat
-        directLine={directLine}
-      />
-    </div>
+    <>
+      <div>
+        <button> Start </button>
+        <button> End </button>
+      </div>
+      <div style={chatStyle}>
+        <ReactWebChat
+          directLine={directLine}
+        />
+      </div>
+    </>
   );
 }
 
