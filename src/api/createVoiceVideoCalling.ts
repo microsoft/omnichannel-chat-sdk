@@ -68,9 +68,11 @@ export class VoiceVideoCallingProxy {
     }
 
     public async initialize(params: IVoiceVideoCallingParams): Promise<void> {
+        /* istanbul ignore next */
         this.debug && console.debug(`[VoiceVideoCallingProxy] VoiceVideoCallingParams: ${JSON.stringify(params)}`);
         this.callingParams = params;
 
+        /* istanbul ignore next */
         this.debug && console.debug(`[VoiceVideoCallingProxy][initialize] _isLoaded: ${this.proxy.getInstance()._isLoaded}`);
         if (!this.proxy.getInstance()._isLoaded) {
             await this.proxy.getInstance().load(this.logger || {});
@@ -88,6 +90,7 @@ export class VoiceVideoCallingProxy {
     public addEventListener(eventName: string, callback: Function): void {
         this.proxy.getInstance().registerEvent(eventName, (params: IEventPayload) => {
             const {callId} = params;
+            /* istanbul ignore next */
             this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}] callId: ${callId}`);
             if (callId !== this.callingParams?.chatToken.chatId) {
                 return;
@@ -103,6 +106,7 @@ export class VoiceVideoCallingProxy {
 
     public async acceptCall(params: IAcceptCallConfig = {}): Promise<void> {
         const callId = this.callingParams?.chatToken.chatId;
+        /* istanbul ignore next */
         this.debug && console.log(`[VoiceVideoCallingProxy][acceptCall] callId: ${callId}`);
 
         this.proxy.getInstance().acceptCall({callId, withVideo: params.withVideo || false});
@@ -114,6 +118,7 @@ export class VoiceVideoCallingProxy {
 
         try {
             this.callingParams?.OCClient.makeSecondaryChannelEventRequest(this.callingParams?.chatToken.requestId, body);
+            /* istanbul ignore next */
             this.debug && console.log(`[VoiceVideoCallingProxy][acceptCall][makeSecondaryChannelEventRequest]`);
         } catch (e) {
             console.error(`[VoiceVideoCallingProxy][acceptCall][makeSecondaryChannelEventRequest] Failure ${e}`);
@@ -122,6 +127,7 @@ export class VoiceVideoCallingProxy {
 
     public async rejectCall(): Promise<void> {
         const callId = this.callingParams?.chatToken.chatId;
+        /* istanbul ignore next */
         this.debug && console.log(`[VoiceVideoCallingProxy][rejectCall] callId: ${callId}`);
 
         this.proxy.getInstance().rejectCall({callId});
@@ -133,6 +139,7 @@ export class VoiceVideoCallingProxy {
 
         try {
             this.callingParams?.OCClient.makeSecondaryChannelEventRequest(this.callingParams?.chatToken.requestId, body);
+            /* istanbul ignore next */
             this.debug && console.log(`[VoiceVideoCallingProxy][rejectCall][makeSecondaryChannelEventRequest]`);
         } catch (e) {
             console.error(`[VoiceVideoCallingProxy][rejectCall][makeSecondaryChannelEventRequest] Failure ${e}`);
@@ -181,36 +188,42 @@ export class VoiceVideoCallingProxy {
 
     public onCallAdded(callback: Function): void {
         const eventName = 'callAdded';
+        /* istanbul ignore next */
         this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
         this.addEventListener(eventName, callback);
     }
 
     public onLocalVideoStreamAdded(callback: Function): void {
         const eventName = 'localVideoStreamAdded';
+        /* istanbul ignore next */
         this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
         this.addEventListener(eventName, callback);
     }
 
     public onLocalVideoStreamRemoved(callback: Function): void {
         const eventName = 'localVideoStreamRemoved';
+        /* istanbul ignore next */
         this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
         this.addEventListener(eventName, callback);
     }
 
     public onRemoteVideoStreamAdded(callback: Function): void {
         const eventName = 'remoteVideoStreamAdded';
+        /* istanbul ignore next */
         this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
         this.addEventListener(eventName, callback);
     }
 
     public onRemoteVideoStreamRemoved(callback: Function): void {
         const eventName = 'remoteVideoStreamRemoved';
+        /* istanbul ignore next */
         this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
         this.addEventListener(eventName, callback);
     }
 
     public onCallDisconnected(callback: Function): void {
         const eventName = 'callDisconnected';
+        /* istanbul ignore next */
         this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
         this.addEventListener(eventName, async (params: IEventPayload) => {
 
