@@ -25,6 +25,8 @@ function App() {
     }
 
     init();
+
+    (window as any).feather.replace();
   }, []);
 
   const startChat = useCallback(async () => {
@@ -35,6 +37,7 @@ function App() {
     setChatAdapter(chatAdapter);
 
     setHasChatStarted(true);
+    (window as any).feather.replace();
   }, [chatSDK]);
 
   const endChat = useCallback(async () => {
@@ -42,30 +45,35 @@ function App() {
     await chatSDK?.endChat();
     setChatAdapter(undefined);
     setHasChatStarted(false);
+
+    (window as any).feather.replace();
   }, [chatSDK]);
 
-  const chatStyle = {
-    width: '60vw',
-    height: '80vh'
-  };
-
-  const iconStyle = {
+  const startChatIconStyle = {
     color: 'white'
   };
+
+  const endChatIconStyle = {
+    color: 'black'
+  }
 
   return (
     <>
       <div>
-        {/* <button onClick={startChat}> Start </button> */}
-        <button onClick={endChat}> End </button>
-      </div>
-      <div>
-      <div className="chat-button" onClick={startChat}>
-        <i data-feather="message-circle" style={iconStyle}></i>
-      </div>
+      {
+        !hasChatStarted && <div className="chat-button" onClick={startChat}>
+          <i data-feather="message-circle" style={startChatIconStyle}></i>
+        </div>
+      }
       </div>
       {
-        hasChatStarted && chatAdapter && <div className="chat-container" style={chatStyle}>
+        hasChatStarted && chatAdapter && <div className="chat-container">
+          <div className="chat-header">
+            <span> Chat </span>
+            <div onClick={endChat}>
+              <i data-feather="x" style={endChatIconStyle}></i>
+            </div>
+          </div>
           <ReactWebChat
             userID="teamsvisitor"
             directLine={chatAdapter}
