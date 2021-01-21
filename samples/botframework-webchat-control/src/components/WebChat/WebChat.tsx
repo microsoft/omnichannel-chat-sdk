@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import ReactWebChat from 'botframework-webchat';
 import { OmnichannelChatSDK } from '@microsoft/omnichannel-chat-sdk';
-import './App.css';
+import './WebChat.css';
 
 
 const omnichannelConfig = {
@@ -12,7 +12,7 @@ const omnichannelConfig = {
 
 console.log(omnichannelConfig);
 
-function App() {
+function WebChat() {
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
   const [chatAdapter, setChatAdapter] = useState<any>(undefined);
   const [hasChatStarted, setHasChatStarted] = useState(false);
@@ -86,4 +86,4 @@ function App() {
   );
 }
 
-export default App;
+export default WebChat;
