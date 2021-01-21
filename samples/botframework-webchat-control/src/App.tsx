@@ -1,15 +1,27 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import ReactWebChat, {createDirectLine} from 'botframework-webchat';
+import React, { useCallback, useEffect, useState } from 'react';
+import ReactWebChat from 'botframework-webchat';
+import { OmnichannelChatSDK } from '@microsoft/omnichannel-chat-sdk';
 import './App.css';
 
+const omnichannelConfig = {
+  orgId: process.env.REACT_APP_orgId || '',
+  orgUrl: process.env.REACT_APP_orgUrl || '',
+  widgetId: process.env.REACT_APP_widgetId || ''
+};
+
+console.log(omnichannelConfig);
+
 function App() {
-  const [token, setToken] = useState();
+  const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
+  const [chatAdapter, setChatAdapter] = useState<any>(undefined);
+  const [hasChatStarted, setHasChatStarted] = useState(false);
+  // const [token, setToken] = useState();
 
   useEffect(() => {
     const init = async () => {
-      const res = await fetch('https://webchat-mockbot.azurewebsites.net/directline/token', { method: 'POST' });
-      const { token } = await res.json();
-      setToken(token);
+      const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+      await chatSDK.initialize();
+      setChatSDK(chatSDK);
     }
 
     init();
@@ -20,19 +32,38 @@ function App() {
     height: '100vh'
   };
 
-  const directLine = useMemo(() => createDirectLine({ token }), [token]);
+  const startChat = useCallback(async () => {
+    console.log('[startChat]');
+    await chatSDK?.startChat();
+
+    const chatAdapter = await chatSDK?.createChatAdapter();
+    setChatAdapter(chatAdapter);
+
+    setHasChatStarted(true);
+  }, [chatSDK]);
+
+  const endChat = useCallback(async () => {
+    console.log('[endChat]');
+    await chatSDK?.endChat();
+    setChatAdapter(undefined);
+    setHasChatStarted(false);
+  }, [chatSDK]);
 
   return (
     <>
       <div>
-        <button> Start </button>
-        <button> End </button>
+        <button onClick={startChat}> Start </button>
+        <button onClick={endChat}> End </button>
       </div>
-      <div style={chatStyle}>
-        <ReactWebChat
-          directLine={directLine}
-        />
-      </div>
+      {
+        hasChatStarted && chatAdapter && <div className="chat-container" style={chatStyle}>
+          <ReactWebChat
+            userID="teamsvisitor"
+            directLine={chatAdapter}
+            sendTypingIndicator={true}
+          />
+        </div>
+      }
     </>
   );
 }
