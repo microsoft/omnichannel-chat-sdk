@@ -15,7 +15,6 @@ function App() {
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
   const [chatAdapter, setChatAdapter] = useState<any>(undefined);
   const [hasChatStarted, setHasChatStarted] = useState(false);
-  // const [token, setToken] = useState();
 
   useEffect(() => {
     const init = async () => {
