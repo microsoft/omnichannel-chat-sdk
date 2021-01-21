@@ -16,7 +16,14 @@ describe('createVoiceVideoCalling', () => {
         isInitialized: jest.fn().mockResolvedValue(true),
         registerEvent: jest.fn((eventName: string, callback: Function) => {}),
         isMicrophoneMuted: jest.fn(),
-        toggleMute: jest.fn().mockResolvedValue(Promise.resolve())
+        toggleMute: jest.fn().mockResolvedValue(Promise.resolve()),
+        isRemoteVideoEnabled: jest.fn().mockResolvedValue(true),
+        isLocalVideoEnabled: jest.fn().mockResolvedValue(true),
+        toggleLocalVideo: jest.fn().mockResolvedValue(Promise.resolve()),
+        isInACall: jest.fn().mockResolvedValue(true),
+        renderVideoStreams: jest.fn(),
+        disposeVideoRenderers: jest.fn(),
+        dispose: jest.fn()
     });
 
     describe('Functionalities', () => {
@@ -90,9 +97,177 @@ describe('createVoiceVideoCalling', () => {
             await proxy.initialize(params);
             jest.spyOn(proxy, 'toggleMute');
 
-            await proxy.toggleMute();
+            proxy.toggleMute();
 
             expect((proxy as typeof VoiceVideoCallingProxy).callingParams.chatToken.chatId).not.toBe(undefined);
+        });
+
+        it('VoiceVideoCallingProxy.isRemoteVideoEnabled() should have ChatId defined', async() => {
+            const proxy = await createVoiceVideoCalling();
+
+            const params = {
+                environment: 'prod',
+                logger: {
+                    logInfo: () => {}
+                },
+                chatToken: {chatId: 'chatId'},
+                OCClient: {
+                    makeSecondaryChannelEventRequest: () => {}
+                },
+                selfVideoHTMLElementId: 'selfVideoHTMLElementId',
+                remoteVideoHTMLElementId: 'remoteVideoHTMLElementId'
+            };
+
+            await proxy.initialize(params);
+            jest.spyOn(proxy, 'isRemoteVideoEnabled');
+
+            proxy.isRemoteVideoEnabled();
+
+            expect((proxy as typeof VoiceVideoCallingProxy).callingParams.chatToken.chatId).not.toBe(undefined);
+        });
+
+        it('VoiceVideoCallingProxy.isLocalVideoEnabled() should have ChatId defined', async() => {
+            const proxy = await createVoiceVideoCalling();
+
+            const params = {
+                environment: 'prod',
+                logger: {
+                    logInfo: () => {}
+                },
+                chatToken: {chatId: 'chatId'},
+                OCClient: {
+                    makeSecondaryChannelEventRequest: () => {}
+                },
+                selfVideoHTMLElementId: 'selfVideoHTMLElementId',
+                remoteVideoHTMLElementId: 'remoteVideoHTMLElementId'
+            };
+
+            await proxy.initialize(params);
+            jest.spyOn(proxy, 'isLocalVideoEnabled');
+
+            proxy.isLocalVideoEnabled();
+
+            expect((proxy as typeof VoiceVideoCallingProxy).callingParams.chatToken.chatId).not.toBe(undefined);
+        });
+
+        it('VoiceVideoCallingProxy.toggleLocalVideo() should have ChatId defined', async() => {
+            const proxy = await createVoiceVideoCalling();
+
+            const params = {
+                environment: 'prod',
+                logger: {
+                    logInfo: () => {}
+                },
+                chatToken: {chatId: 'chatId'},
+                OCClient: {
+                    makeSecondaryChannelEventRequest: () => {}
+                },
+                selfVideoHTMLElementId: 'selfVideoHTMLElementId',
+                remoteVideoHTMLElementId: 'remoteVideoHTMLElementId'
+            };
+
+            await proxy.initialize(params);
+            jest.spyOn(proxy, 'toggleLocalVideo');
+
+            await proxy.toggleLocalVideo();
+
+            expect((proxy as typeof VoiceVideoCallingProxy).callingParams.chatToken.chatId).not.toBe(undefined);
+        });
+
+        it('VoiceVideoCallingProxy.isInACall() should have ChatId defined', async() => {
+            const proxy = await createVoiceVideoCalling();
+
+            const params = {
+                environment: 'prod',
+                logger: {
+                    logInfo: () => {}
+                },
+                chatToken: {chatId: 'chatId'},
+                OCClient: {
+                    makeSecondaryChannelEventRequest: () => {}
+                },
+                selfVideoHTMLElementId: 'selfVideoHTMLElementId',
+                remoteVideoHTMLElementId: 'remoteVideoHTMLElementId'
+            };
+
+            await proxy.initialize(params);
+            jest.spyOn(proxy, 'isInACall');
+
+            proxy.isInACall();
+
+            expect((proxy as typeof VoiceVideoCallingProxy).callingParams.chatToken.chatId).not.toBe(undefined);
+        });
+
+        it('VoiceVideoCallingProxy.renderVideoStreams() should have ChatId defined', async() => {
+            const proxy = await createVoiceVideoCalling();
+
+            const params = {
+                environment: 'prod',
+                logger: {
+                    logInfo: () => {}
+                },
+                chatToken: {chatId: 'chatId'},
+                OCClient: {
+                    makeSecondaryChannelEventRequest: () => {}
+                },
+                selfVideoHTMLElementId: 'selfVideoHTMLElementId',
+                remoteVideoHTMLElementId: 'remoteVideoHTMLElementId'
+            };
+
+            await proxy.initialize(params);
+            jest.spyOn(proxy, 'renderVideoStreams');
+
+            proxy.renderVideoStreams();
+
+            expect((proxy as typeof VoiceVideoCallingProxy).callingParams.chatToken.chatId).not.toBe(undefined);
+        });
+
+        it('VoiceVideoCallingProxy.disposeVideoRenderers() should have ChatId defined', async() => {
+            const proxy = await createVoiceVideoCalling();
+
+            const params = {
+                environment: 'prod',
+                logger: {
+                    logInfo: () => {}
+                },
+                chatToken: {chatId: 'chatId'},
+                OCClient: {
+                    makeSecondaryChannelEventRequest: () => {}
+                },
+                selfVideoHTMLElementId: 'selfVideoHTMLElementId',
+                remoteVideoHTMLElementId: 'remoteVideoHTMLElementId'
+            };
+
+            await proxy.initialize(params);
+            jest.spyOn(proxy, 'disposeVideoRenderers');
+
+            proxy.disposeVideoRenderers();
+
+            expect((proxy as typeof VoiceVideoCallingProxy).callingParams.chatToken.chatId).not.toBe(undefined);
+        });
+
+        it('VoiceVideoCallingProxy.dispose() should have callingParams undefined', async() => {
+            const proxy = await createVoiceVideoCalling();
+
+            const params = {
+                environment: 'prod',
+                logger: {
+                    logInfo: () => {}
+                },
+                chatToken: {chatId: 'chatId'},
+                OCClient: {
+                    makeSecondaryChannelEventRequest: () => {}
+                },
+                selfVideoHTMLElementId: 'selfVideoHTMLElementId',
+                remoteVideoHTMLElementId: 'remoteVideoHTMLElementId'
+            };
+
+            await proxy.initialize(params);
+            jest.spyOn(proxy, 'dispose');
+
+            proxy.dispose();
+
+            expect((proxy as typeof VoiceVideoCallingProxy).callingParams).toBe(undefined);
         });
 
         it('VoiceVideoCallingProxy.onCallAdded() should call VoiceVideoCallingProxy.addEventListener()', async () => {
