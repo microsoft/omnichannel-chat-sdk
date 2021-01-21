@@ -15,6 +15,8 @@
 }
 
 .chat-container {
+    display: flex;
+    flex-direction: column;
     min-width: 400px;
     max-width: 400px;
     min-height: 600px;
@@ -26,13 +28,11 @@
     bottom: 0;
     border-radius: 4px;
     margin: 0 20px 60px 0;
-    display: flex;
-    flex-direction: column;
     box-shadow: 0 0 15px 2px rgb(22, 27, 34, 0.3);
 }
 
 .chat-header {
-    border-bottom: black solid 1px;
+    border-bottom: #E6E6E6 solid 1px;
     padding: 10px;
     display: flex;
     justify-content: space-between;
