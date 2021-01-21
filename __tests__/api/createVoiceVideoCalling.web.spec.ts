@@ -12,7 +12,8 @@ describe('createVoiceVideoCalling', () => {
     (window as any).Microsoft.OmniChannel.SDK.VoiceVideoCalling = {};
     (window as any).Microsoft.OmniChannel.SDK.VoiceVideoCalling.getInstance = () => ({
         load: jest.fn().mockResolvedValue(Promise.resolve()),
-        isInitialized: jest.fn().mockResolvedValue(true)
+        isInitialized: jest.fn().mockResolvedValue(true),
+        registerEvent: jest.fn((eventName: string, callback: Function) => {})
     });
 
     describe('Functionalities', () => {
@@ -41,6 +42,48 @@ describe('createVoiceVideoCalling', () => {
             await createVoiceVideoCalling({logger});
             expect(proxy.load).toHaveBeenCalledTimes(1);
             expect(proxy.load.mock.calls[0][0]).toMatchObject(logger);
+        });
+
+        it('VoiceVideoCallingProxy.onCallAdded() should call VoiceVideoCallingProxy.addEventListener()', async () => {
+            const proxy = await VoiceVideoCallingProxy.getInstance();
+            jest.spyOn(proxy, 'addEventListener');
+            proxy.onCallAdded(() => {});
+            expect(proxy.addEventListener).toHaveBeenCalledTimes(1);
+        });
+
+        it('VoiceVideoCallingProxy.onLocalVideoStreamAdded() should call VoiceVideoCallingProxy.addEventListener()', async () => {
+            const proxy = await VoiceVideoCallingProxy.getInstance();
+            jest.spyOn(proxy, 'addEventListener');
+            proxy.onLocalVideoStreamAdded(() => {});
+            expect(proxy.addEventListener).toHaveBeenCalledTimes(1);
+        });
+
+        it('VoiceVideoCallingProxy.onLocalVideoStreamRemoved() should call VoiceVideoCallingProxy.addEventListener()', async () => {
+            const proxy = await VoiceVideoCallingProxy.getInstance();
+            jest.spyOn(proxy, 'addEventListener');
+            proxy.onLocalVideoStreamRemoved(() => {});
+            expect(proxy.addEventListener).toHaveBeenCalledTimes(1);
+        });
+
+        it('VoiceVideoCallingProxy.onRemoteVideoStreamAdded() should call VoiceVideoCallingProxy.addEventListener()', async () => {
+            const proxy = await VoiceVideoCallingProxy.getInstance();
+            jest.spyOn(proxy, 'addEventListener');
+            proxy.onRemoteVideoStreamAdded(() => {});
+            expect(proxy.addEventListener).toHaveBeenCalledTimes(1);
+        });
+
+        it('VoiceVideoCallingProxy.onRemoteVideoStreamRemoved() should call VoiceVideoCallingProxy.addEventListener()', async () => {
+            const proxy = await VoiceVideoCallingProxy.getInstance();
+            jest.spyOn(proxy, 'addEventListener');
+            proxy.onRemoteVideoStreamRemoved(() => {});
+            expect(proxy.addEventListener).toHaveBeenCalledTimes(1);
+        });
+
+        it('VoiceVideoCallingProxy.onCallDisconnected() should call VoiceVideoCallingProxy.addEventListener()', async () => {
+            const proxy = await VoiceVideoCallingProxy.getInstance();
+            jest.spyOn(proxy, 'addEventListener');
+            proxy.onCallDisconnected(() => {});
+            expect(proxy.addEventListener).toHaveBeenCalledTimes(1);
         });
     });
 });
