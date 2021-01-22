@@ -3,10 +3,13 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import WebChat from './components/WebChat/WebChat';
 import reportWebVitals from './reportWebVitals';
+import { StateProvider } from './context';
 
 ReactDOM.render(
   <React.StrictMode>
-    <WebChat />
+    <StateProvider>
+      <WebChat />
+    </StateProvider>
   </React.StrictMode>,
   document.getElementById('root')
 );

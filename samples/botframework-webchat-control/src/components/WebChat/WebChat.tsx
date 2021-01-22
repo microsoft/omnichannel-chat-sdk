@@ -1,8 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useContext } from 'react';
 import ReactWebChat from 'botframework-webchat';
 import { IRawMessage, OmnichannelChatSDK } from '@microsoft/omnichannel-chat-sdk';
 import { MessageCircle, X} from 'react-feather';
+import Loading from '../Loading/Loading';
 import './WebChat.css';
+import { ActionType, Store } from '../../context';
 
 const omnichannelConfig = {
   orgId: process.env.REACT_APP_orgId || '',
@@ -13,6 +15,7 @@ const omnichannelConfig = {
 console.log(omnichannelConfig);
 
 function WebChat() {
+  const {state, dispatch} = useContext(Store);
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
   const [chatAdapter, setChatAdapter] = useState<any>(undefined);
   const [hasChatStarted, setHasChatStarted] = useState(false);
@@ -24,24 +27,29 @@ function WebChat() {
       setChatSDK(chatSDK);
     }
 
+    console.log(state);
     init();
-  }, []);
+  }, [state]);
 
   const onNewMessage = useCallback((message: IRawMessage) => {
     console.log(`[onNewMessage] ${message.content}`);
-  }, [chatSDK]);
+    dispatch({type: ActionType.SET_LOADING, payload: false});
+  }, [state, dispatch, chatAdapter]);
 
   const onTypingEvent = useCallback(() => {
     console.log(`[onTypingEvent]`);
-  }, [chatSDK]);
+  }, []);
 
   const onAgentEndSession = useCallback(() => {
     console.log(`[onAgentEndSession]`);
-  }, [chatSDK]);
+  }, []);
 
   const startChat = useCallback(async () => {
     console.log('[startChat]');
+
     await chatSDK?.startChat();
+    setHasChatStarted(true);
+    dispatch({type: ActionType.SET_LOADING, payload: true});
 
     chatSDK?.onNewMessage(onNewMessage);
     chatSDK?.onTypingEvent(onTypingEvent);
@@ -52,11 +60,11 @@ function WebChat() {
 
     // Recommended way to listen to messages when using WebChat
     (chatAdapter as any).activity$.subscribe((activity: any) => {
-        console.log(`[activity] ${activity.text}`);
+      console.log(`[activity] ${activity.text}`);
+      dispatch({type: ActionType.SET_LOADING, payload: false});
     });
 
-    setHasChatStarted(true);
-  }, [chatSDK]);
+  }, [chatSDK, state, chatAdapter, dispatch, onAgentEndSession, onNewMessage, onTypingEvent]);
 
   const endChat = useCallback(async () => {
     console.log('[endChat]');
@@ -68,25 +76,30 @@ function WebChat() {
   return (
     <>
       <div>
-      {
-        !hasChatStarted && <div className="chat-button" onClick={startChat}>
-          <MessageCircle color='white' />
-        </div>
-      }
+        {
+          !hasChatStarted && <div className="chat-button" onClick={startChat}>
+            <MessageCircle color='white' />
+          </div>
+        }
       </div>
       {
-        hasChatStarted && chatAdapter && <div className="chat-container">
+        hasChatStarted && <div className="chat-container">
           <div className="chat-header">
             <span> Chat </span>
             <div onClick={endChat}>
               <X />
             </div>
           </div>
-          <ReactWebChat
-            userID="teamsvisitor"
-            directLine={chatAdapter}
-            sendTypingIndicator={true}
-          />
+          {
+            state.isLoading && <Loading />
+          }
+          {
+            !state.isLoading && hasChatStarted && chatAdapter && <ReactWebChat
+              userID="teamsvisitor"
+              directLine={chatAdapter}
+              sendTypingIndicator={true}
+            />
+          }
         </div>
       }
     </>
