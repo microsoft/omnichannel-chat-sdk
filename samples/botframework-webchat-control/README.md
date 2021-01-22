@@ -8,14 +8,14 @@ The sample app includes the following scenarios:
 
 - [x] Start Chat
 - [x] End Chat
-- [ ] Incoming messages
-- [ ] Incoming image attachments
-- [ ] Incoming file attachments of other supported formats
-- [ ] Outgoing messages
-- [ ] Outgoing file attachments
-- [ ] Receive typing
-- [ ] Send typing
-- [ ] Receive agent end session event
+- [x] Incoming messages
+- [x] Incoming image attachments
+- [x] Incoming file attachments of other supported formats
+- [x] Outgoing messages
+- [x] Outgoing file attachments
+- [x] Receive typing
+- [x] Send typing
+- [x] Receive agent end session event
 - [ ] Download transcript
 - [ ] Email transcript
 - [ ] Pre-Chat Survey
