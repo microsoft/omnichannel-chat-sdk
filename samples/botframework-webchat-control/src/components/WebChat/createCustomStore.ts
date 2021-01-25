@@ -1,23 +1,6 @@
 import {createStore} from 'botframework-webchat';
-
-export interface IWebChatAction {
-    type: string;
-    payload: object;
-}
-
-export interface IResultAction {
-    dispatchAction: IWebChatAction;
-    nextAction: IWebChatAction;
-}
-
-export interface IWebChatMiddleware {
-    apply(action: any): IResultAction;
-    applicable(action: any): boolean;
-}
-
-export interface IMiddlewareCollection {
-    [name: string]: IWebChatMiddleware;
-}
+import {IMiddlewareCollection} from '../../interfaces/IMiddlewareCollection';
+import {IWebChatMiddleware} from '../../interfaces/IWebChatMiddleware';
 
 class CustomStore {
     private static _instance: CustomStore;
@@ -43,7 +26,22 @@ class CustomStore {
         return createStore(
             {}, // initial state
             ({ dispatch }: any) => (next: any) => (action: any) => {
-                console.log(`[Store] ${action.type}`);
+                // console.log(`[Store] ${action.type}`);
+                let nextAction = action;
+                if (action && action.payload) {
+                    for (const name of Object.keys(this.middlewares)) {
+                        const currentMiddleware = this.middlewares[name];
+                        if (currentMiddleware.applicable(nextAction)) {
+                            const result = currentMiddleware.apply(nextAction);
+                            if (result.dispatchAction) {
+                                dispatch(result.dispatchAction);
+                            }
+                            if (result.nextAction) {
+                                nextAction = result.nextAction;
+                            }
+                        }
+                    }
+                }
                 return next(action);
             }
         )

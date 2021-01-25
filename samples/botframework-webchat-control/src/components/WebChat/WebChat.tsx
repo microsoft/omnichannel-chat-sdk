@@ -7,6 +7,7 @@ import { ActionType, Store } from '../../context';
 import Loading from '../Loading/Loading';
 import './WebChat.css';
 import createCustomStore from './createCustomStore';
+import { createDataMaskingMiddleware } from './createDataMaskingMiddleware';
 
 const omnichannelConfig = {
   orgId: process.env.REACT_APP_orgId || '',
@@ -28,8 +29,12 @@ function WebChat() {
       await chatSDK.initialize();
       setChatSDK(chatSDK);
 
+      const chatConfig = await chatSDK.getLiveChatConfig();
+
       const store = createCustomStore();
       setWebChatStore(store.create());
+
+      store.subscribe('DataMasking', createDataMaskingMiddleware(chatConfig));
     }
 
     console.log(state);
