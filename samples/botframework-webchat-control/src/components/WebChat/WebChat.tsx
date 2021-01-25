@@ -11,6 +11,7 @@ import createCustomStore from './createCustomStore';
 import { createDataMaskingMiddleware } from './createDataMaskingMiddleware';
 import './WebChat.css';
 import ChatHeader from '../ChatHeader/ChatHeader';
+import ActionBar from '../ActionBar/ActionBar';
 
 const omnichannelConfig = {
   orgId: process.env.REACT_APP_orgId || '',
@@ -60,7 +61,7 @@ function WebChat() {
   const onNewMessage = useCallback((message: IRawMessage) => {
     console.log(`[onNewMessage] ${message.content}`);
     dispatch({type: ActionType.SET_LOADING, payload: false});
-  }, [state, dispatch, chatAdapter]);
+  }, [state, dispatch]);
 
   const onTypingEvent = useCallback(() => {
     console.log(`[onTypingEvent]`);
@@ -194,20 +195,10 @@ function WebChat() {
             />
           }
           {
-            !state.isLoading && state.hasChatStarted && chatAdapter && <div className="action-bar">
-              <Download
-                size={'16'}
-                color='rgb(22, 27, 34)'
-                className='download-button'
-                onClick={downloadTranscript}
-              />
-              <Mail
-                size={'16'}
-                color='rgb(22, 27, 34)'
-                className='email-button'
-                onClick={emailTranscript}
-              />
-            </div>
+            !state.isLoading && state.hasChatStarted && chatAdapter && <ActionBar
+              onDownloadClick={downloadTranscript}
+              onEmailTranscriptClick={emailTranscript}
+            />
           }
         </div>
       }

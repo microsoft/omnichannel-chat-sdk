@@ -14,15 +14,3 @@
     margin: 0 20px 60px 0;
     box-shadow: 0 0 15px 2px rgb(22, 27, 34, 0.3);
 }
-
-.action-bar {
-    padding: 5px 12px;
-}
-
-.download-button {
-    padding: 0 2px 0 0;
-}
-
-.email-button {
-    padding: 0 2px 0 2px;
-}
