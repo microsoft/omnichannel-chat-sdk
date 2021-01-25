@@ -5,6 +5,7 @@ import { Download, Mail, MessageCircle, X} from 'react-feather';
 import IChatTranscriptBody from '@microsoft/omnichannel-chat-sdk/lib/core/IChatTranscriptBody';
 import { ActionType, Store } from '../../context';
 import Loading from '../Loading/Loading';
+import ChatButton from '../ChatButton/ChatButton';
 import createCustomStore from './createCustomStore';
 import { createDataMaskingMiddleware } from './createDataMaskingMiddleware';
 import './WebChat.css';
@@ -139,9 +140,7 @@ function WebChat() {
     <>
       <div>
         {
-          !state.hasChatStarted && <div className="chat-button" onClick={startChat}>
-            <MessageCircle color='white' />
-          </div>
+          !state.hasChatStarted && <ChatButton onClick={startChat} />
         }
       </div>
       {
