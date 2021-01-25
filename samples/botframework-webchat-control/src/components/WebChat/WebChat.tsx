@@ -69,7 +69,7 @@ function WebChat() {
     });
 
     setChatAdapter(chatAdapter);
-  }, [chatSDK, state, dispatch, onAgentEndSession, onNewMessage, onTypingEvent]);
+  }, [chatSDK, chatAdapter, state, dispatch, onAgentEndSession, onNewMessage, onTypingEvent]);
 
   const endChat = useCallback(async () => {
     console.log('[endChat]');
@@ -123,20 +123,22 @@ function WebChat() {
               store={webChatStore}
             />
           }
-          <div className="action-bar">
-            <Download
-              size={'16'}
-              color='rgb(22, 27, 34)'
-              className='download-button'
-              onClick={downloadTranscript}
-            />
-            <Mail
-              size={'16'}
-              color='rgb(22, 27, 34)'
-              className='email-button'
-              onClick={emailTranscript}
-            />
-          </div>
+          {
+            !state.isLoading && state.hasChatStarted && chatAdapter && <div className="action-bar">
+              <Download
+                size={'16'}
+                color='rgb(22, 27, 34)'
+                className='download-button'
+                onClick={downloadTranscript}
+              />
+              <Mail
+                size={'16'}
+                color='rgb(22, 27, 34)'
+                className='email-button'
+                onClick={emailTranscript}
+              />
+            </div>
+          }
         </div>
       }
     </>
