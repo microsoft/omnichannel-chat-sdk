@@ -22,12 +22,25 @@ function WebChat() {
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
   const [chatAdapter, setChatAdapter] = useState<any>(undefined);
   const [webChatStore, setWebChatStore] = useState(undefined);
+  const [VoiceVideoCallingSDK, setVoiceVideoCallingSDK] = useState(undefined);
+  const [incomingCall, setIncomingCall] = useState(false);
 
   useEffect(() => {
     const init = async () => {
       const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
       await chatSDK.initialize();
       setChatSDK(chatSDK);
+
+      if ((chatSDK as any).getVoiceVideoCalling) {
+        try {
+          const VoiceVideoCalling = await (chatSDK as any).getVoiceVideoCalling();
+          VoiceVideoCalling.setDebug(true);
+          setVoiceVideoCallingSDK(VoiceVideoCalling);
+          console.log("VoiceVideoCalling loaded");
+        } catch (e) {
+          console.log(`Failed to load VoiceVideoCalling: ${e}`);
+        }
+      }
 
       const chatConfig = await chatSDK.getLiveChatConfig();
 
@@ -74,7 +87,29 @@ function WebChat() {
     });
 
     setChatAdapter(chatAdapter);
-  }, [chatSDK, chatAdapter, state, dispatch, onAgentEndSession, onNewMessage, onTypingEvent]);
+
+    if ((chatSDK as any).getVoiceVideoCalling) {
+      const chatToken: any = await chatSDK?.getChatToken();
+      try {
+        await (VoiceVideoCallingSDK as any).initialize({
+          chatToken,
+          selfVideoHTMLElementId: 'selfVideo',
+          remoteVideoHTMLElementId: 'remoteVideo',
+          environment: 'test',
+          OCClient: chatSDK?.OCClient
+        });
+        console.log("VoiceVideoCallingProxy initialized!");
+        console.log(VoiceVideoCallingSDK);
+      } catch (e) {
+        console.error("Failed to initialize VoiceVideoCalling!");
+        console.error(e);
+      }
+
+      (VoiceVideoCallingSDK as any).onCallAdded(() => {
+        setIncomingCall(true);
+      });
+    }
+  }, [chatSDK, chatAdapter, state, dispatch, onAgentEndSession, onNewMessage, onTypingEvent, VoiceVideoCallingSDK]);
 
   const endChat = useCallback(async () => {
     console.log('[endChat]');
