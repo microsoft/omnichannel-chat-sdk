@@ -45,13 +45,6 @@ function WebChat() {
           console.log(`Failed to load VoiceVideoCalling: ${e}`);
         }
       }
-
-      const chatConfig = await chatSDK.getLiveChatConfig();
-
-      const store = createCustomStore();
-      setWebChatStore(store.create());
-
-      store.subscribe('DataMasking', createDataMaskingMiddleware(chatConfig));
     }
 
     console.log(state);
@@ -73,6 +66,12 @@ function WebChat() {
 
   const startChat = useCallback(async () => {
     console.log('[startChat]');
+
+    const chatConfig = await chatSDK?.getLiveChatConfig();
+    const store = createCustomStore();
+    setWebChatStore(store.create());
+
+    store.subscribe('DataMasking', createDataMaskingMiddleware(chatConfig));
 
     await chatSDK?.startChat();
     dispatch({type: ActionType.SET_CHAT_STARTED, payload: true});
