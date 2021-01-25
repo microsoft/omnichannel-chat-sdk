@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useState, useContext } from 'react';
 import ReactWebChat from 'botframework-webchat';
 import { IRawMessage, OmnichannelChatSDK } from '@microsoft/omnichannel-chat-sdk';
-import { MessageCircle, X} from 'react-feather';
+import { Download, Mail, MessageCircle, X} from 'react-feather';
+import IChatTranscriptBody from '@microsoft/omnichannel-chat-sdk/lib/core/IChatTranscriptBody';
+import { ActionType, Store } from '../../context';
 import Loading from '../Loading/Loading';
 import './WebChat.css';
-import { ActionType, Store } from '../../context';
 
 const omnichannelConfig = {
   orgId: process.env.REACT_APP_orgId || '',
@@ -17,7 +18,7 @@ console.log(omnichannelConfig);
 function WebChat() {
   const {state, dispatch} = useContext(Store);
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
-  const [chatAdapter, setChatAdapter] = useState<any>(undefined);
+  const [chatAdapter, setChatAdapter] = useState<any>({});
 
   useEffect(() => {
     const init = async () => {
@@ -72,6 +73,23 @@ function WebChat() {
     dispatch({type: ActionType.SET_CHAT_STARTED, payload: false});
   }, [chatSDK]);
 
+  const downloadTranscript = useCallback(async () => {
+    console.log('[downloadTranscript]');
+    const transcript = await chatSDK?.getLiveChatTranscript();
+    console.log(transcript);
+  }, [chatSDK]);
+
+  const emailTranscript = useCallback(async () => {
+    console.log('[emailTranscript]');
+    const transcriptBody: IChatTranscriptBody = {
+      emailAddress: process.env.REACT_APP_email as string,
+      attachmentMessage: 'Transcript',
+      locale: 'en'
+    }
+    console.log(transcriptBody);
+    await chatSDK?.emailLiveChatTranscript(transcriptBody);
+  }, [chatSDK]);
+
   return (
     <>
       <div>
@@ -84,7 +102,7 @@ function WebChat() {
       {
         state.hasChatStarted && <div className="chat-container">
           <div className="chat-header">
-            <span> Chat </span>
+            <span> Live Chat </span>
             <div onClick={endChat}>
               <X />
             </div>
@@ -99,6 +117,20 @@ function WebChat() {
               sendTypingIndicator={true}
             />
           }
+          <div className="action-bar">
+            <Download
+              size={'16'}
+              color='rgb(22, 27, 34)'
+              className='download-button'
+              onClick={downloadTranscript}
+            />
+            <Mail
+              size={'16'}
+              color='rgb(22, 27, 34)'
+              className='email-button'
+              onClick={emailTranscript}
+            />
+          </div>
         </div>
       }
     </>

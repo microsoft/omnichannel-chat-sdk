@@ -37,3 +37,15 @@
     display: flex;
     justify-content: space-between;
 }
+
+.action-bar {
+    padding: 5px 12px;
+}
+
+.download-button {
+    padding: 0 2px 0 0;
+}
+
+.email-button {
+    padding: 0 2px 0 2px;
+}

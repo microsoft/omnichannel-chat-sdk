@@ -16,8 +16,8 @@ The sample app includes the following scenarios:
 - [x] Receive typing
 - [x] Send typing
 - [x] Receive agent end session event
-- [ ] Download transcript
-- [ ] Email transcript
+- [X] Download transcript
+- [X] Email transcript
 - [ ] Pre-Chat Survey
 
 ## Prerequisites
