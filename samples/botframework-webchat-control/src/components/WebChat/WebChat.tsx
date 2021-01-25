@@ -10,6 +10,7 @@ import Calling from '../Calling/Calling';
 import createCustomStore from './createCustomStore';
 import { createDataMaskingMiddleware } from './createDataMaskingMiddleware';
 import './WebChat.css';
+import ChatHeader from '../ChatHeader/ChatHeader';
 
 const omnichannelConfig = {
   orgId: process.env.REACT_APP_orgId || '',
@@ -176,12 +177,10 @@ function WebChat() {
       </div>
       {
         state.hasChatStarted && <div className="chat-container">
-          <div className="chat-header">
-            <span> Live Chat </span>
-            <div onClick={endChat}>
-              <X />
-            </div>
-          </div>
+          <ChatHeader
+            title={'Live Chat with Chat SDK'}
+            onClick={endChat}
+          />
           {
             state.isLoading && <Loading />
           }

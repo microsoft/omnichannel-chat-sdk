@@ -15,13 +15,6 @@
     box-shadow: 0 0 15px 2px rgb(22, 27, 34, 0.3);
 }
 
-.chat-header {
-    border-bottom: #E6E6E6 solid 1px;
-    padding: 10px;
-    display: flex;
-    justify-content: space-between;
-}
-
 .action-bar {
     padding: 5px 12px;
 }
