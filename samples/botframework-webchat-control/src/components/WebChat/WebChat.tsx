@@ -19,8 +19,8 @@ console.log(omnichannelConfig);
 function WebChat() {
   const {state, dispatch} = useContext(Store);
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
-  const [chatAdapter, setChatAdapter] = useState<any>({});
-  const [webChatStore, setWebChatStore] = useState({});
+  const [chatAdapter, setChatAdapter] = useState<any>(undefined);
+  const [webChatStore, setWebChatStore] = useState(undefined);
 
   useEffect(() => {
     const init = async () => {
@@ -29,7 +29,7 @@ function WebChat() {
       setChatSDK(chatSDK);
 
       const store = createCustomStore();
-      setWebChatStore(store);
+      setWebChatStore(store.create());
     }
 
     console.log(state);
@@ -61,7 +61,6 @@ function WebChat() {
     chatSDK?.onAgentEndSession(onAgentEndSession);
 
     const chatAdapter = await chatSDK?.createChatAdapter();
-    setChatAdapter(chatAdapter);
 
     // Recommended way to listen to messages when using WebChat
     (chatAdapter as any).activity$.subscribe((activity: any) => {
@@ -69,7 +68,8 @@ function WebChat() {
       dispatch({type: ActionType.SET_LOADING, payload: false});
     });
 
-  }, [chatSDK, state, chatAdapter, dispatch, onAgentEndSession, onNewMessage, onTypingEvent]);
+    setChatAdapter(chatAdapter);
+  }, [chatSDK, state, dispatch, onAgentEndSession, onNewMessage, onTypingEvent]);
 
   const endChat = useCallback(async () => {
     console.log('[endChat]');
