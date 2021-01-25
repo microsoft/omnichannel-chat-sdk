@@ -5,9 +5,9 @@ import { Download, Mail, MessageCircle, X} from 'react-feather';
 import IChatTranscriptBody from '@microsoft/omnichannel-chat-sdk/lib/core/IChatTranscriptBody';
 import { ActionType, Store } from '../../context';
 import Loading from '../Loading/Loading';
-import './WebChat.css';
 import createCustomStore from './createCustomStore';
 import { createDataMaskingMiddleware } from './createDataMaskingMiddleware';
+import './WebChat.css';
 
 const omnichannelConfig = {
   orgId: process.env.REACT_APP_orgId || '',

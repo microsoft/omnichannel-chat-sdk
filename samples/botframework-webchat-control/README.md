@@ -19,6 +19,8 @@ The sample app includes the following scenarios:
 - [X] Download transcript
 - [X] Email transcript
 - [ ] Pre-Chat Survey
+- [X] Data masking middleware
+- [ ] Attachment middleware
 
 ## Prerequisites
 - [React](https://reactjs.org/)

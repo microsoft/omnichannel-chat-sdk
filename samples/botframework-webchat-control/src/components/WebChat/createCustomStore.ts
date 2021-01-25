@@ -17,6 +17,7 @@ class CustomStore {
         return this._instance;
     }
 
+    // Add new middlewares
     public subscribe(name: string, middleware: IWebChatMiddleware): void {
         this.middlewares[name] = middleware;
     }
@@ -31,6 +32,7 @@ class CustomStore {
                 if (action && action.payload) {
                     for (const name of Object.keys(this.middlewares)) {
                         const currentMiddleware = this.middlewares[name];
+                        // Apply middleware if applicable
                         if (currentMiddleware.applicable(nextAction)) {
                             const result = currentMiddleware.apply(nextAction);
                             if (result.dispatchAction) {
