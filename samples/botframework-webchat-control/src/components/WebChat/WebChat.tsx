@@ -6,6 +6,7 @@ import IChatTranscriptBody from '@microsoft/omnichannel-chat-sdk/lib/core/IChatT
 import { ActionType, Store } from '../../context';
 import Loading from '../Loading/Loading';
 import './WebChat.css';
+import createCustomStore from './createCustomStore';
 
 const omnichannelConfig = {
   orgId: process.env.REACT_APP_orgId || '',
@@ -19,12 +20,16 @@ function WebChat() {
   const {state, dispatch} = useContext(Store);
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
   const [chatAdapter, setChatAdapter] = useState<any>({});
+  const [webChatStore, setWebChatStore] = useState({});
 
   useEffect(() => {
     const init = async () => {
       const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
       await chatSDK.initialize();
       setChatSDK(chatSDK);
+
+      const store = createCustomStore();
+      setWebChatStore(store);
     }
 
     console.log(state);
@@ -115,6 +120,7 @@ function WebChat() {
               userID="teamsvisitor"
               directLine={chatAdapter}
               sendTypingIndicator={true}
+              store={webChatStore}
             />
           }
           <div className="action-bar">
