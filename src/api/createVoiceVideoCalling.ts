@@ -85,7 +85,7 @@ export class VoiceVideoCallingProxy {
             accesstoken: this.callingParams?.chatToken.token,
             environment: this.callingParams?.environment || 'prod',
             selfVideoHTMLElementId: this.callingParams?.selfVideoHTMLElementId,
-            remoteVideoHTMLElementId: this.callingParams?.selfVideoHTMLElementId
+            remoteVideoHTMLElementId: this.callingParams?.remoteVideoHTMLElementId
         });
     }
 
