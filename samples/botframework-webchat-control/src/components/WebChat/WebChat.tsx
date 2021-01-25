@@ -6,6 +6,7 @@ import IChatTranscriptBody from '@microsoft/omnichannel-chat-sdk/lib/core/IChatT
 import { ActionType, Store } from '../../context';
 import Loading from '../Loading/Loading';
 import ChatButton from '../ChatButton/ChatButton';
+import Calling from '../Calling/Calling';
 import createCustomStore from './createCustomStore';
 import { createDataMaskingMiddleware } from './createDataMaskingMiddleware';
 import './WebChat.css';
@@ -107,7 +108,37 @@ function WebChat() {
       }
 
       (VoiceVideoCallingSDK as any).onCallAdded(() => {
+        console.log('[WebChat][CallAdded]');
+        (VoiceVideoCallingSDK as any).acceptCall({
+          withVideo: true
+        })
         setIncomingCall(true);
+      });
+
+      (VoiceVideoCallingSDK as any).onCallDisconnected(() => {
+        console.log('[WebChat][CallDisconnected]');
+        // Clean up
+        const remoteVideoElement = document.getElementById('remoteVideo');
+        while (remoteVideoElement?.firstChild) {
+          console.log('[RemoteVideo][Clean Up]');
+          remoteVideoElement.firstChild.remove();
+        }
+      });
+
+      (VoiceVideoCallingSDK as any).onLocalVideoStreamAdded(() => {
+        console.log('[WebChat][LocalVideoStreamAdded]');
+      });
+
+      (VoiceVideoCallingSDK as any).onLocalVideoStreamRemoved(() => {
+        console.log('[WebChat][LocalVideoStreamRemoved]');
+      });
+
+      (VoiceVideoCallingSDK as any).onRemoteVideoStreamAdded(() => {
+        console.log('[WebChat][RemoteVideoStreamAdded]');
+      });
+
+      (VoiceVideoCallingSDK as any).onRemoteVideoStreamRemoved(() => {
+        console.log('[WebChat][RemoteVideoStreamRemoved]');
       });
     }
   }, [chatSDK, chatAdapter, state, dispatch, onAgentEndSession, onNewMessage, onTypingEvent, VoiceVideoCallingSDK]);
@@ -154,6 +185,7 @@ function WebChat() {
           {
             state.isLoading && <Loading />
           }
+          <Calling />
           {
             !state.isLoading && state.hasChatStarted && chatAdapter && <ReactWebChat
               userID="teamsvisitor"

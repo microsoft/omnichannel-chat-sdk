@@ -1,0 +1,37 @@
+.calling {
+    position: absolute;
+    /* background-color: rgb(22, 27, 34, 0.5); */
+    z-index: 5;
+    height: 250px;
+    width: 100%;
+    margin-top: 48px;
+}
+
+.calling > .container {
+    position: relative;
+    height: 100%;
+}
+
+#remoteVideo {
+    position: absolute;
+    /* background-color: rgb(22, 27, 34, 0.5); */
+    height: 100%;
+    width: 100%;
+}
+
+#selfVideo {
+    position: absolute;
+    /* background-color: black; */
+    height: 100px;
+    width: 130px;
+    right: 0;
+    bottom: 0;
+}
+
+#remoteVideo > div {
+    height: 100%;
+}
+
+#remoteVideo > video, #selfVideo > video {
+    object-fit: fill !important;
+}
