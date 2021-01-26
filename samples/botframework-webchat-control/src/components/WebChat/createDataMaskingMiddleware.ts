@@ -17,18 +17,11 @@ export interface IDataMaskingInfo {
 }
 
 class DataMaskingMiddleware implements IWebChatMiddleware {
-    private chatConfig: any;
     private dataMaskingRules: any;
 
-    public constructor (chatConfig: any) {
+    public constructor (dataMaskingRules: any) {
         // console.log(`[DataMaskingMiddleware][constructor]`);
-        this.chatConfig = chatConfig;
-        this.dataMaskingRules = {};
-
-        const { DataMaskingInfo: dataMaskingConfig } = chatConfig;
-
-        const {setting} = dataMaskingConfig;
-        this.dataMaskingRules = setting.msdyn_maskforcustomer? dataMaskingConfig.dataMaskingRules: {};
+        this.dataMaskingRules = dataMaskingRules;
 
         console.log(`[DataMaskingRules]`);
         console.log(this.dataMaskingRules);

@@ -76,11 +76,11 @@ function WebChat() {
 
     console.log('[startChat]');
 
-    const chatConfig = await chatSDK?.getLiveChatConfig();
+    const dataMaskingRules = await chatSDK?.getDataMaskingRules();
     const store = createCustomStore();
     setWebChatStore(store.create());
 
-    store.subscribe('DataMasking', createDataMaskingMiddleware(chatConfig));
+    store.subscribe('DataMasking', createDataMaskingMiddleware(dataMaskingRules));
 
     // Check for active conversation in cache
     const cachedLiveChatContext = localStorage.getItem('liveChatContext');
