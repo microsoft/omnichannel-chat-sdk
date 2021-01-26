@@ -147,6 +147,7 @@ export class VoiceVideoCallingProxy {
             this.debug && console.log(`[VoiceVideoCallingProxy][rejectCall][makeSecondaryChannelEventRequest]`);
         } catch (e) {
             console.error(`[VoiceVideoCallingProxy][rejectCall][makeSecondaryChannelEventRequest] Failure ${e}`);
+            return e;
         }
     }
 
@@ -154,12 +155,12 @@ export class VoiceVideoCallingProxy {
         const callId = this.callingParams?.chatToken.chatId;
         /* istanbul ignore next */
         this.debug && console.log(`[VoiceVideoCallingProxy][stopCall] callId: ${callId}`);
-        this.proxyInstance.stopCall({callId});
+        return this.proxyInstance.stopCall({callId});
     }
 
     public async toggleMute(): Promise<void> {
         const callId = this.callingParams?.chatToken.chatId;
-        this.proxyInstance.toggleMute({callId});
+        return this.proxyInstance.toggleMute({callId});
     }
 
     public isRemoteVideoEnabled(): boolean {
