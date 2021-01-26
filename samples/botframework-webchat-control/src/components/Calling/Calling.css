@@ -37,3 +37,29 @@
 #remoteVideo > video, #selfVideo > video {
     object-fit: fill !important;
 }
+
+.incoming-call-pop-up {
+    z-index: 5;
+    background-color: rgb(22, 27, 34);
+    padding: 15px 0;
+    display: flex;
+    justify-content: center;
+}
+
+.accept-video-call-button {
+    background-color: rgb(60, 60, 61);
+    color: white;
+    padding: 10px;
+}
+
+.accept-voice-call-button {
+    background-color: rgb(60, 60, 61);
+    color: white;
+    padding: 10px;
+}
+
+.reject-call-button {
+    background-color: rgb(240, 73, 27);
+    color: white;
+    padding: 10px;
+}
