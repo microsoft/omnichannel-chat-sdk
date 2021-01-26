@@ -1,18 +1,23 @@
 .calling {
     position: absolute;
-    z-index: 5;
-    height: 250px;
-    width: 100%;
     margin-top: 48px;
+    z-index: 5;
 }
 
 .calling.active {
-    background-color: rgb(22, 27, 34);
+    /* height: 250px; */
+    width: 100%;
 }
 
 .calling > .container {
     position: relative;
-    height: 100%;
+    z-index: 5;
+    width: 100%;
+}
+
+.calling > .container.active {
+    background-color: rgb(22, 27, 34);
+    height: 250px;
 }
 
 #remoteVideo {
@@ -88,25 +93,33 @@
 .current-call-action-bar {
     z-index: 5;
     background-color: rgb(22, 27, 34);
-    padding: 15px 0;
+    padding: 10px 0;
     display: flex;
     justify-content: center;
+    position: relative;
+    bottom: 0;
 }
 
 .toggle-video-button {
     background-color: rgb(60, 60, 61);
     color: white;
     padding: 10px;
+    width: 18px;
+    height: 18px;
 }
 
 .toggle-mute-button {
     background-color: rgb(60, 60, 61);
     color: white;
     padding: 10px;
+    width: 18px;
+    height: 18px;
 }
 
 .stop-call-button {
     background-color: rgb(240, 73, 27);
     color: white;
     padding: 10px;
+    width: 18px;
+    height: 18px;
 }

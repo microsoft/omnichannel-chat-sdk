@@ -12,9 +12,10 @@ const adjustWebChatHeightInVideoCall = () => {
   console.log(`[WebChat][adjustWebChatHeightInVideoCall]`);
   const webChatTranscriptContainer = document.getElementsByClassName('webchat__basic-transcript')[0] as HTMLElement;
   const remoteVideoContainer = document.getElementById('remoteVideo') as HTMLElement;
+  const currentCallActionBar = document.getElementsByClassName('current-call-action-bar')[0] as HTMLElement;
 
-  const newHeight = webChatTranscriptContainer.clientHeight - remoteVideoContainer.clientHeight;
-  webChatTranscriptContainer.style.marginTop = `${remoteVideoContainer.clientHeight}px`;
+  const newHeight = webChatTranscriptContainer.clientHeight - remoteVideoContainer.clientHeight - currentCallActionBar.clientHeight;
+  webChatTranscriptContainer.style.marginTop = `${remoteVideoContainer.clientHeight + currentCallActionBar.clientHeight}px`;
   webChatTranscriptContainer.style.height = `${newHeight}px`;
 }
 
@@ -24,6 +25,16 @@ const adjustWebChatHeightIncomingCall = () => {
   const incomingCallContainer = document.getElementsByClassName('incoming-call-pop-up')[0] as HTMLElement;
 
   const newHeight = webChatTranscriptContainer.clientHeight - incomingCallContainer.clientHeight;
+  webChatTranscriptContainer.style.height = `${newHeight}px`;
+}
+
+const adjustWebChatHeightInVoiceCall = () => {
+  console.log(`[WebChat][adjustWebChatHeightInVoiceCall]`);
+  const webChatTranscriptContainer = document.getElementsByClassName('webchat__basic-transcript')[0] as HTMLElement;
+  const currentCallActionBar = document.getElementsByClassName('current-call-action-bar')[0] as HTMLElement;
+
+  const newHeight = webChatTranscriptContainer.clientHeight - currentCallActionBar.clientHeight;
+  webChatTranscriptContainer.style.marginTop = `${currentCallActionBar.clientHeight}px`;
   webChatTranscriptContainer.style.height = `${newHeight}px`;
 }
 
@@ -77,6 +88,7 @@ function Calling(props: CallingProps) {
 
         setIncomingCall(false);
         setInVideoCall(false);
+        setInVoiceCall(false);
       });
 
       VoiceVideoCallingSDK.onLocalVideoStreamAdded(() => {
@@ -103,7 +115,7 @@ function Calling(props: CallingProps) {
     console.log(`[WebChat][Calling][Accept][Voice]`);
     const {VoiceVideoCallingSDK} = props;
 
-    VoiceVideoCallingSDK.acceptCall({
+    await VoiceVideoCallingSDK.acceptCall({
       withVideo: false
     });
 
@@ -111,7 +123,7 @@ function Calling(props: CallingProps) {
     setInVideoCall(false);
     setInVoiceCall(true);
 
-    // adjustWebChatHeightInVideoCall();
+    adjustWebChatHeightInVoiceCall();
   }, [props]);
 
   const acceptVideoCall = useCallback(async() => {
@@ -148,8 +160,10 @@ function Calling(props: CallingProps) {
     await VoiceVideoCallingSDK.toggleMute();
   }, [props]);
 
-  const stopCallButton = useCallback(() => {
-
+  const stopCallButton = useCallback(async () => {
+    console.log(`[WebChat][Calling][stopCall]`);
+    const {VoiceVideoCallingSDK} = props;
+    await VoiceVideoCallingSDK.stopCall();
   }, [props]);
 
   return (
@@ -164,21 +178,21 @@ function Calling(props: CallingProps) {
           </div>
         </div>
       }
-
       {
-        inVideoCall && <div className={`calling ${inVideoCall? 'active': ''}`}>
-          <div className="container">
+        <div className={`calling ${inVideoCall || inVoiceCall? 'active': ''}`}>
+          <div className={`container ${inVideoCall? 'active': ''}`}>
             <div id="remoteVideo"></div>
             <div id="selfVideo"></div>
           </div>
-        </div>
-      }
-
-      {
-        false && (inVideoCall || inVoiceCall) && <div className="current-call-action-bar">
-          <Video className="toggle-video-button" onClick={toggleVideoButton} />
-          <Mic className="toggle-mute-button" onClick={toggleMuteButton}/>
-          <PhoneOff className="stop-call-button" onClick={stopCallButton}/>
+          <div>
+            {
+              (inVideoCall || inVoiceCall) && <div className="current-call-action-bar">
+                <Video className="toggle-video-button" onClick={toggleVideoButton} />
+                <Mic className="toggle-mute-button" onClick={toggleMuteButton}/>
+                <PhoneOff className="stop-call-button" onClick={stopCallButton}/>
+              </div>
+            }
+          </div>
         </div>
       }
     </>
