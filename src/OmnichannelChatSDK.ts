@@ -218,7 +218,7 @@ class OmnichannelChatSDK {
         return this.conversation?.getMessages();
     }
 
-    public async getDataMaskingRules(): Promise<any> {
+    public async getDataMaskingRules(): Promise<any> {  // eslint-disable-line  @typescript-eslint/no-explicit-any
         return this.dataMaskingRules;
     }
 
