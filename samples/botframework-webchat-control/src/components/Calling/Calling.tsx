@@ -106,6 +106,17 @@ function Calling(props: CallingProps) {
 
         const isLocalVideoEnabled = VoiceVideoCallingSDK.isLocalVideoEnabled();
         setIsLocalVideoEnabled(isLocalVideoEnabled);
+
+        // No video stream available at this point, voice call
+        if (!isLocalVideoEnabled && !isRemoteVideoEnabled) {
+          setIncomingCall(false);
+          setInVideoCall(false);
+          setInVoiceCall(true);
+        } else {
+          setIncomingCall(false);
+          setInVideoCall(true);
+          setInVoiceCall(false);
+        }
       });
 
       VoiceVideoCallingSDK.onLocalVideoStreamRemoved(() => {
@@ -119,6 +130,17 @@ function Calling(props: CallingProps) {
 
         const isLocalVideoEnabled = VoiceVideoCallingSDK.isLocalVideoEnabled();
         setIsLocalVideoEnabled(isLocalVideoEnabled);
+
+        // No video stream available at this point, voice call
+        if (!isLocalVideoEnabled && !isRemoteVideoEnabled) {
+          setIncomingCall(false);
+          setInVideoCall(false);
+          setInVoiceCall(true);
+        } else {
+          setIncomingCall(false);
+          setInVideoCall(true);
+          setInVoiceCall(false);
+        }
       });
 
       VoiceVideoCallingSDK.onRemoteVideoStreamAdded(() => {
@@ -132,6 +154,17 @@ function Calling(props: CallingProps) {
 
         const isLocalVideoEnabled = VoiceVideoCallingSDK.isLocalVideoEnabled();
         setIsLocalVideoEnabled(isLocalVideoEnabled);
+
+        // No video stream available at this point, voice call
+        if (!isLocalVideoEnabled && !isRemoteVideoEnabled) {
+          setIncomingCall(false);
+          setInVideoCall(false);
+          setInVoiceCall(true);
+        } else {
+          setIncomingCall(false);
+          setInVideoCall(true);
+          setInVoiceCall(false);
+        }
       });
 
       VoiceVideoCallingSDK.onRemoteVideoStreamRemoved(() => {
@@ -145,6 +178,17 @@ function Calling(props: CallingProps) {
 
         const isLocalVideoEnabled = VoiceVideoCallingSDK.isLocalVideoEnabled();
         setIsLocalVideoEnabled(isLocalVideoEnabled);
+
+        // No video stream available at this point, voice call
+        if (!isLocalVideoEnabled && !isRemoteVideoEnabled) {
+          setIncomingCall(false);
+          setInVideoCall(false);
+          setInVoiceCall(true);
+        } else {
+          setIncomingCall(false);
+          setInVideoCall(true);
+          setInVoiceCall(false);
+        }
       });
     }
 
@@ -167,6 +211,12 @@ function Calling(props: CallingProps) {
 
     const isMicrophoneMuted = VoiceVideoCallingSDK.isMicrophoneMuted();
     setIsMicrophoneMuted(isMicrophoneMuted);
+
+    const isRemoteVideoEnabled = VoiceVideoCallingSDK.isRemoteVideoEnabled();
+    setIsRemoteVideoEnabled(isRemoteVideoEnabled);
+
+    const isLocalVideoEnabled = VoiceVideoCallingSDK.isLocalVideoEnabled();
+    setIsLocalVideoEnabled(isLocalVideoEnabled);
   }, [props]);
 
   const acceptVideoCall = useCallback(async () => {
@@ -216,6 +266,17 @@ function Calling(props: CallingProps) {
 
     const isLocalVideoEnabled = VoiceVideoCallingSDK.isLocalVideoEnabled();
     setIsLocalVideoEnabled(isLocalVideoEnabled);
+
+    // No video stream available at this point, voice call
+    if (!isLocalVideoEnabled && !isRemoteVideoEnabled) {
+      setIncomingCall(false);
+      setInVideoCall(false);
+      setInVoiceCall(true);
+    } else {
+      setIncomingCall(false);
+      setInVideoCall(true);
+      setInVoiceCall(false);
+    }
   }, [props]);
 
   const toggleMuteButton = useCallback(async () => {
@@ -231,6 +292,17 @@ function Calling(props: CallingProps) {
 
     const isLocalVideoEnabled = VoiceVideoCallingSDK.isLocalVideoEnabled();
     setIsLocalVideoEnabled(isLocalVideoEnabled);
+
+    // No video stream available at this point, voice call
+    if (!isLocalVideoEnabled && !isRemoteVideoEnabled) {
+      setIncomingCall(false);
+      setInVideoCall(false);
+      setInVoiceCall(true);
+    } else {
+      setIncomingCall(false);
+      setInVideoCall(true);
+      setInVoiceCall(false);
+    }
   }, [props]);
 
   const stopCallButton = useCallback(async () => {
@@ -240,7 +312,7 @@ function Calling(props: CallingProps) {
   }, [props]);
 
   const renderToggleVideoButton = () => {
-    if (!isRemoteVideoEnabled && !isLocalVideoEnabled) {
+    if (!isLocalVideoEnabled) {
       return <VideoOff className="toggle-video-button" onClick={toggleVideoButton}/>
     }
     return <Video className="toggle-video-button" onClick={toggleVideoButton}/>
