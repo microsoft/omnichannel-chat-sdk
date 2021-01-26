@@ -58,6 +58,8 @@ function Calling(props: CallingProps) {
         const webChatTranscriptContainer = document.getElementsByClassName('webchat__basic-transcript__scrollable')[0] as HTMLElement;
         webChatTranscriptContainer.style.marginTop = '';
         webChatTranscriptContainer.style.height = '';
+
+        setIncomingCall(false);
       });
 
       (VoiceVideoCallingSDK as any).onLocalVideoStreamAdded(() => {
@@ -81,7 +83,7 @@ function Calling(props: CallingProps) {
   }, []);
 
   return (
-    <div className="calling">
+    <div className={`calling ${incomingCall? 'active': ''}`}>
       <div className="container">
         <div id="remoteVideo"></div>
         <div id="selfVideo"></div>
