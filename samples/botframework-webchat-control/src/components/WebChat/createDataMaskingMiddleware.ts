@@ -5,10 +5,12 @@ import { IWebChatMiddleware } from "../../interfaces/IWebChatMiddleware";
 export interface IDataMaskingRule {
     [key: string]: string;
 }
+
 export interface IDataMaskingSetting {
     msdyn_maskforcustomer: boolean;
     msdyn_maskforagent: boolean;
 }
+
 export interface IDataMaskingInfo {
     dataMaskingRules: IDataMaskingRule;
     setting: IDataMaskingSetting;

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Mic, PhoneOff, Video } from 'react-feather';
-import './Calling.css';
+import { Mic, MicOff, PhoneOff, Video, VideoOff } from 'react-feather';
 import IncomingCall from './IncomingCall';
+import './Calling.css';
 
 interface CallingProps {
   VoiceVideoCallingSDK: any;
@@ -50,6 +50,9 @@ function Calling(props: CallingProps) {
   const [incomingCall, setIncomingCall] = useState(false);
   const [inVideoCall, setInVideoCall] = useState(false);
   const [inVoiceCall, setInVoiceCall] = useState(false);
+  const [isMicrophoneMuted, setIsMicrophoneMuted] = useState(false);
+  const [isRemoteVideoEnabled, setIsRemoteVideoEnabled] = useState(false);
+  const [isLocalVideoEnabled, setIsLocalVideoEnabled] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -94,25 +97,61 @@ function Calling(props: CallingProps) {
 
       VoiceVideoCallingSDK.onLocalVideoStreamAdded(() => {
         console.log('[WebChat][Calling][LocalVideoStreamAdded]');
+
+        const isMicrophoneMuted = VoiceVideoCallingSDK.isMicrophoneMuted();
+        setIsMicrophoneMuted(isMicrophoneMuted);
+
+        const isRemoteVideoEnabled = VoiceVideoCallingSDK.isRemoteVideoEnabled();
+        setIsRemoteVideoEnabled(isRemoteVideoEnabled);
+
+        const isLocalVideoEnabled = VoiceVideoCallingSDK.isLocalVideoEnabled();
+        setIsLocalVideoEnabled(isLocalVideoEnabled);
       });
 
       VoiceVideoCallingSDK.onLocalVideoStreamRemoved(() => {
         console.log('[WebChat][Calling][LocalVideoStreamRemoved]');
+
+        const isMicrophoneMuted = VoiceVideoCallingSDK.isMicrophoneMuted();
+        setIsMicrophoneMuted(isMicrophoneMuted);
+
+        const isRemoteVideoEnabled = VoiceVideoCallingSDK.isRemoteVideoEnabled();
+        setIsRemoteVideoEnabled(isRemoteVideoEnabled);
+
+        const isLocalVideoEnabled = VoiceVideoCallingSDK.isLocalVideoEnabled();
+        setIsLocalVideoEnabled(isLocalVideoEnabled);
       });
 
       VoiceVideoCallingSDK.onRemoteVideoStreamAdded(() => {
         console.log('[WebChat][Calling][RemoteVideoStreamAdded]');
+
+        const isMicrophoneMuted = VoiceVideoCallingSDK.isMicrophoneMuted();
+        setIsMicrophoneMuted(isMicrophoneMuted);
+
+        const isRemoteVideoEnabled = VoiceVideoCallingSDK.isRemoteVideoEnabled();
+        setIsRemoteVideoEnabled(isRemoteVideoEnabled);
+
+        const isLocalVideoEnabled = VoiceVideoCallingSDK.isLocalVideoEnabled();
+        setIsLocalVideoEnabled(isLocalVideoEnabled);
       });
 
       VoiceVideoCallingSDK.onRemoteVideoStreamRemoved(() => {
         console.log('[WebChat][Calling][RemoteVideoStreamRemoved]');
+
+        const isMicrophoneMuted = VoiceVideoCallingSDK.isMicrophoneMuted();
+        setIsMicrophoneMuted(isMicrophoneMuted);
+
+        const isRemoteVideoEnabled = VoiceVideoCallingSDK.isRemoteVideoEnabled();
+        setIsRemoteVideoEnabled(isRemoteVideoEnabled);
+
+        const isLocalVideoEnabled = VoiceVideoCallingSDK.isLocalVideoEnabled();
+        setIsLocalVideoEnabled(isLocalVideoEnabled);
       });
     }
 
     init();
   }, [props]);
 
-  const acceptVoiceCall = useCallback(async() => {
+  const acceptVoiceCall = useCallback(async () => {
     console.log(`[WebChat][Calling][Accept][Voice]`);
     const {VoiceVideoCallingSDK} = props;
 
@@ -125,9 +164,12 @@ function Calling(props: CallingProps) {
     setInVoiceCall(true);
 
     adjustWebChatHeightInVoiceCall();
+
+    const isMicrophoneMuted = VoiceVideoCallingSDK.isMicrophoneMuted();
+    setIsMicrophoneMuted(isMicrophoneMuted);
   }, [props]);
 
-  const acceptVideoCall = useCallback(async() => {
+  const acceptVideoCall = useCallback(async () => {
     console.log(`[WebChat][Calling][Accept][Video]`);
     const {VoiceVideoCallingSDK} = props;
 
@@ -140,25 +182,55 @@ function Calling(props: CallingProps) {
     setInVoiceCall(false);
 
     adjustWebChatHeightInVideoCall();
+
+    const isMicrophoneMuted = VoiceVideoCallingSDK.isMicrophoneMuted();
+    setIsMicrophoneMuted(isMicrophoneMuted);
+
+    const isRemoteVideoEnabled = VoiceVideoCallingSDK.isRemoteVideoEnabled();
+    setIsRemoteVideoEnabled(isRemoteVideoEnabled);
+
+    const isLocalVideoEnabled = VoiceVideoCallingSDK.isLocalVideoEnabled();
+    setIsLocalVideoEnabled(isLocalVideoEnabled);
   }, [props]);
 
-  const rejectCall = useCallback(async() => {
+  const rejectCall = useCallback(async () => {
     console.log(`[WebChat][Calling][Reject]`);
     const {VoiceVideoCallingSDK} = props;
     await VoiceVideoCallingSDK.rejectCall();
+
     setIncomingCall(false);
+    setInVideoCall(false);
+    setInVoiceCall(false);
   }, [props]);
 
   const toggleVideoButton = useCallback(async () => {
     console.log(`[WebChat][Calling][toggleLocalVideo]`);
     const {VoiceVideoCallingSDK} = props;
     await VoiceVideoCallingSDK.toggleLocalVideo();
+
+    const isMicrophoneMuted = VoiceVideoCallingSDK.isMicrophoneMuted();
+    setIsMicrophoneMuted(isMicrophoneMuted);
+
+    const isRemoteVideoEnabled = VoiceVideoCallingSDK.isRemoteVideoEnabled();
+    setIsRemoteVideoEnabled(isRemoteVideoEnabled);
+
+    const isLocalVideoEnabled = VoiceVideoCallingSDK.isLocalVideoEnabled();
+    setIsLocalVideoEnabled(isLocalVideoEnabled);
   }, [props]);
 
   const toggleMuteButton = useCallback(async () => {
     console.log(`[WebChat][Calling][toggleMute]`);
     const {VoiceVideoCallingSDK} = props;
     await VoiceVideoCallingSDK.toggleMute();
+
+    const isMicrophoneMuted = VoiceVideoCallingSDK.isMicrophoneMuted();
+    setIsMicrophoneMuted(isMicrophoneMuted);
+
+    const isRemoteVideoEnabled = VoiceVideoCallingSDK.isRemoteVideoEnabled();
+    setIsRemoteVideoEnabled(isRemoteVideoEnabled);
+
+    const isLocalVideoEnabled = VoiceVideoCallingSDK.isLocalVideoEnabled();
+    setIsLocalVideoEnabled(isLocalVideoEnabled);
   }, [props]);
 
   const stopCallButton = useCallback(async () => {
@@ -166,6 +238,20 @@ function Calling(props: CallingProps) {
     const {VoiceVideoCallingSDK} = props;
     await VoiceVideoCallingSDK.stopCall();
   }, [props]);
+
+  const renderToggleVideoButton = () => {
+    if (!isRemoteVideoEnabled && !isLocalVideoEnabled) {
+      return <VideoOff className="toggle-video-button" onClick={toggleVideoButton}/>
+    }
+    return <Video className="toggle-video-button" onClick={toggleVideoButton}/>
+  }
+
+  const renderToggleMuteButton = () => {
+    if (isMicrophoneMuted) {
+      return <MicOff className="toggle-mute-button" onClick={toggleMuteButton}/>
+    }
+    return <Mic className="toggle-mute-button" onClick={toggleMuteButton}/>
+  }
 
   return (
     <>
@@ -185,8 +271,8 @@ function Calling(props: CallingProps) {
           <div>
             {
               (inVideoCall || inVoiceCall) && <div className="current-call-action-bar">
-                <Video className="toggle-video-button" onClick={toggleVideoButton} />
-                <Mic className="toggle-mute-button" onClick={toggleMuteButton}/>
+                {renderToggleVideoButton()}
+                {renderToggleMuteButton()}
                 <PhoneOff className="stop-call-button" onClick={stopCallButton}/>
               </div>
             }
