@@ -19,6 +19,7 @@ The sample app includes the following scenarios:
 - [X] Download transcript
 - [X] Email transcript
 - [ ] Pre-Chat Survey
+- [X] Reconnect existing chat
 - [X] Data masking middleware
 - [ ] Attachment middleware
 
