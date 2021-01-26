@@ -92,7 +92,7 @@ function Calling(props: CallingProps) {
     }
 
     init();
-  }, []);
+  }, [props]);
 
   const acceptVoiceCall = useCallback(async() => {
     console.log(`[WebChat][Calling][Accept][Voice]`);
@@ -106,7 +106,7 @@ function Calling(props: CallingProps) {
     setInACall(true);
 
     // adjustWebChatHeightInACall();
-  }, [props.VoiceVideoCallingSDK, incomingCall]);
+  }, [props]);
 
   const acceptVideoCall = useCallback(async() => {
     console.log(`[WebChat][Calling][Accept][Video]`);
@@ -120,7 +120,7 @@ function Calling(props: CallingProps) {
     setInACall(true);
 
     // adjustWebChatHeightInACall();
-  }, [props.VoiceVideoCallingSDK, incomingCall]);
+  }, [props]);
 
   const rejectCall = useCallback(async() => {
     console.log(`[WebChat][Calling][Reject]`);
@@ -129,7 +129,7 @@ function Calling(props: CallingProps) {
     await VoiceVideoCallingSDK.rejectCall();
 
     setIncomingCall(false);
-  }, [props.VoiceVideoCallingSDK, incomingCall]);
+  }, [props]);
 
   return (
     <>
