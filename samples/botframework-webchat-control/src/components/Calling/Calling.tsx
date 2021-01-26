@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Mic, Phone, PhoneOff, Video } from 'react-feather';
 import './Calling.css';
+import IncomingCall from './IncomingCall';
 
 interface CallingProps {
   VoiceVideoCallingSDK: any;
@@ -169,14 +170,11 @@ function Calling(props: CallingProps) {
   return (
     <>
       {
-        incomingCall && <div className="incoming-call-pop-up">
-          <span> Incoming call </span>
-          <div>
-            <PhoneOff className="reject-call-button" onClick={rejectCall}/>
-            <Video className="accept-video-call-button" onClick={acceptVideoCall} />
-            <Phone className="accept-voice-call-button" onClick={acceptVoiceCall}/>
-          </div>
-        </div>
+        incomingCall && <IncomingCall
+          rejectCall={rejectCall}
+          acceptVideoCall={acceptVideoCall}
+          acceptVoiceCall={acceptVideoCall}
+        />
       }
       {
         <div className={`calling ${inVideoCall || inVoiceCall? 'active': ''}`}>
