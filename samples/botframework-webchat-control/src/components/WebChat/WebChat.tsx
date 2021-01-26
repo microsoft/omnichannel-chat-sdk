@@ -5,12 +5,12 @@ import IChatTranscriptBody from '@microsoft/omnichannel-chat-sdk/lib/core/IChatT
 import { ActionType, Store } from '../../context';
 import Loading from '../Loading/Loading';
 import ChatButton from '../ChatButton/ChatButton';
+import ChatHeader from '../ChatHeader/ChatHeader';
 import Calling from '../Calling/Calling';
+import ActionBar from '../ActionBar/ActionBar';
 import createCustomStore from './createCustomStore';
 import { createDataMaskingMiddleware } from './createDataMaskingMiddleware';
 import './WebChat.css';
-import ChatHeader from '../ChatHeader/ChatHeader';
-import ActionBar from '../ActionBar/ActionBar';
 
 const omnichannelConfig = {
   orgId: process.env.REACT_APP_orgId || '',
@@ -34,6 +34,12 @@ function WebChat() {
       await chatSDK.initialize();
       setChatSDK(chatSDK);
 
+      const liveChatContext = localStorage.getItem('liveChatContext');
+      if (liveChatContext && Object.keys(JSON.parse(liveChatContext)).length > 0) {
+        console.log("[liveChatContext]");
+        console.log(liveChatContext);
+      }
+
       if ((chatSDK as any).getVoiceVideoCalling) {
         try {
           const VoiceVideoCalling = await (chatSDK as any).getVoiceVideoCalling();
@@ -53,7 +59,7 @@ function WebChat() {
   const onNewMessage = useCallback((message: IRawMessage) => {
     console.log(`[onNewMessage] ${message.content}`);
     dispatch({type: ActionType.SET_LOADING, payload: false});
-  }, [state, dispatch]);
+  }, [dispatch]);
 
   const onTypingEvent = useCallback(() => {
     console.log(`[onTypingEvent]`);
@@ -63,7 +69,11 @@ function WebChat() {
     console.log(`[onAgentEndSession]`);
   }, []);
 
-  const startChat = useCallback(async () => {
+  const startChat = useCallback(async (_, optionalParams = {}) => {
+    if (state.hasChatStarted) {
+      return;
+    }
+
     console.log('[startChat]');
 
     const chatConfig = await chatSDK?.getLiveChatConfig();
@@ -72,11 +82,22 @@ function WebChat() {
 
     store.subscribe('DataMasking', createDataMaskingMiddleware(chatConfig));
 
-    await chatSDK?.startChat();
+    // Check for active conversation in cache
+    const cachedLiveChatContext = localStorage.getItem('liveChatContext');
+    if (cachedLiveChatContext && Object.keys(JSON.parse(cachedLiveChatContext)).length > 0) {
+      console.log("[liveChatContext]");
+      optionalParams.liveChatContext = JSON.parse(cachedLiveChatContext);
+    }
+
+    await chatSDK?.startChat(optionalParams);
     dispatch({type: ActionType.SET_CHAT_STARTED, payload: true});
     dispatch({type: ActionType.SET_LOADING, payload: true});
 
-    chatSDK?.onNewMessage(onNewMessage);
+    // Cache current conversation context
+    const liveChatContext = await chatSDK?.getCurrentLiveChatContext();
+    localStorage.setItem('liveChatContext', JSON.stringify(liveChatContext));
+
+    // chatSDK?.onNewMessage(onNewMessage);
     chatSDK?.onTypingEvent(onTypingEvent);
     chatSDK?.onAgentEndSession(onAgentEndSession);
 
@@ -89,12 +110,13 @@ function WebChat() {
     });
 
     setChatAdapter(chatAdapter);
+    dispatch({type: ActionType.SET_LOADING, payload: false});
 
     if ((chatSDK as any).getVoiceVideoCalling) {
       const chatToken: any = await chatSDK?.getChatToken();
       setChatToken(chatToken);
     }
-  }, [chatSDK, chatAdapter, state, dispatch, onAgentEndSession, onNewMessage, onTypingEvent, VoiceVideoCallingSDK]);
+  }, [chatSDK, state, dispatch, onAgentEndSession, onNewMessage, onTypingEvent]);
 
   const endChat = useCallback(async () => {
     console.log('[endChat]');
@@ -104,6 +126,7 @@ function WebChat() {
     (VoiceVideoCallingSDK as any).close();
     setChatAdapter(undefined);
     setChatToken(undefined);
+    localStorage.removeItem('liveChatContext');
     dispatch({type: ActionType.SET_CHAT_STARTED, payload: false});
   }, [chatSDK, dispatch, VoiceVideoCallingSDK]);
 
@@ -147,7 +170,7 @@ function WebChat() {
             />
           }
           {
-            !state.isLoading && state.hasChatStarted && chatAdapter && <ReactWebChat
+            !state.isLoading && state.hasChatStarted && chatAdapter && webChatStore && <ReactWebChat
               userID="teamsvisitor"
               directLine={chatAdapter}
               sendTypingIndicator={true}

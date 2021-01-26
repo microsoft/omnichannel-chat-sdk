@@ -44,9 +44,9 @@ class CustomStore {
                         }
                     }
                 }
-                return next(action);
+                return next(nextAction);
             }
-        )
+        );
     }
 }
 

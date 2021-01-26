@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useContext } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Mic, PhoneOff, Video } from 'react-feather';
 import './Calling.css';
 
