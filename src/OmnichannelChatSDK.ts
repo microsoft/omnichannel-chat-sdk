@@ -218,6 +218,10 @@ class OmnichannelChatSDK {
         return this.conversation?.getMessages();
     }
 
+    public async getDataMaskingRules(): Promise<any> {
+        return this.dataMaskingRules;
+    }
+
     public async sendMessage(message: IChatSDKMessage): Promise<void> {
         const {disable, maskingCharacter} = this.chatSDKConfig.dataMasking;
 

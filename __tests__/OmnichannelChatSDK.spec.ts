@@ -97,6 +97,19 @@ describe('Omnichannel Chat SDK', () => {
             expect(preChatSurvey).toBe(null);
         });
 
+        it('ChatSDK.getDataMaskingRules() should return active data masking rules', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            const dataMaskingRules = {
+                'SSN': "\\b(?!000|666|9)\\d{3}[- ]?(?!00)\\d{2}[- ]?(?!0000)\\d{4}\\b"
+            }
+
+            chatSDK.dataMaskingRules = dataMaskingRules;
+
+            await chatSDK.initialize();
+
+            expect(await chatSDK.getDataMaskingRules()).toBe(dataMaskingRules);
+        });
+
         it('ChatSDK.startchat() should start an OC chat', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
