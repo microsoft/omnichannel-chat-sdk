@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Mic, Phone, PhoneOff, Video } from 'react-feather';
+import { Mic, PhoneOff, Video } from 'react-feather';
 import './Calling.css';
 import IncomingCall from './IncomingCall';
 
@@ -173,12 +173,12 @@ function Calling(props: CallingProps) {
         incomingCall && <IncomingCall
           rejectCall={rejectCall}
           acceptVideoCall={acceptVideoCall}
-          acceptVoiceCall={acceptVideoCall}
+          acceptVoiceCall={acceptVoiceCall}
         />
       }
       {
         <div className={`calling ${inVideoCall || inVoiceCall? 'active': ''}`}>
-          <div className={`container ${inVideoCall? 'active': ''}`}>
+          <div className={`video-container ${inVideoCall? 'active': ''}`}>
             <div id="remoteVideo"></div>
             <div id="selfVideo"></div>
           </div>
