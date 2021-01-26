@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState, useContext } from 'react';
 import ReactWebChat from 'botframework-webchat';
 import { IRawMessage, OmnichannelChatSDK } from '@microsoft/omnichannel-chat-sdk';
-import { Download, Mail, MessageCircle, X} from 'react-feather';
 import IChatTranscriptBody from '@microsoft/omnichannel-chat-sdk/lib/core/IChatTranscriptBody';
 import { ActionType, Store } from '../../context';
 import Loading from '../Loading/Loading';
@@ -113,6 +112,14 @@ function WebChat() {
         (VoiceVideoCallingSDK as any).acceptCall({
           withVideo: true
         })
+
+        // Fix height
+        const webChatTranscriptContainer = document.getElementsByClassName('webchat__basic-transcript__scrollable')[0] as HTMLElement;
+        const remoteVideoContainer = document.getElementById('remoteVideo') as HTMLElement;
+
+        const heightGap = webChatTranscriptContainer.clientHeight - remoteVideoContainer.clientHeight;
+        webChatTranscriptContainer.style.marginTop = `${remoteVideoContainer.clientHeight}px`;
+        webChatTranscriptContainer.style.height = `${heightGap}px`;
         setIncomingCall(true);
       });
 
@@ -124,6 +131,10 @@ function WebChat() {
           console.log('[RemoteVideo][Clean Up]');
           remoteVideoElement.firstChild.remove();
         }
+
+        const webChatTranscriptContainer = document.getElementsByClassName('webchat__basic-transcript__scrollable')[0] as HTMLElement;
+        webChatTranscriptContainer.style.marginTop = '';
+        webChatTranscriptContainer.style.height = '';
       });
 
       (VoiceVideoCallingSDK as any).onLocalVideoStreamAdded(() => {
@@ -149,7 +160,7 @@ function WebChat() {
     await chatSDK?.endChat();
     setChatAdapter(undefined);
     dispatch({type: ActionType.SET_CHAT_STARTED, payload: false});
-  }, [chatSDK]);
+  }, [chatSDK, dispatch]);
 
   const downloadTranscript = useCallback(async () => {
     console.log('[downloadTranscript]');
@@ -164,7 +175,6 @@ function WebChat() {
       attachmentMessage: 'Transcript',
       locale: 'en'
     }
-    console.log(transcriptBody);
     await chatSDK?.emailLiveChatTranscript(transcriptBody);
   }, [chatSDK]);
 
