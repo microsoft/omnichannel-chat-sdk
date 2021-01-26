@@ -399,7 +399,10 @@ Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel
     const isLocalVideoEnabled = VoiceVideoCallingSDK.isLocalVideoEnabled();
 
     // Accepts incoming call
-    await VoiceVideoCallingSDK.acceptCall();
+    const acceptCallConfig = {
+        withVideo: true // Accept call with/without video stream
+    };
+    await VoiceVideoCallingSDK.acceptCall(acceptCallConfig);
 
     // Rejects incoming call
     await VoiceVideoCallingSDK.rejectCall();
