@@ -18,6 +18,7 @@ describe('createVoiceVideoCalling', () => {
         isMicrophoneMuted: jest.fn(),
         acceptCall: jest.fn(),
         rejectCall: jest.fn(),
+        stopCall: jest.fn(),
         toggleMute: jest.fn().mockResolvedValue(Promise.resolve()),
         isRemoteVideoEnabled: jest.fn().mockResolvedValue(true),
         isLocalVideoEnabled: jest.fn().mockResolvedValue(true),
@@ -123,6 +124,29 @@ describe('createVoiceVideoCalling', () => {
             jest.spyOn(proxy, 'rejectCall');
 
             await proxy.rejectCall();
+            expect((proxy as typeof VoiceVideoCallingProxy).callingParams.chatToken.chatId).not.toBe(undefined);
+        });
+
+        it('VoiceVideoCallingProxy.stopCall() should have ChatId defined', async () => {
+            const proxy = await createVoiceVideoCalling();
+
+            const params = {
+                environment: 'prod',
+                logger: {
+                    logInfo: () => {}
+                },
+                chatToken: {chatId: 'chatId'},
+                OCClient: {
+                    makeSecondaryChannelEventRequest: () => {}
+                },
+                selfVideoHTMLElementId: 'selfVideoHTMLElementId',
+                remoteVideoHTMLElementId: 'remoteVideoHTMLElementId'
+            };
+
+            await proxy.initialize(params);
+            jest.spyOn(proxy, 'stopCall');
+
+            await proxy.stopCall();
             expect((proxy as typeof VoiceVideoCallingProxy).callingParams.chatToken.chatId).not.toBe(undefined);
         });
 

@@ -263,6 +263,7 @@ export class VoiceVideoCallingProxy {
         if (this.callingParams?.remoteVideoHTMLElementId) {
             const remoteVideoElement = document.getElementById(this.callingParams?.remoteVideoHTMLElementId);
             while (remoteVideoElement?.firstChild) {
+                /* istanbul ignore next */
                 this.debug && console.log('[VoiceVideoCallingProxy][clearRemoteVideoElement]');
                 remoteVideoElement.firstChild.remove();
             }
