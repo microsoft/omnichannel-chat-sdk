@@ -9,23 +9,32 @@ interface CallingProps {
 }
 
 const adjustWebChatHeightInACall = () => {
+  console.log(`[WebChat][adjustWebChatHeightInACall]`);
   // Adjust height
-  const webChatTranscriptContainer = document.getElementsByClassName('webchat__basic-transcript__scrollable')[0] as HTMLElement;
+  const webChatTranscriptContainer = document.getElementsByClassName('webchat__basic-transcript')[0] as HTMLElement;
   const remoteVideoContainer = document.getElementById('remoteVideo') as HTMLElement;
 
-  const heightGap = webChatTranscriptContainer.clientHeight - remoteVideoContainer.clientHeight;
+  const newHeight = webChatTranscriptContainer.clientHeight - remoteVideoContainer.clientHeight;
   webChatTranscriptContainer.style.marginTop = `${remoteVideoContainer.clientHeight}px`;
-  webChatTranscriptContainer.style.height = `${heightGap}px`;
+  webChatTranscriptContainer.style.height = `${newHeight}px`;
 }
 
 const adjustWebChatHeightIncomingCall = () => {
-    // Adjust height
-    const webChatTranscriptContainer = document.getElementsByClassName('webchat__basic-transcript__scrollable')[0] as HTMLElement;
-    const incomingCallContainer = document.getElementsByClassName('incoming-call-pop-up')[0] as HTMLElement;
+  console.log(`[WebChat][adjustWebChatHeightIncomingCall]`);
+  // Adjust height
+  const webChatTranscriptContainer = document.getElementsByClassName('webchat__basic-transcript')[0] as HTMLElement;
+  const incomingCallContainer = document.getElementsByClassName('incoming-call-pop-up')[0] as HTMLElement;
 
-    const heightGap = webChatTranscriptContainer.clientHeight - incomingCallContainer.clientHeight;
-    webChatTranscriptContainer.style.marginTop = `${incomingCallContainer.clientHeight}px`;
-    webChatTranscriptContainer.style.height = `${heightGap}px`;
+  const newHeight = webChatTranscriptContainer.clientHeight - incomingCallContainer.clientHeight;
+  webChatTranscriptContainer.style.height = `${newHeight}px`;
+}
+
+const adjustWebChatHeightNoCall = () => {
+  console.log(`[WebChat][adjustWebChatHeightNoCall]`);
+
+  const webChatTranscriptContainer = document.getElementsByClassName('webchat__basic-transcript')[0] as HTMLElement;
+  webChatTranscriptContainer.style.marginTop = '';
+  webChatTranscriptContainer.style.height = '';
 }
 
 function Calling(props: CallingProps) {
@@ -54,7 +63,7 @@ function Calling(props: CallingProps) {
       VoiceVideoCallingSDK.onCallAdded(() => {
         console.log('[WebChat][Calling][CallAdded]');
         setIncomingCall(true);
-        // adjustWebChatHeightIncomingCall();
+        adjustWebChatHeightIncomingCall();
       });
 
       VoiceVideoCallingSDK.onCallDisconnected(() => {
@@ -66,9 +75,7 @@ function Calling(props: CallingProps) {
           remoteVideoElement.firstChild.remove();
         }
 
-        const webChatTranscriptContainer = document.getElementsByClassName('webchat__basic-transcript__scrollable')[0] as HTMLElement;
-        webChatTranscriptContainer.style.marginTop = '';
-        webChatTranscriptContainer.style.height = '';
+        adjustWebChatHeightNoCall();
 
         setIncomingCall(false);
         setInACall(false);
@@ -119,7 +126,7 @@ function Calling(props: CallingProps) {
     setIncomingCall(false);
     setInACall(true);
 
-    // adjustWebChatHeightInACall();
+    adjustWebChatHeightInACall();
   }, [props]);
 
   const rejectCall = useCallback(async() => {
