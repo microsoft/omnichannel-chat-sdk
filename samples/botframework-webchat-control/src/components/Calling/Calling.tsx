@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Mic, PhoneOff, Video } from 'react-feather';
+import { Mic, Phone, PhoneOff, Video } from 'react-feather';
 import './Calling.css';
 
 interface CallingProps {
@@ -37,6 +37,7 @@ const adjustWebChatHeightNoCall = () => {
 function Calling(props: CallingProps) {
   const [incomingCall, setIncomingCall] = useState(false);
   const [inVideoCall, setInVideoCall] = useState(false);
+  const [inVoiceCall, setInVoiceCall] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -108,6 +109,7 @@ function Calling(props: CallingProps) {
 
     setIncomingCall(false);
     setInVideoCall(false);
+    setInVoiceCall(true);
 
     // adjustWebChatHeightInVideoCall();
   }, [props]);
@@ -122,6 +124,7 @@ function Calling(props: CallingProps) {
 
     setIncomingCall(false);
     setInVideoCall(true);
+    setInVoiceCall(false);
 
     adjustWebChatHeightInVideoCall();
   }, [props]);
@@ -129,14 +132,39 @@ function Calling(props: CallingProps) {
   const rejectCall = useCallback(async() => {
     console.log(`[WebChat][Calling][Reject]`);
     const {VoiceVideoCallingSDK} = props;
-
     await VoiceVideoCallingSDK.rejectCall();
-
     setIncomingCall(false);
+  }, [props]);
+
+  const toggleVideoButton = useCallback(async () => {
+    console.log(`[WebChat][Calling][toggleLocalVideo]`);
+    const {VoiceVideoCallingSDK} = props;
+    await VoiceVideoCallingSDK.toggleLocalVideo();
+  }, [props]);
+
+  const toggleMuteButton = useCallback(async () => {
+    console.log(`[WebChat][Calling][toggleMute]`);
+    const {VoiceVideoCallingSDK} = props;
+    await VoiceVideoCallingSDK.toggleMute();
+  }, [props]);
+
+  const stopCallButton = useCallback(() => {
+
   }, [props]);
 
   return (
     <>
+      {
+        incomingCall && <div className="incoming-call-pop-up">
+          <span> Incoming call </span>
+          <div>
+            <PhoneOff className="reject-call-button" onClick={rejectCall}/>
+            <Video className="accept-video-call-button" onClick={acceptVideoCall} />
+            <Phone className="accept-voice-call-button" onClick={acceptVoiceCall}/>
+          </div>
+        </div>
+      }
+
       {
         inVideoCall && <div className={`calling ${inVideoCall? 'active': ''}`}>
           <div className="container">
@@ -145,11 +173,12 @@ function Calling(props: CallingProps) {
           </div>
         </div>
       }
+
       {
-        incomingCall && <div className="incoming-call-pop-up">
-          <Video className="accept-video-call-button" onClick={acceptVideoCall} />
-          <Mic className="accept-voice-call-button" onClick={acceptVoiceCall}/>
-          <PhoneOff className="reject-call-button" onClick={rejectCall}/>
+        false && (inVideoCall || inVoiceCall) && <div className="current-call-action-bar">
+          <Video className="toggle-video-button" onClick={toggleVideoButton} />
+          <Mic className="toggle-mute-button" onClick={toggleMuteButton}/>
+          <PhoneOff className="stop-call-button" onClick={stopCallButton}/>
         </div>
       }
     </>
