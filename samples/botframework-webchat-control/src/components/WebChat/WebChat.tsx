@@ -158,9 +158,10 @@ function WebChat() {
   const endChat = useCallback(async () => {
     console.log('[endChat]');
     await chatSDK?.endChat();
+    (VoiceVideoCallingSDK as any).close();
     setChatAdapter(undefined);
     dispatch({type: ActionType.SET_CHAT_STARTED, payload: false});
-  }, [chatSDK, dispatch]);
+  }, [chatSDK, dispatch, VoiceVideoCallingSDK]);
 
   const downloadTranscript = useCallback(async () => {
     console.log('[downloadTranscript]');
