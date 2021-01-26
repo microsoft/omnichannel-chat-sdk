@@ -325,6 +325,8 @@ Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel
 ```ts
     import OmnichannelChatSDK from '@microsoft/omnichannel-chat-sdk';
 
+    ...
+
     const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
     await chatSDK.initialize();
 
@@ -361,7 +363,7 @@ Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel
         ...
     });
 
-    // Triggered when local video stream is unavailable (e.g.: Customer turning off  local video)
+    // Triggered when local video stream is unavailable (e.g.: Customer turning off local video)
     VoiceVideoCallingSDK.onLocalVideoStreamRemoved(() => {
         ...
     });
@@ -371,7 +373,7 @@ Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel
         ...
     });
 
-    // Triggered when remote video stream is unavailable (e.g.: Agent turning off  remote video)
+    // Triggered when remote video stream is unavailable (e.g.: Agent turning off remote video)
     VoiceVideoCallingSDK.onRemoteVideoStreamRemoved(() => {
         ...
     });
