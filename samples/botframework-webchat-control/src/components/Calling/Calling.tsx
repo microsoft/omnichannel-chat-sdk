@@ -81,12 +81,6 @@ function Calling(props: CallingProps) {
 
       VoiceVideoCallingSDK.onCallDisconnected(() => {
         console.log('[WebChat][Calling][CallDisconnected]');
-        // Clean up
-        const remoteVideoElement = document.getElementById('remoteVideo');
-        while (remoteVideoElement?.firstChild) {
-          console.log('[WebChat][Calling][RemoteVideo][Clean Up]');
-          remoteVideoElement.firstChild.remove();
-        }
 
         adjustWebChatHeightNoCall();
 
