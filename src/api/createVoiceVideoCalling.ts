@@ -260,6 +260,7 @@ export class VoiceVideoCallingProxy {
     }
 
     private clearRemoteVideoElementChildren() {
+        // Remove remoteVideoHTMLElement children if any or video won't be rendered properly
         if (this.callingParams?.remoteVideoHTMLElementId) {
             const remoteVideoElement = document.getElementById(this.callingParams?.remoteVideoHTMLElementId);
             while (remoteVideoElement?.firstChild) {
