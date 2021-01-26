@@ -155,6 +155,7 @@ export class VoiceVideoCallingProxy {
         const callId = this.callingParams?.chatToken.chatId;
         /* istanbul ignore next */
         this.debug && console.log(`[VoiceVideoCallingProxy][stopCall] callId: ${callId}`);
+        this.clearRemoteVideoElementChildren();
         return this.proxyInstance.stopCall({callId});
     }
 
@@ -253,8 +254,19 @@ export class VoiceVideoCallingProxy {
                 console.error(`[VoiceVideoCallingProxy][onCallDisconnected][makeSecondaryChannelEventRequest] Failure ${e}`);
             }
 
+            this.clearRemoteVideoElementChildren();
             callback(params);
         });
+    }
+
+    private clearRemoteVideoElementChildren() {
+        if (this.callingParams?.remoteVideoHTMLElementId) {
+            const remoteVideoElement = document.getElementById(this.callingParams?.remoteVideoHTMLElementId);
+            while (remoteVideoElement?.firstChild) {
+                this.debug && console.log('[VoiceVideoCallingProxy][clearRemoteVideoElement]');
+                remoteVideoElement.firstChild.remove();
+            }
+        }
     }
 }
 
