@@ -34,36 +34,35 @@ function Calling(props: CallingProps) {
 
   useEffect(() => {
     const init = async () => {
-      console.log(`[Calling][chatToken]`);
       const {VoiceVideoCallingSDK, OCClient, chatToken} = props;
 
       try {
-        await (VoiceVideoCallingSDK as any).initialize({
+        await VoiceVideoCallingSDK.initialize({
           chatToken,
           selfVideoHTMLElementId: 'selfVideo',
           remoteVideoHTMLElementId: 'remoteVideo',
           environment: 'test',
           OCClient: OCClient
         });
-        console.log("VoiceVideoCallingProxy initialized!");
+        console.log("[WebChat][Calling] VoiceVideoCallingProxy initialized!");
         console.log(VoiceVideoCallingSDK);
       } catch (e) {
-        console.error("Failed to initialize VoiceVideoCalling!");
+        console.error("[WebChat][Calling] Failed to initialize VoiceVideoCalling!");
         console.error(e);
       }
 
-      (VoiceVideoCallingSDK as any).onCallAdded(() => {
-        console.log('[WebChat][CallAdded]');
+      VoiceVideoCallingSDK.onCallAdded(() => {
+        console.log('[WebChat][Calling][CallAdded]');
         setIncomingCall(true);
-        adjustWebChatHeightIncomingCall();
+        // adjustWebChatHeightIncomingCall();
       });
 
-      (VoiceVideoCallingSDK as any).onCallDisconnected(() => {
-        console.log('[WebChat][CallDisconnected]');
+      VoiceVideoCallingSDK.onCallDisconnected(() => {
+        console.log('[WebChat][Calling][CallDisconnected]');
         // Clean up
         const remoteVideoElement = document.getElementById('remoteVideo');
         while (remoteVideoElement?.firstChild) {
-          console.log('[RemoteVideo][Clean Up]');
+          console.log('[WebChat][Calling][RemoteVideo][Clean Up]');
           remoteVideoElement.firstChild.remove();
         }
 
@@ -75,20 +74,20 @@ function Calling(props: CallingProps) {
         setInACall(false);
       });
 
-      (VoiceVideoCallingSDK as any).onLocalVideoStreamAdded(() => {
-        console.log('[WebChat][LocalVideoStreamAdded]');
+      VoiceVideoCallingSDK.onLocalVideoStreamAdded(() => {
+        console.log('[WebChat][Calling][LocalVideoStreamAdded]');
       });
 
-      (VoiceVideoCallingSDK as any).onLocalVideoStreamRemoved(() => {
-        console.log('[WebChat][LocalVideoStreamRemoved]');
+      VoiceVideoCallingSDK.onLocalVideoStreamRemoved(() => {
+        console.log('[WebChat][Calling][LocalVideoStreamRemoved]');
       });
 
-      (VoiceVideoCallingSDK as any).onRemoteVideoStreamAdded(() => {
-        console.log('[WebChat][RemoteVideoStreamAdded]');
+      VoiceVideoCallingSDK.onRemoteVideoStreamAdded(() => {
+        console.log('[WebChat][Calling][RemoteVideoStreamAdded]');
       });
 
-      (VoiceVideoCallingSDK as any).onRemoteVideoStreamRemoved(() => {
-        console.log('[WebChat][RemoteVideoStreamRemoved]');
+      VoiceVideoCallingSDK.onRemoteVideoStreamRemoved(() => {
+        console.log('[WebChat][Calling][RemoteVideoStreamRemoved]');
       });
     }
 
@@ -96,38 +95,38 @@ function Calling(props: CallingProps) {
   }, []);
 
   const acceptVoiceCall = useCallback(async() => {
-    console.log(`[Calling][Accept][Voice]`);
+    console.log(`[WebChat][Calling][Accept][Voice]`);
     const {VoiceVideoCallingSDK} = props;
 
-    (VoiceVideoCallingSDK as any).acceptCall({
+    VoiceVideoCallingSDK.acceptCall({
       withVideo: false
     });
 
     setIncomingCall(false);
     setInACall(true);
 
-    adjustWebChatHeightInACall();
+    // adjustWebChatHeightInACall();
   }, [props.VoiceVideoCallingSDK, incomingCall]);
 
   const acceptVideoCall = useCallback(async() => {
-    console.log(`[Calling][Accept][Video]`);
+    console.log(`[WebChat][Calling][Accept][Video]`);
     const {VoiceVideoCallingSDK} = props;
 
-    await (VoiceVideoCallingSDK as any).acceptCall({
+    await VoiceVideoCallingSDK.acceptCall({
       withVideo: true
     });
 
     setIncomingCall(false);
     setInACall(true);
 
-    adjustWebChatHeightInACall();
+    // adjustWebChatHeightInACall();
   }, [props.VoiceVideoCallingSDK, incomingCall]);
 
   const rejectCall = useCallback(async() => {
-    console.log(`[Calling][Reject]`);
+    console.log(`[WebChat][Calling][Reject]`);
     const {VoiceVideoCallingSDK} = props;
 
-    await (VoiceVideoCallingSDK as any).rejectCall();
+    await VoiceVideoCallingSDK.rejectCall();
 
     setIncomingCall(false);
   }, [props.VoiceVideoCallingSDK, incomingCall]);

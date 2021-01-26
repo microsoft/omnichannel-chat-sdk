@@ -133,7 +133,7 @@ function WebChat() {
       {
         state.hasChatStarted && <div className="chat-container">
           <ChatHeader
-            title={'Live Chat with Chat SDK'}
+            title={'Live Chat via Chat SDK'}
             onClick={endChat}
           />
           {
