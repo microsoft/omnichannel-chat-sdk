@@ -22,6 +22,7 @@ Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel
 | OmnichannelChatSDK.endChat() | Ends OC chat | |
 | OmnichannelChatSDK.getPreChatSurvey() | Adaptive card data of PreChat survey | |
 | OmnichannelChatSDK.getLiveChatConfig() | Get live chat config | |
+| OmnichannelChatSDK.getDataMaskingRules() | Get active data masking rules | |
 | OmnichannelChatSDK.getCurrentLiveChatContext() | Get current live chat context information to reconnect to the same chat | |
 | OmnichannelChatSDK.getChatToken() | Get chat token | |
 | OmnichannelChatSDK.getMessages() | Get all messages | |
@@ -74,6 +75,11 @@ Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel
 ### Get Live Chat Config
 ```ts
     const liveChatConfig = await chatSDK.getLiveChatConfig();
+```
+
+### Get Data Masking Rules
+```ts
+    const dataMaskingRules = await chatSDK.getDataMaskingRules();
 ```
 
 ### Get PreChat Survey
