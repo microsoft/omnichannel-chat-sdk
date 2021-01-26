@@ -25,8 +25,8 @@ function WebChat() {
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
   const [chatAdapter, setChatAdapter] = useState<any>(undefined);
   const [webChatStore, setWebChatStore] = useState(undefined);
+  const [chatToken, setChatToken] = useState(undefined);
   const [VoiceVideoCallingSDK, setVoiceVideoCallingSDK] = useState(undefined);
-  const [incomingCall, setIncomingCall] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -92,74 +92,18 @@ function WebChat() {
 
     if ((chatSDK as any).getVoiceVideoCalling) {
       const chatToken: any = await chatSDK?.getChatToken();
-      try {
-        await (VoiceVideoCallingSDK as any).initialize({
-          chatToken,
-          selfVideoHTMLElementId: 'selfVideo',
-          remoteVideoHTMLElementId: 'remoteVideo',
-          environment: 'test',
-          OCClient: chatSDK?.OCClient
-        });
-        console.log("VoiceVideoCallingProxy initialized!");
-        console.log(VoiceVideoCallingSDK);
-      } catch (e) {
-        console.error("Failed to initialize VoiceVideoCalling!");
-        console.error(e);
-      }
-
-      (VoiceVideoCallingSDK as any).onCallAdded(() => {
-        console.log('[WebChat][CallAdded]');
-        (VoiceVideoCallingSDK as any).acceptCall({
-          withVideo: true
-        })
-
-        // Fix height
-        const webChatTranscriptContainer = document.getElementsByClassName('webchat__basic-transcript__scrollable')[0] as HTMLElement;
-        const remoteVideoContainer = document.getElementById('remoteVideo') as HTMLElement;
-
-        const heightGap = webChatTranscriptContainer.clientHeight - remoteVideoContainer.clientHeight;
-        webChatTranscriptContainer.style.marginTop = `${remoteVideoContainer.clientHeight}px`;
-        webChatTranscriptContainer.style.height = `${heightGap}px`;
-        setIncomingCall(true);
-      });
-
-      (VoiceVideoCallingSDK as any).onCallDisconnected(() => {
-        console.log('[WebChat][CallDisconnected]');
-        // Clean up
-        const remoteVideoElement = document.getElementById('remoteVideo');
-        while (remoteVideoElement?.firstChild) {
-          console.log('[RemoteVideo][Clean Up]');
-          remoteVideoElement.firstChild.remove();
-        }
-
-        const webChatTranscriptContainer = document.getElementsByClassName('webchat__basic-transcript__scrollable')[0] as HTMLElement;
-        webChatTranscriptContainer.style.marginTop = '';
-        webChatTranscriptContainer.style.height = '';
-      });
-
-      (VoiceVideoCallingSDK as any).onLocalVideoStreamAdded(() => {
-        console.log('[WebChat][LocalVideoStreamAdded]');
-      });
-
-      (VoiceVideoCallingSDK as any).onLocalVideoStreamRemoved(() => {
-        console.log('[WebChat][LocalVideoStreamRemoved]');
-      });
-
-      (VoiceVideoCallingSDK as any).onRemoteVideoStreamAdded(() => {
-        console.log('[WebChat][RemoteVideoStreamAdded]');
-      });
-
-      (VoiceVideoCallingSDK as any).onRemoteVideoStreamRemoved(() => {
-        console.log('[WebChat][RemoteVideoStreamRemoved]');
-      });
+      setChatToken(chatToken);
     }
   }, [chatSDK, chatAdapter, state, dispatch, onAgentEndSession, onNewMessage, onTypingEvent, VoiceVideoCallingSDK]);
 
   const endChat = useCallback(async () => {
     console.log('[endChat]');
     await chatSDK?.endChat();
+
+    // Clean up
     (VoiceVideoCallingSDK as any).close();
     setChatAdapter(undefined);
+    setChatToken(undefined);
     dispatch({type: ActionType.SET_CHAT_STARTED, payload: false});
   }, [chatSDK, dispatch, VoiceVideoCallingSDK]);
 
@@ -195,7 +139,13 @@ function WebChat() {
           {
             state.isLoading && <Loading />
           }
-          <Calling />
+          {
+            VoiceVideoCallingSDK && chatToken && <Calling
+              VoiceVideoCallingSDK={VoiceVideoCallingSDK}
+              OCClient={chatSDK?.OCClient}
+              chatToken={chatToken}
+            />
+          }
           {
             !state.isLoading && state.hasChatStarted && chatAdapter && <ReactWebChat
               userID="teamsvisitor"
