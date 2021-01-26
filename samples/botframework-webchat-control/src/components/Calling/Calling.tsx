@@ -8,9 +8,8 @@ interface CallingProps {
   chatToken: any;
 }
 
-const adjustWebChatHeightInACall = () => {
-  console.log(`[WebChat][adjustWebChatHeightInACall]`);
-  // Adjust height
+const adjustWebChatHeightInVideoCall = () => {
+  console.log(`[WebChat][adjustWebChatHeightInVideoCall]`);
   const webChatTranscriptContainer = document.getElementsByClassName('webchat__basic-transcript')[0] as HTMLElement;
   const remoteVideoContainer = document.getElementById('remoteVideo') as HTMLElement;
 
@@ -21,7 +20,6 @@ const adjustWebChatHeightInACall = () => {
 
 const adjustWebChatHeightIncomingCall = () => {
   console.log(`[WebChat][adjustWebChatHeightIncomingCall]`);
-  // Adjust height
   const webChatTranscriptContainer = document.getElementsByClassName('webchat__basic-transcript')[0] as HTMLElement;
   const incomingCallContainer = document.getElementsByClassName('incoming-call-pop-up')[0] as HTMLElement;
 
@@ -31,7 +29,6 @@ const adjustWebChatHeightIncomingCall = () => {
 
 const adjustWebChatHeightNoCall = () => {
   console.log(`[WebChat][adjustWebChatHeightNoCall]`);
-
   const webChatTranscriptContainer = document.getElementsByClassName('webchat__basic-transcript')[0] as HTMLElement;
   webChatTranscriptContainer.style.marginTop = '';
   webChatTranscriptContainer.style.height = '';
@@ -39,7 +36,7 @@ const adjustWebChatHeightNoCall = () => {
 
 function Calling(props: CallingProps) {
   const [incomingCall, setIncomingCall] = useState(false);
-  const [inACall, setInACall] = useState(false);
+  const [inVideoCall, setInVideoCall] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -78,7 +75,7 @@ function Calling(props: CallingProps) {
         adjustWebChatHeightNoCall();
 
         setIncomingCall(false);
-        setInACall(false);
+        setInVideoCall(false);
       });
 
       VoiceVideoCallingSDK.onLocalVideoStreamAdded(() => {
@@ -110,9 +107,9 @@ function Calling(props: CallingProps) {
     });
 
     setIncomingCall(false);
-    setInACall(true);
+    setInVideoCall(false);
 
-    // adjustWebChatHeightInACall();
+    // adjustWebChatHeightInVideoCall();
   }, [props]);
 
   const acceptVideoCall = useCallback(async() => {
@@ -124,9 +121,9 @@ function Calling(props: CallingProps) {
     });
 
     setIncomingCall(false);
-    setInACall(true);
+    setInVideoCall(true);
 
-    adjustWebChatHeightInACall();
+    adjustWebChatHeightInVideoCall();
   }, [props]);
 
   const rejectCall = useCallback(async() => {
@@ -140,21 +137,21 @@ function Calling(props: CallingProps) {
 
   return (
     <>
-    <div className={`calling ${inACall? 'active': ''}`}>
       {
-        inACall && <div className="container">
-          <div id="remoteVideo"></div>
-          <div id="selfVideo"></div>
+        inVideoCall && <div className={`calling ${inVideoCall? 'active': ''}`}>
+          <div className="container">
+            <div id="remoteVideo"></div>
+            <div id="selfVideo"></div>
+          </div>
         </div>
       }
-    </div>
-    {
-      incomingCall && <div className="incoming-call-pop-up">
-        <Video className="accept-video-call-button" onClick={acceptVideoCall} />
-        <Mic className="accept-voice-call-button" onClick={acceptVoiceCall}/>
-        <PhoneOff className="reject-call-button" onClick={rejectCall}/>
-      </div>
-    }
+      {
+        incomingCall && <div className="incoming-call-pop-up">
+          <Video className="accept-video-call-button" onClick={acceptVideoCall} />
+          <Mic className="accept-voice-call-button" onClick={acceptVoiceCall}/>
+          <PhoneOff className="reject-call-button" onClick={rejectCall}/>
+        </div>
+      }
     </>
   )
 }
