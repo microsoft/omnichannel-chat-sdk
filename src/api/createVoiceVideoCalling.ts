@@ -240,7 +240,6 @@ export class VoiceVideoCallingProxy {
         /* istanbul ignore next */
         this.debug && console.debug(`[VoiceVideoCallingProxy][${eventName}]`);
         this.addEventListener(eventName, async (params: IEventPayload) => {
-
             const body = {
                 SecondaryChannelType: SecondaryChannelType.Voice,
                 SecondaryChannelEventType: SecondaryChannelEvents.End
