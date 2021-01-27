@@ -133,7 +133,6 @@ export class VoiceVideoCallingProxy {
         const callId = this.callingParams?.chatToken.chatId;
         /* istanbul ignore next */
         this.debug && console.debug(`[VoiceVideoCallingProxy][rejectCall] callId: ${callId}`);
-
         this.proxyInstance.rejectCall({callId});
 
         const body = {
