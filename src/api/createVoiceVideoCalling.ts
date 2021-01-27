@@ -93,7 +93,7 @@ export class VoiceVideoCallingProxy {
         this.proxyInstance.registerEvent(eventName, (params: IEventPayload) => {
             const {callId} = params;
             /* istanbul ignore next */
-            this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}] callId: ${callId}`);
+            this.debug && console.debug(`[VoiceVideoCallingProxy][${eventName}] callId: ${callId}`);
             if (callId !== this.callingParams?.chatToken.chatId) {
                 return;
             }
@@ -109,9 +109,9 @@ export class VoiceVideoCallingProxy {
     public async acceptCall(params: IAcceptCallConfig = {}): Promise<void> {
         const callId = this.callingParams?.chatToken.chatId;
         /* istanbul ignore next */
-        this.debug && console.log(`[VoiceVideoCallingProxy][acceptCall] callId: ${callId}`);
+        this.debug && console.debug(`[VoiceVideoCallingProxy][acceptCall] callId: ${callId}`);
         /* istanbul ignore next */
-        this.debug && console.log(params);
+        this.debug && console.debug(params);
 
         this.proxyInstance.acceptCall({callId, withVideo: params.withVideo || false});
 
@@ -123,7 +123,7 @@ export class VoiceVideoCallingProxy {
         try {
             this.callingParams?.OCClient.makeSecondaryChannelEventRequest(this.callingParams?.chatToken.requestId, body);
             /* istanbul ignore next */
-            this.debug && console.log(`[VoiceVideoCallingProxy][acceptCall][makeSecondaryChannelEventRequest]`);
+            this.debug && console.debug(`[VoiceVideoCallingProxy][acceptCall][makeSecondaryChannelEventRequest]`);
         } catch (e) {
             console.error(`[VoiceVideoCallingProxy][acceptCall][makeSecondaryChannelEventRequest] Failure ${e}`);
         }
@@ -132,7 +132,7 @@ export class VoiceVideoCallingProxy {
     public async rejectCall(): Promise<void> {
         const callId = this.callingParams?.chatToken.chatId;
         /* istanbul ignore next */
-        this.debug && console.log(`[VoiceVideoCallingProxy][rejectCall] callId: ${callId}`);
+        this.debug && console.debug(`[VoiceVideoCallingProxy][rejectCall] callId: ${callId}`);
 
         this.proxyInstance.rejectCall({callId});
 
@@ -144,7 +144,7 @@ export class VoiceVideoCallingProxy {
         try {
             this.callingParams?.OCClient.makeSecondaryChannelEventRequest(this.callingParams?.chatToken.requestId, body);
             /* istanbul ignore next */
-            this.debug && console.log(`[VoiceVideoCallingProxy][rejectCall][makeSecondaryChannelEventRequest]`);
+            this.debug && console.debug(`[VoiceVideoCallingProxy][rejectCall][makeSecondaryChannelEventRequest]`);
         } catch (e) {
             console.error(`[VoiceVideoCallingProxy][rejectCall][makeSecondaryChannelEventRequest] Failure ${e}`);
             return e;
@@ -154,7 +154,7 @@ export class VoiceVideoCallingProxy {
     public async stopCall(): Promise<void> {
         const callId = this.callingParams?.chatToken.chatId;
         /* istanbul ignore next */
-        this.debug && console.log(`[VoiceVideoCallingProxy][stopCall] callId: ${callId}`);
+        this.debug && console.debug(`[VoiceVideoCallingProxy][stopCall] callId: ${callId}`);
         this.clearRemoteVideoElementChildren();
         return this.proxyInstance.stopCall({callId});
     }
@@ -196,7 +196,7 @@ export class VoiceVideoCallingProxy {
 
     public close(): void {
         /* istanbul ignore next */
-        this.debug && console.log(`[VoiceVideoCallingProxy][close]`);
+        this.debug && console.debug(`[VoiceVideoCallingProxy][close]`);
         this.proxyInstance.dispose();
         this.callingParams = undefined;
     }
@@ -204,42 +204,42 @@ export class VoiceVideoCallingProxy {
     public onCallAdded(callback: Function): void {
         const eventName = 'callAdded';
         /* istanbul ignore next */
-        this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
+        this.debug && console.debug(`[VoiceVideoCallingProxy][${eventName}]`);
         this.addEventListener(eventName, callback);
     }
 
     public onLocalVideoStreamAdded(callback: Function): void {
         const eventName = 'localVideoStreamAdded';
         /* istanbul ignore next */
-        this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
+        this.debug && console.debug(`[VoiceVideoCallingProxy][${eventName}]`);
         this.addEventListener(eventName, callback);
     }
 
     public onLocalVideoStreamRemoved(callback: Function): void {
         const eventName = 'localVideoStreamRemoved';
         /* istanbul ignore next */
-        this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
+        this.debug && console.debug(`[VoiceVideoCallingProxy][${eventName}]`);
         this.addEventListener(eventName, callback);
     }
 
     public onRemoteVideoStreamAdded(callback: Function): void {
         const eventName = 'remoteVideoStreamAdded';
         /* istanbul ignore next */
-        this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
+        this.debug && console.debug(`[VoiceVideoCallingProxy][${eventName}]`);
         this.addEventListener(eventName, callback);
     }
 
     public onRemoteVideoStreamRemoved(callback: Function): void {
         const eventName = 'remoteVideoStreamRemoved';
         /* istanbul ignore next */
-        this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
+        this.debug && console.debug(`[VoiceVideoCallingProxy][${eventName}]`);
         this.addEventListener(eventName, callback);
     }
 
     public onCallDisconnected(callback: Function): void {
         const eventName = 'callDisconnected';
         /* istanbul ignore next */
-        this.debug && console.log(`[VoiceVideoCallingProxy][${eventName}]`);
+        this.debug && console.debug(`[VoiceVideoCallingProxy][${eventName}]`);
         this.addEventListener(eventName, async (params: IEventPayload) => {
 
             const body = {
@@ -249,7 +249,7 @@ export class VoiceVideoCallingProxy {
 
             try {
                 this.callingParams?.OCClient.makeSecondaryChannelEventRequest(this.callingParams?.chatToken.requestId, body);
-                this.debug && console.log(`[VoiceVideoCallingProxy][onCallDisconnected][makeSecondaryChannelEventRequest]`);
+                this.debug && console.debug(`[VoiceVideoCallingProxy][onCallDisconnected][makeSecondaryChannelEventRequest]`);
             } catch (e) {
                 console.error(`[VoiceVideoCallingProxy][onCallDisconnected][makeSecondaryChannelEventRequest] Failure ${e}`);
             }
@@ -265,7 +265,7 @@ export class VoiceVideoCallingProxy {
             const remoteVideoElement = document.getElementById(this.callingParams?.remoteVideoHTMLElementId);
             while (remoteVideoElement?.firstChild) {
                 /* istanbul ignore next */
-                this.debug && console.log('[VoiceVideoCallingProxy][clearRemoteVideoElement]');
+                this.debug && console.debug('[VoiceVideoCallingProxy][clearRemoteVideoElement]');
                 remoteVideoElement.firstChild.remove();
             }
         }
