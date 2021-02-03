@@ -424,7 +424,7 @@ class OmnichannelChatSDK {
         // Find src attribute with its url in code snippet
         const widgetSnippetSourceRegex = new RegExp(`src="(https:\\/\\/[\\w-.]+)[\\w-.\\/]+"`);
         const result = msdyn_widgetsnippet.match(widgetSnippetSourceRegex);
-        if (result) {
+        if (result && result.length) {
             return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
                 const spoolSDKCDNUrl = `${result[1]}/livechatwidget/WebChatControl/lib/spool-sdk/sdk.bundle.js`;
                 await loadScript(spoolSDKCDNUrl, () => {
