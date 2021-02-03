@@ -34,10 +34,11 @@ enum SecondaryChannelEvents {
 export class VoiceVideoCallingProxy {
     private static _instance: VoiceVideoCallingProxy;
     private debug: boolean;
+    private logger: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private proxy: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private proxyInstance: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private callingParams?: IVoiceVideoCallingParams;
-    private logger: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    private callId?: string;
 
     private constructor() {
         this.debug = false;
@@ -73,6 +74,7 @@ export class VoiceVideoCallingProxy {
         /* istanbul ignore next */
         this.debug && console.debug(`[VoiceVideoCallingProxy] VoiceVideoCallingParams: ${JSON.stringify(params)}`);
         this.callingParams = params;
+        this.callId = this.callingParams?.chatToken.chatId;
 
         /* istanbul ignore next */
         this.debug && console.debug(`[VoiceVideoCallingProxy][initialize] _isLoaded: ${this.proxyInstance._isLoaded}`);
@@ -102,12 +104,12 @@ export class VoiceVideoCallingProxy {
     }
 
     public isMicrophoneMuted(): boolean {
-        const callId = this.callingParams?.chatToken.chatId;
+        const {callId} = this;
         return this.proxyInstance.isMicrophoneMuted({callId});
     }
 
     public async acceptCall(params: IAcceptCallConfig = {}): Promise<void> {
-        const callId = this.callingParams?.chatToken.chatId;
+        const {callId} = this;
         /* istanbul ignore next */
         this.debug && console.debug(`[VoiceVideoCallingProxy][acceptCall] callId: ${callId}`);
         /* istanbul ignore next */
@@ -130,7 +132,7 @@ export class VoiceVideoCallingProxy {
     }
 
     public async rejectCall(): Promise<void> {
-        const callId = this.callingParams?.chatToken.chatId;
+        const {callId} = this;
         /* istanbul ignore next */
         this.debug && console.debug(`[VoiceVideoCallingProxy][rejectCall] callId: ${callId}`);
         this.proxyInstance.rejectCall({callId});
@@ -151,7 +153,7 @@ export class VoiceVideoCallingProxy {
     }
 
     public async stopCall(): Promise<void> {
-        const callId = this.callingParams?.chatToken.chatId;
+        const {callId} = this;
         /* istanbul ignore next */
         this.debug && console.debug(`[VoiceVideoCallingProxy][stopCall] callId: ${callId}`);
         this.clearRemoteVideoElementChildren();
@@ -159,37 +161,37 @@ export class VoiceVideoCallingProxy {
     }
 
     public async toggleMute(): Promise<void> {
-        const callId = this.callingParams?.chatToken.chatId;
+        const {callId} = this;
         return this.proxyInstance.toggleMute({callId});
     }
 
     public isRemoteVideoEnabled(): boolean {
-        const callId = this.callingParams?.chatToken.chatId;
+        const {callId} = this;
         return this.proxyInstance.isRemoteVideoEnabled({callId});
     }
 
     public isLocalVideoEnabled(): boolean {
-        const callId = this.callingParams?.chatToken.chatId;
+        const {callId} = this;
         return this.proxyInstance.isLocalVideoEnabled({callId});
     }
 
     public async toggleLocalVideo(): Promise<void> {
-        const callId = this.callingParams?.chatToken.chatId;
+        const {callId} = this;
         return this.proxyInstance.toggleLocalVideo({callId});
     }
 
     public isInACall(): boolean {
-        const callId = this.callingParams?.chatToken.chatId;
+        const {callId} = this;
         return this.proxyInstance.isInACall({callId});
     }
 
     public renderVideoStreams(): void {
-        const callId = this.callingParams?.chatToken.chatId;
+        const {callId} = this;
         return this.proxyInstance.renderVideoStreams({callId});
     }
 
     public disposeVideoRenderers(): void {
-        const callId = this.callingParams?.chatToken.chatId;
+        const {callId} = this;
         return this.proxyInstance.disposeVideoRenderers({callId});
     }
 
@@ -198,6 +200,7 @@ export class VoiceVideoCallingProxy {
         this.debug && console.debug(`[VoiceVideoCallingProxy][close]`);
         this.proxyInstance.dispose();
         this.callingParams = undefined;
+        this.callId = undefined;
     }
 
     public onCallAdded(callback: Function): void {
