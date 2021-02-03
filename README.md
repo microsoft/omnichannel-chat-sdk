@@ -22,6 +22,7 @@ Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel
 | OmnichannelChatSDK.endChat() | Ends OC chat | |
 | OmnichannelChatSDK.getPreChatSurvey() | Adaptive card data of PreChat survey | |
 | OmnichannelChatSDK.getLiveChatConfig() | Get live chat config | |
+| OmnichannelChatSDK.getDataMaskingRules() | Get active data masking rules | |
 | OmnichannelChatSDK.getCurrentLiveChatContext() | Get current live chat context information to reconnect to the same chat | |
 | OmnichannelChatSDK.getChatToken() | Get chat token | |
 | OmnichannelChatSDK.getMessages() | Get all messages | |
@@ -34,7 +35,8 @@ Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel
 | OmnichannelChatSDK.getLiveChatTranscript() | Get transcript data (JSON) | |
 | OmnichannelChatSDK.uploadFileAttachment() | Send file attachment | |
 | OmnichannelChatSDK.downloadFileAttachment() | Download file attachment | |
-| OmnichannelChatSDK.createChatAdapter() | Get IC3Adapter (Web only) | |
+| OmnichannelChatSDK.createChatAdapter() | Get IC3Adapter | **Web only** |
+| OmnichannelChatSDK.getVoiceVideoCalling() | Get VoiceVideoCall SDK for Escalation to Voice & Video| **Web only** |
 
 ### Import
 ```ts
@@ -73,6 +75,11 @@ Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel
 ### Get Live Chat Config
 ```ts
     const liveChatConfig = await chatSDK.getLiveChatConfig();
+```
+
+### Get Data Masking Rules
+```ts
+    const dataMaskingRules = await chatSDK.getDataMaskingRules();
 ```
 
 ### Get PreChat Survey
@@ -319,6 +326,99 @@ Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel
     />
 ```
 
+### Escalation to Voice & Video
+**NOTE**: Currently supported on web only
+```ts
+    import OmnichannelChatSDK from '@microsoft/omnichannel-chat-sdk';
+
+    ...
+
+    const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+    await chatSDK.initialize();
+
+    let VoiceVideoCallingSDK;
+    try {
+        VoiceVideoCallingSDK = await chatSDK.getVoiceVideoCalling();
+        console.log("VoiceVideoCalling loaded");
+    } catch (e) {
+        console.log(`Failed to load VoiceVideoCalling: ${e}`);
+    }
+
+    await chatSDK.startChat();
+
+    const chatToken: any = await chatSDK.getChatToken();
+
+    try {
+        await VoiceVideoCallingSDK.initialize({
+            chatToken,
+            selfVideoHTMLElementId: 'selfVideo', // HTML element id where video stream of the agent will be rendered
+            remoteVideoHTMLElementId: 'remoteVideo', // HTML element id where video stream of the customer will be rendered
+            OCClient: chatSDK.OCClient
+        });
+    } catch (e) {
+        console.error("Failed to initialize VoiceVideoCalling!");
+    }
+
+    // Triggered when there's an incoming call
+    VoiceVideoCallingSDK.onCallAdded(() => {
+        ...
+    });
+
+    // Triggered when local video stream is available (e.g.: Local video added succesfully in selfVideoHTMLElement)
+    VoiceVideoCallingSDK.onLocalVideoStreamAdded(() => {
+        ...
+    });
+
+    // Triggered when local video stream is unavailable (e.g.: Customer turning off local video)
+    VoiceVideoCallingSDK.onLocalVideoStreamRemoved(() => {
+        ...
+    });
+
+    // Triggered when remote video stream is available (e.g.: Remote video added succesfully in remoteVideoHTMLElement)
+    VoiceVideoCallingSDK.onRemoteVideoStreamAdded(() => {
+        ...
+    });
+
+    // Triggered when remote video stream is unavailable (e.g.: Agent turning off remote video)
+    VoiceVideoCallingSDK.onRemoteVideoStreamRemoved(() => {
+        ...
+    });
+
+    // Triggered when current call has ended or disconnected regardless the party
+    VoiceVideoCalling.onCallDisconnected(() => {
+        ...
+    });
+
+    // Check if microphone is muted
+    const isMicrophoneMuted = VoiceVideoCallingSDK.isMicrophoneMuted();
+
+    // Check if remote video is available
+    const isRemoteVideoEnabled = VoiceVideoCallingSDK.isRemoteVideoEnabled();
+
+    // Check if local video is available
+    const isLocalVideoEnabled = VoiceVideoCallingSDK.isLocalVideoEnabled();
+
+    // Accepts incoming call
+    const acceptCallConfig = {
+        withVideo: true // Accept call with/without video stream
+    };
+    await VoiceVideoCallingSDK.acceptCall(acceptCallConfig);
+
+    // Rejects incoming call
+    await VoiceVideoCallingSDK.rejectCall();
+
+    // Ends/Stops current call
+    await VoiceVideoCallingSDK.stopCall();
+
+    // Mute/Unmute current call
+    await VoiceVideoCallingSDK.toggleMute()
+
+    // Display/Hide local video of current call
+    await VoiceVideoCallingSDK.toggleLocalVideo()
+
+    // Clean up VoiceVideoCallingSDK (e.g.: Usually called when customer ends chat session)
+    VoiceVideoCallingSDK.close();
+```
 
 ## Feature Comparisons
 

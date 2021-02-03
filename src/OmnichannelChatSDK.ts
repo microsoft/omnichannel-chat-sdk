@@ -40,8 +40,12 @@ import {isCustomerMessage} from "./utils/utilities";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 import validateSDKConfig, {defaultChatSDKConfig} from "./validators/SDKConfigValidators";
 import ISDKConfiguration from "@microsoft/ocsdk/lib/Interfaces/ISDKConfiguration";
+import { loadScript } from "./utils/WebUtils";
+import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
+import CallingOptionsOptionSetNumber from "./core/CallingOptionsOptionSetNumber";
 
 class OmnichannelChatSDK {
+    private debug: boolean;
     public OCSDKProvider: unknown;
     public IC3SDKProvider: unknown;
     public OCClient: any; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -56,9 +60,10 @@ class OmnichannelChatSDK {
     private authenticatedUserToken: string | null = null;
     private preChatSurvey: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private conversation: IConversation | null = null;
-    private debug: boolean;
+    private callingOption: CallingOptionsOptionSetNumber = CallingOptionsOptionSetNumber.NoCalling;
 
     constructor(omnichannelConfig: IOmnichannelConfig, chatSDKConfig: IChatSDKConfig = defaultChatSDKConfig) {
+        this.debug = false;
         this.omnichannelConfig = omnichannelConfig;
         this.chatSDKConfig = chatSDKConfig;
         this.requestId = uuidv4();
@@ -67,10 +72,14 @@ class OmnichannelChatSDK {
         this.dataMaskingRules = {};
         this.authSettings = null;
         this.preChatSurvey = null;
-        this.debug = false;
 
         validateOmnichannelConfig(omnichannelConfig);
         validateSDKConfig(chatSDKConfig);
+    }
+
+    /* istanbul ignore next */
+    public setDebug(flag: boolean): void {
+        this.debug = flag;
     }
 
     public async initialize(): Promise<IChatConfig> {
@@ -209,6 +218,10 @@ class OmnichannelChatSDK {
         return this.conversation?.getMessages();
     }
 
+    public async getDataMaskingRules(): Promise<any> {  // eslint-disable-line  @typescript-eslint/no-explicit-any
+        return this.dataMaskingRules;
+    }
+
     public async sendMessage(message: IChatSDKMessage): Promise<void> {
         const {disable, maskingCharacter} = this.chatSDKConfig.dataMasking;
 
@@ -295,7 +308,14 @@ class OmnichannelChatSDK {
     }
 
     public async onAgentEndSession(onAgentEndSessionCallback: (message: IRawThread) => void): Promise<void> {
-        this.conversation?.registerOnThreadUpdate(onAgentEndSessionCallback);
+        this.conversation?.registerOnThreadUpdate((message: IRawThread) => {
+            const {members} = message;
+
+            // Agent ending conversation would have 1 member left in the chat thread
+            if (members.length === 1) {
+                onAgentEndSessionCallback(message);
+            }
+        });
     }
 
     public async uploadFileAttachment(fileInfo: IFileInfo): Promise<IRawMessage> {
@@ -368,12 +388,10 @@ class OmnichannelChatSDK {
             return Promise.reject(`ChatAdapter for protocol ${protocol} currently not supported`);
         }
 
-        const scriptElement = document.createElement('script');
-        scriptElement.setAttribute('src', libraries.getIC3AdapterCDNUrl());
-        document.head.appendChild(scriptElement);
-
-        return new Promise((resolve, reject) => {
-            scriptElement.addEventListener('load', () => {
+        return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
+            const ic3AdapterCDNUrl = libraries.getIC3AdapterCDNUrl();
+            await loadScript(ic3AdapterCDNUrl, () => {
+                /* istanbul ignore next */
                 this.debug && console.debug('IC3Adapter loaded!');
                 const adapterConfig: IIC3AdapterOptions = {
                     chatToken: this.chatToken,
@@ -384,17 +402,48 @@ class OmnichannelChatSDK {
 
                 const adapter = new window.Microsoft.BotFramework.WebChat.IC3Adapter(adapterConfig);
                 resolve(adapter);
-            });
-
-            scriptElement.addEventListener('error', () => {
-                reject(`Failed to load IC3Adapter`);
+            }, () => {
+                reject('Failed to load IC3Adapter');
             });
         });
     }
 
-    /* istanbul ignore next */
-    public setDebug(flag: boolean): void {
-        this.debug = flag;
+    public async getVoiceVideoCalling(params: any = {}): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+        if (platform.isNode() || platform.isReactNative()) {
+            return Promise.reject('VoiceVideoCalling is only supported on browser');
+        }
+
+        if (this.callingOption.toString() === CallingOptionsOptionSetNumber.NoCalling.toString()) {
+            return Promise.reject('Voice and video call is not enabled');
+        }
+
+        const chatConfig = await this.getChatConfig();
+        const {LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin} = chatConfig;
+        const {msdyn_widgetsnippet} = liveWSAndLiveChatEngJoin;
+
+        // Find src attribute with its url in code snippet
+        const widgetSnippetSourceRegex = new RegExp(`src="(https:\\/\\/[\\w-.]+)[\\w-.\\/]+"`);
+        const result = msdyn_widgetsnippet.match(widgetSnippetSourceRegex);
+        if (result && result.length) {
+            return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
+                const spoolSDKCDNUrl = `${result[1]}/livechatwidget/WebChatControl/lib/spool-sdk/sdk.bundle.js`;
+                await loadScript(spoolSDKCDNUrl, () => {
+                    /* istanbul ignore next */
+                    this.debug && console.debug(`${spoolSDKCDNUrl} loaded!`);
+                }, () => {
+                    reject('Failed to load SpoolSDK');
+                });
+
+                const LiveChatWidgetLibCDNUrl = `${result[1]}/livechatwidget/WebChatControl/lib/LiveChatWidgetLibs.min.js`;
+                await loadScript(LiveChatWidgetLibCDNUrl, async () => {
+                    this.debug && console.debug(`${LiveChatWidgetLibCDNUrl} loaded!`);
+                    const VoiceVideoCalling = await createVoiceVideoCalling(params);
+                    resolve(VoiceVideoCalling);
+                }, async () => {
+                    reject('Failed to load VoiceVideoCalling');
+                });
+            });
+        }
     }
 
     private async getIC3Client() {
@@ -411,13 +460,13 @@ class OmnichannelChatSDK {
         } else {
             this.debug && console.debug('IC3Client');
             // Use IC3Client if browser is detected
-            const scriptElement = document.createElement('script');
-            scriptElement.setAttribute('src', libraries.getIC3ClientCDNUrl());
-            document.head.appendChild(scriptElement);
+            return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
+                const ic3ClientCDNUrl = libraries.getIC3ClientCDNUrl();
 
-            return new Promise((resolve) => {
                 window.addEventListener("ic3:sdk:load", async () => {
                     // Use FramedBridge from IC3Client
+                    /* istanbul ignore next */
+                    this.debug && console.debug('ic3:sdk:load');
                     const {SDK: ic3sdk} = window.Microsoft.CRM.Omnichannel.IC3Client;
                     const {SDKProvider: IC3SDKProvider} = ic3sdk;
                     this.IC3SDKProvider = IC3SDKProvider;
@@ -426,6 +475,12 @@ class OmnichannelChatSDK {
                         protocolType: ProtocolType.IC3V1SDK
                     });
                     resolve(IC3Client);
+                });
+
+                await loadScript(ic3ClientCDNUrl, () => {
+                    this.debug && console.debug('IC3Client loaded!');
+                }, () => {
+                    reject('Failed to load IC3Adapter');
                 });
             });
         }
@@ -449,7 +504,7 @@ class OmnichannelChatSDK {
                 this.authSettings = authSettings;
             }
 
-            const {PreChatSurvey: preChatSurvey, msdyn_prechatenabled} = liveWSAndLiveChatEngJoin;
+            const {PreChatSurvey: preChatSurvey, msdyn_prechatenabled, msdyn_callingoptions} = liveWSAndLiveChatEngJoin;
             const isPreChatEnabled = msdyn_prechatenabled === true || msdyn_prechatenabled == "true";
             if (isPreChatEnabled && preChatSurvey && preChatSurvey.trim().length > 0) {
                 this.preChatSurvey = preChatSurvey;
@@ -475,6 +530,7 @@ class OmnichannelChatSDK {
                 this.debug && console.log('Prechat Survey!');
             }
 
+            this.callingOption = msdyn_callingoptions;
             this.liveChatConfig = liveChatConfig;
             return this.liveChatConfig;
         } catch (error) {
