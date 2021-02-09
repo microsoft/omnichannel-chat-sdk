@@ -1,3 +1,5 @@
+import { AlertCircle } from "react-feather";
+
 const getInitial = (text: string): string => {
     if (text) {
         const initials = text.split(/\s/).reduce((response, word) => response += word.slice(0, 1), '');
@@ -33,7 +35,13 @@ const createAvatarMiddleware = () => {
         // System message
         if (tags && tags.includes('system')) {
             console.log(`[AvatarMiddleware][Message][System] ${text}`);
-            return false; // Do not display avatar on system message
+
+            // Display alert icon
+            return (
+                <div>
+                    <AlertCircle color='red' size={20}/>
+                </div>
+            )
         }
 
         if (fromUser === undefined || fromUser === null) {
@@ -62,7 +70,7 @@ const createAvatarMiddleware = () => {
             )
         }
 
-        return next(card); // Default Behaviour
+        return next(card); // Default Behavior
     }
 
     return avatarMiddleware;

@@ -24,7 +24,8 @@
     height: 32px;
     border-radius: 16px;
     text-align: center;
-    background-color:  rgb(22, 27, 34);
+    /* background-color:  rgb(22, 27, 34); */
+    background-color: #2266e3;
 }
 
 .webchat__avatar_initials {
@@ -39,4 +40,43 @@
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+}
+
+.system-message .webchat__bubble__nub {
+    display: none;
+}
+
+.system-message .webchat__stackedLayout__content [class^="css"]:not(.from-user).bubble {
+    max-width: 100%;
+}
+
+.system-message [class^="css"]:not(.from-user) > .webchat__bubble__content {
+    color: #605E5C;
+    background: transparent;
+    font-size: 12px;
+    border: none;
+    border-radius: 0;
+    min-height: auto;
+    line-height: 20px;
+}
+
+.system-message [class^="css"]:not(.from-user) > .webchat__bubble__content > p {
+    padding: 0;
+}
+
+.system-message > [class^="css"] > .content > .webchat__row > .bubble {
+    max-width: 100%;
+}
+
+.system-message > [class^="css"] > .content > .webchat__row > .bubble > div > div {
+    padding-left: 0;
+}
+
+.system-message .timestamp {
+    display: none;
+}
+
+.system-message .markdown {
+    padding: 0;
+    height: auto;
 }

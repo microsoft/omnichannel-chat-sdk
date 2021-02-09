@@ -24,6 +24,16 @@ console.log(omnichannelConfig);
 
 const activityMiddleware: any = createActivityMiddleware();
 const avatarMiddleware: any = createAvatarMiddleware();
+const styleOptions = {
+  bubbleBorderRadius: 10,
+  bubbleNubSize: 10,
+  bubbleNubOffset: 15,
+
+  bubbleFromUserBorderRadius: 10,
+  bubbleFromUserNubSize: 10,
+  bubbleFromUserNubOffset: 15,
+  bubbleFromUserBackground: 'rgb(246, 246, 246)'
+}
 
 function WebChat() {
   const {state, dispatch} = useContext(Store);
@@ -182,6 +192,7 @@ function WebChat() {
               directLine={chatAdapter}
               sendTypingIndicator={true}
               store={webChatStore}
+              styleOptions={styleOptions}
             />
           }
           {
