@@ -10,6 +10,7 @@ import Calling from '../Calling/Calling';
 import ActionBar from '../ActionBar/ActionBar';
 import createCustomStore from './createCustomStore';
 import { createDataMaskingMiddleware } from './createDataMaskingMiddleware';
+import createActivityMiddleware from './createActivityMiddleware';
 import './WebChat.css';
 
 const omnichannelConfig = {
@@ -19,6 +20,8 @@ const omnichannelConfig = {
 };
 
 console.log(omnichannelConfig);
+
+const activityMiddleware: any = createActivityMiddleware();
 
 function WebChat() {
   const {state, dispatch} = useContext(Store);
@@ -170,7 +173,8 @@ function WebChat() {
             />
           }
           {
-            !state.isLoading && state.hasChatStarted && chatAdapter && webChatStore && <ReactWebChat
+            !state.isLoading && state.hasChatStarted && chatAdapter && webChatStore && activityMiddleware && <ReactWebChat
+              activityMiddleware={activityMiddleware}
               userID="teamsvisitor"
               directLine={chatAdapter}
               sendTypingIndicator={true}
