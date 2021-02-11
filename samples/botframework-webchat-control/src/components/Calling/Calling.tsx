@@ -81,7 +81,6 @@ function Calling(props: CallingProps) {
 
       VoiceVideoCallingSDK.onCallDisconnected(() => {
         console.log('[WebChat][Calling][CallDisconnected]');
-
         adjustWebChatHeightNoCall();
 
         setIncomingCall(false);
