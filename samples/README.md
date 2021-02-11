@@ -8,5 +8,5 @@ All sample apps are not production ready code and are used for reference only.
 
 | Sample Name | Description |
 | --- | --- |
-| [Gifted Chat React Native Control](GiftedChatReactNativeControl/) | Demonstrates how to use Chat SDK with Gifted Chat React Native Control |
+| [Gifted Chat React Native Control](GiftedChatReactNativeControl/) | Demonstrates how to use Chat SDK with [Gifted Chat React Native](https://github.com/FaridSafi/react-native-gifted-chat) Control |
 | [BotFramework-WebChat Control](botframework-webchat-control/) | Demonstrates how to use Chat SDK with [BotFramework-WebChat](https://github.com/microsoft/BotFramework-WebChat) Control
