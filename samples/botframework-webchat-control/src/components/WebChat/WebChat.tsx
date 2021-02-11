@@ -12,14 +12,12 @@ import createCustomStore from './createCustomStore';
 import { createDataMaskingMiddleware } from './createDataMaskingMiddleware';
 import createActivityMiddleware from './createActivityMiddleware';
 import createAvatarMiddleware from './createAvatarMiddleware';
+import fetchOmnichannelConfig from '../../utils/fetchOmnichannelConfig';
 import './WebChat.css';
 
-const omnichannelConfig = {
-  orgId: process.env.REACT_APP_orgId || '',
-  orgUrl: process.env.REACT_APP_orgUrl || '',
-  widgetId: process.env.REACT_APP_widgetId || ''
-};
+const omnichannelConfig: any = fetchOmnichannelConfig();
 
+console.log(`%c [OmnichannelConfig]`, 'background-color:#001433;color:#fff');
 console.log(omnichannelConfig);
 
 const activityMiddleware: any = createActivityMiddleware();
