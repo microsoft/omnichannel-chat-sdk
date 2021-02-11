@@ -427,7 +427,7 @@ Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel
 | --- | --- | --- |
 | **Features** | | |
 | Chat Widget UI | Not provided | Basic chat client provided |
-| Data Masking | Embedded | Requires `Attachment Middleware` implementation |
+| Data Masking | Embedded | Requires `Data Masking Middleware` implementation |
 | Send Typing indicator | Embedded | Requires `sendTypingIndicator` flag set to `true` |
 | PreChat Survey | Requires Adaptive Cards renderer | Requires Adaptive Cards renderer
 | Display Attachments | Requires implementation | Provided & Customizable |
@@ -439,7 +439,7 @@ Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel
 | **Features** | | | Currently not supported |
 | Chat Widget UI | Not provided | Basic chat client provided | X |
 | Data Masking | Embedded | Embedded | X |
-| Send Typing indicator | Embedded | WIP | X |
+| Send Typing indicator | Embedded | Requires Implementation | X |
 | PreChat Survey | Requires Adaptive Cards renderer | Requires Adaptive Cards renderer | X |
 | Display Attachments | Requires implementation| Embedded | X |
 | Incoming messages handling |IC3 protocol message data | IC3 protocol message data | X |
