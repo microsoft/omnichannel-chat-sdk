@@ -2,6 +2,16 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Added
+- React Native sample app with Omnichannel Chat SDK using [react-native-gifted-chat](https://github.com/FaridSafi/react-native-gifted-chat)
+- Escalation to Voice & View support (Web Only)
+- React sample app with Omnichannel Chat SDK using [BotFramework-WebChat](https://github.com/microsoft/BotFramework-WebChat)
+
+### Fixed
+- onAgentEndSession triggered on accept voice & video call
+
+### Security
+- Fix eslint errors
 
 ## [0.1.0] - 2020-10-26
 ### Added
