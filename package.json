@@ -2,6 +2,9 @@
   "name": "@microsoft/omnichannel-chat-sdk",
   "version": "0.1.1-0",
   "description": "Microsoft Omnichannel Chat SDK",
+  "files": [
+    "lib/**/*"
+  ],
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
@@ -30,12 +33,12 @@
     "@typescript-eslint/eslint-plugin": "^4.9.1",
     "@typescript-eslint/parser": "^4.9.1",
     "eslint": "^7.15.0",
-    "jest": "^26.4.2",
-    "ts-jest": "^26.3.0",
+    "jest": "^26.6.3",
+    "ts-jest": "^26.5.1",
     "typescript": "^3.9.5"
   },
   "dependencies": {
-    "@microsoft/ocsdk": "^0.1.0",
-    "@microsoft/omnichannel-ic3core": "^0.1.0"
+    "@microsoft/ocsdk": "^0.1.1",
+    "@microsoft/omnichannel-ic3core": "^0.1.1"
   }
 }

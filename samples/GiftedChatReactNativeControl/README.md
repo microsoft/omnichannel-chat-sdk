@@ -63,4 +63,4 @@ orgUrl='[your-org-url]'
 widgetId='[your-app-id]'
 ```
 
-### 5. Install the project with `npm install` and run the application with `npm run android` or `npm run ios`
+### 5. Install the project with `npm ci` and run the application with `npm run android` or `npm run ios`
