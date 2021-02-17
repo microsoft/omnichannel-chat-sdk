@@ -18,7 +18,7 @@ The sample app includes the following scenarios:
 - [ ] Download transcript
 - [ ] Email transcript
 - [ ] Pre-Chat Survey
-- [ ] Reconnect existing chat
+- [X] Reconnect existing chat
 - [ ] Escalation to Voice & Video
 
 ## Prerequisites

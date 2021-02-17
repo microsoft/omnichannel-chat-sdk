@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Widget, addResponseMessage, isWidgetOpened, dropMessages } from 'react-chat-widget';
+import { Widget, addResponseMessage, isWidgetOpened, dropMessages, addUserMessage } from 'react-chat-widget';
 import fetchOmnichannelConfig from '../../utils/fetchOmnichannelConfig';
-import {OmnichannelChatSDK} from '@microsoft/omnichannel-chat-sdk';
+import {OmnichannelChatSDK, isCustomerMessage, isSystemMessage} from '@microsoft/omnichannel-chat-sdk';
 import 'react-chat-widget/lib/styles.css';
 
 const omnichannelConfig: any = fetchOmnichannelConfig();
@@ -44,13 +44,38 @@ function ChatWidget() {
     setOpen(open);
 
     if (!hasChatStarted && open) {
-      console.log(`[StartNEWChat]`);
+      console.log(`[StartChat]`);
 
-      await chatSDK?.startChat();
+      const optionalParams: any = {};
+
+      // Check for active conversation in cache
+      const cachedLiveChatContext = localStorage.getItem('liveChatContext');
+      if (cachedLiveChatContext && Object.keys(JSON.parse(cachedLiveChatContext)).length > 0) {
+        console.log("[liveChatContext]");
+        optionalParams.liveChatContext = JSON.parse(cachedLiveChatContext);
+      }
+
+      await chatSDK?.startChat(optionalParams);
+
+      // Rehydrate messages
+      const messages: any = await chatSDK?.getMessages();
+      for (const message of messages.reverse()) {
+        if (isSystemMessage(message)) {
+          addResponseMessage(message.content);
+        } else if (isCustomerMessage(message)) {
+          addUserMessage(message.content);
+        } else {
+          addResponseMessage(message.content);
+        }
+      }
 
       const chatToken = await chatSDK?.getChatToken();
       console.log(`[chatToken]`);
       console.log(chatToken);
+
+      // Cache current conversation context
+      const liveChatContext = await chatSDK?.getCurrentLiveChatContext();
+      localStorage.setItem('liveChatContext', JSON.stringify(liveChatContext));
 
       chatSDK?.onNewMessage((message: any) => {
         addResponseMessage(message.content);
@@ -61,9 +86,10 @@ function ChatWidget() {
 
     if (hasChatStarted && !open) {
       console.log(`[CloseChat]`);
-
       await chatSDK?.endChat();
 
+      // Clean up
+      localStorage.removeItem('liveChatContext');
       dropMessages()
       setHasChatStarted(false);
     }
