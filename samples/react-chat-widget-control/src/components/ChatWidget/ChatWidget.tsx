@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Widget, addResponseMessage, isWidgetOpened, toggleWidget } from 'react-chat-widget';
+import { Widget, addResponseMessage, isWidgetOpened, dropMessages } from 'react-chat-widget';
 import fetchOmnichannelConfig from '../../utils/fetchOmnichannelConfig';
 import {OmnichannelChatSDK} from '@microsoft/omnichannel-chat-sdk';
 import 'react-chat-widget/lib/styles.css';
@@ -28,8 +28,6 @@ function ChatWidget() {
     }
 
     init();
-    // Sample message from agent
-    addResponseMessage('Hi, how can I help you?');
   }, []);
 
   const handleNewUserMessage = async (newMessage: any) => {
@@ -62,15 +60,18 @@ function ChatWidget() {
 
       await chatSDK?.endChat();
 
+      dropMessages()
       setHasChatStarted(false);
     }
   }
 
   return (
     <div>
-      <h1> Hello World!</h1>
+      <h1> Omnichannel Chat SDK </h1>
       <div onClick={onWidgetClick}>
         <Widget
+          title='Live Chat'
+          subtitle='via omnichannel-sdk & react-chat-widget control'
           handleNewUserMessage={handleNewUserMessage}
         />
       </div>
