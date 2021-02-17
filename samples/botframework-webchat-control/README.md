@@ -22,6 +22,7 @@ The sample app includes the following scenarios:
 - [X] Reconnect existing chat
 - [X] Data masking middleware
 - [ ] Attachment middleware
+- [X] Escalation to Voice & Video
 
 ## Prerequisites
 - [React](https://reactjs.org/)
