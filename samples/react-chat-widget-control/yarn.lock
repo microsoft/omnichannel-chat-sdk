@@ -1391,9 +1391,10 @@
     "@types/node" "^12.12.7"
     axios "^0.21.1"
 
-"@microsoft/omnichannel-chat-sdk@https://inapp.blob.core.windows.net/dev/npm/microsoft-omnichannel-chat-sdk-0.1.1-0.tgz":
-  version "0.1.1-0"
-  resolved "https://inapp.blob.core.windows.net/dev/npm/microsoft-omnichannel-chat-sdk-0.1.1-0.tgz#6baeec90ee8696397e0ce984f06e337dc16fc7d7"
+"@microsoft/omnichannel-chat-sdk@^0.1.1-main.c05dc32":
+  version "0.1.1-main.c05dc32"
+  resolved "https://registry.yarnpkg.com/@microsoft/omnichannel-chat-sdk/-/omnichannel-chat-sdk-0.1.1-main.c05dc32.tgz#e15d9d749d7ae2c0d8cf5a49f7c2b2df0c78f9c1"
+  integrity sha512-EBOc1b2XeHlOdVWbBC5vbufPqYe8i7Hsn8W/Gyh32lfyHcO9QORj754jqKnf7SCwFHJb8dGFcWMSGZGRfbwqvQ==
   dependencies:
     "@microsoft/ocsdk" "^0.1.1"
     "@microsoft/omnichannel-ic3core" "^0.1.1"
