@@ -33,7 +33,6 @@ function ChatWidget() {
   const handleNewUserMessage = async (newMessage: any) => {
     console.log(`New message incoming! ${newMessage}`);
 
-    // TODO: Send message to Omnichannel
     await chatSDK?.sendMessage({
       content: newMessage
     });
@@ -48,6 +47,11 @@ function ChatWidget() {
       console.log(`[StartNEWChat]`);
 
       await chatSDK?.startChat();
+
+      const chatToken = await chatSDK?.getChatToken();
+      console.log(`[chatToken]`);
+      console.log(chatToken);
+
       chatSDK?.onNewMessage((message: any) => {
         addResponseMessage(message.content);
       });
