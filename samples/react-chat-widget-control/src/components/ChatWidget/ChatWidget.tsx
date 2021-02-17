@@ -32,24 +32,36 @@ function ChatWidget() {
     addResponseMessage('Hi, how can I help you?');
   }, []);
 
-  const handleNewUserMessage = (newMessage: any) => {
+  const handleNewUserMessage = async (newMessage: any) => {
     console.log(`New message incoming! ${newMessage}`);
 
     // TODO: Send message to Omnichannel
+    await chatSDK?.sendMessage({
+      content: newMessage
+    });
   };
 
-  const onWidgetClick = (event: any) => {
+  const onWidgetClick = async (event: any) => {
     const open = isWidgetOpened();
     // console.log(`[isWidgetOpened] ${open}`);
     setOpen(open);
 
     if (!hasChatStarted && open) {
       console.log(`[StartNEWChat]`);
+
+      await chatSDK?.startChat();
+      chatSDK?.onNewMessage((message: any) => {
+        addResponseMessage(message.content);
+      });
+
       setHasChatStarted(true);
     }
 
     if (hasChatStarted && !open) {
       console.log(`[CloseChat]`);
+
+      await chatSDK?.endChat();
+
       setHasChatStarted(false);
     }
   }
