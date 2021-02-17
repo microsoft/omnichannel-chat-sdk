@@ -12,6 +12,7 @@ console.log(omnichannelConfig);
 function ChatWidget() {
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
   const [open, setOpen] = useState<boolean>(false);
+  const [hasChatStarted, setHasChatStarted] = useState<boolean>(false);
 
   useEffect(() => {
     const init = async () => {
@@ -39,8 +40,18 @@ function ChatWidget() {
 
   const onWidgetClick = (event: any) => {
     const open = isWidgetOpened();
-    console.log(`[isWidgetOpened] ${open}`);
+    // console.log(`[isWidgetOpened] ${open}`);
     setOpen(open);
+
+    if (!hasChatStarted && open) {
+      console.log(`[StartNEWChat]`);
+      setHasChatStarted(true);
+    }
+
+    if (hasChatStarted && !open) {
+      console.log(`[CloseChat]`);
+      setHasChatStarted(false);
+    }
   }
 
   return (
