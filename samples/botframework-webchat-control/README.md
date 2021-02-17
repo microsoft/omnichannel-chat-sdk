@@ -22,6 +22,7 @@ The sample app includes the following scenarios:
 - [X] Reconnect existing chat
 - [X] Data masking middleware
 - [ ] Attachment middleware
+- [X] Escalation to Voice & Video
 
 ## Prerequisites
 - [React](https://reactjs.org/)
@@ -67,4 +68,4 @@ REACT_APP_orgUrl='[your-org-url]'
 REACT_APP_widgetId='[your-app-id]'
 ```
 
-### 5. Install the project with `npm install` and run the application with `npm run start`
+### 5. Install the project with `npm ci` and run the application with `npm run start`
