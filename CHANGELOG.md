@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 - React Native sample app using Omnichannel Chat SDK with [react-native-gifted-chat](https://github.com/FaridSafi/react-native-gifted-chat)
 - Escalation to Voice & View support (Web Only)
 - React sample app using Omnichannel Chat SDK with [BotFramework-WebChat](https://github.com/microsoft/BotFramework-WebChat)
+- Expose `sessiontInit`'s `initContext` on `startChat`'s optional paramaters
 
 ### Changed
 - Uptake [@microsoft/ocsdk@0.1.1](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.1.1)
