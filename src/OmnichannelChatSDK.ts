@@ -105,7 +105,7 @@ class OmnichannelChatSDK {
         };
 
         if (optionalParams.customContext) {
-            (sessionInitOptionalParams.initContext! as any).customContextData = optionalParams.customContext;
+            (sessionInitOptionalParams.initContext! as any).customContextData = optionalParams.customContext; // eslint-disable-line @typescript-eslint/no-explicit-any
         }
 
         if (optionalParams.browser) {
