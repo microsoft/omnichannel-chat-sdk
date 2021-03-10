@@ -128,6 +128,11 @@ class OmnichannelChatSDK {
             sessionInitOptionalParams.initContext!.preChatResponse = optionalParams.preChatResponse;
         }
 
+        // Override initContext completely
+        if (optionalParams.initContext) {
+            sessionInitOptionalParams.initContext = optionalParams.initContext;
+        }
+
         if (this.authenticatedUserToken) {
             sessionInitOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
         }

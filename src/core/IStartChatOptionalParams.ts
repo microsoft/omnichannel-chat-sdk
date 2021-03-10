@@ -1,3 +1,4 @@
+import InitContext from "@microsoft/ocsdk/lib/Model/InitContext";
 import ILiveChatContext from "./ILiveChatContext";
 
 export default interface IStartChatOptionalParams {
@@ -8,4 +9,5 @@ export default interface IStartChatOptionalParams {
     os?: string;
     locale?: string;
     device?: string;
+    initContext?: InitContext;
 }
