@@ -7,7 +7,7 @@ interface IDataMaskingSDKConfig {
 }
 
 interface IChatSDKConfig {
-    dataMasking: IDataMaskingSDKConfig,
+    dataMasking?: IDataMaskingSDKConfig,
     getAuthToken?: () => Promise<string|null>,
     ic3Config?: IC3Config,
     chatAdapterConfig?: ChatAdapterConfig
