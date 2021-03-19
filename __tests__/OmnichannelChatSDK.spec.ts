@@ -305,6 +305,101 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.sessionInit.mock.calls[0][1]).toMatchObject(sessionInitOptionalParams);
         });
 
+        it('ChatSDK.startChat() with customContext, browser, os, locale, device defined in sessionInitOptionalParams should pass it to OCClient.sessionInit() call\'s optional parameters', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.IC3Client = {
+                initialize: jest.fn(),
+                joinConversation: jest.fn()
+            }
+
+            const optionaParams = {
+                preChatResponse: 'preChatResponse',
+                customContext: {},
+                browser: 'browser',
+                os: 'os',
+                locale: 'locale',
+                device: 'device'
+            }
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+
+            await chatSDK.startChat(optionaParams);
+
+            const sessionInitOptionalParams = {
+                initContext: {
+                    preChatResponse: optionaParams.preChatResponse,
+                    browser: optionaParams.browser,
+                    os: optionaParams.os,
+                    locale: optionaParams.locale,
+                    device: optionaParams.device
+                }
+            }
+
+            expect(chatSDK.OCClient.sessionInit.mock.calls[0][1]).toMatchObject(sessionInitOptionalParams);
+        });
+
+        it('ChatSDK.startChat() with initContext defined should override IStartChatOptionalParams', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.IC3Client = {
+                initialize: jest.fn(),
+                joinConversation: jest.fn()
+            }
+
+            const optionaParams = {
+                preChatResponse: 'preChatResponse',
+                customContext: {},
+                browser: 'browser',
+                os: 'os',
+                locale: 'locale',
+                device: 'device',
+                initContext: {
+                    preChatResponse: 'override',
+                    customContext: 'override',
+                    browser: 'override',
+                    os: 'override',
+                    locale: 'override',
+                    device: 'override'
+                }
+            }
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+
+            await chatSDK.startChat(optionaParams);
+
+            const sessionInitOptionalParams = {
+                initContext: {
+                    preChatResponse: optionaParams.initContext.preChatResponse,
+                    customContext: optionaParams.initContext.customContext,
+                    browser: optionaParams.initContext.browser,
+                    os: optionaParams.initContext.os,
+                    locale: optionaParams.initContext.locale,
+                    device: optionaParams.initContext.device
+                }
+            }
+
+            expect(chatSDK.OCClient.sessionInit.mock.calls[0][1]).toMatchObject(sessionInitOptionalParams);
+        });
+
         it('ChatSDK.startChat() with authenticatedUserToken should pass it to OCClient.sessionInit() call\'s optional parameters', async() => {
             const chatSDKConfig = {
                 getAuthToken: async () => {

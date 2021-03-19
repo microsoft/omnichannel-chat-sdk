@@ -5,15 +5,20 @@
 
 Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel Services.
 
+## Table of Contents
+- [API Reference](#api-reference)
+- [API Examples](#api-examples)
+- [Sample Apps](samples/)
+- [Common Scenarios](#common-scenarios)
+- [Feature Comparisons](#feature-comparisons)
+
 ## Installation
 
 ```
     npm install @microsoft/omnichannel-chat-sdk --save
 ```
 
-## API
-
-### High Level Overview
+## API Reference
 
 | Method | Description | Notes |
 | ------ | ----------- | ----- |
@@ -37,6 +42,8 @@ Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel
 | OmnichannelChatSDK.downloadFileAttachment() | Download file attachment | |
 | OmnichannelChatSDK.createChatAdapter() | Get IC3Adapter | **Web only** |
 | OmnichannelChatSDK.getVoiceVideoCalling() | Get VoiceVideoCall SDK for Escalation to Voice & Video| **Web only** |
+
+## API examples
 
 ### Import
 ```ts
@@ -95,9 +102,16 @@ Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel
 
 ### Start Chat
 ```ts
+    const customContext = {
+        'contextKey1': {'value': 'contextValue1', 'isDisplayable': true},
+        'contextKey2': {'value': 12.34, 'isDisplayable': false},
+        'contextKey3': {'value': true}
+    };
+
     const optionalParams = {
         preChatResponse: '', // PreChatSurvey response
-        liveChatContext: {} // EXISTING chat context data
+        liveChatContext: {}, // EXISTING chat context data
+        customContext // Custom Context
     };
     await chatSDK.startChat(optionalParams);
 ```
@@ -197,7 +211,7 @@ Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel
     await chatSDK.emailLiveChatTranscript(body);
 ```
 
-## Samples
+## Common Scenarios
 
 ### PreChatSurvey
 

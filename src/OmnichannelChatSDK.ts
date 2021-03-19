@@ -104,8 +104,33 @@ class OmnichannelChatSDK {
             initContext: {} as InitContext
         };
 
+        if (optionalParams.customContext) {
+            (sessionInitOptionalParams.initContext! as any).customContextData = optionalParams.customContext; // eslint-disable-line @typescript-eslint/no-explicit-any
+        }
+
+        if (optionalParams.browser) {
+            sessionInitOptionalParams.initContext!.browser = optionalParams.browser;
+        }
+
+        if (optionalParams.os) {
+            sessionInitOptionalParams.initContext!.os = optionalParams.os;
+        }
+
+        if (optionalParams.locale) {
+            sessionInitOptionalParams.initContext!.locale = optionalParams.locale;
+        }
+
+        if (optionalParams.device) {
+            sessionInitOptionalParams.initContext!.device = optionalParams.device;
+        }
+
         if (optionalParams.preChatResponse) {
             sessionInitOptionalParams.initContext!.preChatResponse = optionalParams.preChatResponse;
+        }
+
+        // Override initContext completely
+        if (optionalParams.initContext) {
+            sessionInitOptionalParams.initContext = optionalParams.initContext;
         }
 
         if (this.authenticatedUserToken) {
