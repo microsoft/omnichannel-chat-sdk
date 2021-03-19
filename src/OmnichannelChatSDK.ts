@@ -248,7 +248,7 @@ class OmnichannelChatSDK {
     }
 
     public async sendMessage(message: IChatSDKMessage): Promise<void> {
-        const {disable, maskingCharacter} = this.chatSDKConfig.dataMasking;
+        const {disable, maskingCharacter} = this.chatSDKConfig.dataMasking!;
 
         let {content} = message;
         if (Object.keys(this.dataMaskingRules).length > 0 && !disable) {
