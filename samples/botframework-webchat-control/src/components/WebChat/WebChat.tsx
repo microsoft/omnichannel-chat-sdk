@@ -136,7 +136,7 @@ function WebChat() {
     await chatSDK?.endChat();
 
     // Clean up
-    (VoiceVideoCallingSDK as any).close();
+    (VoiceVideoCallingSDK as any)?.close();
     setChatAdapter(undefined);
     setChatToken(undefined);
     localStorage.removeItem('liveChatContext');
