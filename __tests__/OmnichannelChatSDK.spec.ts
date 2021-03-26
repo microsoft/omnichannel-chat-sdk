@@ -4,10 +4,11 @@ import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/Fi
 import IFileMetadata from "@microsoft/omnichannel-ic3core/lib/model/IFileMetadata";
 import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
+import libraries from "../src/utils/libraries";
 
 describe('Omnichannel Chat SDK', () => {
     describe('Configurations', () => {
-        it('ChatSDK should require omnichannelConfig as paramater', () => {
+        it('ChatSDK should require omnichannelConfig as parameter', () => {
             try {
                 new OmnichannelChatSDK();
             } catch (error) {
@@ -26,6 +27,58 @@ describe('Omnichannel Chat SDK', () => {
             } catch (error) {
                 expect(error).toBeInstanceOf(Error);
             }
+        });
+
+        it('ChatSDK should be able to pick custom ic3ClientVersion', async () => {
+            const omnichannelConfig = {
+                orgUrl: '',
+                orgId: '',
+                widgetId: ''
+            };
+
+            const chatSDKConfig = {
+                ic3Config: {
+                    ic3ClientVersion: 'version'
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            const url = chatSDK.resolveIC3ClientUrl();
+
+            expect(url).toBe(libraries.getIC3ClientCDNUrl(chatSDKConfig.ic3Config.ic3ClientVersion));
+        });
+
+        it('ChatSDK should be able to pick custom ic3ClientCDNUrl', async () => {
+            const omnichannelConfig = {
+                orgUrl: '',
+                orgId: '',
+                widgetId: ''
+            };
+
+            const chatSDKConfig = {
+                ic3Config: {
+                    ic3ClientVersion: 'version',
+                    ic3ClientCDNUrl: 'cdn'
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            const url = chatSDK.resolveIC3ClientUrl();
+
+            expect(url).toBe(chatSDKConfig.ic3Config.ic3ClientCDNUrl);
+        });
+
+        it('ChatSDK should pick the default ic3ClientCDNUrl if no ic3Config is set', async () => {
+            const omnichannelConfig = {
+                orgUrl: '',
+                orgId: '',
+                widgetId: ''
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            const url = chatSDK.resolveIC3ClientUrl();
+
+            expect(url).toBe(libraries.getIC3ClientCDNUrl());
         });
     });
 
