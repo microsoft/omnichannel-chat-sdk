@@ -13,11 +13,11 @@ const defaultChatSDKConfig: IChatSDKConfig = {
  */
 const validateDataMaskingConfig = (dataMaskingConfig: IDataMaskingSDKConfig) => {
     if (typeof dataMaskingConfig.disable !== "boolean") {
-        dataMaskingConfig.disable = defaultChatSDKConfig.dataMasking.disable;
+        dataMaskingConfig.disable = defaultChatSDKConfig!.dataMasking!.disable; // eslint-disable-line @typescript-eslint/no-non-null-assertion
     }
 
     if (typeof dataMaskingConfig.maskingCharacter !== "string" || dataMaskingConfig.maskingCharacter.length !== 1) {
-        dataMaskingConfig.maskingCharacter = defaultChatSDKConfig.dataMasking.maskingCharacter;
+        dataMaskingConfig.maskingCharacter = defaultChatSDKConfig!.dataMasking!.maskingCharacter; // eslint-disable-line @typescript-eslint/no-non-null-assertion
     }
 }
 
