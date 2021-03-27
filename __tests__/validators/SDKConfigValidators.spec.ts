@@ -19,8 +19,8 @@ describe('SDKConfigValidators', () => {
 
         validateSDKConfig(chatSDKConfig);
 
-        expect(chatSDKConfig.dataMasking.disable).toBe(defaultChatSDKConfig.dataMasking.disable);
-        expect(chatSDKConfig.dataMasking.maskingCharacter).toBe(defaultChatSDKConfig.dataMasking.maskingCharacter);
+        expect(chatSDKConfig.dataMasking.disable).toBe(defaultChatSDKConfig!.dataMasking!.disable);
+        expect(chatSDKConfig.dataMasking.maskingCharacter).toBe(defaultChatSDKConfig!.dataMasking!.maskingCharacter);
         expect(chatSDKConfig.dataMasking.maskingCharacter.length).toBe(1);
     });
 });
