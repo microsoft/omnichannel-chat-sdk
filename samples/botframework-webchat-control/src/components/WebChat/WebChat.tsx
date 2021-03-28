@@ -102,9 +102,9 @@ function WebChat() {
       optionalParams.liveChatContext = JSON.parse(cachedLiveChatContext);
     }
 
-    await chatSDK?.startChat(optionalParams);
     dispatch({type: ActionType.SET_CHAT_STARTED, payload: true});
     dispatch({type: ActionType.SET_LOADING, payload: true});
+    await chatSDK?.startChat(optionalParams);
 
     // Cache current conversation context
     const liveChatContext = await chatSDK?.getCurrentLiveChatContext();
