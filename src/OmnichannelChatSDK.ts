@@ -248,7 +248,7 @@ class OmnichannelChatSDK {
     }
 
     public async sendMessage(message: IChatSDKMessage): Promise<void> {
-        const {disable, maskingCharacter} = this.chatSDKConfig.dataMasking;
+        const {disable, maskingCharacter} = this.chatSDKConfig.dataMasking!;
 
         let {content} = message;
         if (Object.keys(this.dataMaskingRules).length > 0 && !disable) {
@@ -414,7 +414,8 @@ class OmnichannelChatSDK {
         }
 
         return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
-            const ic3AdapterCDNUrl = libraries.getIC3AdapterCDNUrl();
+            const ic3AdapterCDNUrl = this.resolveChatAdapterUrl(protocol);
+
             await loadScript(ic3AdapterCDNUrl, () => {
                 /* istanbul ignore next */
                 this.debug && console.debug('IC3Adapter loaded!');
@@ -422,7 +423,7 @@ class OmnichannelChatSDK {
                     chatToken: this.chatToken,
                     userDisplayName: 'Customer',
                     userId: 'teamsvisitor',
-                    sdkURL: libraries.getIC3ClientCDNUrl()
+                    sdkURL: this.resolveIC3ClientUrl(),
                 };
 
                 const adapter = new window.Microsoft.BotFramework.WebChat.IC3Adapter(adapterConfig);
@@ -486,7 +487,7 @@ class OmnichannelChatSDK {
             this.debug && console.debug('IC3Client');
             // Use IC3Client if browser is detected
             return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
-                const ic3ClientCDNUrl = libraries.getIC3ClientCDNUrl();
+                const ic3ClientCDNUrl = this.resolveIC3ClientUrl();
 
                 window.addEventListener("ic3:sdk:load", async () => {
                     // Use FramedBridge from IC3Client
@@ -562,6 +563,34 @@ class OmnichannelChatSDK {
             console.error(`OmnichannelChatSDK/getChatConfig/error ${error}`);
             return error;
         }
+    }
+
+    private resolveIC3ClientUrl(): string {
+        if (this.chatSDKConfig.ic3Config && 'ic3ClientCDNUrl' in this.chatSDKConfig.ic3Config) {
+            return this.chatSDKConfig.ic3Config.ic3ClientCDNUrl as string;
+        }
+
+        if (this.chatSDKConfig.ic3Config && 'ic3ClientVersion' in this.chatSDKConfig.ic3Config) {
+            return libraries.getIC3ClientCDNUrl(this.chatSDKConfig.ic3Config.ic3ClientVersion);
+        }
+
+        return libraries.getIC3ClientCDNUrl();
+    }
+
+    private resolveChatAdapterUrl(protocol: string): string {
+        if (protocol !== ChatAdapterProtocols.IC3) {
+            throw new Error(`ChatAdapter for protocol ${protocol} currently not supported`);
+        }
+
+        if (this.chatSDKConfig.chatAdapterConfig && 'webChatIC3AdapterCDNUrl' in this.chatSDKConfig.chatAdapterConfig) {
+            return this.chatSDKConfig.chatAdapterConfig.webChatIC3AdapterCDNUrl as string;
+        }
+
+        if (this.chatSDKConfig.chatAdapterConfig && 'webChatIC3AdapterVersion' in this.chatSDKConfig.chatAdapterConfig) {
+            return libraries.getIC3AdapterCDNUrl(this.chatSDKConfig.chatAdapterConfig.webChatIC3AdapterVersion);
+        }
+
+        return libraries.getIC3AdapterCDNUrl();
     }
 }
 
