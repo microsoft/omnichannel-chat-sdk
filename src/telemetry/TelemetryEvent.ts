@@ -23,17 +23,17 @@ enum TelemetryEvent {
     RejectVideoCall = "RejectVideoCall",
     StopCall = "StopCall",
     onCallDisconnected = "onCallDisconnected"
-};
+}
 
-export const startEvent = (event: TelemetryEvent) => {
+export const startEvent = (event: TelemetryEvent): string => {
     return `${event}Started`;
 }
 
-export const completeEvent = (event: TelemetryEvent) => {
+export const completeEvent = (event: TelemetryEvent): string => {
     return `${event}Completed`;
 }
 
-export const failEvent = (event: TelemetryEvent) => {
+export const failEvent = (event: TelemetryEvent): string => {
     return `${event}Failed`;
 }
 
