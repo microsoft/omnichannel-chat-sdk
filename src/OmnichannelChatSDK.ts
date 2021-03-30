@@ -255,6 +255,15 @@ class OmnichannelChatSDK {
     }
 
     public async endChat(): Promise<void> {
+        this.telemetry?.info({
+            Event: startEvent(TelemetryEvent.EndChat),
+            OrgId: this.omnichannelConfig.orgId,
+            OrgUrl: this.omnichannelConfig.orgUrl,
+            WidgetId: this.omnichannelConfig.widgetId,
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string
+        });
+
         const sessionCloseOptionalParams: ISessionCloseOptionalParams = {};
         if (this.authenticatedUserToken) {
             sessionCloseOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
@@ -262,11 +271,35 @@ class OmnichannelChatSDK {
 
         try {
             await this.OCClient.sessionClose(this.requestId, sessionCloseOptionalParams);
+
+            this.telemetry?.info({
+                Event: completeEvent(TelemetryEvent.EndChat),
+                OrgId: this.omnichannelConfig.orgId,
+                OrgUrl: this.omnichannelConfig.orgUrl,
+                WidgetId: this.omnichannelConfig.widgetId,
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
+
             this.conversation!.disconnect();
             this.conversation = null;
             this.requestId = uuidv4();
             this.chatToken = {};
         } catch (error) {
+            const exceptionDetails = {
+                response: "OCClientSessionCloseFailed"
+            };
+
+            this.telemetry?.error({
+                Event: failEvent(TelemetryEvent.EndChat),
+                OrgId: this.omnichannelConfig.orgId,
+                OrgUrl: this.omnichannelConfig.orgUrl,
+                WidgetId: this.omnichannelConfig.widgetId,
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string,
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
             console.error(`OmnichannelChatSDK/endChat/error ${error}`);
             return error;
         }
