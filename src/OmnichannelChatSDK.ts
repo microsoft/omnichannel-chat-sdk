@@ -78,7 +78,7 @@ class OmnichannelChatSDK {
         this.preChatSurvey = null;
         this.telemetry = createTelemetry(this.debug);
 
-        this.chatSDKConfig.telemetry?.disable && this.telemetry.disable();
+        this.chatSDKConfig.telemetry?.disable && this.telemetry?.disable();
 
         validateOmnichannelConfig(omnichannelConfig);
         validateSDKConfig(chatSDKConfig);
@@ -123,6 +123,13 @@ class OmnichannelChatSDK {
     }
 
     public async startChat(optionalParams: IStartChatOptionalParams = {}): Promise<void> {
+        this.telemetry?.info({
+            Event: startEvent(TelemetryEvent.StartChat),
+            OrgId: this.omnichannelConfig.orgId,
+            OrgUrl: this.omnichannelConfig.orgUrl,
+            WidgetId: this.omnichannelConfig.widgetId,
+            RequestId: this.requestId
+        });
 
         if (optionalParams.liveChatContext) {
             this.chatToken = optionalParams.liveChatContext.chatToken || {};
@@ -173,6 +180,20 @@ class OmnichannelChatSDK {
         try {
             await this.OCClient.sessionInit(this.requestId, sessionInitOptionalParams);
         } catch (error) {
+            const exceptionDetails = {
+                response: "OCClientSessionInitFailed"
+            };
+
+            this.telemetry?.error({
+                Event: failEvent(TelemetryEvent.StartChat),
+                OrgId: this.omnichannelConfig.orgId,
+                OrgUrl: this.omnichannelConfig.orgUrl,
+                WidgetId: this.omnichannelConfig.widgetId,
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string,
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
             console.error(`OmnichannelChatSDK/startChat/sessionInit/error ${error}`);
             return error;
         }
@@ -184,13 +205,50 @@ class OmnichannelChatSDK {
                 visitor: true
             });
         } catch (error) {
+            const exceptionDetails = {
+                response: "IC3ClientInitializeFailed"
+            };
+
+            this.telemetry?.error({
+                Event: failEvent(TelemetryEvent.StartChat),
+                OrgId: this.omnichannelConfig.orgId,
+                OrgUrl: this.omnichannelConfig.orgUrl,
+                WidgetId: this.omnichannelConfig.widgetId,
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string,
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
             console.error(`OmnichannelChatSDK/startChat/initialize/error ${error}`);
             return error;
         }
 
         try {
             this.conversation = await this.IC3Client.joinConversation(this.chatToken.chatId);
+
+            this.telemetry?.info({
+                Event: completeEvent(TelemetryEvent.StartChat),
+                OrgId: this.omnichannelConfig.orgId,
+                OrgUrl: this.omnichannelConfig.orgUrl,
+                WidgetId: this.omnichannelConfig.widgetId,
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
         } catch (error) {
+            const exceptionDetails = {
+                response: "IC3ClientJoinConversationFailed"
+            };
+
+            this.telemetry?.error({
+                Event: failEvent(TelemetryEvent.StartChat),
+                OrgId: this.omnichannelConfig.orgId,
+                OrgUrl: this.omnichannelConfig.orgUrl,
+                WidgetId: this.omnichannelConfig.widgetId,
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string,
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
             console.error(`OmnichannelChatSDK/startChat/joinConversation/error ${error}`);
             return error;
         }
@@ -247,6 +305,14 @@ class OmnichannelChatSDK {
     }
 
     public async getChatToken(cached = true): Promise<IChatToken> {
+        this.telemetry?.info({
+            Event: startEvent(TelemetryEvent.GetChatToken),
+            OrgId: this.omnichannelConfig.orgId,
+            OrgUrl: this.omnichannelConfig.orgUrl,
+            WidgetId: this.omnichannelConfig.widgetId,
+            RequestId: this.requestId
+        });
+
         if (!cached) {
             try {
                 const getChatTokenOptionalParams: IGetChatTokenOptionalParams = {};
@@ -264,9 +330,41 @@ class OmnichannelChatSDK {
                     visitorId,
                     voiceVideoCallToken
                 };
+
+                this.telemetry?.info({
+                    Event: completeEvent(TelemetryEvent.GetChatToken),
+                    OrgId: this.omnichannelConfig.orgId,
+                    OrgUrl: this.omnichannelConfig.orgUrl,
+                    WidgetId: this.omnichannelConfig.widgetId,
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
             } catch (error) {
+                const exceptionDetails = {
+                    response: "OCClientGetChatTokenFailed"
+                };
+
+                this.telemetry?.info({
+                    Event: failEvent(TelemetryEvent.GetChatToken),
+                    OrgId: this.omnichannelConfig.orgId,
+                    OrgUrl: this.omnichannelConfig.orgUrl,
+                    WidgetId: this.omnichannelConfig.widgetId,
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string,
+                    ExceptionDetails: JSON.stringify(exceptionDetails)
+                });
+
                 console.error(`OmnichannelChatSDK/getChatToken/error ${error}`);
             }
+        } else {
+            this.telemetry?.info({
+                Event: completeEvent(TelemetryEvent.GetChatToken),
+                OrgId: this.omnichannelConfig.orgId,
+                OrgUrl: this.omnichannelConfig.orgUrl,
+                WidgetId: this.omnichannelConfig.widgetId,
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
         }
 
         return this.chatToken;
