@@ -46,6 +46,7 @@ import CallingOptionsOptionSetNumber from "./core/CallingOptionsOptionSetNumber"
 import createTelemetry from "./utils/createTelemetry";
 import AriaTelemetry from "./telemetry/AriaTelemetry";
 import TelemetryEvent, { completeEvent, failEvent, startEvent } from "./telemetry/TelemetryEvent";
+import StopWatch from "./telemetry/StopWatch";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -91,6 +92,9 @@ class OmnichannelChatSDK {
     }
 
     public async initialize(): Promise<IChatConfig> {
+        const stopWatch = new StopWatch();
+        stopWatch.start();
+
         this.telemetry?.info({
             Event: startEvent(TelemetryEvent.InitializeChatSDK),
             OrgId: this.omnichannelConfig.orgId,
@@ -108,14 +112,16 @@ class OmnichannelChatSDK {
                 Event: completeEvent(TelemetryEvent.InitializeChatSDK),
                 OrgId: this.omnichannelConfig.orgId,
                 OrgUrl: this.omnichannelConfig.orgUrl,
-                WidgetId: this.omnichannelConfig.widgetId
+                WidgetId: this.omnichannelConfig.widgetId,
+                ElapsedTimeInMilliseconds: stopWatch.stop()
             });
         } catch {
             this.telemetry?.info({
                 Event: failEvent(TelemetryEvent.InitializeChatSDK),
                 OrgId: this.omnichannelConfig.orgId,
                 OrgUrl: this.omnichannelConfig.orgUrl,
-                WidgetId: this.omnichannelConfig.widgetId
+                WidgetId: this.omnichannelConfig.widgetId,
+                ElapsedTimeInMilliseconds: stopWatch.stop()
             });
         }
 
@@ -123,6 +129,9 @@ class OmnichannelChatSDK {
     }
 
     public async startChat(optionalParams: IStartChatOptionalParams = {}): Promise<void> {
+        const stopWatch = new StopWatch();
+        stopWatch.start();
+
         this.telemetry?.info({
             Event: startEvent(TelemetryEvent.StartChat),
             OrgId: this.omnichannelConfig.orgId,
@@ -191,7 +200,8 @@ class OmnichannelChatSDK {
                 WidgetId: this.omnichannelConfig.widgetId,
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string,
-                ExceptionDetails: JSON.stringify(exceptionDetails)
+                ExceptionDetails: JSON.stringify(exceptionDetails),
+                ElapsedTimeInMilliseconds: stopWatch.stop()
             });
 
             console.error(`OmnichannelChatSDK/startChat/sessionInit/error ${error}`);
@@ -216,7 +226,8 @@ class OmnichannelChatSDK {
                 WidgetId: this.omnichannelConfig.widgetId,
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string,
-                ExceptionDetails: JSON.stringify(exceptionDetails)
+                ExceptionDetails: JSON.stringify(exceptionDetails),
+                ElapsedTimeInMilliseconds: stopWatch.stop()
             });
 
             console.error(`OmnichannelChatSDK/startChat/initialize/error ${error}`);
@@ -232,7 +243,8 @@ class OmnichannelChatSDK {
                 OrgUrl: this.omnichannelConfig.orgUrl,
                 WidgetId: this.omnichannelConfig.widgetId,
                 RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string
+                ChatId: this.chatToken.chatId as string,
+                ElapsedTimeInMilliseconds: stopWatch.stop()
             });
         } catch (error) {
             const exceptionDetails = {
@@ -246,7 +258,8 @@ class OmnichannelChatSDK {
                 WidgetId: this.omnichannelConfig.widgetId,
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string,
-                ExceptionDetails: JSON.stringify(exceptionDetails)
+                ExceptionDetails: JSON.stringify(exceptionDetails),
+                ElapsedTimeInMilliseconds: stopWatch.stop()
             });
 
             console.error(`OmnichannelChatSDK/startChat/joinConversation/error ${error}`);
@@ -255,6 +268,9 @@ class OmnichannelChatSDK {
     }
 
     public async endChat(): Promise<void> {
+        const stopWatch = new StopWatch();
+        stopWatch.start();
+
         this.telemetry?.info({
             Event: startEvent(TelemetryEvent.EndChat),
             OrgId: this.omnichannelConfig.orgId,
@@ -278,7 +294,8 @@ class OmnichannelChatSDK {
                 OrgUrl: this.omnichannelConfig.orgUrl,
                 WidgetId: this.omnichannelConfig.widgetId,
                 RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string
+                ChatId: this.chatToken.chatId as string,
+                ElapsedTimeInMilliseconds: stopWatch.stop()
             });
 
             this.conversation!.disconnect();
@@ -297,7 +314,8 @@ class OmnichannelChatSDK {
                 WidgetId: this.omnichannelConfig.widgetId,
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string,
-                ExceptionDetails: JSON.stringify(exceptionDetails)
+                ExceptionDetails: JSON.stringify(exceptionDetails),
+                ElapsedTimeInMilliseconds: stopWatch.stop()
             });
 
             console.error(`OmnichannelChatSDK/endChat/error ${error}`);
@@ -338,6 +356,9 @@ class OmnichannelChatSDK {
     }
 
     public async getChatToken(cached = true): Promise<IChatToken> {
+        const stopWatch = new StopWatch();
+        stopWatch.start();
+
         this.telemetry?.info({
             Event: startEvent(TelemetryEvent.GetChatToken),
             OrgId: this.omnichannelConfig.orgId,
@@ -370,7 +391,8 @@ class OmnichannelChatSDK {
                     OrgUrl: this.omnichannelConfig.orgUrl,
                     WidgetId: this.omnichannelConfig.widgetId,
                     RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
+                    ChatId: this.chatToken.chatId as string,
+                    ElapsedTimeInMilliseconds: stopWatch.stop()
                 });
             } catch (error) {
                 const exceptionDetails = {
@@ -384,7 +406,8 @@ class OmnichannelChatSDK {
                     WidgetId: this.omnichannelConfig.widgetId,
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: JSON.stringify(exceptionDetails)
+                    ExceptionDetails: JSON.stringify(exceptionDetails),
+                    ElapsedTimeInMilliseconds: stopWatch.stop()
                 });
 
                 console.error(`OmnichannelChatSDK/getChatToken/error ${error}`);
@@ -396,7 +419,8 @@ class OmnichannelChatSDK {
                 OrgUrl: this.omnichannelConfig.orgUrl,
                 WidgetId: this.omnichannelConfig.widgetId,
                 RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string
+                ChatId: this.chatToken.chatId as string,
+                ElapsedTimeInMilliseconds: stopWatch.stop()
             });
         }
 
@@ -569,6 +593,9 @@ class OmnichannelChatSDK {
     }
 
     public async createChatAdapter(protocol: string = ChatAdapterProtocols.IC3): Promise<unknown> {
+        const stopWatch = new StopWatch();
+        stopWatch.start();
+
         if (platform.isNode() || platform.isReactNative()) {
             return Promise.reject('ChatAdapter is only supported on browser');
         }
@@ -607,7 +634,8 @@ class OmnichannelChatSDK {
                     Event: completeEvent(TelemetryEvent.CreateIC3Adapter),
                     OrgId: this.omnichannelConfig.orgId,
                     OrgUrl: this.omnichannelConfig.orgUrl,
-                    WidgetId: this.omnichannelConfig.widgetId
+                    WidgetId: this.omnichannelConfig.widgetId,
+                    ElapsedTimeInMilliseconds: stopWatch.stop()
                 });
 
                 resolve(adapter);
@@ -616,7 +644,8 @@ class OmnichannelChatSDK {
                     Event: failEvent(TelemetryEvent.CreateIC3Adapter),
                     OrgId: this.omnichannelConfig.orgId,
                     OrgUrl: this.omnichannelConfig.orgUrl,
-                    WidgetId: this.omnichannelConfig.widgetId
+                    WidgetId: this.omnichannelConfig.widgetId,
+                    ElapsedTimeInMilliseconds: stopWatch.stop()
                 });
 
                 reject('Failed to load IC3Adapter');
@@ -625,6 +654,9 @@ class OmnichannelChatSDK {
     }
 
     public async getVoiceVideoCalling(params: any = {}): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+        const stopWatch = new StopWatch();
+        stopWatch.start();
+
         if (platform.isNode() || platform.isReactNative()) {
             return Promise.reject('VoiceVideoCalling is only supported on browser');
         }
@@ -668,7 +700,8 @@ class OmnichannelChatSDK {
                         OrgId: this.omnichannelConfig.orgId,
                         OrgUrl: this.omnichannelConfig.orgUrl,
                         WidgetId: this.omnichannelConfig.widgetId,
-                        ExceptionDetails: JSON.stringify(exceptionDetails)
+                        ExceptionDetails: JSON.stringify(exceptionDetails),
+                        ElapsedTimeInMilliseconds: stopWatch.stop()
                     });
 
                     reject('Failed to load SpoolSDK');
@@ -688,7 +721,8 @@ class OmnichannelChatSDK {
                         Event: completeEvent(TelemetryEvent.GetVoiceVideoCalling),
                         OrgId: this.omnichannelConfig.orgId,
                         OrgUrl: this.omnichannelConfig.orgUrl,
-                        WidgetId: this.omnichannelConfig.widgetId
+                        WidgetId: this.omnichannelConfig.widgetId,
+                        ElapsedTimeInMilliseconds: stopWatch.stop()
                     });
 
                     resolve(VoiceVideoCalling);
@@ -702,7 +736,8 @@ class OmnichannelChatSDK {
                         OrgId: this.omnichannelConfig.orgId,
                         OrgUrl: this.omnichannelConfig.orgUrl,
                         WidgetId: this.omnichannelConfig.widgetId,
-                        ExceptionDetails: JSON.stringify(exceptionDetails)
+                        ExceptionDetails: JSON.stringify(exceptionDetails),
+                        ElapsedTimeInMilliseconds: stopWatch.stop()
                     });
 
                     reject('Failed to load VoiceVideoCalling');
@@ -712,6 +747,9 @@ class OmnichannelChatSDK {
     }
 
     private async getIC3Client() {
+        const stopWatch = new StopWatch();
+        stopWatch.start();
+
         this.telemetry?.info({
             Event: startEvent(TelemetryEvent.GetIC3Client),
             OrgId: this.omnichannelConfig.orgId,
@@ -733,7 +771,8 @@ class OmnichannelChatSDK {
                 Event: completeEvent(TelemetryEvent.GetIC3Client),
                 OrgId: this.omnichannelConfig.orgId,
                 OrgUrl: this.omnichannelConfig.orgUrl,
-                WidgetId: this.omnichannelConfig.widgetId
+                WidgetId: this.omnichannelConfig.widgetId,
+                ElapsedTimeInMilliseconds: stopWatch.stop()
             });
 
             return IC3Client;
@@ -763,7 +802,8 @@ class OmnichannelChatSDK {
                         Event: completeEvent(TelemetryEvent.GetIC3Client),
                         OrgId: this.omnichannelConfig.orgId,
                         OrgUrl: this.omnichannelConfig.orgUrl,
-                        WidgetId: this.omnichannelConfig.widgetId
+                        WidgetId: this.omnichannelConfig.widgetId,
+                        ElapsedTimeInMilliseconds: stopWatch.stop()
                     });
 
                     resolve(IC3Client);
@@ -781,7 +821,8 @@ class OmnichannelChatSDK {
                         OrgId: this.omnichannelConfig.orgId,
                         OrgUrl: this.omnichannelConfig.orgUrl,
                         WidgetId: this.omnichannelConfig.widgetId,
-                        ExceptionDetails: JSON.stringify(exceptionDetails)
+                        ExceptionDetails: JSON.stringify(exceptionDetails),
+                        ElapsedTimeInMilliseconds: stopWatch.stop()
                     });
 
                     reject('Failed to load IC3Client');
