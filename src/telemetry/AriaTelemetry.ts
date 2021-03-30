@@ -11,6 +11,7 @@ interface BaseContract {
     RequestId?: string;
     ChatId?: string;
     ExceptionDetails?: string;
+    ElapsedTimeInMilliseconds?: string;
     ChatSDKVersion: string;
     NPMPackagesInfo?: string;
     CDNPackagesInfo?: string;
@@ -155,6 +156,7 @@ class AriaTelemetry {
             RequestId: '',
             ChatId: '',
             ExceptionDetails: '',
+            ElapsedTimeInMilliseconds: '',
             ChatSDKVersion: require('../../package.json').version,
             NPMPackagesInfo: JSON.stringify(packagesInfo),
             CDNPackagesInfo: JSON.stringify(AriaTelemetry._CDNPackagesInfo)
