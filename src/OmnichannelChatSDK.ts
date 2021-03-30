@@ -43,6 +43,9 @@ import ISDKConfiguration from "@microsoft/ocsdk/lib/Interfaces/ISDKConfiguration
 import { loadScript } from "./utils/WebUtils";
 import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
 import CallingOptionsOptionSetNumber from "./core/CallingOptionsOptionSetNumber";
+import createTelemetry from "./utils/createTelemetry";
+import AriaTelemetry from "./telemetry/AriaTelemetry";
+import TelemetryEvent, { completeEvent, failEvent, startEvent } from "./telemetry/TelemetryEvent";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -61,6 +64,7 @@ class OmnichannelChatSDK {
     private preChatSurvey: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private conversation: IConversation | null = null;
     private callingOption: CallingOptionsOptionSetNumber = CallingOptionsOptionSetNumber.NoCalling;
+    private telemetry: typeof AriaTelemetry | null = null;
 
     constructor(omnichannelConfig: IOmnichannelConfig, chatSDKConfig: IChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
@@ -72,6 +76,9 @@ class OmnichannelChatSDK {
         this.dataMaskingRules = {};
         this.authSettings = null;
         this.preChatSurvey = null;
+        this.telemetry = createTelemetry(this.debug);
+
+        this.chatSDKConfig.telemetry?.disable && this.telemetry.disable();
 
         validateOmnichannelConfig(omnichannelConfig);
         validateSDKConfig(chatSDKConfig);
@@ -80,13 +87,39 @@ class OmnichannelChatSDK {
     /* istanbul ignore next */
     public setDebug(flag: boolean): void {
         this.debug = flag;
+        this.telemetry?.setDebug(flag);
     }
 
     public async initialize(): Promise<IChatConfig> {
-        this.OCSDKProvider = OCSDKProvider;
-        this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, {} as ISDKConfiguration, undefined as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-        this.IC3Client = await this.getIC3Client();
-        return this.getChatConfig();
+        this.telemetry?.info({
+            Event: startEvent(TelemetryEvent.InitializeChatSDK),
+            OrgId: this.omnichannelConfig.orgId,
+            OrgUrl: this.omnichannelConfig.orgUrl,
+            WidgetId: this.omnichannelConfig.widgetId
+        });
+
+        try {
+            this.OCSDKProvider = OCSDKProvider;
+            this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, {} as ISDKConfiguration, undefined as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+            this.IC3Client = await this.getIC3Client();
+            await this.getChatConfig();
+
+            this.telemetry?.info({
+                Event: completeEvent(TelemetryEvent.InitializeChatSDK),
+                OrgId: this.omnichannelConfig.orgId,
+                OrgUrl: this.omnichannelConfig.orgUrl,
+                WidgetId: this.omnichannelConfig.widgetId
+            });
+        } catch {
+            this.telemetry?.info({
+                Event: failEvent(TelemetryEvent.InitializeChatSDK),
+                OrgId: this.omnichannelConfig.orgId,
+                OrgUrl: this.omnichannelConfig.orgUrl,
+                WidgetId: this.omnichannelConfig.widgetId
+            });
+        }
+
+        return this.liveChatConfig;
     }
 
     public async startChat(optionalParams: IStartChatOptionalParams = {}): Promise<void> {
@@ -416,6 +449,17 @@ class OmnichannelChatSDK {
         return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
             const ic3AdapterCDNUrl = this.resolveChatAdapterUrl(protocol);
 
+            this.telemetry?.setCDNPackages({
+                IC3Adapter: ic3AdapterCDNUrl
+            });
+
+            this.telemetry?.info({
+                Event: startEvent(TelemetryEvent.CreateIC3Adapter),
+                OrgId: this.omnichannelConfig.orgId,
+                OrgUrl: this.omnichannelConfig.orgUrl,
+                WidgetId: this.omnichannelConfig.widgetId
+            });
+
             await loadScript(ic3AdapterCDNUrl, () => {
                 /* istanbul ignore next */
                 this.debug && console.debug('IC3Adapter loaded!');
@@ -427,8 +471,23 @@ class OmnichannelChatSDK {
                 };
 
                 const adapter = new window.Microsoft.BotFramework.WebChat.IC3Adapter(adapterConfig);
+
+                this.telemetry?.info({
+                    Event: completeEvent(TelemetryEvent.CreateIC3Adapter),
+                    OrgId: this.omnichannelConfig.orgId,
+                    OrgUrl: this.omnichannelConfig.orgUrl,
+                    WidgetId: this.omnichannelConfig.widgetId
+                });
+
                 resolve(adapter);
             }, () => {
+                this.telemetry?.info({
+                    Event: failEvent(TelemetryEvent.CreateIC3Adapter),
+                    OrgId: this.omnichannelConfig.orgId,
+                    OrgUrl: this.omnichannelConfig.orgUrl,
+                    WidgetId: this.omnichannelConfig.widgetId
+                });
+
                 reject('Failed to load IC3Adapter');
             });
         });
@@ -453,19 +512,68 @@ class OmnichannelChatSDK {
         if (result && result.length) {
             return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
                 const spoolSDKCDNUrl = `${result[1]}/livechatwidget/WebChatControl/lib/spool-sdk/sdk.bundle.js`;
+
+                this.telemetry?.info({
+                    Event: startEvent(TelemetryEvent.GetVoiceVideoCalling),
+                    OrgId: this.omnichannelConfig.orgId,
+                    OrgUrl: this.omnichannelConfig.orgUrl,
+                    WidgetId: this.omnichannelConfig.widgetId
+                });
+
+                this.telemetry?.setCDNPackages({
+                    SpoolSDK: spoolSDKCDNUrl
+                });
+
                 await loadScript(spoolSDKCDNUrl, () => {
                     /* istanbul ignore next */
                     this.debug && console.debug(`${spoolSDKCDNUrl} loaded!`);
                 }, () => {
+                    const exceptionDetails = {
+                        response: "SpoolSDKLoadFailed"
+                    };
+
+                    this.telemetry?.info({
+                        Event: failEvent(TelemetryEvent.GetVoiceVideoCalling),
+                        OrgId: this.omnichannelConfig.orgId,
+                        OrgUrl: this.omnichannelConfig.orgUrl,
+                        WidgetId: this.omnichannelConfig.widgetId,
+                        ExceptionDetails: JSON.stringify(exceptionDetails)
+                    });
+
                     reject('Failed to load SpoolSDK');
                 });
 
                 const LiveChatWidgetLibCDNUrl = `${result[1]}/livechatwidget/WebChatControl/lib/LiveChatWidgetLibs.min.js`;
+
+                this.telemetry?.setCDNPackages({
+                    VoiceVideoCalling: LiveChatWidgetLibCDNUrl
+                });
+
                 await loadScript(LiveChatWidgetLibCDNUrl, async () => {
                     this.debug && console.debug(`${LiveChatWidgetLibCDNUrl} loaded!`);
                     const VoiceVideoCalling = await createVoiceVideoCalling(params);
+
+                    this.telemetry?.info({
+                        Event: completeEvent(TelemetryEvent.GetVoiceVideoCalling),
+                        OrgId: this.omnichannelConfig.orgId,
+                        OrgUrl: this.omnichannelConfig.orgUrl,
+                        WidgetId: this.omnichannelConfig.widgetId
+                    });
+
                     resolve(VoiceVideoCalling);
                 }, async () => {
+                    const exceptionDetails = {
+                        response: "VoiceVideoCallingLoadFailed"
+                    };
+
+                    this.telemetry?.info({
+                        Event: failEvent(TelemetryEvent.GetVoiceVideoCalling),
+                        OrgId: this.omnichannelConfig.orgId,
+                        OrgUrl: this.omnichannelConfig.orgUrl,
+                        WidgetId: this.omnichannelConfig.widgetId,
+                        ExceptionDetails: JSON.stringify(exceptionDetails)
+                    });
+
                     reject('Failed to load VoiceVideoCalling');
                 });
             });
@@ -473,6 +581,13 @@ class OmnichannelChatSDK {
     }
 
     private async getIC3Client() {
+        this.telemetry?.info({
+            Event: startEvent(TelemetryEvent.GetIC3Client),
+            OrgId: this.omnichannelConfig.orgId,
+            OrgUrl: this.omnichannelConfig.orgUrl,
+            WidgetId: this.omnichannelConfig.widgetId
+        });
+
         if (platform.isNode() || platform.isReactNative()) {
             this.debug && console.debug('IC3Core');
             // Use FramelessBridge from IC3Core
@@ -482,12 +597,24 @@ class OmnichannelChatSDK {
                 protocolType: ProtocolType.IC3V1SDK
             });
             IC3Client.setDebug(this.debug);
+
+            this.telemetry?.info({
+                Event: completeEvent(TelemetryEvent.GetIC3Client),
+                OrgId: this.omnichannelConfig.orgId,
+                OrgUrl: this.omnichannelConfig.orgUrl,
+                WidgetId: this.omnichannelConfig.widgetId
+            });
+
             return IC3Client;
         } else {
             this.debug && console.debug('IC3Client');
             // Use IC3Client if browser is detected
             return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
                 const ic3ClientCDNUrl = this.resolveIC3ClientUrl();
+
+                this.telemetry?.setCDNPackages({
+                    IC3Client: ic3ClientCDNUrl
+                });
 
                 window.addEventListener("ic3:sdk:load", async () => {
                     // Use FramedBridge from IC3Client
@@ -500,13 +627,33 @@ class OmnichannelChatSDK {
                         hostType: HostType.IFrame,
                         protocolType: ProtocolType.IC3V1SDK
                     });
+
+                    this.telemetry?.info({
+                        Event: completeEvent(TelemetryEvent.GetIC3Client),
+                        OrgId: this.omnichannelConfig.orgId,
+                        OrgUrl: this.omnichannelConfig.orgUrl,
+                        WidgetId: this.omnichannelConfig.widgetId
+                    });
+
                     resolve(IC3Client);
                 });
 
                 await loadScript(ic3ClientCDNUrl, () => {
                     this.debug && console.debug('IC3Client loaded!');
                 }, () => {
-                    reject('Failed to load IC3Adapter');
+                    const exceptionDetails = {
+                        response: "IC3ClientLoadFailed"
+                    };
+
+                    this.telemetry?.info({
+                        Event: failEvent(TelemetryEvent.GetIC3Client),
+                        OrgId: this.omnichannelConfig.orgId,
+                        OrgUrl: this.omnichannelConfig.orgUrl,
+                        WidgetId: this.omnichannelConfig.widgetId,
+                        ExceptionDetails: JSON.stringify(exceptionDetails)
+                    });
+
+                    reject('Failed to load IC3Client');
                 });
             });
         }
