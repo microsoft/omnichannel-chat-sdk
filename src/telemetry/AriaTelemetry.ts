@@ -15,7 +15,7 @@ interface BaseContract {
     ChatSDKVersion: string;
     NPMPackagesInfo?: string;
     CDNPackagesInfo?: string;
-};
+}
 
 interface NPMPackagesInfo {
     OCSDK: string;
@@ -31,26 +31,26 @@ interface CDNPackagesInfo {
 
 class AriaTelemetry {
     private static _logger: AWTLogger;
-    private static _debug: boolean = true;
+    private static _debug = true;
     private static _CDNPackagesInfo: CDNPackagesInfo;
-    private static _disable: boolean = false;
+    private static _disable = false;
 
-    public static setDebug(flag: boolean) {
+    public static setDebug(flag: boolean): void {
         AriaTelemetry._debug = flag;
     }
 
-    public static disable() {
+    public static disable(): void {
         AriaTelemetry._disable = false;
     }
 
-    public static setCDNPackages(packages: CDNPackagesInfo) {
+    public static setCDNPackages(packages: CDNPackagesInfo): void {
         AriaTelemetry._CDNPackagesInfo = {
             ...AriaTelemetry._CDNPackagesInfo,
             ...packages
         };
     }
 
-    public static info(properties: AWTEventData["properties"]) {
+    public static info(properties: AWTEventData["properties"]): void {
         const event = {
             name: ScenarioType.EVENTS,
             properties: {
@@ -67,7 +67,7 @@ class AriaTelemetry {
         !AriaTelemetry._disable && AriaTelemetry.logger.logEvent(event);
     }
 
-    public static debug(properties: AWTEventData["properties"]) {
+    public static debug(properties: AWTEventData["properties"]): void {
         const event = {
             name: ScenarioType.EVENTS,
             properties: {
@@ -84,7 +84,7 @@ class AriaTelemetry {
         !AriaTelemetry._disable && AriaTelemetry.logger.logEvent(event);
     }
 
-    public static warn(properties: AWTEventData["properties"]) {
+    public static warn(properties: AWTEventData["properties"]): void {
         const event = {
             name: ScenarioType.EVENTS,
             properties: {
@@ -101,7 +101,7 @@ class AriaTelemetry {
         !AriaTelemetry._disable && AriaTelemetry.logger.logEvent(event);
     }
 
-    public static error(properties: AWTEventData["properties"]) {
+    public static error(properties: AWTEventData["properties"]): void {
         const event = {
             name: ScenarioType.EVENTS,
             properties: {
@@ -118,7 +118,7 @@ class AriaTelemetry {
         !AriaTelemetry._disable && AriaTelemetry.logger.logEvent(event);
     }
 
-    public static log(properties: AWTEventData["properties"]) {
+    public static log(properties: AWTEventData["properties"]): void {
         const event = {
             name: ScenarioType.EVENTS,
             properties: {
@@ -145,8 +145,8 @@ class AriaTelemetry {
 
     private static populateBaseProperties(): BaseContract {
         const packagesInfo: NPMPackagesInfo = {
-            OCSDK: require('@microsoft/ocsdk/package.json').version,
-            IC3Core: require('@microsoft/omnichannel-ic3core/package.json').version,
+            OCSDK: require('@microsoft/ocsdk/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
+            IC3Core: require('@microsoft/omnichannel-ic3core/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
         };
 
         return {
@@ -157,16 +157,16 @@ class AriaTelemetry {
             ChatId: '',
             ExceptionDetails: '',
             ElapsedTimeInMilliseconds: '',
-            ChatSDKVersion: require('../../package.json').version,
+            ChatSDKVersion: require('../../package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
             NPMPackagesInfo: JSON.stringify(packagesInfo),
             CDNPackagesInfo: JSON.stringify(AriaTelemetry._CDNPackagesInfo)
         };
-    };
+    }
 
     private static fillMobilePlatformData() {
-        const platformData: any = {};
+        const platformData: any = {}; // eslint-disable-line @typescript-eslint/no-explicit-any
         try {
-            const ReactNative = require('react-native');
+            const ReactNative = require('react-native'); // eslint-disable-line @typescript-eslint/no-var-requires
             const Platform = ReactNative.Platform;
 
             platformData.DeviceInfo_OsVersion = Platform.Version;
