@@ -6,7 +6,7 @@
 Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel Services.
 
 ## Table of Contents
-- [Chat Widget vs. Chat SDK](#chat-widget-vs-chat-sdk)
+- [Live Chat Widget vs. Chat SDK](#live-chat-widget-vs-chat-sdk)
 - [API Reference](#api-reference)
 - [API Examples](#api-examples)
 - [Sample Apps](samples/)
