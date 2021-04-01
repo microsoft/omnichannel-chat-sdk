@@ -6,11 +6,20 @@
 Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel Services.
 
 ## Table of Contents
+- [Chat Widget vs. Chat SDK](#chat-widget-vs-chat-sdk)
 - [API Reference](#api-reference)
 - [API Examples](#api-examples)
 - [Sample Apps](samples/)
 - [Common Scenarios](#common-scenarios)
 - [Feature Comparisons](#feature-comparisons)
+
+## Chat Widget vs. Chat SDK
+
+Omnichannel offers an out-of-the-box (OOB) chat widget by default. You can use the Chat SDK to build your custom chat widget if:
+- You want to fully customize the user interface of the chat widget to conform with your branding.
+- You want to integrate Omnichannel in your mobile app using React Native.
+- You want to integrate additional functionalities that our OOB chat widget does not offer.
+- Some other cool ideas. Please share with us on what you've achieved with the Chat SDK! 🙂
 
 ## Installation
 
@@ -444,7 +453,7 @@ Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel
 | Data Masking | Embedded | Requires `Data Masking Middleware` implementation |
 | Send Typing indicator | Embedded | Requires `sendTypingIndicator` flag set to `true` |
 | PreChat Survey | Requires Adaptive Cards renderer | Requires Adaptive Cards renderer
-| Display Attachments | Requires implementation | Provided & Customizable |
+| Display Attachments | Requires implementation | Basic interface provided & Customizable |
 | Incoming messages handling | IC3 protocol message data | DirectLine activity data |
 
 ### React Native
