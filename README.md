@@ -6,11 +6,44 @@
 Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel Services.
 
 ## Table of Contents
+- [Live Chat Widget vs. Chat SDK](#live-chat-widget-vs-chat-sdk)
 - [API Reference](#api-reference)
 - [API Examples](#api-examples)
 - [Sample Apps](samples/)
 - [Common Scenarios](#common-scenarios)
 - [Feature Comparisons](#feature-comparisons)
+
+## Live Chat Widget vs. Chat SDK
+
+Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SDK to build your custom chat widget if:
+- You want to fully customize the user interface of the chat widget to conform with your branding.
+- You want to integrate Omnichannel in your mobile app using React Native.
+- You want to integrate additional functionalities that LCW does not offer.
+- Some other cool ideas. Please share with us on what you've achieved with the Chat SDK! 🙂
+
+### Feature Comparisons
+
+| Feature | Live Chat Widget | Chat SDK | Notes |
+| -----  | ----- | ----- | ----- |
+| Bring Your Own Widget | ❌ | ✔ | |
+| Web Support | ✔ | ✔ |
+| React Native Support | ❌ | ✔ |
+| Escalation to Voice & Video | ✔ | Web Only |
+| Co-browse | ✔ | ❌ |
+| Screen Sharing | ✔ | ❌ |
+| Authenticated Chat | ✔ | ✔ |
+| Pre-chat Survey | ✔ | ✔ |
+| Post-chat Survey | ✔ | ❌ |
+| Queue Position | ✔ | ✔ |
+| Average Wait Time | ✔ | ✔ |
+| Download Transcript | ✔ | ✔ |
+| Email Transcript | ✔ | ✔ |
+| Data Masking | ✔ | ✔ |
+| File Attachments | ✔ | ✔ |
+| Custom Context | ✔ | ✔ |
+| Proactive Chat | ✔ | BYOI **\*** |
+
+**\*** BYOI: Bring Your Own Implementation
 
 ## Installation
 
@@ -444,7 +477,7 @@ Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel
 | Data Masking | Embedded | Requires `Data Masking Middleware` implementation |
 | Send Typing indicator | Embedded | Requires `sendTypingIndicator` flag set to `true` |
 | PreChat Survey | Requires Adaptive Cards renderer | Requires Adaptive Cards renderer
-| Display Attachments | Requires implementation | Provided & Customizable |
+| Display Attachments | Requires implementation | Basic interface provided & Customizable |
 | Incoming messages handling | IC3 protocol message data | DirectLine activity data |
 
 ### React Native
