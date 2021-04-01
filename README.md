@@ -13,13 +13,37 @@ Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel
 - [Common Scenarios](#common-scenarios)
 - [Feature Comparisons](#feature-comparisons)
 
-## Chat Widget vs. Chat SDK
+## Live Chat Widget vs. Chat SDK
 
-Omnichannel offers an out-of-the-box (OOB) chat widget by default. You can use the Chat SDK to build your custom chat widget if:
+Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SDK to build your custom chat widget if:
 - You want to fully customize the user interface of the chat widget to conform with your branding.
 - You want to integrate Omnichannel in your mobile app using React Native.
-- You want to integrate additional functionalities that our OOB chat widget does not offer.
+- You want to integrate additional functionalities that LCW does not offer.
 - Some other cool ideas. Please share with us on what you've achieved with the Chat SDK! 🙂
+
+### Feature Comparisons
+
+| Feature | Live Chat Widget | Chat SDK | Notes |
+| -----  | ----- | ----- | ----- |
+| Bring Your Own Widget | ❌ | ✔ | |
+| Web Support | ✔ | ✔ |
+| React Native Support | ❌ | ✔ |
+| Escalation to Voice & Video | ✔ | Web Only |
+| Co-browse | ✔ | ❌ |
+| Screen Sharing | ✔ | ❌ |
+| Authenticated Chat | ✔ | ✔ |
+| Pre-chat Survey | ✔ | ✔ |
+| Post-chat Survey | ✔ | ❌ |
+| Queue Position | ✔ | ✔ |
+| Average Wait Time | ✔ | ✔ |
+| Download Transcript | ✔ | ✔ |
+| Email Transcript | ✔ | ✔ |
+| Data Masking | ✔ | ✔ |
+| File Attachments | ✔ | ✔ |
+| Custom Context | ✔ | ✔ |
+| Proactive Chat | ✔ | BYOI **\*** |
+
+**\*** BYOI: Bring Your Own Implementation
 
 ## Installation
 
