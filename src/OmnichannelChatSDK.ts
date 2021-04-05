@@ -603,6 +603,8 @@ class OmnichannelChatSDK {
 
                     this.scenarioMarker.completeScenario(TelemetryEvent.GetVoiceVideoCalling);
 
+                    VoiceVideoCalling.useScenarioMarker(this.scenarioMarker);
+
                     resolve(VoiceVideoCalling);
                 }, async () => {
                     const exceptionDetails = {
