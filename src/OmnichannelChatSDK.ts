@@ -81,11 +81,12 @@ class OmnichannelChatSDK {
         this.telemetry = createTelemetry(this.debug);
         this.scenarioMarker = new ScenarioMarker(this.omnichannelConfig);
 
-        this.chatSDKConfig.telemetry?.disable && this.telemetry?.disable();
         this.scenarioMarker.useTelemetry(this.telemetry);
 
         validateOmnichannelConfig(omnichannelConfig);
         validateSDKConfig(chatSDKConfig);
+
+        this.chatSDKConfig.telemetry?.disable && this.telemetry?.disable();
     }
 
     /* istanbul ignore next */
