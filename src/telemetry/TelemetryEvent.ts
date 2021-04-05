@@ -19,8 +19,7 @@ enum TelemetryEvent {
     InitializeVoiceVideoCallingSDK = "InitializeVoiceVideoCallingSDK",
     AcceptVoiceCall = "AcceptVoiceCall",
     AcceptVideoCall = "AcceptVideoCall",
-    RejectVoiceCall = "RejectVoiceCall",
-    RejectVideoCall = "RejectVideoCall",
+    RejectCall = "RejectCall",
     StopCall = "StopCall",
     onCallDisconnected = "onCallDisconnected"
 }
