@@ -42,7 +42,7 @@ class AriaTelemetry {
 
     public static disable(): void {
         this._debug && console.log(`[AriaTelemetry][disable]`);
-        AriaTelemetry._disable = false;
+        AriaTelemetry._disable = true;
     }
 
     public static setCDNPackages(packages: CDNPackagesInfo): void {
