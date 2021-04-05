@@ -10,6 +10,7 @@ interface BaseContract {
     WidgetId: string;
     RequestId?: string;
     ChatId?: string;
+    CallId?: string;
     ExceptionDetails?: string;
     ElapsedTimeInMilliseconds?: string;
     ChatSDKVersion: string;
@@ -155,6 +156,7 @@ class AriaTelemetry {
             WidgetId: '',
             RequestId: '',
             ChatId: '',
+            CallId: '',
             ExceptionDetails: '',
             ElapsedTimeInMilliseconds: '',
             ChatSDKVersion: require('../../package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
