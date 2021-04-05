@@ -61,7 +61,7 @@ export class VoiceVideoCallingProxy {
         this.debug = flag;
     }
 
-    public useScenarioMarker(scenarioMarker: ScenarioMarker) {
+    public useScenarioMarker(scenarioMarker: ScenarioMarker): void {
         this.scenarioMarker = scenarioMarker;
     }
 
