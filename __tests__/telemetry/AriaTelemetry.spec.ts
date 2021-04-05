@@ -4,6 +4,7 @@ import * as settings from '../../src/config/settings';
 describe('AriaTelemetry', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        jest.resetModules();
     });
 
     it('AriaTelemetry.disable() have telemetry enabled by default', () => {
@@ -50,9 +51,10 @@ describe('AriaTelemetry', () => {
         expect(platformData).toEqual({});
     });
 
-    it('AriaTelemetry.fillMobilePlatformData() should return platform data on ReactNative', () => {
+    it('AriaTelemetry.fillMobilePlatformData() should return correct platform data if OS is Android', () => {
+        const mobileOS = 'Android';
         const platformData = {
-            OS: 'OS',
+            OS: mobileOS.toLowerCase(),
             Version: 'Version'
         };
 
@@ -65,7 +67,47 @@ describe('AriaTelemetry', () => {
         }, {virtual: true});
 
         const mobilePlatformData = (AriaTelemetry as any).fillMobilePlatformData();
-        expect(mobilePlatformData.DeviceInfo_OsName).toBe(platformData.OS);
+        expect(mobilePlatformData.DeviceInfo_OsName).toBe(mobileOS);
+        expect(mobilePlatformData.DeviceInfo_OsVersion).toBe(platformData.Version);
+    });
+
+    it('AriaTelemetry.fillMobilePlatformData() should return correct platform data if OS is iOS', () => {
+        const mobileOS = 'iOS';
+        const platformData = {
+            OS: mobileOS.toLowerCase(),
+            Version: 'Version'
+        };
+
+        jest.mock('react-native', () => {
+            return {
+                Platform: {
+                    ...platformData
+                }
+            }
+        }, {virtual: true});
+
+        const mobilePlatformData = (AriaTelemetry as any).fillMobilePlatformData();
+        expect(mobilePlatformData.DeviceInfo_OsName).toBe(mobileOS);
+        expect(mobilePlatformData.DeviceInfo_OsVersion).toBe(platformData.Version);
+    });
+
+    it('AriaTelemetry.fillMobilePlatformData() should return correct platform data if OS is other', () => {
+        const mobileOS = 'other';
+        const platformData = {
+            OS: mobileOS.toLowerCase(),
+            Version: 'Version'
+        };
+
+        jest.mock('react-native', () => {
+            return {
+                Platform: {
+                    ...platformData
+                }
+            }
+        }, {virtual: true});
+
+        const mobilePlatformData = (AriaTelemetry as any).fillMobilePlatformData();
+        expect(mobilePlatformData.DeviceInfo_OsName).toBe(mobileOS);
         expect(mobilePlatformData.DeviceInfo_OsVersion).toBe(platformData.Version);
     });
 });
