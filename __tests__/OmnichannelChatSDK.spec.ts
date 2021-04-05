@@ -6,6 +6,7 @@ import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import libraries from "../src/utils/libraries";
 import ChatAdapterProtocols from "../src/core/ChatAdapterProtocols";
+import AriaTelemetry from "../src/telemetry/AriaTelemetry";
 
 describe('Omnichannel Chat SDK', () => {
     describe('Configurations', () => {
@@ -149,6 +150,44 @@ describe('Omnichannel Chat SDK', () => {
             } catch (error) {
                 expect(error.toString()).toContain(`ChatAdapter for protocol ${protocol} currently not supported`);
             }
+        });
+
+        it('Telemetry should be disabled if set', () => {
+            const omnichannelConfig = {
+                orgUrl: '',
+                orgId: '',
+                widgetId: ''
+            };
+
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                }
+            };
+
+            jest.spyOn(AriaTelemetry, 'disable');
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+
+            expect(chatSDK.chatSDKConfig.telemetry.disable).toBe(true);
+            expect(AriaTelemetry.disable).toHaveBeenCalledTimes(1);
+        });
+
+        it('Telemetry should be enabled by default', () => {
+            jest.clearAllMocks();
+
+            const omnichannelConfig = {
+                orgUrl: '',
+                orgId: '',
+                widgetId: ''
+            };
+
+            jest.spyOn(AriaTelemetry, 'disable');
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+
+            expect(chatSDK.chatSDKConfig.telemetry.disable).toBe(false);
+            expect(AriaTelemetry.disable).toHaveBeenCalledTimes(0);
         });
     });
 
