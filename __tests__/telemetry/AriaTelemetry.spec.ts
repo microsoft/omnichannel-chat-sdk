@@ -1,4 +1,5 @@
 import AriaTelemetry from '../../src/telemetry/AriaTelemetry';
+import * as settings from '../../src/config/settings';
 
 describe('AriaTelemetry', () => {
     beforeEach(() => {
@@ -42,5 +43,29 @@ describe('AriaTelemetry', () => {
         AriaTelemetry.setCDNPackages(overridePackages);
 
         expect((AriaTelemetry as any)._CDNPackagesInfo).toEqual(overridePackages);
+    });
+
+    it('AriaTelemetry.fillMobilePlatformData() should return {} on Node', () => {
+        const platformData = (AriaTelemetry as any).fillMobilePlatformData();
+        expect(platformData).toEqual({});
+    });
+
+    it('AriaTelemetry.fillMobilePlatformData() should return platform data on ReactNative', () => {
+        const platformData = {
+            OS: 'OS',
+            Version: 'Version'
+        };
+
+        jest.mock('react-native', () => {
+            return {
+                Platform: {
+                    ...platformData
+                }
+            }
+        }, {virtual: true});
+
+        const mobilePlatformData = (AriaTelemetry as any).fillMobilePlatformData();
+        expect(mobilePlatformData.DeviceInfo_OsName).toBe(platformData.OS);
+        expect(mobilePlatformData.DeviceInfo_OsVersion).toBe(platformData.Version);
     });
 });
