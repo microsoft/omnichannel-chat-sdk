@@ -36,11 +36,13 @@ class AriaTelemetry {
     private static _CDNPackagesInfo: CDNPackagesInfo;
     private static _disable = false;
 
+    /* istanbul ignore next */
     public static setDebug(flag: boolean): void {
         AriaTelemetry._debug = flag;
     }
 
     public static disable(): void {
+        /* istanbul ignore next */
         this._debug && console.log(`[AriaTelemetry][disable]`);
         AriaTelemetry._disable = true;
     }
@@ -64,8 +66,11 @@ class AriaTelemetry {
             priority: AWTEventPriority.High
         };
 
+        /* istanbul ignore next */
         this._debug && console.log(`[AriaTelemetry][info]`);
+        /* istanbul ignore next */
         this._debug && console.log(event);
+
         !AriaTelemetry._disable && AriaTelemetry.logger.logEvent(event);
     }
 
@@ -81,8 +86,11 @@ class AriaTelemetry {
             priority: AWTEventPriority.High
         };
 
+        /* istanbul ignore next */
         this._debug && console.log(`[AriaTelemetry][debug]`);
+        /* istanbul ignore next */
         this._debug && console.log(event);
+
         !AriaTelemetry._disable && AriaTelemetry.logger.logEvent(event);
     }
 
@@ -98,8 +106,11 @@ class AriaTelemetry {
             priority: AWTEventPriority.High
         };
 
+        /* istanbul ignore next */
         this._debug && console.log(`[AriaTelemetry][warn]`);
+        /* istanbul ignore next */
         this._debug && console.log(event);
+
         !AriaTelemetry._disable && AriaTelemetry.logger.logEvent(event);
     }
 
@@ -115,8 +126,11 @@ class AriaTelemetry {
             priority: AWTEventPriority.High
         };
 
+        /* istanbul ignore next */
         this._debug && console.log(`[AriaTelemetry][error]`);
+        /* istanbul ignore next */
         this._debug && console.log(event);
+
         !AriaTelemetry._disable && AriaTelemetry.logger.logEvent(event);
     }
 
@@ -132,8 +146,11 @@ class AriaTelemetry {
             priority: AWTEventPriority.High
         };
 
+        /* istanbul ignore next */
         this._debug && console.log(`[AriaTelemetry][log]`);
+        /* istanbul ignore next */
         this._debug && console.log(event);
+
         !AriaTelemetry._disable && AriaTelemetry.logger.logEvent(event);
     }
 
@@ -182,8 +199,10 @@ class AriaTelemetry {
                 platformData.DeviceInfo_OsName = `${Platform.OS}`;
             }
 
+            /* istanbul ignore next */
             this._debug && console.log(`[AriaTelemetry][fillMobilePlatformData][${platformData.DeviceInfo_OsName}]`);
         } catch {
+            /* istanbul ignore next */
             this._debug && console.log("[AriaTelemetry][fillMobilePlatformData][Web]");
         }
 

@@ -640,6 +640,7 @@ class OmnichannelChatSDK {
 
             return IC3Client;
         } else {
+            /* istanbul ignore next */
             this.debug && console.debug('IC3Client');
             // Use IC3Client if browser is detected
             return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
@@ -669,6 +670,7 @@ class OmnichannelChatSDK {
                 });
 
                 await loadScript(ic3ClientCDNUrl, () => {
+                    /* istanbul ignore next */
                     this.debug && console.debug('IC3Client loaded!');
                 }, () => {
                     const exceptionDetails = {
@@ -726,6 +728,7 @@ class OmnichannelChatSDK {
             }
 
             if (this.preChatSurvey) {
+                /* istanbul ignore next */
                 this.debug && console.log('Prechat Survey!');
             }
 
