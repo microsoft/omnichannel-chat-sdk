@@ -41,6 +41,7 @@ class AriaTelemetry {
     }
 
     public static disable(): void {
+        this._debug && console.log(`[AriaTelemetry][disable]`);
         AriaTelemetry._disable = false;
     }
 
