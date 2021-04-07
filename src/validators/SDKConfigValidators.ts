@@ -7,7 +7,7 @@ const defaultChatSDKConfig: IChatSDKConfig = {
         maskingCharacter: '#'
     },
     telemetry: {
-        disable: true,
+        disable: false,
         ariaTelemetryKey
     }
 };
