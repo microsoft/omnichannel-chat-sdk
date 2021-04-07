@@ -2,14 +2,16 @@ import AriaTelemetry from '../../src/telemetry/AriaTelemetry';
 import * as settings from '../../src/config/settings';
 
 describe('AriaTelemetry', () => {
+    (settings as any).ariaTelemetryKey = '';
+
     beforeEach(() => {
         jest.clearAllMocks();
         jest.resetModules();
+
+        (AriaTelemetry as any)._disable = false;
     });
 
     it('AriaTelemetry.disable() have telemetry enabled by default', () => {
-        jest.spyOn(AriaTelemetry, 'disable');
-
         expect((AriaTelemetry as any)._disable).toBe(false);
     });
 
@@ -109,5 +111,37 @@ describe('AriaTelemetry', () => {
         const mobilePlatformData = (AriaTelemetry as any).fillMobilePlatformData();
         expect(mobilePlatformData.DeviceInfo_OsName).toBe(mobileOS);
         expect(mobilePlatformData.DeviceInfo_OsVersion).toBe(platformData.Version);
+    });
+
+    it('AriaTelemetry.debug() should call AriaTelemetry.logger.logEvent()', () => {
+        jest.spyOn((AriaTelemetry as any).logger, 'logEvent');
+        AriaTelemetry.debug({});
+
+        expect((AriaTelemetry as any)._disable).toBe(false);
+        expect((AriaTelemetry as any).logger.logEvent).toHaveBeenCalled();
+    });
+
+    it('AriaTelemetry.warn() should call AriaTelemetry.logger.logEvent()', () => {
+        jest.spyOn((AriaTelemetry as any).logger, 'logEvent');
+        AriaTelemetry.warn({});
+
+        expect((AriaTelemetry as any)._disable).toBe(false);
+        expect((AriaTelemetry as any).logger.logEvent).toHaveBeenCalled();
+    });
+
+    it('AriaTelemetry.error() should call AriaTelemetry.logger.logEvent()', () => {
+        jest.spyOn((AriaTelemetry as any).logger, 'logEvent');
+        AriaTelemetry.error({});
+
+        expect((AriaTelemetry as any)._disable).toBe(false);
+        expect((AriaTelemetry as any).logger.logEvent).toHaveBeenCalled();
+    });
+
+    it('AriaTelemetry.log() should call AriaTelemetry.logger.logEvent()', () => {
+        jest.spyOn((AriaTelemetry as any).logger, 'logEvent');
+        AriaTelemetry.log({});
+
+        expect((AriaTelemetry as any)._disable).toBe(false);
+        expect((AriaTelemetry as any).logger.logEvent).toHaveBeenCalled();
     });
 });
