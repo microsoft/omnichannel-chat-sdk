@@ -9,6 +9,9 @@ describe('AriaTelemetry', () => {
         jest.resetModules();
 
         (AriaTelemetry as any)._disable = false;
+        (AriaTelemetry as any)._logger = {
+            logEvent: jest.fn()
+        };
     });
 
     it('AriaTelemetry.disable() have telemetry enabled by default', () => {
