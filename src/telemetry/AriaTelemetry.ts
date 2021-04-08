@@ -32,7 +32,7 @@ interface CDNPackagesInfo {
 
 class AriaTelemetry {
     private static _logger: AWTLogger;
-    private static _debug = true;
+    private static _debug = false;
     private static _CDNPackagesInfo: CDNPackagesInfo;
     private static _disable = false;
 
