@@ -20,6 +20,11 @@ describe('Omnichannel Chat SDK (Node)', () => {
         (global.navigator as any).product = 'ReactNative';
 
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+        chatSDK.scenarioMarker = {
+            startScenario: jest.fn(),
+            failScenario: jest.fn(),
+            completeScenario: jest.fn()
+        };
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
 
@@ -43,6 +48,11 @@ describe('Omnichannel Chat SDK (Node)', () => {
         (global.navigator as any).product = 'ReactNative';
 
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+        chatSDK.scenarioMarker = {
+            startScenario: jest.fn(),
+            failScenario: jest.fn(),
+            completeScenario: jest.fn()
+        };
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
 
