@@ -3,5 +3,8 @@ module.exports = {
   testEnvironment: 'node',
   testPathIgnorePatterns : [
     "<rootDir>/samples/"
+  ],
+  coveragePathIgnorePatterns: [
+    "external/aria/"
   ]
 };

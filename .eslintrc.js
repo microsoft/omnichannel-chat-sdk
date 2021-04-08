@@ -7,5 +7,8 @@ module.exports = {
     ],
     rules: {
         '@typescript-eslint/ban-types': 'off'
-    }
+    },
+    ignorePatterns: [
+        'src/external/aria/'
+    ]
 }

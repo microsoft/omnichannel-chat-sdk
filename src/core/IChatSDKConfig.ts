@@ -6,8 +6,14 @@ interface IDataMaskingSDKConfig {
     maskingCharacter: string
 }
 
+interface TelemetrySDKConfig {
+    disable: boolean,
+    ariaTelemetryKey?: string
+}
+
 interface IChatSDKConfig {
     dataMasking?: IDataMaskingSDKConfig,
+    telemetry?: TelemetrySDKConfig,
     getAuthToken?: () => Promise<string|null>,
     ic3Config?: IC3Config,
     chatAdapterConfig?: ChatAdapterConfig
