@@ -56,6 +56,7 @@ class OmnichannelChatSDK {
     public IC3Client: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     public omnichannelConfig: IOmnichannelConfig;
     public chatSDKConfig: IChatSDKConfig;
+    public isInitialized: boolean;
     public requestId: string;
     private chatToken: IChatToken;
     private liveChatConfig: any; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -72,6 +73,7 @@ class OmnichannelChatSDK {
         this.debug = false;
         this.omnichannelConfig = omnichannelConfig;
         this.chatSDKConfig = chatSDKConfig;
+        this.isInitialized = false;
         this.requestId = uuidv4();
         this.chatToken = {};
         this.liveChatConfig = {};
@@ -99,11 +101,23 @@ class OmnichannelChatSDK {
     public async initialize(): Promise<IChatConfig> {
         this.scenarioMarker.startScenario(TelemetryEvent.InitializeChatSDK);
 
+        if (this.isInitialized) {
+            this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
+            return this.liveChatConfig;
+        }
+
         try {
             this.OCSDKProvider = OCSDKProvider;
-            this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, {} as ISDKConfiguration, undefined as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-            this.IC3Client = await this.getIC3Client();
+            const OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, {} as ISDKConfiguration, undefined as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+            const IC3Client = await this.getIC3Client();
+
+            // Assign & Update flag only if all dependencies have been initialized succesfully
+            this.OCClient = OCClient;
+            this.IC3Client = IC3Client;
+
             await this.getChatConfig();
+
+            this.isInitialized = true;
 
             this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
         } catch {
