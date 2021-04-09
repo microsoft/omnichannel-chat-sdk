@@ -215,6 +215,22 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.IC3Client).toBeDefined();
         });
 
+        it('ChatSDK.initialize() call multiple times should instantiate OCSDK & IC3Core/IC3Client only once', async () => {
+            jest.resetAllMocks();
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            jest.spyOn(chatSDK, 'getIC3Client');
+
+            await chatSDK.initialize();
+            await chatSDK.initialize();
+            await chatSDK.initialize();
+
+            expect(chatSDK.isInitialized).toBe(true);
+            expect(chatSDK.getIC3Client).toHaveBeenCalledTimes(1);
+            expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(1);
+        });
+
         it('ChatSDK.getPreChatSurvey() with preChat enabled should return a pre chat survey', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             const samplePreChatSurvey = '{"type":"AdaptiveCard", "version":"1.1", "body":[]}';
