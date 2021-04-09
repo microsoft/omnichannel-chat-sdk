@@ -1,9 +1,14 @@
 import IChatSDKConfig, { IDataMaskingSDKConfig } from "../core/IChatSDKConfig";
+import {ariaTelemetryKey} from "../config/settings";
 
 const defaultChatSDKConfig: IChatSDKConfig = {
     dataMasking: {
         disable: false,
         maskingCharacter: '#'
+    },
+    telemetry: {
+        disable: false,
+        ariaTelemetryKey
     }
 };
 

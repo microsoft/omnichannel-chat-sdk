@@ -15,6 +15,7 @@ Please make sure you have a chat widget configured before using this package or 
 - [Sample Apps](samples/)
 - [Common Scenarios](#common-scenarios)
 - [Feature Comparisons](#feature-comparisons)
+- [Telemetry](#telemetry)
 - [Troubleshooting Guide](docs/TROUBLESHOOTING_GUIDE.md)
 
 ## Live Chat Widget vs. Chat SDK
@@ -96,7 +97,7 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
     };
 
     const chatSDKConfig = { // Optional
-        DataMasking: {
+        dataMasking: {
             disable: false,
             maskingCharacter: '#'
         }
@@ -495,6 +496,39 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 | Display Attachments | Requires implementation| Embedded | X |
 | Incoming messages handling |IC3 protocol message data | IC3 protocol message data | X |
 
+## Telemetry
+
+Omnichannel Chat SDK collects telemetry by default to improve the feature’s capabilities, reliability, and performance over time by helping Microsoft understand usage patterns, plan new features, and troubleshoot and fix problem areas.
+
+Some of the data being collected are the following:
+
+| Field | Sample |
+| --- | --- |
+| Organization Id | `e00e67ee-a60e-4b49-b28c-9d279bf42547` |
+| Organization Url | `org60082947.crm.oc.crmlivetie.com` |
+| Widget Id | `1893e4ae-2859-4ac4-9cf5-97cffbb9c01b` |
+| Browser Name | `Edge` |
+| Os Name | `Windows` |
+| Anonymized IP Address (last octet redacted) | `19.207.000.000` |
+
+If your organization is concerned about the data collected by the Chat SDK, you have the option to turn off automatic data collection by adding a flag in the `ChatSDKConfig`.
+
+```ts
+    const omnichannelConfig = {
+        orgUrl: "",
+        orgId: "",
+        widgetId: ""
+    };
+
+    const chatSDKConfig = {
+        telemetry: {
+            disable: true // Disable telemetry
+        }
+    };
+
+    const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+    await chatSDK.initialize();
+```
 
 # Contributing
 

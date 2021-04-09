@@ -1,4 +1,6 @@
 import IChatToken from "../external/IC3Adapter/IChatToken";
+import ScenarioMarker from "../telemetry/ScenarioMarker";
+import TelemetryEvent from "../telemetry/TelemetryEvent";
 
 interface IVoiceVideoCallingParams {
     environment?: string;
@@ -39,6 +41,7 @@ export class VoiceVideoCallingProxy {
     private proxyInstance: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private callingParams?: IVoiceVideoCallingParams;
     private callId?: string;
+    private scenarioMarker?: ScenarioMarker;
 
     private constructor() {
         this.debug = false;
@@ -56,6 +59,10 @@ export class VoiceVideoCallingProxy {
     /* istanbul ignore next */
     public setDebug(flag: boolean): void {
         this.debug = flag;
+    }
+
+    public useScenarioMarker(scenarioMarker: ScenarioMarker): void {
+        this.scenarioMarker = scenarioMarker;
     }
 
     public async load(params: any = {}): Promise<void> { // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -76,19 +83,33 @@ export class VoiceVideoCallingProxy {
         this.callingParams = params;
         this.callId = this.callingParams?.chatToken.chatId;
 
+        this.scenarioMarker?.startScenario(TelemetryEvent.InitializeVoiceVideoCallingSDK, {
+            CallId: this.callId || ''
+        });
+
         /* istanbul ignore next */
         this.debug && console.debug(`[VoiceVideoCallingProxy][initialize] _isLoaded: ${this.proxyInstance._isLoaded}`);
         if (!this.proxyInstance._isLoaded) {
             await this.proxyInstance.load(this.logger || {});
         }
 
-        this.proxyInstance.initialize({
-            skypeid: this.callingParams?.chatToken.visitorId,
-            accesstoken: this.callingParams?.chatToken.token,
-            environment: this.callingParams?.environment || 'prod',
-            selfVideoHTMLElementId: this.callingParams?.selfVideoHTMLElementId,
-            remoteVideoHTMLElementId: this.callingParams?.remoteVideoHTMLElementId
-        });
+        try {
+            await this.proxyInstance.initialize({
+                skypeid: this.callingParams?.chatToken.visitorId,
+                accesstoken: this.callingParams?.chatToken.token,
+                environment: this.callingParams?.environment || 'prod',
+                selfVideoHTMLElementId: this.callingParams?.selfVideoHTMLElementId,
+                remoteVideoHTMLElementId: this.callingParams?.remoteVideoHTMLElementId
+            });
+
+            this.scenarioMarker?.completeScenario(TelemetryEvent.InitializeVoiceVideoCallingSDK, {
+                CallId: this.callId || ''
+            });
+        } catch {
+            this.scenarioMarker?.failScenario(TelemetryEvent.InitializeVoiceVideoCallingSDK, {
+                CallId: this.callId || ''
+            });
+        }
     }
 
     public addEventListener(eventName: string, callback: Function): void {
@@ -110,12 +131,28 @@ export class VoiceVideoCallingProxy {
 
     public async acceptCall(params: IAcceptCallConfig = {}): Promise<void> {
         const {callId} = this;
+
+        this.scenarioMarker?.startScenario(params.withVideo? TelemetryEvent.AcceptVideoCall: TelemetryEvent.AcceptVoiceCall, {
+            CallId: callId || ''
+        });
+
         /* istanbul ignore next */
         this.debug && console.debug(`[VoiceVideoCallingProxy][acceptCall] callId: ${callId}`);
         /* istanbul ignore next */
         this.debug && console.debug(params);
 
-        this.proxyInstance.acceptCall({callId, withVideo: params.withVideo || false});
+        try {
+            await this.proxyInstance.acceptCall({callId, withVideo: params.withVideo || false});
+        } catch {
+            const exceptionDetails = {
+                response: params.withVideo? "AcceptVideoCallFailed": "AcceptVoiceCallFailed"
+            };
+
+            this.scenarioMarker?.failScenario(params.withVideo? TelemetryEvent.AcceptVideoCall: TelemetryEvent.AcceptVoiceCall, {
+                CallId: callId || '',
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+        }
 
         const body = {
             SecondaryChannelType: params.withVideo? SecondaryChannelType.Video: SecondaryChannelType.Voice,
@@ -124,18 +161,50 @@ export class VoiceVideoCallingProxy {
 
         try {
             this.callingParams?.OCClient.makeSecondaryChannelEventRequest(this.callingParams?.chatToken.requestId, body);
+            this.scenarioMarker?.completeScenario(params.withVideo? TelemetryEvent.AcceptVideoCall: TelemetryEvent.AcceptVoiceCall, {
+                CallId: callId || ''
+            });
+
             /* istanbul ignore next */
             this.debug && console.debug(`[VoiceVideoCallingProxy][acceptCall][makeSecondaryChannelEventRequest]`);
         } catch (e) {
+            const exceptionDetails = {
+                response: "OCClientMakeSecondaryChannelEventRequestFailed"
+            };
+
+            this.scenarioMarker?.failScenario(params.withVideo? TelemetryEvent.AcceptVideoCall: TelemetryEvent.AcceptVoiceCall, {
+                CallId: callId || '',
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
             console.error(`[VoiceVideoCallingProxy][acceptCall][makeSecondaryChannelEventRequest] Failure ${e}`);
         }
     }
 
     public async rejectCall(): Promise<void> {
         const {callId} = this;
+
+        this.scenarioMarker?.startScenario(TelemetryEvent.RejectCall, {
+            CallId: callId || ''
+        });
+
         /* istanbul ignore next */
         this.debug && console.debug(`[VoiceVideoCallingProxy][rejectCall] callId: ${callId}`);
-        this.proxyInstance.rejectCall({callId});
+        try {
+            await this.proxyInstance.rejectCall({callId});
+            this.scenarioMarker?.completeScenario(TelemetryEvent.RejectCall, {
+                CallId: callId || ''
+            });
+        } catch {
+            const exceptionDetails = {
+                response: "RejectCallFailed"
+            };
+
+            this.scenarioMarker?.failScenario(TelemetryEvent.RejectCall, {
+                CallId: callId || '',
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+        }
 
         const body = {
             SecondaryChannelType: this.isRemoteVideoEnabled()? SecondaryChannelType.Video: SecondaryChannelType.Voice,
@@ -147,6 +216,15 @@ export class VoiceVideoCallingProxy {
             /* istanbul ignore next */
             this.debug && console.debug(`[VoiceVideoCallingProxy][rejectCall][makeSecondaryChannelEventRequest]`);
         } catch (e) {
+            const exceptionDetails = {
+                response: "OCClientMakeSecondaryChannelEventRequestFailed"
+            };
+
+            this.scenarioMarker?.failScenario(TelemetryEvent.RejectCall, {
+                CallId: callId || '',
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
             console.error(`[VoiceVideoCallingProxy][rejectCall][makeSecondaryChannelEventRequest] Failure ${e}`);
             return e;
         }
@@ -154,10 +232,24 @@ export class VoiceVideoCallingProxy {
 
     public async stopCall(): Promise<void> {
         const {callId} = this;
+
+        this.scenarioMarker?.startScenario(TelemetryEvent.StopCall, {
+            CallId: callId || ''
+        });
+
         /* istanbul ignore next */
         this.debug && console.debug(`[VoiceVideoCallingProxy][stopCall] callId: ${callId}`);
-        this.clearRemoteVideoElementChildren();
-        return this.proxyInstance.stopCall({callId});
+
+        try {
+            await this.proxyInstance.stopCall({callId});
+            this.scenarioMarker?.completeScenario(TelemetryEvent.StopCall, {
+                CallId: callId || ''
+            });
+        } catch {
+            this.scenarioMarker?.failScenario(TelemetryEvent.StopCall, {
+                CallId: callId || '',
+            });
+        }
     }
 
     public async toggleMute(): Promise<void> {
