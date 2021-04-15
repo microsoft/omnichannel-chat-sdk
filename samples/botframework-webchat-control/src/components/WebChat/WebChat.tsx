@@ -43,7 +43,11 @@ function WebChat() {
 
   useEffect(() => {
     const init = async () => {
-      const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+      const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+        telemetry: {
+          disable: true
+        }
+      });
       await chatSDK.initialize();
       setChatSDK(chatSDK);
 
