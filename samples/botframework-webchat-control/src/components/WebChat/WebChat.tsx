@@ -13,12 +13,17 @@ import { createDataMaskingMiddleware } from './createDataMaskingMiddleware';
 import createActivityMiddleware from './createActivityMiddleware';
 import createAvatarMiddleware from './createAvatarMiddleware';
 import fetchOmnichannelConfig from '../../utils/fetchOmnichannelConfig';
+import fetchTelemetryConfig from '../../utils/fetchTelemetryConfig';
 import './WebChat.css';
 
 const omnichannelConfig: any = fetchOmnichannelConfig();
+const telemetryConfig: any = fetchTelemetryConfig();
 
 console.log(`%c [OmnichannelConfig]`, 'background-color:#001433;color:#fff');
 console.log(omnichannelConfig);
+
+console.log(`%c [telemetryConfig]`, 'background-color:#001433;color:#fff');
+console.log(telemetryConfig);
 
 const activityMiddleware: any = createActivityMiddleware();
 const avatarMiddleware: any = createAvatarMiddleware();
@@ -44,9 +49,7 @@ function WebChat() {
   useEffect(() => {
     const init = async () => {
       const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
-        telemetry: {
-          disable: true
-        }
+        ...telemetryConfig
       });
       await chatSDK.initialize();
       setChatSDK(chatSDK);
