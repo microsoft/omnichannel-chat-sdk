@@ -434,8 +434,6 @@ class OmnichannelChatSDK {
             ChatId: this.chatToken.chatId as string
         });
 
-        this.debug && console.log('in send typing event....');
-
         try {
             await this.conversation!.indicateTypingStatus(0);
             const members: IPerson[] = await this.conversation!.getMembers();
@@ -472,8 +470,7 @@ class OmnichannelChatSDK {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
         });
-        this.scenarioMarker.completeScenario(TelemetryEvent.OnAgentEndSession);
-        this.scenarioMarker.failScenario(TelemetryEvent.OnAgentEndSession);
+
         try {
             this.conversation?.registerOnThreadUpdate((message: IRawThread) => {
                 const {members} = message;
@@ -483,7 +480,7 @@ class OmnichannelChatSDK {
                     onAgentEndSessionCallback(message);
                 }
             });
-            
+            this.scenarioMarker.completeScenario(TelemetryEvent.OnAgentEndSession);
         }
         catch(e) {
             this.scenarioMarker.failScenario(TelemetryEvent.OnAgentEndSession);
@@ -491,6 +488,11 @@ class OmnichannelChatSDK {
     }
 
     public async uploadFileAttachment(fileInfo: IFileInfo): Promise<IRawMessage> {
+        this.scenarioMarker.startScenario(TelemetryEvent.UploadFileAttachment, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string
+        });
+
         const fileMetadata: IFileMetadata = await this.conversation!.sendFileData(fileInfo, FileSharingProtocolType.AmsBasedFileSharing);
 
         const messageToSend: IRawMessage = {
@@ -510,9 +512,12 @@ class OmnichannelChatSDK {
 
         try {
             await this.conversation!.sendFileMessage(fileMetadata, messageToSend);
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.UploadFileAttachment);
             return messageToSend;
         } catch (error) {
             console.error(`OmnichannelChatSDK/uploadFileAttachment/error: ${error}`);
+            this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment);
             return error;
         }
     }
