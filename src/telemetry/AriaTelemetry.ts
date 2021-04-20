@@ -3,6 +3,7 @@ import { AWTEventPriority } from '../external/aria/common/Enums';
 import { AWTLogManager, AWTLogger, AWTEventData } from '../external/aria/webjs/AriaSDK';
 import LogLevel from '../telemetry/LogLevel';
 import ScenarioType from '../telemetry/ScenarioType';
+import { ic3ClientVersion } from '../config/settings';
 
 interface BaseContract {
     OrgId: string;
@@ -30,6 +31,23 @@ interface CDNPackagesInfo {
     VoiceVideoCalling?: string;
 }
 
+interface IC3ClientContract {
+    OrgId: string;
+    OrgUrl: string;
+    WidgetId: string;
+    RequestId: string;
+    ChatId: string;
+    Event?: string;
+    Description?: string;
+    SubscriptionId?: string;
+    EndpointId?: string;
+    EndpointUrl?: string;
+    ErrorCode?: string;
+    ExceptionDetails?: string;
+    ElapsedTimeInMilliseconds?: string;
+    IC3ClientVersion: string;
+}
+
 class AriaTelemetry {
     private static _logger: AWTLogger;
     private static _debug = false;
@@ -54,8 +72,8 @@ class AriaTelemetry {
         };
     }
 
-    public static info(properties: AWTEventData["properties"]): void {
-        const event = {
+    public static info(properties: AWTEventData["properties"], scenarioType: ScenarioType = ScenarioType.EVENTS): void {
+        let event = {
             name: ScenarioType.EVENTS,
             properties: {
                 ...AriaTelemetry.populateBaseProperties(),
@@ -66,16 +84,28 @@ class AriaTelemetry {
             priority: AWTEventPriority.High
         };
 
+        if (scenarioType == ScenarioType.IC3CLIENT) {
+            event = {
+                name: ScenarioType.IC3CLIENT,
+                properties: {
+                    ...AriaTelemetry.populateIC3ClientBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.INFO
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
         /* istanbul ignore next */
-        this._debug && console.log(`[AriaTelemetry][info]`);
+        this._debug && console.log(`[AriaTelemetry][info] ${scenarioType}`);
         /* istanbul ignore next */
         this._debug && console.log(event);
 
         !AriaTelemetry._disable && AriaTelemetry.logger.logEvent(event);
     }
 
-    public static debug(properties: AWTEventData["properties"]): void {
-        const event = {
+    public static debug(properties: AWTEventData["properties"], scenarioType: ScenarioType = ScenarioType.EVENTS): void {
+        let event = {
             name: ScenarioType.EVENTS,
             properties: {
                 ...AriaTelemetry.populateBaseProperties(),
@@ -86,16 +116,28 @@ class AriaTelemetry {
             priority: AWTEventPriority.High
         };
 
+        if (scenarioType == ScenarioType.IC3CLIENT) {
+            event = {
+                name: ScenarioType.IC3CLIENT,
+                properties: {
+                    ...AriaTelemetry.populateIC3ClientBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.DEBUG
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
         /* istanbul ignore next */
-        this._debug && console.log(`[AriaTelemetry][debug]`);
+        this._debug && console.log(`[AriaTelemetry][debug] ${scenarioType}`);
         /* istanbul ignore next */
         this._debug && console.log(event);
 
         !AriaTelemetry._disable && AriaTelemetry.logger.logEvent(event);
     }
 
-    public static warn(properties: AWTEventData["properties"]): void {
-        const event = {
+    public static warn(properties: AWTEventData["properties"], scenarioType: ScenarioType = ScenarioType.EVENTS): void {
+        let event = {
             name: ScenarioType.EVENTS,
             properties: {
                 ...AriaTelemetry.populateBaseProperties(),
@@ -106,16 +148,28 @@ class AriaTelemetry {
             priority: AWTEventPriority.High
         };
 
+        if (scenarioType == ScenarioType.IC3CLIENT) {
+            event = {
+                name: ScenarioType.IC3CLIENT,
+                properties: {
+                    ...AriaTelemetry.populateIC3ClientBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.WARN
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
         /* istanbul ignore next */
-        this._debug && console.log(`[AriaTelemetry][warn]`);
+        this._debug && console.log(`[AriaTelemetry][warn] ${scenarioType}`);
         /* istanbul ignore next */
         this._debug && console.log(event);
 
         !AriaTelemetry._disable && AriaTelemetry.logger.logEvent(event);
     }
 
-    public static error(properties: AWTEventData["properties"]): void {
-        const event = {
+    public static error(properties: AWTEventData["properties"], scenarioType: ScenarioType = ScenarioType.EVENTS): void {
+        let event = {
             name: ScenarioType.EVENTS,
             properties: {
                 ...AriaTelemetry.populateBaseProperties(),
@@ -126,16 +180,28 @@ class AriaTelemetry {
             priority: AWTEventPriority.High
         };
 
+        if (scenarioType == ScenarioType.IC3CLIENT) {
+            event = {
+                name: ScenarioType.IC3CLIENT,
+                properties: {
+                    ...AriaTelemetry.populateIC3ClientBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.ERROR
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
         /* istanbul ignore next */
-        this._debug && console.log(`[AriaTelemetry][error]`);
+        this._debug && console.log(`[AriaTelemetry][error] ${scenarioType}`);
         /* istanbul ignore next */
         this._debug && console.log(event);
 
         !AriaTelemetry._disable && AriaTelemetry.logger.logEvent(event);
     }
 
-    public static log(properties: AWTEventData["properties"]): void {
-        const event = {
+    public static log(properties: AWTEventData["properties"], scenarioType: ScenarioType = ScenarioType.EVENTS): void {
+        let event = {
             name: ScenarioType.EVENTS,
             properties: {
                 ...AriaTelemetry.populateBaseProperties(),
@@ -145,6 +211,18 @@ class AriaTelemetry {
             },
             priority: AWTEventPriority.High
         };
+
+        if (scenarioType == ScenarioType.IC3CLIENT) {
+            event = {
+                name: ScenarioType.IC3CLIENT,
+                properties: {
+                    ...AriaTelemetry.populateIC3ClientBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.LOG
+                },
+                priority: AWTEventPriority.High
+            }
+        }
 
         /* istanbul ignore next */
         this._debug && console.log(`[AriaTelemetry][log]`);
@@ -207,6 +285,25 @@ class AriaTelemetry {
         }
 
         return platformData;
+    }
+
+    private static populateIC3ClientBaseProperties(): IC3ClientContract {
+        return {
+            OrgId: '',
+            OrgUrl: '',
+            WidgetId: '',
+            RequestId: '',
+            ChatId: '',
+            Event: '',
+            Description: '',
+            SubscriptionId: '',
+            EndpointId: '',
+            EndpointUrl: '',
+            ErrorCode: '',
+            ExceptionDetails: '',
+            ElapsedTimeInMilliseconds: '',
+            IC3ClientVersion: ic3ClientVersion
+        }
     }
 }
 
