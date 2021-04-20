@@ -7,6 +7,7 @@ export default interface IIC3AdapterOptions {
     conversation?: IConversation
     chatToken?: IChatToken;
     sdkURL?: string;
+    sdk?: any;
     // visitor: boolean;
     // sendHeartBeat: boolean;
     // hostType: HostType;
