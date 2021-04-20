@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - onAgentEndSession triggered on accept voice & video call
+- Fix multiple instances of IC3Client initialized
 
 ### Security
 - Fix eslint errors
