@@ -7,7 +7,7 @@ export default interface IIC3AdapterOptions {
     conversation?: IConversation
     chatToken?: IChatToken;
     sdkURL?: string;
-    sdk?: any;
+    sdk?: any; // eslint-disable-line  @typescript-eslint/no-explicit-any
     // visitor: boolean;
     // sendHeartBeat: boolean;
     // hostType: HostType;
