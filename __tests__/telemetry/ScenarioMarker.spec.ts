@@ -2,7 +2,6 @@ import AriaTelemetry from '../../src/telemetry/AriaTelemetry';
 import ScenarioMarker from '../../src/telemetry/ScenarioMarker';
 import * as settings from '../../src/config/settings';
 
-
 describe('ScenarioMarker', () => {
     (settings as any).ariaTelemetryKey = '';
     const omnichannelConfig = {
@@ -72,5 +71,31 @@ describe('ScenarioMarker', () => {
         expect(scenarioMarker.telemetryEvents.size).toBe(0);
         expect(scenarioMarker.telemetry.info).toHaveBeenCalledTimes(2);
         expect(stopWatch).toBe(undefined);
+    });
+
+    it('ScenarioMarker.failScenario(event) without calling ScenarioMarker.startScenario(event) before should send a warning message', () => {
+        const scenario: any = 'Scenario';
+        const scenarioMarker: any = new ScenarioMarker(omnichannelConfig);
+        scenarioMarker.telemetry = {
+            info: jest.fn(),
+            error: jest.fn()
+        }
+
+        spyOn(console, 'warn');
+        scenarioMarker.failScenario(scenario);
+        expect(console.warn).toHaveBeenCalledTimes(1);
+    });
+
+    it('ScenarioMarker.completeScenario(event) without calling ScenarioMarker.startScenario(event) before should send a warning message', () => {
+        const scenario: any = 'Scenario';
+        const scenarioMarker: any = new ScenarioMarker(omnichannelConfig);
+        scenarioMarker.telemetry = {
+            info: jest.fn(),
+            error: jest.fn()
+        }
+
+        spyOn(console, 'warn');
+        scenarioMarker.completeScenario(scenario);
+        expect(console.warn).toHaveBeenCalledTimes(1);
     });
 });
