@@ -548,7 +548,6 @@ class OmnichannelChatSDK {
 
         return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
             const ic3AdapterCDNUrl = this.resolveChatAdapterUrl(protocol);
-
             this.telemetry?.setCDNPackages({
                 IC3Adapter: ic3AdapterCDNUrl
             });
@@ -563,6 +562,7 @@ class OmnichannelChatSDK {
                     userDisplayName: 'Customer',
                     userId: 'teamsvisitor',
                     sdkURL: this.resolveIC3ClientUrl(),
+                    sdk: this.IC3Client
                 };
 
                 const adapter = new window.Microsoft.BotFramework.WebChat.IC3Adapter(adapterConfig);
