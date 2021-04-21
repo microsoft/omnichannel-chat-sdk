@@ -87,7 +87,7 @@ function WebChat() {
 
     console.log(state);
     init();
-  }, [state]);
+  }, []);
 
   const onNewMessage = useCallback((message: IRawMessage) => {
     console.log(`[onNewMessage] ${message.content}`);
