@@ -100,6 +100,8 @@ class AriaTelemetry {
         this._debug && console.log(`[AriaTelemetry][info] ${scenarioType}`);
         /* istanbul ignore next */
         this._debug && console.log(event);
+        /* istanbul ignore next */
+        this._debug && console.log(event.properties.Event);
 
         !AriaTelemetry._disable && AriaTelemetry.logger.logEvent(event);
     }
@@ -132,6 +134,8 @@ class AriaTelemetry {
         this._debug && console.log(`[AriaTelemetry][debug] ${scenarioType}`);
         /* istanbul ignore next */
         this._debug && console.log(event);
+        /* istanbul ignore next */
+        this._debug && console.log(event.properties.Event);
 
         !AriaTelemetry._disable && AriaTelemetry.logger.logEvent(event);
     }
@@ -164,6 +168,8 @@ class AriaTelemetry {
         this._debug && console.log(`[AriaTelemetry][warn] ${scenarioType}`);
         /* istanbul ignore next */
         this._debug && console.log(event);
+        /* istanbul ignore next */
+        this._debug && console.log(event.properties.Event);
 
         !AriaTelemetry._disable && AriaTelemetry.logger.logEvent(event);
     }
@@ -196,6 +202,8 @@ class AriaTelemetry {
         this._debug && console.log(`[AriaTelemetry][error] ${scenarioType}`);
         /* istanbul ignore next */
         this._debug && console.log(event);
+        /* istanbul ignore next */
+        this._debug && console.log(event.properties.Event);
 
         !AriaTelemetry._disable && AriaTelemetry.logger.logEvent(event);
     }
@@ -228,6 +236,8 @@ class AriaTelemetry {
         this._debug && console.log(`[AriaTelemetry][log]`);
         /* istanbul ignore next */
         this._debug && console.log(event);
+        /* istanbul ignore next */
+        this._debug && console.log(event.properties.Event);
 
         !AriaTelemetry._disable && AriaTelemetry.logger.logEvent(event);
     }
