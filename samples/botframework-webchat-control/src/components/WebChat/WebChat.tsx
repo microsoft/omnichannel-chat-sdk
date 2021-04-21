@@ -15,11 +15,13 @@ import createAvatarMiddleware from './createAvatarMiddleware';
 import fetchOmnichannelConfig from '../../utils/fetchOmnichannelConfig';
 import fetchTelemetryConfig from '../../utils/fetchTelemetryConfig';
 import fetchCallingConfig from '../../utils/fetchCallingConfig';
+import fetchDebugConfig from '../../utils/fetchDebugConfig';
 import './WebChat.css';
 
 const omnichannelConfig: any = fetchOmnichannelConfig();
 const telemetryConfig: any = fetchTelemetryConfig();
 const callingConfig: any = fetchCallingConfig();
+const debugConfig: any = fetchDebugConfig();
 
 console.log(`%c [OmnichannelConfig]`, 'background-color:#001433;color:#fff');
 console.log(omnichannelConfig);
@@ -29,6 +31,9 @@ console.log(telemetryConfig);
 
 console.log(`%c [callingConfig]`, 'background-color:#001433;color:#fff');
 console.log(callingConfig);
+
+console.log(`%c [debugConfig]`, 'background-color:#001433;color:#fff');
+console.log(debugConfig);
 
 const activityMiddleware: any = createActivityMiddleware();
 const avatarMiddleware: any = createAvatarMiddleware();
@@ -56,6 +61,9 @@ function WebChat() {
       const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
         ...telemetryConfig
       });
+
+      chatSDK.setDebug(!debugConfig.disable);
+
       await chatSDK.initialize();
       setChatSDK(chatSDK);
 
