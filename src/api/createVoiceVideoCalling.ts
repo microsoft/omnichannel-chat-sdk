@@ -340,11 +340,15 @@ export class VoiceVideoCallingProxy {
                 SecondaryChannelEventType: SecondaryChannelEvents.End
             }
 
+            this.scenarioMarker?.startScenario(TelemetryEvent.onCallDisconnected);
+
             try {
                 this.callingParams?.OCClient.makeSecondaryChannelEventRequest(this.callingParams?.chatToken.requestId, body);
                 this.debug && console.debug(`[VoiceVideoCallingProxy][onCallDisconnected][makeSecondaryChannelEventRequest]`);
+                this.scenarioMarker?.completeScenario(TelemetryEvent.onCallDisconnected);
             } catch (e) {
                 console.error(`[VoiceVideoCallingProxy][onCallDisconnected][makeSecondaryChannelEventRequest] Failure ${e}`);
+                this.scenarioMarker?.failScenario(TelemetryEvent.onCallDisconnected);
             }
 
             this.clearRemoteVideoElementChildren();

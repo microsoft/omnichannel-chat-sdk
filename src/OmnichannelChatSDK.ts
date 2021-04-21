@@ -512,7 +512,6 @@ class OmnichannelChatSDK {
 
         try {
             await this.conversation!.sendFileMessage(fileMetadata, messageToSend);
-
             this.scenarioMarker.completeScenario(TelemetryEvent.UploadFileAttachment);
             return messageToSend;
         } catch (error) {
@@ -650,7 +649,10 @@ class OmnichannelChatSDK {
                     SpoolSDK: spoolSDKCDNUrl
                 });
 
-                this.scenarioMarker.startScenario(TelemetryEvent.GetVoiceVideoCalling);
+                this.scenarioMarker.startScenario(TelemetryEvent.GetVoiceVideoCalling, {            
+                    RequestId: this.requestId,
+                    chatId: this.chatToken.chatId as string
+                });
 
                 await loadScript(spoolSDKCDNUrl, () => {
                     /* istanbul ignore next */
@@ -700,7 +702,10 @@ class OmnichannelChatSDK {
     private async getIC3Client() {
         if (platform.isNode() || platform.isReactNative()) {
             this.debug && console.debug('IC3Core');
-            this.scenarioMarker.startScenario(TelemetryEvent.GetIC3Client);
+            this.scenarioMarker.startScenario(TelemetryEvent.GetIC3Client, {
+                RequestId: this.requestId,
+                chatId: this.chatToken.chatId as string
+            });
 
             // Use FramelessBridge from IC3Core
             this.IC3SDKProvider = IC3SDKProvider;
