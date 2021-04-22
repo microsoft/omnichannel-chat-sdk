@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Widget, addResponseMessage, isWidgetOpened, dropMessages, addUserMessage, setQuickButtons } from 'react-chat-widget';
 import fetchOmnichannelConfig from '../../utils/fetchOmnichannelConfig';
 import {OmnichannelChatSDK, isCustomerMessage, isSystemMessage} from '@microsoft/omnichannel-chat-sdk';
@@ -49,9 +49,11 @@ function ChatWidget() {
     });
   };
 
-  const onWidgetClick = async (event: any) => {
+  const onWidgetClick = useCallback(async (event: any) => {
+    console.log('[onWidgetClick]');
     const open = isWidgetOpened();
     // console.log(`[isWidgetOpened] ${open}`);
+    // console.log(`[hasChatStarted] ${hasChatStarted}`);
     setOpen(open);
 
     if (!hasChatStarted && open) {
@@ -70,12 +72,37 @@ function ChatWidget() {
 
       // Rehydrate messages
       const messages: any = await chatSDK?.getMessages();
+      console.log(`[Rehydrate] ${messages.length} message(s)`);
       for (const message of messages.reverse()) {
         if (isSystemMessage(message)) {
           addResponseMessage(message.content);
         } else if (isCustomerMessage(message)) {
+          // Renders attachment
+          if (message.fileMetadata) {
+            console.log(`[Rehydrate][Attachment][User] ${message.fileMetadata.name}`);
+            const blob = await chatSDK?.downloadFileAttachment(message.fileMetadata);
+            const fileReader = new FileReader();
+            fileReader.readAsDataURL(blob as Blob);
+            fileReader.onloadend = () => {
+              addUserMessage(`![attachment](${fileReader.result})`);
+            }
+            continue;
+          }
+
           addUserMessage(message.content);
         } else {
+          // Renders attachment
+          if (message.fileMetadata) {
+            console.log(`[Rehydrate][Attachment][Agent] ${message.fileMetadata.name}`);
+            const blob = await chatSDK?.downloadFileAttachment(message.fileMetadata);
+            const fileReader = new FileReader();
+            fileReader.readAsDataURL(blob as Blob);
+            fileReader.onloadend = () => {
+              addResponseMessage(`![attachment](${fileReader.result})`);
+            }
+            continue;
+          }
+
           addResponseMessage(message.content);
         }
       }
@@ -88,7 +115,17 @@ function ChatWidget() {
       const liveChatContext = await chatSDK?.getCurrentLiveChatContext();
       localStorage.setItem('liveChatContext', JSON.stringify(liveChatContext));
 
-      chatSDK?.onNewMessage((message: any) => {
+      chatSDK?.onNewMessage(async (message: any) => {
+        if (message.fileMetadata) {
+          console.log(`[onNewMessage][Attachment] ${message.fileMetadata.name}`);
+          const blob = await chatSDK?.downloadFileAttachment(message.fileMetadata);
+          const fileReader = new FileReader();
+          fileReader.readAsDataURL(blob as Blob);
+          fileReader.onloadend = () => {
+            addResponseMessage(`![attachment](${fileReader.result})`);
+          }
+          return;
+        }
         addResponseMessage(message.content);
       });
 
@@ -104,7 +141,7 @@ function ChatWidget() {
       dropMessages()
       setHasChatStarted(false);
     }
-  }
+  }, [hasChatStarted, chatSDK, open]);
 
   const handleQuickButtonClicked = (value: string) => {
     console.log('[handleQuickButtonClicked]');
@@ -121,7 +158,7 @@ function ChatWidget() {
         const fileReader = new FileReader();
         fileReader.readAsDataURL(file);
         fileReader.onloadend = () => {
-          addResponseMessage(`![attachment](${fileReader.result})`);
+          addUserMessage(`![attachment](${fileReader.result})`);
         }
       }
     }
