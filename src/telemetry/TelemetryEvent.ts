@@ -6,6 +6,7 @@ enum TelemetryEvent {
     EndChat = "EndChat",
     GetLiveChatConfig = "GetLiveChatConfig",
     GetChatToken = "GetChatToken",
+    GetConversationDetails = "GetConversationDetails",
     SendTypingEvent = "SendTypingEvent",
     OnAgentEndSession = "OnAgentEndSession",
     UploadFileAttachment = "UpdateFileAttachment",
