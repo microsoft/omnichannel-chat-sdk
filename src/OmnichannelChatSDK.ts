@@ -74,7 +74,10 @@ class OmnichannelChatSDK {
     constructor(omnichannelConfig: IOmnichannelConfig, chatSDKConfig: IChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
         this.omnichannelConfig = omnichannelConfig;
-        this.chatSDKConfig = chatSDKConfig;
+        this.chatSDKConfig = {
+            ...defaultChatSDKConfig,
+            ...chatSDKConfig // overrides
+        };
         this.isInitialized = false;
         this.requestId = uuidv4();
         this.chatToken = {};
