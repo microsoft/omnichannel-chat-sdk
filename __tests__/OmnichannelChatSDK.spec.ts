@@ -9,12 +9,6 @@ import ChatAdapterProtocols from "../src/core/ChatAdapterProtocols";
 import AriaTelemetry from "../src/telemetry/AriaTelemetry";
 
 describe('Omnichannel Chat SDK', () => {
-    // beforeEach(() => {
-    //     (AriaTelemetry as any)._disable = false;
-    //     (AriaTelemetry as any)._logger = {
-    //         logEvent: jest.fn()
-    //     };
-    // });
 
     describe('Configurations', () => {
         it('ChatSDK should require omnichannelConfig as parameter', () => {
