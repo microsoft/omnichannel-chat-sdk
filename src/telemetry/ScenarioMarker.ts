@@ -48,6 +48,11 @@ class ScenarioMarker {
     public failScenario(event: TelemetryEvent, additionalProperties: AWTEventData["properties"] = {}): void {
         this.debug && console.log(`[ScenarioMarker][failScenario]`);
 
+        if (!this.telemetryEvents.has(event)) {
+            console.warn(`'${event}' event has not started.`);
+            return;
+        }
+
         const stopWatch = this.telemetryEvents.get(event);
         this.telemetryEvents.delete(event);
 
@@ -65,6 +70,11 @@ class ScenarioMarker {
 
     public completeScenario(event: TelemetryEvent, additionalProperties: AWTEventData["properties"] = {}): void {
         this.debug && console.log(`[ScenarioMarker][completeScenario]`);
+
+        if (!this.telemetryEvents.has(event)) {
+            console.warn(`'${event}' event has not started.`);
+            return;
+        }
 
         const stopWatch = this.telemetryEvents.get(event);
         this.telemetryEvents.delete(event);

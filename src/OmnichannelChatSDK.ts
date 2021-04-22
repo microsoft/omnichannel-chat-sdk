@@ -32,6 +32,7 @@ import IEmailTranscriptOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IEma
 import IStartChatOptionalParams from "./core/IStartChatOptionalParams";
 import MessageContentType from "@microsoft/omnichannel-ic3core/lib/model/MessageContentType";
 import MessageType from "@microsoft/omnichannel-ic3core/lib/model/MessageType";
+import OnNewMessageOptionalParams from "./core/OnNewMessageOptionalParams";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import platform from "./utils/platform";
 import ProtocolType from "@microsoft/omnichannel-ic3core/lib/interfaces/ProtocoleType";
@@ -47,6 +48,7 @@ import createTelemetry from "./utils/createTelemetry";
 import AriaTelemetry from "./telemetry/AriaTelemetry";
 import TelemetryEvent from "./telemetry/TelemetryEvent";
 import ScenarioMarker from "./telemetry/ScenarioMarker";
+import { createIC3ClientLogger, IC3ClientLogger } from "./utils/loggers";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -68,11 +70,15 @@ class OmnichannelChatSDK {
     private callingOption: CallingOptionsOptionSetNumber = CallingOptionsOptionSetNumber.NoCalling;
     private telemetry: typeof AriaTelemetry | null = null;
     private scenarioMarker: ScenarioMarker;
+    private ic3ClientLogger: IC3ClientLogger | null = null;
 
     constructor(omnichannelConfig: IOmnichannelConfig, chatSDKConfig: IChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
         this.omnichannelConfig = omnichannelConfig;
-        this.chatSDKConfig = chatSDKConfig;
+        this.chatSDKConfig = {
+            ...defaultChatSDKConfig,
+            ...chatSDKConfig // overrides
+        };
         this.isInitialized = false;
         this.requestId = uuidv4();
         this.chatToken = {};
@@ -82,13 +88,17 @@ class OmnichannelChatSDK {
         this.preChatSurvey = null;
         this.telemetry = createTelemetry(this.debug);
         this.scenarioMarker = new ScenarioMarker(this.omnichannelConfig);
+        this.ic3ClientLogger = createIC3ClientLogger(this.omnichannelConfig);
 
         this.scenarioMarker.useTelemetry(this.telemetry);
+        this.ic3ClientLogger.useTelemetry(this.telemetry);
 
         validateOmnichannelConfig(omnichannelConfig);
         validateSDKConfig(chatSDKConfig);
 
         this.chatSDKConfig.telemetry?.disable && this.telemetry?.disable();
+
+        this.ic3ClientLogger?.setRequestId(this.requestId);
     }
 
     /* istanbul ignore next */
@@ -96,6 +106,7 @@ class OmnichannelChatSDK {
         this.debug = flag;
         this.telemetry?.setDebug(flag);
         this.scenarioMarker.setDebug(flag);
+        this.ic3ClientLogger?.setDebug(flag);
     }
 
     public async initialize(): Promise<IChatConfig> {
@@ -140,6 +151,8 @@ class OmnichannelChatSDK {
         if (this.chatToken && Object.keys(this.chatToken).length === 0) {
             await this.getChatToken(false);
         }
+
+        this.ic3ClientLogger?.setChatId(this.chatToken.chatId || '');
 
         const sessionInitOptionalParams: ISessionInitOptionalParams = {
             initContext: {} as InitContext
@@ -261,6 +274,9 @@ class OmnichannelChatSDK {
             this.conversation = null;
             this.requestId = uuidv4();
             this.chatToken = {};
+
+            this.ic3ClientLogger?.setRequestId(this.requestId);
+            this.ic3ClientLogger?.setChatId('');
         } catch (error) {
             const exceptionDetails = {
                 response: "OCClientSessionCloseFailed"
@@ -409,12 +425,34 @@ class OmnichannelChatSDK {
         return this.conversation!.sendMessage(messageToSend);
     }
 
-    public onNewMessage(onNewMessageCallback: CallableFunction): void {
+    public async onNewMessage(onNewMessageCallback: CallableFunction, optionalParams: OnNewMessageOptionalParams | unknown = {}): Promise<void> {
+        const postedMessages = new Set();
+
+        if ((optionalParams as OnNewMessageOptionalParams).rehydrate) {
+            this.debug && console.log('[OmnichannelChatSDK][onNewMessage] rehydrate');
+            const messages = await this.getMessages() as IRawMessage[];
+            for (const message of messages.reverse()) {
+                const {clientmessageid} = message;
+
+                if (postedMessages.has(clientmessageid)) {
+                    continue;
+                }
+
+                postedMessages.add(clientmessageid);
+                onNewMessageCallback(message);
+            }
+        }
+
         this.conversation?.registerOnNewMessage((message: IRawMessage) => {
-            const {messageType} = message;
+            const {clientmessageid, messageType} = message;
 
             // Filter out customer messages
             if (isCustomerMessage(message)) {
+                return;
+            }
+
+            // Skip duplicates
+            if (postedMessages.has(clientmessageid)) {
                 return;
             }
 
@@ -485,13 +523,19 @@ class OmnichannelChatSDK {
         }   
     }
 
-    public async uploadFileAttachment(fileInfo: IFileInfo): Promise<IRawMessage> {
+    public async uploadFileAttachment(fileInfo: IFileInfo | File): Promise<IRawMessage> {
         this.scenarioMarker.startScenario(TelemetryEvent.UploadFileAttachment, {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
         });
 
-        const fileMetadata: IFileMetadata = await this.conversation!.sendFileData(fileInfo, FileSharingProtocolType.AmsBasedFileSharing);
+        let fileMetadata: IFileMetadata;
+
+        if (platform.isReactNative() || platform.isNode()) {
+            fileMetadata = await this.conversation!.sendFileData(fileInfo as IFileInfo, FileSharingProtocolType.AmsBasedFileSharing);
+        } else {
+            fileMetadata = await this.conversation!.uploadFile(fileInfo as File, FileSharingProtocolType.AmsBasedFileSharing);
+        }
 
         const messageToSend: IRawMessage = {
             content: "",
@@ -611,7 +655,6 @@ class OmnichannelChatSDK {
 
         return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
             const ic3AdapterCDNUrl = this.resolveChatAdapterUrl(protocol);
-
             this.telemetry?.setCDNPackages({
                 IC3Adapter: ic3AdapterCDNUrl
             });
@@ -626,6 +669,7 @@ class OmnichannelChatSDK {
                     userDisplayName: 'Customer',
                     userId: 'teamsvisitor',
                     sdkURL: this.resolveIC3ClientUrl(),
+                    sdk: this.IC3Client
                 };
 
                 const adapter = new window.Microsoft.BotFramework.WebChat.IC3Adapter(adapterConfig);
@@ -753,7 +797,8 @@ class OmnichannelChatSDK {
                     this.IC3SDKProvider = IC3SDKProvider;
                     const IC3Client = await IC3SDKProvider.getSDK({
                         hostType: HostType.IFrame,
-                        protocolType: ProtocolType.IC3V1SDK
+                        protocolType: ProtocolType.IC3V1SDK,
+                        logger: this.ic3ClientLogger
                     });
 
                     this.scenarioMarker.completeScenario(TelemetryEvent.GetIC3Client);
