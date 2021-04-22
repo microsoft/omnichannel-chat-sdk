@@ -13,12 +13,27 @@ import { createDataMaskingMiddleware } from './createDataMaskingMiddleware';
 import createActivityMiddleware from './createActivityMiddleware';
 import createAvatarMiddleware from './createAvatarMiddleware';
 import fetchOmnichannelConfig from '../../utils/fetchOmnichannelConfig';
+import fetchTelemetryConfig from '../../utils/fetchTelemetryConfig';
+import fetchCallingConfig from '../../utils/fetchCallingConfig';
+import fetchDebugConfig from '../../utils/fetchDebugConfig';
 import './WebChat.css';
 
 const omnichannelConfig: any = fetchOmnichannelConfig();
+const telemetryConfig: any = fetchTelemetryConfig();
+const callingConfig: any = fetchCallingConfig();
+const debugConfig: any = fetchDebugConfig();
 
 console.log(`%c [OmnichannelConfig]`, 'background-color:#001433;color:#fff');
 console.log(omnichannelConfig);
+
+console.log(`%c [telemetryConfig]`, 'background-color:#001433;color:#fff');
+console.log(telemetryConfig);
+
+console.log(`%c [callingConfig]`, 'background-color:#001433;color:#fff');
+console.log(callingConfig);
+
+console.log(`%c [debugConfig]`, 'background-color:#001433;color:#fff');
+console.log(debugConfig);
 
 const activityMiddleware: any = createActivityMiddleware();
 const avatarMiddleware: any = createAvatarMiddleware();
@@ -43,7 +58,12 @@ function WebChat() {
 
   useEffect(() => {
     const init = async () => {
-      const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+      const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+        ...telemetryConfig
+      });
+
+      chatSDK.setDebug(!debugConfig.disable);
+
       await chatSDK.initialize();
       setChatSDK(chatSDK);
 
@@ -53,7 +73,7 @@ function WebChat() {
         console.log(liveChatContext);
       }
 
-      if ((chatSDK as any).getVoiceVideoCalling) {
+      if ((chatSDK as any).getVoiceVideoCalling && !callingConfig.disable) {
         try {
           const VoiceVideoCalling = await (chatSDK as any).getVoiceVideoCalling();
           VoiceVideoCalling.setDebug(true);
@@ -67,7 +87,7 @@ function WebChat() {
 
     console.log(state);
     init();
-  }, [state]);
+  }, []);
 
   const onNewMessage = useCallback((message: IRawMessage) => {
     console.log(`[onNewMessage] ${message.content}`);
@@ -176,7 +196,7 @@ function WebChat() {
             state.isLoading && <Loading />
           }
           {
-            VoiceVideoCallingSDK && chatToken && <Calling
+            !callingConfig.disable && VoiceVideoCallingSDK && chatToken && <Calling
               VoiceVideoCallingSDK={VoiceVideoCallingSDK}
               OCClient={chatSDK?.OCClient}
               chatToken={chatToken}
