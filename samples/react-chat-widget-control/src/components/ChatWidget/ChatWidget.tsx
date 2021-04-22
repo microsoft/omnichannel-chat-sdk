@@ -2,14 +2,19 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Widget, addResponseMessage, isWidgetOpened, dropMessages, addUserMessage, setQuickButtons } from 'react-chat-widget';
 import {OmnichannelChatSDK, isCustomerMessage, isSystemMessage} from '@microsoft/omnichannel-chat-sdk';
 import fetchOmnichannelConfig from '../../utils/fetchOmnichannelConfig';
+import fetchTelemetryConfig from '../../utils/fetchTelemetryConfig';
 import fetchDebugConfig from '../../utils/fetchDebugConfig';
 import 'react-chat-widget/lib/styles.css';
 
 const omnichannelConfig: any = fetchOmnichannelConfig();
+const telemetryConfig: any = fetchTelemetryConfig();
 const debugConfig: any = fetchDebugConfig();
 
 console.log(`%c [OmnichannelConfig]`, 'background-color:#001433;color:#fff');
 console.log(omnichannelConfig);
+
+console.log(`%c [telemetryConfig]`, 'background-color:#001433;color:#fff');
+console.log(telemetryConfig);
 
 console.log(`%c [debugConfig]`, 'background-color:#001433;color:#fff');
 console.log(debugConfig);
@@ -26,9 +31,7 @@ function ChatWidget() {
   useEffect(() => {
     const init = async () => {
       const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
-        telemetry: {
-          disable: true
-        }
+        ...telemetryConfig
       });
 
       chatSDK.setDebug(!debugConfig.disable);
