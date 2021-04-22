@@ -160,10 +160,14 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 
 ### On New Message Handler
 ```ts
+    const optionalParams = {
+        rehydrate: true, // Rehydrate all previous messages of existing conversation (false by default)
+    }
+
     chatSDK.onNewMessage((message) => {
       console.log(`[NewMessage] ${message.content}`); // IC3 protocol message data
       console.log(message);
-    });
+    }, optionalParams);
 ```
 
 ### On Agent End Session

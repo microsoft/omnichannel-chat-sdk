@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Expose `sessiontInit`'s `initContext` on `startChat`'s optional paramaters
 - Add ability to use custom `ic3Config` & `chatAdapterConfig`
 - Add telemetry
+- Add `rehydrate` flag for `onNewMessage` to rehydrate all messages of existing conversation
 
 ### Changed
 - Uptake [@microsoft/ocsdk@0.1.1](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.1.1)

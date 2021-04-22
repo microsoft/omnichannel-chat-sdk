@@ -32,6 +32,7 @@ import IEmailTranscriptOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IEma
 import IStartChatOptionalParams from "./core/IStartChatOptionalParams";
 import MessageContentType from "@microsoft/omnichannel-ic3core/lib/model/MessageContentType";
 import MessageType from "@microsoft/omnichannel-ic3core/lib/model/MessageType";
+import OnNewMessageOptionalParams from "./core/OnNewMessageOptionalParams";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import platform from "./utils/platform";
 import ProtocolType from "@microsoft/omnichannel-ic3core/lib/interfaces/ProtocoleType";
@@ -425,12 +426,34 @@ class OmnichannelChatSDK {
         return this.conversation!.sendMessage(messageToSend);
     }
 
-    public onNewMessage(onNewMessageCallback: CallableFunction): void {
+    public async onNewMessage(onNewMessageCallback: CallableFunction, optionalParams: OnNewMessageOptionalParams | unknown = {}): Promise<void> {
+        const postedMessages = new Set();
+
+        if ((optionalParams as OnNewMessageOptionalParams).rehydrate) {
+            this.debug && console.log('[OmnichannelChatSDK][onNewMessage] rehydrate');
+            const messages = await this.getMessages() as IRawMessage[];
+            for (const message of messages.reverse()) {
+                const {clientmessageid} = message;
+
+                if (postedMessages.has(clientmessageid)) {
+                    continue;
+                }
+
+                postedMessages.add(clientmessageid);
+                onNewMessageCallback(message);
+            }
+        }
+
         this.conversation?.registerOnNewMessage((message: IRawMessage) => {
-            const {messageType} = message;
+            const {clientmessageid, messageType} = message;
 
             // Filter out customer messages
             if (isCustomerMessage(message)) {
+                return;
+            }
+
+            // Skip duplicates
+            if (postedMessages.has(clientmessageid)) {
                 return;
             }
 
