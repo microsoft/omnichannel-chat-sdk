@@ -49,6 +49,7 @@ import AriaTelemetry from "./telemetry/AriaTelemetry";
 import TelemetryEvent from "./telemetry/TelemetryEvent";
 import ScenarioMarker from "./telemetry/ScenarioMarker";
 import { createIC3ClientLogger, IC3ClientLogger } from "./utils/loggers";
+import LiveWorkItemDetails from "./core/LiveWorkItemDetails";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -308,6 +309,26 @@ class OmnichannelChatSDK {
         }
 
         return chatSession;
+    }
+
+    public async getConversationDetails(): Promise<LiveWorkItemDetails> {
+        const {requestId} = this;
+
+        try {
+            const lwiDetails = await this.OCClient.getLWIDetails(requestId);
+            const {State: state, ConversationId: conversationId, AgentAcceptedOn: agentAcceptedOn} = lwiDetails;
+            const liveWorkItemDetails = {
+                state,
+                conversationId,
+                agentAcceptedOn
+            };
+
+            return liveWorkItemDetails;
+        } catch (error) {
+            console.error(`OmnichannelChatSDK/getConversationDetails/error ${error}`);
+        }
+
+        return {} as LiveWorkItemDetails;
     }
 
     /**
