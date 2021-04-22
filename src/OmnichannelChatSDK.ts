@@ -476,8 +476,14 @@ class OmnichannelChatSDK {
         });
     }
 
-    public async uploadFileAttachment(fileInfo: IFileInfo): Promise<IRawMessage> {
-        const fileMetadata: IFileMetadata = await this.conversation!.sendFileData(fileInfo, FileSharingProtocolType.AmsBasedFileSharing);
+    public async uploadFileAttachment(fileInfo: IFileInfo | File): Promise<IRawMessage> {
+        let fileMetadata: IFileMetadata;
+
+        if (platform.isReactNative() || platform.isNode()) {
+            fileMetadata = await this.conversation!.sendFileData(fileInfo as IFileInfo, FileSharingProtocolType.AmsBasedFileSharing);
+        } else {
+            fileMetadata = await this.conversation!.uploadFile(fileInfo as File, FileSharingProtocolType.AmsBasedFileSharing);
+        }
 
         const messageToSend: IRawMessage = {
             content: "",
