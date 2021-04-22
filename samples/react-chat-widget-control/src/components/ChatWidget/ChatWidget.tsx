@@ -1,13 +1,18 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Widget, addResponseMessage, isWidgetOpened, dropMessages, addUserMessage, setQuickButtons } from 'react-chat-widget';
-import fetchOmnichannelConfig from '../../utils/fetchOmnichannelConfig';
 import {OmnichannelChatSDK, isCustomerMessage, isSystemMessage} from '@microsoft/omnichannel-chat-sdk';
+import fetchOmnichannelConfig from '../../utils/fetchOmnichannelConfig';
+import fetchDebugConfig from '../../utils/fetchDebugConfig';
 import 'react-chat-widget/lib/styles.css';
 
 const omnichannelConfig: any = fetchOmnichannelConfig();
+const debugConfig: any = fetchDebugConfig();
 
 console.log(`%c [OmnichannelConfig]`, 'background-color:#001433;color:#fff');
 console.log(omnichannelConfig);
+
+console.log(`%c [debugConfig]`, 'background-color:#001433;color:#fff');
+console.log(debugConfig);
 
 const quickButtons = [
   {label: 'Attachment', value: 'Attachment'},
@@ -25,6 +30,8 @@ function ChatWidget() {
           disable: true
         }
       });
+
+      chatSDK.setDebug(!debugConfig.disable);
 
       await chatSDK.initialize();
       setChatSDK(chatSDK);
