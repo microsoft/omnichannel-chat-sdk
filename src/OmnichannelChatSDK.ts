@@ -92,12 +92,10 @@ class OmnichannelChatSDK {
     }
 
     /* istanbul ignore next */
-    public setDebug(flag: boolean): void | boolean {
+    public setDebug(flag: boolean): void {
         this.debug = flag;
-        return this.debug;
         this.telemetry?.setDebug(flag);
         this.scenarioMarker.setDebug(flag);
-        return this.debug
     }
 
     public async initialize(): Promise<IChatConfig> {
