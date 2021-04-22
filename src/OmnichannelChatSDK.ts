@@ -50,6 +50,7 @@ import TelemetryEvent from "./telemetry/TelemetryEvent";
 import ScenarioMarker from "./telemetry/ScenarioMarker";
 import { createIC3ClientLogger, IC3ClientLogger } from "./utils/loggers";
 import LiveWorkItemDetails from "./core/LiveWorkItemDetails";
+import LiveWorkItemState from "./core/LiveWorkItemState";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -154,6 +155,37 @@ class OmnichannelChatSDK {
         }
 
         this.ic3ClientLogger?.setChatId(this.chatToken.chatId || '');
+
+        const conversationDetails = await this.getConversationDetails();
+        if (Object.keys(conversationDetails).length === 0) {
+            const exceptionDetails = {
+                response: "InvalidConversation"
+            };
+
+            this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string,
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
+            console.error(`Conversation not found`);
+            throw Error(exceptionDetails.response);
+        }
+
+        if (conversationDetails.state === LiveWorkItemState.WrapUp || conversationDetails.state === LiveWorkItemState.Closed) {
+            const exceptionDetails = {
+                response: "ClosedConversation"
+            };
+
+            this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string,
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
+            console.error(`Unable to join conversation that's in '${conversationDetails.state}' state`);
+            throw Error(exceptionDetails.response);
+        }
 
         const sessionInitOptionalParams: ISessionInitOptionalParams = {
             initContext: {} as InitContext
