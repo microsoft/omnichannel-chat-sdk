@@ -1,13 +1,27 @@
-import React, { useEffect, useState } from 'react';
-import { Widget, addResponseMessage, isWidgetOpened, dropMessages, addUserMessage } from 'react-chat-widget';
-import fetchOmnichannelConfig from '../../utils/fetchOmnichannelConfig';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Widget, addResponseMessage, isWidgetOpened, dropMessages, addUserMessage, setQuickButtons } from 'react-chat-widget';
 import {OmnichannelChatSDK, isCustomerMessage, isSystemMessage} from '@microsoft/omnichannel-chat-sdk';
+import fetchOmnichannelConfig from '../../utils/fetchOmnichannelConfig';
+import fetchTelemetryConfig from '../../utils/fetchTelemetryConfig';
+import fetchDebugConfig from '../../utils/fetchDebugConfig';
 import 'react-chat-widget/lib/styles.css';
 
 const omnichannelConfig: any = fetchOmnichannelConfig();
+const telemetryConfig: any = fetchTelemetryConfig();
+const debugConfig: any = fetchDebugConfig();
 
 console.log(`%c [OmnichannelConfig]`, 'background-color:#001433;color:#fff');
 console.log(omnichannelConfig);
+
+console.log(`%c [telemetryConfig]`, 'background-color:#001433;color:#fff');
+console.log(telemetryConfig);
+
+console.log(`%c [debugConfig]`, 'background-color:#001433;color:#fff');
+console.log(debugConfig);
+
+const quickButtons = [
+  {label: 'Attachment', value: 'Attachment'},
+]
 
 function ChatWidget() {
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
@@ -16,7 +30,12 @@ function ChatWidget() {
 
   useEffect(() => {
     const init = async () => {
-      const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+      const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+        ...telemetryConfig
+      });
+
+      chatSDK.setDebug(!debugConfig.disable);
+
       await chatSDK.initialize();
       setChatSDK(chatSDK);
 
@@ -25,6 +44,8 @@ function ChatWidget() {
         console.log("[liveChatContext]");
         console.log(liveChatContext);
       }
+
+      setQuickButtons(quickButtons);
     }
 
     init();
@@ -38,9 +59,11 @@ function ChatWidget() {
     });
   };
 
-  const onWidgetClick = async (event: any) => {
+  const onWidgetClick = useCallback(async (event: any) => {
+    console.log('[onWidgetClick]');
     const open = isWidgetOpened();
     // console.log(`[isWidgetOpened] ${open}`);
+    // console.log(`[hasChatStarted] ${hasChatStarted}`);
     setOpen(open);
 
     if (!hasChatStarted && open) {
@@ -59,12 +82,37 @@ function ChatWidget() {
 
       // Rehydrate messages
       const messages: any = await chatSDK?.getMessages();
+      console.log(`[Rehydrate] ${messages.length} message(s)`);
       for (const message of messages.reverse()) {
         if (isSystemMessage(message)) {
           addResponseMessage(message.content);
         } else if (isCustomerMessage(message)) {
+          // Renders attachment
+          if (message.fileMetadata) {
+            console.log(`[Rehydrate][Attachment][User] ${message.fileMetadata.name}`);
+            const blob = await chatSDK?.downloadFileAttachment(message.fileMetadata);
+            const fileReader = new FileReader();
+            fileReader.readAsDataURL(blob as Blob);
+            fileReader.onloadend = () => {
+              addUserMessage(`![attachment](${fileReader.result})`);
+            }
+            continue;
+          }
+
           addUserMessage(message.content);
         } else {
+          // Renders attachment
+          if (message.fileMetadata) {
+            console.log(`[Rehydrate][Attachment][Agent] ${message.fileMetadata.name}`);
+            const blob = await chatSDK?.downloadFileAttachment(message.fileMetadata);
+            const fileReader = new FileReader();
+            fileReader.readAsDataURL(blob as Blob);
+            fileReader.onloadend = () => {
+              addResponseMessage(`![attachment](${fileReader.result})`);
+            }
+            continue;
+          }
+
           addResponseMessage(message.content);
         }
       }
@@ -77,7 +125,17 @@ function ChatWidget() {
       const liveChatContext = await chatSDK?.getCurrentLiveChatContext();
       localStorage.setItem('liveChatContext', JSON.stringify(liveChatContext));
 
-      chatSDK?.onNewMessage((message: any) => {
+      chatSDK?.onNewMessage(async (message: any) => {
+        if (message.fileMetadata) {
+          console.log(`[onNewMessage][Attachment] ${message.fileMetadata.name}`);
+          const blob = await chatSDK?.downloadFileAttachment(message.fileMetadata);
+          const fileReader = new FileReader();
+          fileReader.readAsDataURL(blob as Blob);
+          fileReader.onloadend = () => {
+            addResponseMessage(`![attachment](${fileReader.result})`);
+          }
+          return;
+        }
         addResponseMessage(message.content);
       });
 
@@ -93,6 +151,27 @@ function ChatWidget() {
       dropMessages()
       setHasChatStarted(false);
     }
+  }, [hasChatStarted, chatSDK, open]);
+
+  const handleQuickButtonClicked = (value: string) => {
+    console.log('[handleQuickButtonClicked]');
+    if (value === 'Attachment') {
+      const fileSelector = document.createElement('input');
+      fileSelector.setAttribute('type', 'file');
+      fileSelector.click();
+      fileSelector.onchange = async (event: any) => {
+        const file = event.target.files[0];
+        console.log(file);
+        console.log('[UploadFileAttachment]');
+        chatSDK?.uploadFileAttachment(file);
+
+        const fileReader = new FileReader();
+        fileReader.readAsDataURL(file);
+        fileReader.onloadend = () => {
+          addUserMessage(`![attachment](${fileReader.result})`);
+        }
+      }
+    }
   }
 
   return (
@@ -103,6 +182,7 @@ function ChatWidget() {
           title='Live Chat'
           subtitle='via omnichannel-sdk & react-chat-widget control'
           handleNewUserMessage={handleNewUserMessage}
+          handleQuickButtonClicked={handleQuickButtonClicked}
         />
       </div>
     </div>
