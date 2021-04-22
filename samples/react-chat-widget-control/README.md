@@ -9,9 +9,9 @@ The sample app includes the following scenarios:
 - [x] Start Chat
 - [x] End Chat
 - [x] Incoming messages
-- [ ] Incoming image attachments
+- [x] Incoming image attachments
 - [x] Outgoing messages
-- [ ] Outgoing file attachments
+- [x] Outgoing file attachments
 - [ ] Receive typing
 - [ ] Send typing
 - [ ] Receive agent end session event
