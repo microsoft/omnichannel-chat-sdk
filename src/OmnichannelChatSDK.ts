@@ -522,7 +522,20 @@ class OmnichannelChatSDK {
     }
 
     public async downloadFileAttachment(fileMetadata: IFileMetadata): Promise<Blob> {
-        return this.conversation!.downloadFile(fileMetadata);
+        this.scenarioMarker.startScenario(TelemetryEvent.DownloadFileAttachment, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string
+        })
+
+        try { 
+            const downloadedFile = this.conversation!.downloadFile(fileMetadata);
+            this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment);
+            return downloadedFile;
+        }
+        catch(e) {
+            this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment);
+            return this.conversation!.downloadFile(fileMetadata);
+        }
     }
 
     public async emailLiveChatTranscript(body: IChatTranscriptBody): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
