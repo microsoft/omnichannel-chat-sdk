@@ -9,6 +9,13 @@ import ChatAdapterProtocols from "../src/core/ChatAdapterProtocols";
 import AriaTelemetry from "../src/telemetry/AriaTelemetry";
 
 describe('Omnichannel Chat SDK', () => {
+    // beforeEach(() => {
+    //     (AriaTelemetry as any)._disable = false;
+    //     (AriaTelemetry as any)._logger = {
+    //         logEvent: jest.fn()
+    //     };
+    // });
+
     describe('Configurations', () => {
         it('ChatSDK should require omnichannelConfig as parameter', () => {
             try {
@@ -1177,6 +1184,39 @@ describe('Omnichannel Chat SDK', () => {
 
             expect(IC3SDKProvider.getSDK.mock.calls[0][0].hostType).toBe(HostType.Page);
             expect(platform.isReactNative).toHaveBeenCalledTimes(1);
+        });
+
+        it('ChatSDK.onNewMessage() with rehydrate flag should call ChatSDK.getMessages()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient.sessionInit = jest.fn();
+            chatSDK.IC3Client.initialize = jest.fn();
+            chatSDK.IC3Client.joinConversation = jest.fn();
+
+            const messages = [
+                {clientmessageid: 2},
+                {clientmessageid: 1},
+                {clientmessageid: 1},
+                {clientmessageid: 0}
+            ]
+
+            await chatSDK.startChat();
+
+            chatSDK.conversation = {
+                registerOnNewMessage: jest.fn(),
+                getMessages: jest.fn()
+            };
+
+            jest.spyOn(chatSDK, 'getMessages').mockResolvedValue(messages);
+
+            await chatSDK.onNewMessage(() => {}, {rehydrate: true});
+
+            expect(chatSDK.getMessages).toHaveBeenCalledTimes(1);
+            expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(1);
         });
 
         it('Ability to add multiple "onNewMessage" event handler', async () => {
