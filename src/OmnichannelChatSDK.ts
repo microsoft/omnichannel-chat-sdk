@@ -312,19 +312,35 @@ class OmnichannelChatSDK {
     }
 
     public async getConversationDetails(): Promise<LiveWorkItemDetails> {
-        const {requestId} = this;
+        this.scenarioMarker.startScenario(TelemetryEvent.GetConversationDetails, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken?.chatId as string || '',
+        });
 
         try {
-            const lwiDetails = await this.OCClient.getLWIDetails(requestId);
+            const lwiDetails = await this.OCClient.getLWIDetails(this.requestId);
             const {State: state, ConversationId: conversationId, AgentAcceptedOn: agentAcceptedOn} = lwiDetails;
-            const liveWorkItemDetails = {
+            const liveWorkItemDetails: LiveWorkItemDetails = {
                 state,
-                conversationId,
-                agentAcceptedOn
+                conversationId
             };
+
+            if (agentAcceptedOn) {
+                liveWorkItemDetails.agentAcceptedOn = agentAcceptedOn;
+            }
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.GetConversationDetails, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string || '',
+            });
 
             return liveWorkItemDetails;
         } catch (error) {
+            this.scenarioMarker.failScenario(TelemetryEvent.GetConversationDetails, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string || '',
+            });
+
             console.error(`OmnichannelChatSDK/getConversationDetails/error ${error}`);
         }
 
