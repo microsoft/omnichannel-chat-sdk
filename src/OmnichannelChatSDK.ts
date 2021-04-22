@@ -556,13 +556,15 @@ class OmnichannelChatSDK {
                 CustomerLocale: body.locale
             };
 
-            this.scenarioMarker.completeScenario(TelemetryEvent.EmailLiveChatTranscript);
-
-            return this.OCClient.emailTranscript(
+            const emailResponse = this.OCClient.emailTranscript(
                 this.requestId,
                 this.chatToken.token,
                 emailRequestBody,
                 emailTranscriptOptionalParams);
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.EmailLiveChatTranscript);
+
+            return emailResponse;
         }
 
         catch(e) {
@@ -575,21 +577,23 @@ class OmnichannelChatSDK {
 
         this.scenarioMarker.startScenario(TelemetryEvent.GetLiveChatTranscript, {
             RequestId: this.requestId,
-            chatId: this.chatToken.chatId as string
+            ChatId: this.chatToken.chatId as string
         });
 
         try {
             if (this.authenticatedUserToken) {
                 getChatTranscriptOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
             }
-
-            this.scenarioMarker.completeScenario(TelemetryEvent.EmailLiveChatTranscript);
             
-            return this.OCClient.getChatTranscripts(
+            const transcriptResponse = this.OCClient.getChatTranscripts(
                 this.requestId,
                 this.chatToken.chatId,
                 this.chatToken.token,
-                getChatTranscriptOptionalParams);        
+                getChatTranscriptOptionalParams);
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.GetLiveChatTranscript);
+            
+            return transcriptResponse;      
         }
         catch(e) {
             this.scenarioMarker.failScenario(TelemetryEvent.GetLiveChatTranscript);
@@ -662,7 +666,7 @@ class OmnichannelChatSDK {
 
                 this.scenarioMarker.startScenario(TelemetryEvent.GetVoiceVideoCalling, {            
                     RequestId: this.requestId,
-                    chatId: this.chatToken.chatId as string
+                    ChatId: this.chatToken.chatId as string
                 });
 
                 await loadScript(spoolSDKCDNUrl, () => {
@@ -713,10 +717,7 @@ class OmnichannelChatSDK {
     private async getIC3Client() {
         if (platform.isNode() || platform.isReactNative()) {
             this.debug && console.debug('IC3Core');
-            this.scenarioMarker.startScenario(TelemetryEvent.GetIC3Client, {
-                RequestId: this.requestId,
-                chatId: this.chatToken.chatId as string
-            });
+            this.scenarioMarker.startScenario(TelemetryEvent.GetIC3Client);
 
             // Use FramelessBridge from IC3Core
             this.IC3SDKProvider = IC3SDKProvider;
