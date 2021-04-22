@@ -682,6 +682,28 @@ describe('Omnichannel Chat SDK', () => {
             expect(Object.keys(chatContext).includes('requestId')).toBe(false);
         });
 
+        it('ChatSDK.getConversationDetails() should call OCClient.getLWIDetails()', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.IC3Client = {
+                initialize: jest.fn(),
+                joinConversation: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue({
+                State: 'state',
+                ConversationId: 'id',
+                AgentAcceptedOn: 'agentAcceptedOn'
+            });
+
+            await chatSDK.getConversationDetails();
+
+            expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
+        });
+
         it('ChatSDK.getMessages should call conversation.getMessages()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
