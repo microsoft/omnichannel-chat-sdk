@@ -71,7 +71,6 @@ const { Provider } = Store;
 
 const StateProvider = (props: { children: React.ReactNode; }) => {
   const [state, dispatch] = useReducer(Reducer, initialState);
-  console.log(state);
   return <Provider value={{state, dispatch} as any}>{props.children}</Provider>;
 }
 
