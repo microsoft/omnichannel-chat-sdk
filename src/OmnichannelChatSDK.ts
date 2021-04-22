@@ -75,7 +75,10 @@ class OmnichannelChatSDK {
     constructor(omnichannelConfig: IOmnichannelConfig, chatSDKConfig: IChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
         this.omnichannelConfig = omnichannelConfig;
-        this.chatSDKConfig = chatSDKConfig;
+        this.chatSDKConfig = {
+            ...defaultChatSDKConfig,
+            ...chatSDKConfig // overrides
+        };
         this.isInitialized = false;
         this.requestId = uuidv4();
         this.chatToken = {};
@@ -499,8 +502,14 @@ class OmnichannelChatSDK {
         });
     }
 
-    public async uploadFileAttachment(fileInfo: IFileInfo): Promise<IRawMessage> {
-        const fileMetadata: IFileMetadata = await this.conversation!.sendFileData(fileInfo, FileSharingProtocolType.AmsBasedFileSharing);
+    public async uploadFileAttachment(fileInfo: IFileInfo | File): Promise<IRawMessage> {
+        let fileMetadata: IFileMetadata;
+
+        if (platform.isReactNative() || platform.isNode()) {
+            fileMetadata = await this.conversation!.sendFileData(fileInfo as IFileInfo, FileSharingProtocolType.AmsBasedFileSharing);
+        } else {
+            fileMetadata = await this.conversation!.uploadFile(fileInfo as File, FileSharingProtocolType.AmsBasedFileSharing);
+        }
 
         const messageToSend: IRawMessage = {
             content: "",
