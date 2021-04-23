@@ -48,7 +48,7 @@ import createTelemetry from "./utils/createTelemetry";
 import AriaTelemetry from "./telemetry/AriaTelemetry";
 import TelemetryEvent from "./telemetry/TelemetryEvent";
 import ScenarioMarker from "./telemetry/ScenarioMarker";
-import { createIC3ClientLogger, IC3ClientLogger } from "./utils/loggers";
+import { createIC3ClientLogger, createOCSDKLogger, IC3ClientLogger, OCSDKLogger } from "./utils/loggers";
 import LiveWorkItemDetails from "./core/LiveWorkItemDetails";
 import LiveWorkItemState from "./core/LiveWorkItemState";
 
@@ -73,6 +73,7 @@ class OmnichannelChatSDK {
     private telemetry: typeof AriaTelemetry | null = null;
     private scenarioMarker: ScenarioMarker;
     private ic3ClientLogger: IC3ClientLogger | null = null;
+    private ocSdkLogger: OCSDKLogger | null = null;
 
     constructor(omnichannelConfig: IOmnichannelConfig, chatSDKConfig: IChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
@@ -91,9 +92,11 @@ class OmnichannelChatSDK {
         this.telemetry = createTelemetry(this.debug);
         this.scenarioMarker = new ScenarioMarker(this.omnichannelConfig);
         this.ic3ClientLogger = createIC3ClientLogger(this.omnichannelConfig);
+        this.ocSdkLogger = createOCSDKLogger(this.omnichannelConfig);
 
         this.scenarioMarker.useTelemetry(this.telemetry);
         this.ic3ClientLogger.useTelemetry(this.telemetry);
+        this.ocSdkLogger.useTelemetry(this.telemetry);
 
         validateOmnichannelConfig(omnichannelConfig);
         validateSDKConfig(chatSDKConfig);
@@ -101,6 +104,7 @@ class OmnichannelChatSDK {
         this.chatSDKConfig.telemetry?.disable && this.telemetry?.disable();
 
         this.ic3ClientLogger?.setRequestId(this.requestId);
+        this.ocSdkLogger?.setRequestId(this.requestId);
     }
 
     /* istanbul ignore next */
@@ -109,6 +113,7 @@ class OmnichannelChatSDK {
         this.telemetry?.setDebug(flag);
         this.scenarioMarker.setDebug(flag);
         this.ic3ClientLogger?.setDebug(flag);
+        this.ocSdkLogger?.setDebug(flag);
     }
 
     public async initialize(): Promise<IChatConfig> {
@@ -121,7 +126,7 @@ class OmnichannelChatSDK {
 
         try {
             this.OCSDKProvider = OCSDKProvider;
-            const OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, {} as ISDKConfiguration, undefined as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+            const OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, {} as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
             const IC3Client = await this.getIC3Client();
 
             // Assign & Update flag only if all dependencies have been initialized succesfully
@@ -187,6 +192,7 @@ class OmnichannelChatSDK {
         }
 
         this.ic3ClientLogger?.setChatId(this.chatToken.chatId || '');
+        this.ocSdkLogger?.setChatId(this.chatToken.chatId || '');
 
         const sessionInitOptionalParams: ISessionInitOptionalParams = {
             initContext: {} as InitContext
@@ -312,6 +318,9 @@ class OmnichannelChatSDK {
 
             this.ic3ClientLogger?.setRequestId(this.requestId);
             this.ic3ClientLogger?.setChatId('');
+
+            this.ocSdkLogger?.setRequestId(this.requestId);
+            this.ocSdkLogger?.setChatId('');
         } catch (error) {
             const exceptionDetails = {
                 response: "OCClientSessionCloseFailed"
