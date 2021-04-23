@@ -440,6 +440,76 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.IC3Client.joinConversation).toHaveBeenCalledTimes(1);
         });
 
+        it('ChatSDK.startChat() with invalid liveChatContext should throw an error', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue(Promise.reject());
+
+            const liveChatContext = {
+                chatToken: {
+                    chatId: '',
+                    token: '',
+                    regionGtms: {}
+                },
+                requestId: 'requestId'
+            }
+
+            const optionaParams = {
+                liveChatContext
+            }
+
+            try {
+                await chatSDK.startChat(optionaParams);
+            } catch (error) {
+                expect(error.message).toEqual('InvalidConversation');
+            }
+        });
+
+
+        it('ChatSDK.startChat() with liveChatContext of a closed conversation should throw an error', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue(Promise.resolve({
+                State: 'Closed',
+                ConversationId: 'id'
+            }));
+
+            const liveChatContext = {
+                chatToken: {
+                    chatId: '',
+                    token: '',
+                    regionGtms: {}
+                },
+                requestId: 'requestId'
+            }
+
+            const optionaParams = {
+                liveChatContext
+            }
+
+            try {
+                await chatSDK.startChat(optionaParams);
+            } catch (error) {
+                expect(error.message).toEqual('ClosedConversation');
+            }
+        });
+
         it('ChatSDK.getLiveChatConfig() should return the cached value by default', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
