@@ -271,7 +271,6 @@ class OmnichannelChatSDK {
 
         try {
             this.conversation = await this.IC3Client.joinConversation(this.chatToken.chatId);
-
             this.scenarioMarker.completeScenario(TelemetryEvent.StartChat, {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string
@@ -544,13 +543,30 @@ class OmnichannelChatSDK {
 
     public async sendTypingEvent(): Promise<void> {
         const typingPayload = `{isTyping: 0}`;
+
+        this.scenarioMarker.startScenario(TelemetryEvent.SendTypingEvent, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string
+        });
+
         try {
             await this.conversation!.indicateTypingStatus(0);
             const members: IPerson[] = await this.conversation!.getMembers();
             const botMembers = members.filter((member: IPerson) => member.type === PersonType.Bot);
             await this.conversation!.sendMessageToBot(botMembers[0].id, {payload: typingPayload});
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.SendTypingEvent, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
+
         } catch (error) {
             console.error("OmnichannelChatSDK/sendTypingEvent/error");
+
+            this.scenarioMarker.failScenario(TelemetryEvent.SendTypingEvent, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
             return error;
         }
     }
@@ -571,17 +587,39 @@ class OmnichannelChatSDK {
     }
 
     public async onAgentEndSession(onAgentEndSessionCallback: (message: IRawThread) => void): Promise<void> {
-        this.conversation?.registerOnThreadUpdate((message: IRawThread) => {
-            const {members} = message;
-
-            // Agent ending conversation would have 1 member left in the chat thread
-            if (members.length === 1) {
-                onAgentEndSessionCallback(message);
-            }
+        this.scenarioMarker.startScenario(TelemetryEvent.OnAgentEndSession, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string
         });
+
+        try {
+            this.conversation?.registerOnThreadUpdate((message: IRawThread) => {
+                const {members} = message;
+
+                // Agent ending conversation would have 1 member left in the chat thread
+                if (members.length === 1) {
+                    onAgentEndSessionCallback(message);
+                }
+            });
+            this.scenarioMarker.completeScenario(TelemetryEvent.OnAgentEndSession, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
+
+        } catch (error) {
+            this.scenarioMarker.failScenario(TelemetryEvent.OnAgentEndSession, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
+        }   
     }
 
     public async uploadFileAttachment(fileInfo: IFileInfo | File): Promise<IRawMessage> {
+        this.scenarioMarker.startScenario(TelemetryEvent.UploadFileAttachment, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string
+        });
+
         let fileMetadata: IFileMetadata;
 
         if (platform.isReactNative() || platform.isNode()) {
@@ -607,46 +645,117 @@ class OmnichannelChatSDK {
 
         try {
             await this.conversation!.sendFileMessage(fileMetadata, messageToSend);
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.UploadFileAttachment, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
+
             return messageToSend;
         } catch (error) {
             console.error(`OmnichannelChatSDK/uploadFileAttachment/error: ${error}`);
+
+            this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
+
             return error;
         }
     }
 
     public async downloadFileAttachment(fileMetadata: IFileMetadata): Promise<Blob> {
-        return this.conversation!.downloadFile(fileMetadata);
+        this.scenarioMarker.startScenario(TelemetryEvent.DownloadFileAttachment, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string
+        })
+
+        try { 
+            const downloadedFile = await this.conversation!.downloadFile(fileMetadata);
+            this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
+            return downloadedFile;
+        } catch (error) {
+            console.error(`OmnichannelChatSDK/downloadFileAttachment/error: ${error}`);
+            this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
+            throw new Error('DownloadFileAttachmentFailed');
+        }
     }
 
     public async emailLiveChatTranscript(body: IChatTranscriptBody): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
         const emailTranscriptOptionalParams: IEmailTranscriptOptionalParams = {};
-        if (this.authenticatedUserToken) {
-            emailTranscriptOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
+
+        this.scenarioMarker.startScenario(TelemetryEvent.EmailLiveChatTranscript, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string
+        });
+
+        try {
+
+            if (this.authenticatedUserToken) {
+                emailTranscriptOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
+            }
+            const emailRequestBody = {
+                ChatId: this.chatToken.chatId,
+                EmailAddress: body.emailAddress,
+                DefaultAttachmentMessage: body.attachmentMessage,
+                CustomerLocale: body.locale
+            };
+
+            const emailResponse = this.OCClient.emailTranscript(
+                this.requestId,
+                this.chatToken.token,
+                emailRequestBody,
+                emailTranscriptOptionalParams);
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.EmailLiveChatTranscript);
+
+            return emailResponse;
         }
-        const emailRequestBody = {
-            ChatId: this.chatToken.chatId,
-            EmailAddress: body.emailAddress,
-            DefaultAttachmentMessage: body.attachmentMessage,
-            CustomerLocale: body.locale
-        };
-        return this.OCClient.emailTranscript(
-            this.requestId,
-            this.chatToken.token,
-            emailRequestBody,
-            emailTranscriptOptionalParams);
+
+        catch(e) {
+            this.scenarioMarker.failScenario(TelemetryEvent.EmailLiveChatTranscript);
+        }
     }
 
     public async getLiveChatTranscript(): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
         const getChatTranscriptOptionalParams: IGetChatTranscriptsOptionalParams = {};
-        if (this.authenticatedUserToken) {
-            getChatTranscriptOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
+
+        this.scenarioMarker.startScenario(TelemetryEvent.GetLiveChatTranscript, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string
+        });
+
+        try {
+            if (this.authenticatedUserToken) {
+                getChatTranscriptOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
+            }
+            
+            const transcriptResponse = this.OCClient.getChatTranscripts(
+                this.requestId,
+                this.chatToken.chatId,
+                this.chatToken.token,
+                getChatTranscriptOptionalParams);
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.GetLiveChatTranscript, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
+            
+            return transcriptResponse;      
         }
-        return this.OCClient.getChatTranscripts(
-            this.requestId,
-            this.chatToken.chatId,
-            this.chatToken.token,
-            getChatTranscriptOptionalParams);
-    }
+        catch (error) {
+            this.scenarioMarker.failScenario(TelemetryEvent.GetLiveChatTranscript, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
+        }
+    } 
 
     public async createChatAdapter(protocol: string = ChatAdapterProtocols.IC3): Promise<unknown> {
         if (platform.isNode() || platform.isReactNative()) {

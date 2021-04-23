@@ -9,7 +9,7 @@ enum TelemetryEvent {
     GetConversationDetails = "GetConversationDetails",
     SendTypingEvent = "SendTypingEvent",
     OnAgentEndSession = "OnAgentEndSession",
-    UploadFileAttachment = "UpdateFileAttachment",
+    UploadFileAttachment = "UploadFileAttachment",
     DownloadFileAttachment = "DownloadFileAttachment",
     EmailLiveChatTranscript = "EmailLiveChatTranscript",
     GetLiveChatTranscript = "GetLiveChatTranscript",
@@ -22,7 +22,7 @@ enum TelemetryEvent {
     AcceptVideoCall = "AcceptVideoCall",
     RejectCall = "RejectCall",
     StopCall = "StopCall",
-    onCallDisconnected = "onCallDisconnected"
+    OnCallDisconnected = "OnCallDisconnected"
 }
 
 export const startEvent = (event: TelemetryEvent): string => {
