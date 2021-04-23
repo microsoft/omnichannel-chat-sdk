@@ -601,10 +601,16 @@ class OmnichannelChatSDK {
                     onAgentEndSessionCallback(message);
                 }
             });
-            this.scenarioMarker.completeScenario(TelemetryEvent.OnAgentEndSession);
-        }
-        catch(e) {
-            this.scenarioMarker.failScenario(TelemetryEvent.OnAgentEndSession);
+            this.scenarioMarker.completeScenario(TelemetryEvent.OnAgentEndSession, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
+
+        } catch (error) {
+            this.scenarioMarker.failScenario(TelemetryEvent.OnAgentEndSession, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
         }   
     }
 
@@ -743,7 +749,7 @@ class OmnichannelChatSDK {
             
             return transcriptResponse;      
         }
-        catch(e) {
+        catch (error) {
             this.scenarioMarker.failScenario(TelemetryEvent.GetLiveChatTranscript, {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string
