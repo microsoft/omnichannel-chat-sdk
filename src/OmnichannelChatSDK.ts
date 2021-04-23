@@ -821,10 +821,7 @@ class OmnichannelChatSDK {
                     SpoolSDK: spoolSDKCDNUrl
                 });
 
-                this.scenarioMarker.startScenario(TelemetryEvent.GetVoiceVideoCalling, {            
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
+                this.scenarioMarker.startScenario(TelemetryEvent.GetVoiceVideoCalling);
 
                 await loadScript(spoolSDKCDNUrl, () => {
                     /* istanbul ignore next */
