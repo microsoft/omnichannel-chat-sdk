@@ -639,11 +639,21 @@ class OmnichannelChatSDK {
 
         try {
             await this.conversation!.sendFileMessage(fileMetadata, messageToSend);
-            this.scenarioMarker.completeScenario(TelemetryEvent.UploadFileAttachment);
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.UploadFileAttachment, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
+
             return messageToSend;
         } catch (error) {
             console.error(`OmnichannelChatSDK/uploadFileAttachment/error: ${error}`);
-            this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment);
+
+            this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
+
             return error;
         }
     }
