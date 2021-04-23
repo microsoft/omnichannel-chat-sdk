@@ -35,7 +35,9 @@ export class IC3ClientLogger {
     }
 
     public logClientSdkTelemetryEvent(logLevel: LogLevel, event: IIC3SDKLogData): void {
+        /* istanbul ignore next */
         this.debug && console.log(`[IC3ClientLogger][logClientSdkTelemetryEvent][${logLevel}]`);
+        /* istanbul ignore next */
         this.debug && console.log(event);
 
         const baseProperties: AWTEventData["properties"] = {
@@ -110,7 +112,9 @@ export class OCSDKLogger {
     }
 
     public logClientSdkTelemetryEvent(logLevel: LogLevel, event: IOCSDKLogData): void {
+        /* istanbul ignore next */
         this.debug && console.log(`[OCSDKLogger][logClientSdkTelemetryEvent][${logLevel}]`);
+        /* istanbul ignore next */
         this.debug && console.log(event);
 
         const baseProperties: AWTEventData["properties"] = {
