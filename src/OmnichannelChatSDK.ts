@@ -683,7 +683,7 @@ class OmnichannelChatSDK {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string
             });
-            return this.conversation!.downloadFile(fileMetadata);
+            throw new Error('DownloadFileAttachmentFailed');
         }
     }
 
