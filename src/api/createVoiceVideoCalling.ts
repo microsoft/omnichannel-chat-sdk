@@ -356,7 +356,7 @@ export class VoiceVideoCallingProxy {
                 const exceptionDetails = {
                     response: 'OnCallDisconnectedFailed'
                 }
-                this.scenarioMarker?.failScenario(TelemetryEvent.OnCallDisconnected,{
+                this.scenarioMarker?.failScenario(TelemetryEvent.OnCallDisconnected, {
                     CallId: this.callId || '',
                     ExceptionDetails: JSON.stringify(exceptionDetails)
                 });
