@@ -666,11 +666,17 @@ class OmnichannelChatSDK {
 
         try { 
             const downloadedFile = this.conversation!.downloadFile(fileMetadata);
-            this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment);
+            this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
             return downloadedFile;
-        }
-        catch(e) {
-            this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment);
+        } catch (error) {
+            console.error(`OmnichannelChatSDK/downloadFileAttachment/error: ${error}`);
+            this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
             return this.conversation!.downloadFile(fileMetadata);
         }
     }
