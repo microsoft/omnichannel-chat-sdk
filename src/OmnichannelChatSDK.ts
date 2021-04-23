@@ -665,7 +665,7 @@ class OmnichannelChatSDK {
         })
 
         try { 
-            const downloadedFile = this.conversation!.downloadFile(fileMetadata);
+            const downloadedFile = await this.conversation!.downloadFile(fileMetadata);
             this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment, {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string
