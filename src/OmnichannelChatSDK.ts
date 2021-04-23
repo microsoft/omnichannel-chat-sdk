@@ -736,12 +736,18 @@ class OmnichannelChatSDK {
                 this.chatToken.token,
                 getChatTranscriptOptionalParams);
 
-            this.scenarioMarker.completeScenario(TelemetryEvent.GetLiveChatTranscript);
+            this.scenarioMarker.completeScenario(TelemetryEvent.GetLiveChatTranscript, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
             
             return transcriptResponse;      
         }
         catch(e) {
-            this.scenarioMarker.failScenario(TelemetryEvent.GetLiveChatTranscript);
+            this.scenarioMarker.failScenario(TelemetryEvent.GetLiveChatTranscript, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
         }
     } 
 
