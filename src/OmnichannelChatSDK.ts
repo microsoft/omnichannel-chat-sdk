@@ -555,12 +555,18 @@ class OmnichannelChatSDK {
             const botMembers = members.filter((member: IPerson) => member.type === PersonType.Bot);
             await this.conversation!.sendMessageToBot(botMembers[0].id, {payload: typingPayload});
 
-            this.scenarioMarker.completeScenario(TelemetryEvent.SendTypingEvent);
+            this.scenarioMarker.completeScenario(TelemetryEvent.SendTypingEvent, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
 
         } catch (error) {
             console.error("OmnichannelChatSDK/sendTypingEvent/error");
 
-            this.scenarioMarker.failScenario(TelemetryEvent.SendTypingEvent);
+            this.scenarioMarker.failScenario(TelemetryEvent.SendTypingEvent, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
             return error;
         }
     }
