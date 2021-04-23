@@ -411,6 +411,10 @@ describe('Omnichannel Chat SDK', () => {
                 RegionGtms: '{}'
             }));
 
+            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue(Promise.resolve({
+                State: 'Open',
+                ConversationId: 'id'
+            }));
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve());
