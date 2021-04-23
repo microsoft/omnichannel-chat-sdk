@@ -48,6 +48,19 @@ interface IC3ClientContract {
     IC3ClientVersion: string;
 }
 
+interface OCSDKContract {
+    OrgId: string;
+    OrgUrl: string;
+    WidgetId: string;
+    RequestId: string;
+    ChatId: string;
+    TransactionId: string;
+    Event?: string;
+    ExceptionDetails?: string;
+    ElapsedTimeInMilliseconds?: string;
+    OCSDKVersion: string;
+}
+
 class AriaTelemetry {
     private static _logger: AWTLogger;
     private static _debug = false;
@@ -96,6 +109,18 @@ class AriaTelemetry {
             }
         }
 
+        if (scenarioType == ScenarioType.OCSDK) {
+            event = {
+                name: ScenarioType.OCSDK,
+                properties: {
+                    ...AriaTelemetry.populateOCSDKBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.INFO
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
         /* istanbul ignore next */
         this._debug && console.log(`[AriaTelemetry][info] ${scenarioType}`);
         /* istanbul ignore next */
@@ -123,6 +148,18 @@ class AriaTelemetry {
                 name: ScenarioType.IC3CLIENT,
                 properties: {
                     ...AriaTelemetry.populateIC3ClientBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.DEBUG
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
+        if (scenarioType == ScenarioType.OCSDK) {
+            event = {
+                name: ScenarioType.OCSDK,
+                properties: {
+                    ...AriaTelemetry.populateOCSDKBaseProperties(),
                     ...properties,
                     LogLevel: LogLevel.DEBUG
                 },
@@ -164,6 +201,18 @@ class AriaTelemetry {
             }
         }
 
+        if (scenarioType == ScenarioType.OCSDK) {
+            event = {
+                name: ScenarioType.OCSDK,
+                properties: {
+                    ...AriaTelemetry.populateOCSDKBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.WARN
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
         /* istanbul ignore next */
         this._debug && console.log(`[AriaTelemetry][warn] ${scenarioType}`);
         /* istanbul ignore next */
@@ -198,6 +247,18 @@ class AriaTelemetry {
             }
         }
 
+        if (scenarioType == ScenarioType.OCSDK) {
+            event = {
+                name: ScenarioType.OCSDK,
+                properties: {
+                    ...AriaTelemetry.populateOCSDKBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.ERROR
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
         /* istanbul ignore next */
         this._debug && console.log(`[AriaTelemetry][error] ${scenarioType}`);
         /* istanbul ignore next */
@@ -225,6 +286,18 @@ class AriaTelemetry {
                 name: ScenarioType.IC3CLIENT,
                 properties: {
                     ...AriaTelemetry.populateIC3ClientBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.LOG
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
+        if (scenarioType == ScenarioType.OCSDK) {
+            event = {
+                name: ScenarioType.OCSDK,
+                properties: {
+                    ...AriaTelemetry.populateOCSDKBaseProperties(),
                     ...properties,
                     LogLevel: LogLevel.LOG
                 },
@@ -313,6 +386,21 @@ class AriaTelemetry {
             ExceptionDetails: '',
             ElapsedTimeInMilliseconds: '',
             IC3ClientVersion: ic3ClientVersion
+        }
+    }
+
+    private static populateOCSDKBaseProperties(): OCSDKContract {
+        return {
+            OrgId: '',
+            OrgUrl: '',
+            WidgetId: '',
+            RequestId: '',
+            ChatId: '',
+            TransactionId: '',
+            Event: '',
+            ExceptionDetails: '',
+            ElapsedTimeInMilliseconds: '',
+            OCSDKVersion: require('@microsoft/ocsdk/package.json').version // eslint-disable-line @typescript-eslint/no-var-requires
         }
     }
 }
