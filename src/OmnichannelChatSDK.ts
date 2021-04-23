@@ -49,6 +49,8 @@ import AriaTelemetry from "./telemetry/AriaTelemetry";
 import TelemetryEvent from "./telemetry/TelemetryEvent";
 import ScenarioMarker from "./telemetry/ScenarioMarker";
 import { createIC3ClientLogger, IC3ClientLogger } from "./utils/loggers";
+import LiveWorkItemDetails from "./core/LiveWorkItemDetails";
+import LiveWorkItemState from "./core/LiveWorkItemState";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -146,6 +148,38 @@ class OmnichannelChatSDK {
         if (optionalParams.liveChatContext) {
             this.chatToken = optionalParams.liveChatContext.chatToken || {};
             this.requestId = optionalParams.liveChatContext.requestId || uuidv4();
+
+            // Validate conversation
+            const conversationDetails = await this.getConversationDetails();
+            if (Object.keys(conversationDetails).length === 0) {
+                const exceptionDetails = {
+                    response: "InvalidConversation"
+                };
+
+                this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string,
+                    ExceptionDetails: JSON.stringify(exceptionDetails)
+                });
+
+                console.error(`Conversation not found`);
+                throw Error(exceptionDetails.response);
+            }
+
+            if (conversationDetails.state === LiveWorkItemState.WrapUp || conversationDetails.state === LiveWorkItemState.Closed) {
+                const exceptionDetails = {
+                    response: "ClosedConversation"
+                };
+
+                this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string,
+                    ExceptionDetails: JSON.stringify(exceptionDetails)
+                });
+
+                console.error(`Unable to join conversation that's in '${conversationDetails.state}' state`);
+                throw Error(exceptionDetails.response);
+            }
         }
 
         if (this.chatToken && Object.keys(this.chatToken).length === 0) {
@@ -308,6 +342,42 @@ class OmnichannelChatSDK {
         }
 
         return chatSession;
+    }
+
+    public async getConversationDetails(): Promise<LiveWorkItemDetails> {
+        this.scenarioMarker.startScenario(TelemetryEvent.GetConversationDetails, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken?.chatId as string || '',
+        });
+
+        try {
+            const lwiDetails = await this.OCClient.getLWIDetails(this.requestId);
+            const {State: state, ConversationId: conversationId, AgentAcceptedOn: agentAcceptedOn} = lwiDetails;
+            const liveWorkItemDetails: LiveWorkItemDetails = {
+                state,
+                conversationId
+            };
+
+            if (agentAcceptedOn) {
+                liveWorkItemDetails.agentAcceptedOn = agentAcceptedOn;
+            }
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.GetConversationDetails, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string || '',
+            });
+
+            return liveWorkItemDetails;
+        } catch (error) {
+            this.scenarioMarker.failScenario(TelemetryEvent.GetConversationDetails, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string || '',
+            });
+
+            console.error(`OmnichannelChatSDK/getConversationDetails/error ${error}`);
+        }
+
+        return {} as LiveWorkItemDetails;
     }
 
     /**

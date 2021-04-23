@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Add ability to use custom `ic3Config` & `chatAdapterConfig`
 - Add telemetry
 - Add `rehydrate` flag for `onNewMessage` to rehydrate all messages of existing conversation
+- Add `getConversationDetails`
 
 ### Changed
 - Uptake [@microsoft/ocsdk@0.1.1](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.1.1)

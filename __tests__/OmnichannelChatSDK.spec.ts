@@ -411,6 +411,10 @@ describe('Omnichannel Chat SDK', () => {
                 RegionGtms: '{}'
             }));
 
+            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue(Promise.resolve({
+                State: 'Open',
+                ConversationId: 'id'
+            }));
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve());
@@ -434,6 +438,76 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
             expect(chatSDK.IC3Client.initialize).toHaveBeenCalledTimes(1);
             expect(chatSDK.IC3Client.joinConversation).toHaveBeenCalledTimes(1);
+        });
+
+        it('ChatSDK.startChat() with invalid liveChatContext should throw an error', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue(Promise.reject());
+
+            const liveChatContext = {
+                chatToken: {
+                    chatId: '',
+                    token: '',
+                    regionGtms: {}
+                },
+                requestId: 'requestId'
+            }
+
+            const optionaParams = {
+                liveChatContext
+            }
+
+            try {
+                await chatSDK.startChat(optionaParams);
+            } catch (error) {
+                expect(error.message).toEqual('InvalidConversation');
+            }
+        });
+
+
+        it('ChatSDK.startChat() with liveChatContext of a closed conversation should throw an error', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue(Promise.resolve({
+                State: 'Closed',
+                ConversationId: 'id'
+            }));
+
+            const liveChatContext = {
+                chatToken: {
+                    chatId: '',
+                    token: '',
+                    regionGtms: {}
+                },
+                requestId: 'requestId'
+            }
+
+            const optionaParams = {
+                liveChatContext
+            }
+
+            try {
+                await chatSDK.startChat(optionaParams);
+            } catch (error) {
+                expect(error.message).toEqual('ClosedConversation');
+            }
         });
 
         it('ChatSDK.getLiveChatConfig() should return the cached value by default', async () => {
@@ -680,6 +754,28 @@ describe('Omnichannel Chat SDK', () => {
             expect(Object.keys(chatContext).length).toBe(0);
             expect(Object.keys(chatContext).includes('chatToken')).toBe(false);
             expect(Object.keys(chatContext).includes('requestId')).toBe(false);
+        });
+
+        it('ChatSDK.getConversationDetails() should call OCClient.getLWIDetails()', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.IC3Client = {
+                initialize: jest.fn(),
+                joinConversation: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue({
+                State: 'state',
+                ConversationId: 'id',
+                AgentAcceptedOn: 'agentAcceptedOn'
+            });
+
+            await chatSDK.getConversationDetails();
+
+            expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
         });
 
         it('ChatSDK.getMessages should call conversation.getMessages()', async () => {
