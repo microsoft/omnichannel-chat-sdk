@@ -9,6 +9,7 @@ import ChatAdapterProtocols from "../src/core/ChatAdapterProtocols";
 import AriaTelemetry from "../src/telemetry/AriaTelemetry";
 
 describe('Omnichannel Chat SDK', () => {
+
     describe('Configurations', () => {
         it('ChatSDK should require omnichannelConfig as parameter', () => {
             try {
@@ -410,6 +411,10 @@ describe('Omnichannel Chat SDK', () => {
                 RegionGtms: '{}'
             }));
 
+            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue(Promise.resolve({
+                State: 'Open',
+                ConversationId: 'id'
+            }));
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve());
@@ -433,6 +438,76 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
             expect(chatSDK.IC3Client.initialize).toHaveBeenCalledTimes(1);
             expect(chatSDK.IC3Client.joinConversation).toHaveBeenCalledTimes(1);
+        });
+
+        it('ChatSDK.startChat() with invalid liveChatContext should throw an error', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue(Promise.reject());
+
+            const liveChatContext = {
+                chatToken: {
+                    chatId: '',
+                    token: '',
+                    regionGtms: {}
+                },
+                requestId: 'requestId'
+            }
+
+            const optionaParams = {
+                liveChatContext
+            }
+
+            try {
+                await chatSDK.startChat(optionaParams);
+            } catch (error) {
+                expect(error.message).toEqual('InvalidConversation');
+            }
+        });
+
+
+        it('ChatSDK.startChat() with liveChatContext of a closed conversation should throw an error', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue(Promise.resolve({
+                State: 'Closed',
+                ConversationId: 'id'
+            }));
+
+            const liveChatContext = {
+                chatToken: {
+                    chatId: '',
+                    token: '',
+                    regionGtms: {}
+                },
+                requestId: 'requestId'
+            }
+
+            const optionaParams = {
+                liveChatContext
+            }
+
+            try {
+                await chatSDK.startChat(optionaParams);
+            } catch (error) {
+                expect(error.message).toEqual('ClosedConversation');
+            }
         });
 
         it('ChatSDK.getLiveChatConfig() should return the cached value by default', async () => {
@@ -679,6 +754,28 @@ describe('Omnichannel Chat SDK', () => {
             expect(Object.keys(chatContext).length).toBe(0);
             expect(Object.keys(chatContext).includes('chatToken')).toBe(false);
             expect(Object.keys(chatContext).includes('requestId')).toBe(false);
+        });
+
+        it('ChatSDK.getConversationDetails() should call OCClient.getLWIDetails()', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.IC3Client = {
+                initialize: jest.fn(),
+                joinConversation: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue({
+                State: 'state',
+                ConversationId: 'id',
+                AgentAcceptedOn: 'agentAcceptedOn'
+            });
+
+            await chatSDK.getConversationDetails();
+
+            expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
         });
 
         it('ChatSDK.getMessages should call conversation.getMessages()', async () => {
@@ -1177,6 +1274,39 @@ describe('Omnichannel Chat SDK', () => {
 
             expect(IC3SDKProvider.getSDK.mock.calls[0][0].hostType).toBe(HostType.Page);
             expect(platform.isReactNative).toHaveBeenCalledTimes(1);
+        });
+
+        it('ChatSDK.onNewMessage() with rehydrate flag should call ChatSDK.getMessages()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient.sessionInit = jest.fn();
+            chatSDK.IC3Client.initialize = jest.fn();
+            chatSDK.IC3Client.joinConversation = jest.fn();
+
+            const messages = [
+                {clientmessageid: 2},
+                {clientmessageid: 1},
+                {clientmessageid: 1},
+                {clientmessageid: 0}
+            ]
+
+            await chatSDK.startChat();
+
+            chatSDK.conversation = {
+                registerOnNewMessage: jest.fn(),
+                getMessages: jest.fn()
+            };
+
+            jest.spyOn(chatSDK, 'getMessages').mockResolvedValue(messages);
+
+            await chatSDK.onNewMessage(() => {}, {rehydrate: true});
+
+            expect(chatSDK.getMessages).toHaveBeenCalledTimes(1);
+            expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(1);
         });
 
         it('Ability to add multiple "onNewMessage" event handler', async () => {

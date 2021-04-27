@@ -67,6 +67,7 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 | OmnichannelChatSDK.getLiveChatConfig() | Get live chat config | |
 | OmnichannelChatSDK.getDataMaskingRules() | Get active data masking rules | |
 | OmnichannelChatSDK.getCurrentLiveChatContext() | Get current live chat context information to reconnect to the same chat | |
+| OmnichannelChatSDK.getConversationDetails() | Get details of the current conversation such as its state & when the agent joined the conversation | |
 | OmnichannelChatSDK.getChatToken() | Get chat token | |
 | OmnichannelChatSDK.getMessages() | Get all messages | |
 | OmnichannelChatSDK.sendMessage() | Send message | |
@@ -110,6 +111,11 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 ### Get Current Live Chat Context
 ```ts
     const liveChatContext = await chatSDK.getCurrentLiveChatContext();
+```
+
+### Get Conversation Details
+```ts
+    const conversationDetails = await chatSDK.getConversationDetails();
 ```
 
 ### Get Chat Token
@@ -161,10 +167,14 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 
 ### On New Message Handler
 ```ts
+    const optionalParams = {
+        rehydrate: true, // Rehydrate all previous messages of existing conversation (false by default)
+    }
+
     chatSDK.onNewMessage((message) => {
       console.log(`[NewMessage] ${message.content}`); // IC3 protocol message data
       console.log(message);
-    });
+    }, optionalParams);
 ```
 
 ### On Agent End Session
