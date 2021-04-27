@@ -7,6 +7,7 @@ import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import libraries from "../src/utils/libraries";
 import ChatAdapterProtocols from "../src/core/ChatAdapterProtocols";
 import AriaTelemetry from "../src/telemetry/AriaTelemetry";
+import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
 
 describe('Omnichannel Chat SDK', () => {
 
@@ -196,6 +197,10 @@ describe('Omnichannel Chat SDK', () => {
             (AriaTelemetry as any)._logger = {
                 logEvent: jest.fn()
             };
+
+            (AWTLogManager as any).initialize = jest.fn(() => ({
+                logEvent: jest.fn()
+            }));
 
             const omnichannelConfig = {
                 orgUrl: '',
