@@ -9,8 +9,15 @@ import libraries from "../src/utils/libraries";
 import platform from "../src/utils/platform";
 import WebUtils from "../src/utils/WebUtils";
 import CallingOptionsOptionSetNumber from "../src/core/CallingOptionsOptionSetNumber";
+import AriaTelemetry from "../src/telemetry/AriaTelemetry";
+import * as settings from '../src/config/settings';
+import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
 
 describe('Omnichannel Chat SDK (Web)', () => {
+    (settings as any).ariaTelemetryKey = '';
+    (AriaTelemetry as any)._disable = true;
+    AWTLogManager.initialize = jest.fn();
+
     const omnichannelConfig = {
         orgUrl: '',
         orgId: '',

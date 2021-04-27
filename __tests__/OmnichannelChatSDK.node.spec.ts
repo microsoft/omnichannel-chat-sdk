@@ -2,9 +2,16 @@
  * @jest-environment node
  */
 
+import AriaTelemetry from "../src/telemetry/AriaTelemetry";
+import * as settings from '../src/config/settings';
+import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
+
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 
 describe('Omnichannel Chat SDK (Node)', () => {
+    (settings as any).ariaTelemetryKey = '';
+    AWTLogManager.initialize = jest.fn();
+
     const omnichannelConfig = {
         orgUrl: '',
         orgId: '',
