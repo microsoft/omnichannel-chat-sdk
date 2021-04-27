@@ -34,6 +34,12 @@ This guide is intended to help users to get guidance and help on troubleshooting
             </pre>
 
         1. Take a look in the developer `console` and see if there's any errors.
+            1. You can filter logs by
+                - `error`
+                - `failed`
+                - `failScenario`
+
+            and see if there's any results from these filters.
 
         1. Take a look in the `network activity` and see if there's any failures.
 
