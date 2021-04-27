@@ -208,7 +208,7 @@ describe('Omnichannel Chat SDK', () => {
                 }
             };
 
-            const fn = jest.spyOn(AriaTelemetry, 'initialize');
+            const fn = jest.spyOn(AriaTelemetry, 'initialize').mockReturnValue();
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
 
