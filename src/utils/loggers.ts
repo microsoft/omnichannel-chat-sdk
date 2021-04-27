@@ -30,6 +30,7 @@ export class IC3ClientLogger {
     }
 
     public useTelemetry(telemetry: typeof AriaTelemetry): void {
+        /* istanbul ignore next */
         this.debug && console.log(`[IC3ClientLogger][useTelemetry]`);
         this.telemetry = telemetry;
     }
@@ -107,6 +108,7 @@ export class OCSDKLogger {
     }
 
     public useTelemetry(telemetry: typeof AriaTelemetry): void {
+        /* istanbul ignore next */
         this.debug && console.log(`[OCSDKLogger][useTelemetry]`);
         this.telemetry = telemetry;
     }

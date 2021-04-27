@@ -7,8 +7,10 @@ import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import libraries from "../src/utils/libraries";
 import ChatAdapterProtocols from "../src/core/ChatAdapterProtocols";
 import AriaTelemetry from "../src/telemetry/AriaTelemetry";
+import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
 
 describe('Omnichannel Chat SDK', () => {
+    AWTLogManager.initialize = jest.fn();
 
     describe('Configurations', () => {
         it('ChatSDK should require omnichannelConfig as parameter', () => {
@@ -189,6 +191,28 @@ describe('Omnichannel Chat SDK', () => {
 
             expect(chatSDK.chatSDKConfig.telemetry.disable).toBe(false);
             expect(AriaTelemetry.disable).toHaveBeenCalledTimes(0);
+        });
+
+        it('ChatSDK should be able to pick up custom ariaTelemetryKey if set', () => {
+            const omnichannelConfig = {
+                orgUrl: '',
+                orgId: '',
+                widgetId: ''
+            };
+
+            const chatSDKConfig = {
+                telemetry: {
+                    ariaTelemetryKey: 'custom'
+                }
+            };
+
+            const fn = jest.spyOn(AriaTelemetry, 'initialize');
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+
+            expect(AriaTelemetry.initialize).toHaveBeenCalledTimes(1);
+            expect(chatSDK.chatSDKConfig.telemetry.ariaTelemetryKey).toBe(chatSDKConfig.telemetry.ariaTelemetryKey);
+            expect(fn.mock.calls[0][0]).toBe(chatSDKConfig.telemetry.ariaTelemetryKey);
         });
     });
 

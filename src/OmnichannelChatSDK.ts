@@ -103,6 +103,10 @@ class OmnichannelChatSDK {
 
         this.chatSDKConfig.telemetry?.disable && this.telemetry?.disable();
 
+        if (this.chatSDKConfig.telemetry?.ariaTelemetryKey) {
+            this.telemetry.initialize(this.chatSDKConfig.telemetry.ariaTelemetryKey);
+        }
+
         this.ic3ClientLogger?.setRequestId(this.requestId);
         this.ocSdkLogger?.setRequestId(this.requestId);
     }
@@ -611,7 +615,7 @@ class OmnichannelChatSDK {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string
             });
-        }   
+        }
     }
 
     public async uploadFileAttachment(fileInfo: IFileInfo | File): Promise<IRawMessage> {
@@ -670,7 +674,7 @@ class OmnichannelChatSDK {
             ChatId: this.chatToken.chatId as string
         })
 
-        try { 
+        try {
             const downloadedFile = await this.conversation!.downloadFile(fileMetadata);
             this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment, {
                 RequestId: this.requestId,
@@ -713,13 +717,18 @@ class OmnichannelChatSDK {
                 emailRequestBody,
                 emailTranscriptOptionalParams);
 
-            this.scenarioMarker.completeScenario(TelemetryEvent.EmailLiveChatTranscript);
+            this.scenarioMarker.completeScenario(TelemetryEvent.EmailLiveChatTranscript, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
 
             return emailResponse;
-        }
-
-        catch(e) {
-            this.scenarioMarker.failScenario(TelemetryEvent.EmailLiveChatTranscript);
+        } catch (error) {
+            console.error(`OmnichannelChatSDK/emailLiveChatTranscript/error: ${error}`);
+            this.scenarioMarker.failScenario(TelemetryEvent.EmailLiveChatTranscript, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
         }
     }
 
@@ -735,7 +744,7 @@ class OmnichannelChatSDK {
             if (this.authenticatedUserToken) {
                 getChatTranscriptOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
             }
-            
+
             const transcriptResponse = this.OCClient.getChatTranscripts(
                 this.requestId,
                 this.chatToken.chatId,
@@ -746,16 +755,15 @@ class OmnichannelChatSDK {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string
             });
-            
-            return transcriptResponse;      
-        }
-        catch (error) {
+
+            return transcriptResponse;
+        } catch (error) {
             this.scenarioMarker.failScenario(TelemetryEvent.GetLiveChatTranscript, {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string
             });
         }
-    } 
+    }
 
     public async createChatAdapter(protocol: string = ChatAdapterProtocols.IC3): Promise<unknown> {
         if (platform.isNode() || platform.isReactNative()) {
