@@ -206,9 +206,13 @@ describe('Omnichannel Chat SDK', () => {
                 }
             };
 
+            const fn = jest.spyOn(AriaTelemetry, 'initialize');
+
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
 
+            expect(AriaTelemetry.initialize).toHaveBeenCalledTimes(1);
             expect(chatSDK.chatSDKConfig.telemetry.ariaTelemetryKey).toBe(chatSDKConfig.telemetry.ariaTelemetryKey);
+            expect(fn.mock.calls[0][0]).toBe(chatSDKConfig.telemetry.ariaTelemetryKey);
         });
     });
 
