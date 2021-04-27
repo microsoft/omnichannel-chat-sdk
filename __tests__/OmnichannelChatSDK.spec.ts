@@ -192,7 +192,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(AriaTelemetry.disable).toHaveBeenCalledTimes(0);
         });
 
-        it('ChatSDK should be able to pick up custom ariaTelemetryKey if set', () => {
+        it('ChatSDK should be able to pick up custom ariaTelemetryKey if set', (done) => {
             (AriaTelemetry as any)._disable = true;
             (AriaTelemetry as any)._logger = {
                 logEvent: jest.fn()
@@ -221,6 +221,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(AriaTelemetry.initialize).toHaveBeenCalledTimes(1);
             expect(chatSDK.chatSDKConfig.telemetry.ariaTelemetryKey).toBe(chatSDKConfig.telemetry.ariaTelemetryKey);
             expect(fn.mock.calls[0][0]).toBe(chatSDKConfig.telemetry.ariaTelemetryKey);
+            done();
         });
     });
 
