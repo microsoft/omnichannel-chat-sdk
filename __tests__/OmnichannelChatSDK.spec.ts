@@ -10,6 +10,7 @@ import AriaTelemetry from "../src/telemetry/AriaTelemetry";
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
 
 describe('Omnichannel Chat SDK', () => {
+    AWTLogManager.initialize = jest.fn();
 
     describe('Configurations', () => {
         it('ChatSDK should require omnichannelConfig as parameter', () => {
