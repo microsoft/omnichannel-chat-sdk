@@ -2,9 +2,14 @@
  * @jest-environment node
  */
 
+import AriaTelemetry from "../src/telemetry/AriaTelemetry";
+import * as settings from '../src/config/settings';
+
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 
 describe('Omnichannel Chat SDK (Node)', () => {
+    (settings as any).ariaTelemetryKey = '';
+
     const omnichannelConfig = {
         orgUrl: '',
         orgId: '',
