@@ -67,6 +67,12 @@ class AriaTelemetry {
     private static _CDNPackagesInfo: CDNPackagesInfo;
     private static _disable = false;
 
+    public static initialize(key: string): void {
+        /* istanbul ignore next */
+        this._debug && console.log(`[AriaTelemetry][logger][initialize][custom]`);
+        AriaTelemetry._logger = AWTLogManager.initialize(key);
+    }
+
     /* istanbul ignore next */
     public static setDebug(flag: boolean): void {
         AriaTelemetry._debug = flag;
@@ -317,6 +323,7 @@ class AriaTelemetry {
 
     private static get logger(): AWTLogger {
         if (!AriaTelemetry._logger) {
+            /* istanbul ignore next */
             this._debug && console.log(`[AriaTelemetry][logger][initialize]`);
             AriaTelemetry._logger = AWTLogManager.initialize(ariaTelemetryKey);
         }
