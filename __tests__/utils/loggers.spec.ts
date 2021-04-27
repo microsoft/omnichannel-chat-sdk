@@ -1,5 +1,5 @@
 import LogLevel from '@microsoft/omnichannel-ic3core/lib/logging/LogLevel';
-import {IC3ClientLogger} from '../../src/utils/loggers';
+import {IC3ClientLogger, OCSDKLogger} from '../../src/utils/loggers';
 
 describe('loggers', () => {
     describe('IC3ClientLogger', () => {
@@ -16,7 +16,7 @@ describe('loggers', () => {
             info: jest.fn()
         }
 
-        test('IC3ClientLogger.logClientSdkTelemetryEvent() with LogLevel DEBUG should call telemetry.debug()', () => {
+        it('IC3ClientLogger.logClientSdkTelemetryEvent() with LogLevel DEBUG should call telemetry.debug()', () => {
             const logger = new IC3ClientLogger(omnichannelConfig);
 
             const eventData = {
@@ -29,7 +29,7 @@ describe('loggers', () => {
             expect(telemetry.debug).toBeCalledTimes(1);
         });
 
-        test('IC3ClientLogger.logClientSdkTelemetryEvent() with LogLevel WARN should call telemetry.warn()', () => {
+        it('IC3ClientLogger.logClientSdkTelemetryEvent() with LogLevel WARN should call telemetry.warn()', () => {
             const logger = new IC3ClientLogger(omnichannelConfig);
 
             const eventData = {
@@ -42,7 +42,7 @@ describe('loggers', () => {
             expect(telemetry.warn).toBeCalledTimes(1);
         });
 
-        test('IC3ClientLogger.logClientSdkTelemetryEvent() with LogLevel ERROR should call telemetry.error()', () => {
+        it('IC3ClientLogger.logClientSdkTelemetryEvent() with LogLevel ERROR should call telemetry.error()', () => {
             const logger = new IC3ClientLogger(omnichannelConfig);
 
             const eventData = {
@@ -55,7 +55,7 @@ describe('loggers', () => {
             expect(telemetry.error).toBeCalledTimes(1);
         });
 
-        test('IC3ClientLogger.logClientSdkTelemetryEvent() with LogLevel INFO should call telemetry.info()', () => {
+        it('IC3ClientLogger.logClientSdkTelemetryEvent() with LogLevel INFO should call telemetry.info()', () => {
             const logger = new IC3ClientLogger(omnichannelConfig);
 
             const eventData = {
@@ -70,6 +70,69 @@ describe('loggers', () => {
     });
 
     describe('OCSDKLogger', () => {
+        const omnichannelConfig = {
+            orgId: '',
+            orgUrl: '',
+            widgetId: ''
+        }
 
+        const telemetry = {
+            debug: jest.fn(),
+            warn: jest.fn(),
+            error: jest.fn(),
+            info: jest.fn()
+        }
+
+        it('OCSDKLogger.logClientSdkTelemetryEvent() with LogLevel DEBUG should call telemetry.debug()', () => {
+            const logger = new OCSDKLogger(omnichannelConfig);
+
+            const eventData = {
+                Event: ''
+            };
+
+            logger.useTelemetry(telemetry as any);
+            logger.logClientSdkTelemetryEvent(LogLevel.DEBUG, eventData as any);
+
+            expect(telemetry.debug).toBeCalledTimes(1);
+        });
+
+        it('OCSDKLogger.logClientSdkTelemetryEvent() with LogLevel WARN should call telemetry.warn()', () => {
+            const logger = new OCSDKLogger(omnichannelConfig);
+
+            const eventData = {
+                Event: ''
+            };
+
+            logger.useTelemetry(telemetry as any);
+            logger.logClientSdkTelemetryEvent(LogLevel.WARN, eventData as any);
+
+            expect(telemetry.warn).toBeCalledTimes(1);
+        });
+
+        it('OCSDKLogger.logClientSdkTelemetryEvent() with LogLevel ERROR should call telemetry.error()', () => {
+            const logger = new OCSDKLogger(omnichannelConfig);
+
+            const eventData = {
+                Event: ''
+            };
+
+            logger.useTelemetry(telemetry as any);
+            logger.logClientSdkTelemetryEvent(LogLevel.ERROR, eventData as any);
+
+            expect(telemetry.error).toBeCalledTimes(1);
+        });
+
+        it('OCSDKLogger.logClientSdkTelemetryEvent() with LogLevel INFO should call telemetry.info()', () => {
+            const logger = new OCSDKLogger(omnichannelConfig);
+
+            const eventData = {
+                Event: ''
+            };
+
+            logger.useTelemetry(telemetry as any);
+            logger.logClientSdkTelemetryEvent(LogLevel.INFO, eventData as any);
+
+            expect(telemetry.info).toBeCalledTimes(1);
+        });
     });
 })
