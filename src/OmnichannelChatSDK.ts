@@ -717,13 +717,18 @@ class OmnichannelChatSDK {
                 emailRequestBody,
                 emailTranscriptOptionalParams);
 
-            this.scenarioMarker.completeScenario(TelemetryEvent.EmailLiveChatTranscript);
+            this.scenarioMarker.completeScenario(TelemetryEvent.EmailLiveChatTranscript, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
 
             return emailResponse;
-        }
-
-        catch(e) {
-            this.scenarioMarker.failScenario(TelemetryEvent.EmailLiveChatTranscript);
+        } catch (error) {
+            console.error(`OmnichannelChatSDK/emailLiveChatTranscript/error: ${error}`);
+            this.scenarioMarker.failScenario(TelemetryEvent.EmailLiveChatTranscript, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
         }
     }
 
@@ -752,8 +757,7 @@ class OmnichannelChatSDK {
             });
 
             return transcriptResponse;
-        }
-        catch (error) {
+        } catch (error) {
             this.scenarioMarker.failScenario(TelemetryEvent.GetLiveChatTranscript, {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string
