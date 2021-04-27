@@ -190,6 +190,28 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.chatSDKConfig.telemetry.disable).toBe(false);
             expect(AriaTelemetry.disable).toHaveBeenCalledTimes(0);
         });
+
+        it('ChatSDK should be able to pick up custom ariaTelemetryKey if set', () => {
+            const omnichannelConfig = {
+                orgUrl: '',
+                orgId: '',
+                widgetId: ''
+            };
+
+            const chatSDKConfig = {
+                telemetry: {
+                    ariaTelemetryKey: 'custom'
+                }
+            };
+
+            const fn = jest.spyOn(AriaTelemetry, 'initialize');
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+
+            expect(AriaTelemetry.initialize).toHaveBeenCalledTimes(1);
+            expect(chatSDK.chatSDKConfig.telemetry.ariaTelemetryKey).toBe(chatSDKConfig.telemetry.ariaTelemetryKey);
+            expect(fn.mock.calls[0][0]).toBe(chatSDKConfig.telemetry.ariaTelemetryKey);
+        });
     });
 
     describe('Functionalities', () => {
