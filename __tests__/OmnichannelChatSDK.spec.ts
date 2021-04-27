@@ -192,6 +192,7 @@ describe('Omnichannel Chat SDK', () => {
         });
 
         it('ChatSDK should be able to pick up custom ariaTelemetryKey if set', () => {
+            (AriaTelemetry as any)._disable = true;
             (AriaTelemetry as any)._logger = {
                 logEvent: jest.fn()
             };
