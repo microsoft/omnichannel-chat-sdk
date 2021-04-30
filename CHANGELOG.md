@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+
+## [0.2.0] - 2021-04-30
 ### Added
 - React Native sample app using Omnichannel Chat SDK with [react-native-gifted-chat](https://github.com/FaridSafi/react-native-gifted-chat)
 - Escalation to Voice & View support (Web Only)
@@ -24,6 +26,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - onAgentEndSession triggered on accept voice & video call
 - Fix multiple instances of IC3Client initialized
+- `uploadFileAttachment` failing on Web
 
 ### Security
 - Fix eslint errors
