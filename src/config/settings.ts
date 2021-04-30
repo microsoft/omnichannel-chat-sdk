@@ -1,6 +1,6 @@
 const ic3ClientVersion = '2021.03.02.1';
 const webChatIC3AdapterVersion = '0.1.0-master.92b1505';
-const ariaTelemetryKey = '07172c8dd08d4de7a594b5b5cf81e668-92304109-4cd9-41b6-8806-714387b256e8-7337';
+const ariaTelemetryKey = 'c7655518acf1403f93ff6b9f77942f0a-d01a02fd-6b50-4de3-a566-62eda11f93bc-7083';
 
 export {
     ic3ClientVersion,
