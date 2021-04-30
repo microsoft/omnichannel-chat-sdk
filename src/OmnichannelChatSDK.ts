@@ -51,6 +51,7 @@ import ScenarioMarker from "./telemetry/ScenarioMarker";
 import { createIC3ClientLogger, createOCSDKLogger, IC3ClientLogger, OCSDKLogger } from "./utils/loggers";
 import LiveWorkItemDetails from "./core/LiveWorkItemDetails";
 import LiveWorkItemState from "./core/LiveWorkItemState";
+import LiveChatVersion from "./core/LiveChatVersion";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -64,6 +65,7 @@ class OmnichannelChatSDK {
     public requestId: string;
     private chatToken: IChatToken;
     private liveChatConfig: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    private liveChatVersion: number;
     private dataMaskingRules: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private authSettings: IAuthSettings | null = null;
     private authenticatedUserToken: string | null = null;
@@ -83,6 +85,7 @@ class OmnichannelChatSDK {
             ...chatSDKConfig // overrides
         };
         this.isInitialized = false;
+        this.liveChatVersion = LiveChatVersion.V1;
         this.requestId = uuidv4();
         this.chatToken = {};
         this.liveChatConfig = {};
@@ -948,8 +951,13 @@ class OmnichannelChatSDK {
             const {
                 DataMaskingInfo: dataMaskingConfig,
                 LiveChatConfigAuthSettings: authSettings,
-                LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin
+                LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin,
+                LiveChatVersion: liveChatVersion
             } = liveChatConfig;
+
+            this.liveChatVersion = liveChatVersion || LiveChatVersion.V1;
+
+            this.debug && console.log(`[OmnichannelChatSDK][getChatConfig][liveChatVersion] ${this.liveChatVersion}`);
 
             const {setting} = dataMaskingConfig;
             if (setting.msdyn_maskforcustomer) {
