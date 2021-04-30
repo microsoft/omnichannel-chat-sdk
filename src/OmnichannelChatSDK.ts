@@ -957,6 +957,7 @@ class OmnichannelChatSDK {
 
             this.liveChatVersion = liveChatVersion || LiveChatVersion.V1;
 
+            /* istanbul ignore next */
             this.debug && console.log(`[OmnichannelChatSDK][getChatConfig][liveChatVersion] ${this.liveChatVersion}`);
 
             const {setting} = dataMaskingConfig;
