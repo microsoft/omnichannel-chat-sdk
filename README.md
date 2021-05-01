@@ -33,8 +33,8 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 | Web Support | ✔ | ✔ |
 | React Native Support | ❌ | ✔ |
 | Escalation to Voice & Video | ✔ | Web Only |
-| Co-browse | ✔ | ❌ |
-| Screen Sharing | ✔ | ❌ |
+| Co-browse | ✔ | Web Only |
+| Screen Sharing | ✔ | Web Only |
 | Authenticated Chat | ✔ | ✔ |
 | Pre-chat Survey | ✔ | ✔ |
 | Post-chat Survey | ✔ | ❌ |
