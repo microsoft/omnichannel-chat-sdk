@@ -38,6 +38,7 @@
     "typescript": "^3.9.5"
   },
   "dependencies": {
+    "@azure/communication-common": "^1.0.0",
     "@microsoft/ocsdk": "^0.1.1",
     "@microsoft/omnichannel-ic3core": "^0.1.1"
   }
