@@ -52,6 +52,12 @@ import { createIC3ClientLogger, createOCSDKLogger, IC3ClientLogger, OCSDKLogger 
 import LiveWorkItemDetails from "./core/LiveWorkItemDetails";
 import LiveWorkItemState from "./core/LiveWorkItemState";
 import LiveChatVersion from "./core/LiveChatVersion";
+import ACSClient from "./core/ACSClient";
+import { AzureCommunicationTokenCredential } from "@azure/communication-common";
+import { ChatClient, ChatThreadClient } from "@azure/communication-chat";
+import { ChatMessageReceivedEvent } from '@azure/communication-signaling';
+
+const acsResourceEndpoint = "https://{0}-Trial-acs.communication.azure.com";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -59,10 +65,13 @@ class OmnichannelChatSDK {
     public IC3SDKProvider: unknown;
     public OCClient: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     public IC3Client: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    public ACSClient: ACSClient | null = null;
     public omnichannelConfig: IOmnichannelConfig;
     public chatSDKConfig: IChatSDKConfig;
     public isInitialized: boolean;
     public requestId: string;
+    private chatClient: ChatClient | null = null;
+    private chatThreadClient: ChatThreadClient | null = null;
     private chatToken: IChatToken;
     private liveChatConfig: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private liveChatVersion: number;
@@ -135,10 +144,12 @@ class OmnichannelChatSDK {
             this.OCSDKProvider = OCSDKProvider;
             const OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, {} as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
             const IC3Client = await this.getIC3Client();
+            const acsClient = new ACSClient();
 
             // Assign & Update flag only if all dependencies have been initialized succesfully
             this.OCClient = OCClient;
             this.IC3Client = IC3Client;
+            this.ACSClient = acsClient;
 
             await this.getChatConfig();
 
@@ -255,46 +266,78 @@ class OmnichannelChatSDK {
             return error;
         }
 
-        try {
-            await this.IC3Client.initialize({
+        if (this.liveChatVersion === LiveChatVersion.V2) {
+            const tokenCredential = new AzureCommunicationTokenCredential(this.chatToken.token as string);
+
+            const chatAdapterConfig = {
                 token: this.chatToken.token,
-                regionGtms: this.chatToken.regionGTMS,
-                visitor: true
-            });
-        } catch (error) {
-            const exceptionDetails = {
-                response: "IC3ClientInitializeFailed"
+                id: this.chatToken.visitorId || 'teamsvisitor',
+                threadId: this.chatToken.chatId,
+                environmentUrl: acsResourceEndpoint.replace('{0}', this.omnichannelConfig.orgId)
             };
 
-            this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string,
-                ExceptionDetails: JSON.stringify(exceptionDetails)
-            });
+            try {
+                this.chatClient = new ChatClient(chatAdapterConfig.environmentUrl, tokenCredential);
+            } catch (error) {
+                console.error(`OmnichannelChatSDK/startChat/ChatClient/error ${error}`);
+                throw new Error('ChatClientInitFailed');
+            }
 
-            console.error(`OmnichannelChatSDK/startChat/initialize/error ${error}`);
-            return error;
-        }
+            try {
+                this.chatThreadClient = await this.chatClient?.getChatThreadClient(chatAdapterConfig.threadId as string);
+            } catch (error) {
+                console.error(`OmnichannelChatSDK/startChat/ChatThreadClient/error ${error}`);
+                throw new Error('GetChatThreadClientFailed');
+            }
 
-        try {
-            this.conversation = await this.IC3Client.joinConversation(this.chatToken.chatId);
-            this.scenarioMarker.completeScenario(TelemetryEvent.StartChat, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string
-            });
-        } catch (error) {
-            const exceptionDetails = {
-                response: "IC3ClientJoinConversationFailed"
-            };
+            try {
+                await this.chatClient.startRealtimeNotifications();
+            } catch (error) {
+                console.error(`OmnichannelChatSDK/startChat/startRealtimeNotifications/error ${error}`);
+                throw new Error('StartRealtimeNotificationsFailed');
+            }
+        } else {
+            try {
+                await this.IC3Client.initialize({
+                    token: this.chatToken.token,
+                    regionGtms: this.chatToken.regionGTMS,
+                    visitor: true
+                });
+            } catch (error) {
+                const exceptionDetails = {
+                    response: "IC3ClientInitializeFailed"
+                };
 
-            this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string,
-                ExceptionDetails: JSON.stringify(exceptionDetails)
-            });
+                this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string,
+                    ExceptionDetails: JSON.stringify(exceptionDetails)
+                });
 
-            console.error(`OmnichannelChatSDK/startChat/joinConversation/error ${error}`);
-            return error;
+                console.error(`OmnichannelChatSDK/startChat/initialize/error ${error}`);
+                return error;
+            }
+
+            try {
+                this.conversation = await this.IC3Client.joinConversation(this.chatToken.chatId);
+                this.scenarioMarker.completeScenario(TelemetryEvent.StartChat, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+            } catch (error) {
+                const exceptionDetails = {
+                    response: "IC3ClientJoinConversationFailed"
+                };
+
+                this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string,
+                    ExceptionDetails: JSON.stringify(exceptionDetails)
+                });
+
+                console.error(`OmnichannelChatSDK/startChat/joinConversation/error ${error}`);
+                return error;
+            }
         }
     }
 
@@ -317,10 +360,12 @@ class OmnichannelChatSDK {
                 ChatId: this.chatToken.chatId as string
             });
 
-            this.conversation!.disconnect();
+            this.conversation?.disconnect();
             this.conversation = null;
             this.requestId = uuidv4();
             this.chatToken = {};
+            this.chatClient = null;
+            this.chatThreadClient = null;
 
             this.ic3ClientLogger?.setRequestId(this.requestId);
             this.ic3ClientLogger?.setChatId('');
@@ -462,7 +507,11 @@ class OmnichannelChatSDK {
     }
 
     public async getMessages(): Promise<IMessage[] | undefined> {
-        return this.conversation?.getMessages();
+        if (this.liveChatVersion === LiveChatVersion.V2) {
+
+        } else {
+            return this.conversation?.getMessages();
+        }
     }
 
     public async getDataMaskingRules(): Promise<any> {  // eslint-disable-line  @typescript-eslint/no-explicit-any
@@ -485,139 +534,171 @@ class OmnichannelChatSDK {
         }
         message.content = content;
 
-        const messageToSend: IRawMessage = {
-            content: message.content,
-            timestamp: new Date(),
-            contentType: MessageContentType.Text,
-            deliveryMode: DeliveryMode.Bridged,
-            messageType: MessageType.UserMessage,
-            properties: undefined,
-            tags: [], // OC tag (system)
-            sender: {
-              displayName : "Customer",
-              id : "customer",
-              type : PersonType.User
+        if (this.liveChatVersion === LiveChatVersion.V2) {
+            const sendMessageRequest = {
+                content: message.content,
+                senderDisplayName: undefined
             }
-        };
 
-        if (message.tags) {
-            messageToSend.tags = message.tags;
+            try {
+                await this.chatThreadClient?.sendMessage(sendMessageRequest);
+            } catch (error) {
+
+            }
+        } else {
+            const messageToSend: IRawMessage = {
+                content: message.content,
+                timestamp: new Date(),
+                contentType: MessageContentType.Text,
+                deliveryMode: DeliveryMode.Bridged,
+                messageType: MessageType.UserMessage,
+                properties: undefined,
+                tags: [], // OC tag (system)
+                sender: {
+                    displayName : "Customer",
+                    id : "customer",
+                    type : PersonType.User
+                }
+            };
+
+            if (message.tags) {
+                messageToSend.tags = message.tags;
+            }
+
+            if (message.timestamp) {
+                messageToSend.timestamp = message.timestamp;
+            }
+
+            return this.conversation!.sendMessage(messageToSend);
         }
-
-        if (message.timestamp) {
-            messageToSend.timestamp = message.timestamp;
-        }
-
-        return this.conversation!.sendMessage(messageToSend);
     }
 
     public async onNewMessage(onNewMessageCallback: CallableFunction, optionalParams: OnNewMessageOptionalParams | unknown = {}): Promise<void> {
-        const postedMessages = new Set();
+        if (this.liveChatVersion === LiveChatVersion.V2) {
+            this.chatClient?.on("chatMessageReceived", (event: ChatMessageReceivedEvent) => {
+                onNewMessageCallback(event);
+            });
+        } else {
+            const postedMessages = new Set();
 
-        if ((optionalParams as OnNewMessageOptionalParams).rehydrate) {
-            this.debug && console.log('[OmnichannelChatSDK][onNewMessage] rehydrate');
-            const messages = await this.getMessages() as IRawMessage[];
-            for (const message of messages.reverse()) {
-                const {clientmessageid} = message;
+            if ((optionalParams as OnNewMessageOptionalParams).rehydrate) {
+                this.debug && console.log('[OmnichannelChatSDK][onNewMessage] rehydrate');
+                const messages = await this.getMessages() as IRawMessage[];
+                for (const message of messages.reverse()) {
+                    const {clientmessageid} = message;
 
-                if (postedMessages.has(clientmessageid)) {
-                    continue;
+                    if (postedMessages.has(clientmessageid)) {
+                        continue;
+                    }
+
+                    postedMessages.add(clientmessageid);
+                    onNewMessageCallback(message);
+                }
+            }
+
+            this.conversation?.registerOnNewMessage((message: IRawMessage) => {
+                const {clientmessageid, messageType} = message;
+
+                // Filter out customer messages
+                if (isCustomerMessage(message)) {
+                    return;
                 }
 
-                postedMessages.add(clientmessageid);
-                onNewMessageCallback(message);
-            }
+                // Skip duplicates
+                if (postedMessages.has(clientmessageid)) {
+                    return;
+                }
+
+                if (messageType !== MessageType.Typing) {
+                    onNewMessageCallback(message);
+                }
+            });
         }
-
-        this.conversation?.registerOnNewMessage((message: IRawMessage) => {
-            const {clientmessageid, messageType} = message;
-
-            // Filter out customer messages
-            if (isCustomerMessage(message)) {
-                return;
-            }
-
-            // Skip duplicates
-            if (postedMessages.has(clientmessageid)) {
-                return;
-            }
-
-            if (messageType !== MessageType.Typing) {
-                onNewMessageCallback(message);
-            }
-        });
     }
 
     public async sendTypingEvent(): Promise<void> {
-        const typingPayload = `{isTyping: 0}`;
+        if (this.liveChatVersion === LiveChatVersion.V2) {
 
-        this.scenarioMarker.startScenario(TelemetryEvent.SendTypingEvent, {
-            RequestId: this.requestId,
-            ChatId: this.chatToken.chatId as string
-        });
+        } else {
+            const typingPayload = `{isTyping: 0}`;
 
-        try {
-            await this.conversation!.indicateTypingStatus(0);
-            const members: IPerson[] = await this.conversation!.getMembers();
-            const botMembers = members.filter((member: IPerson) => member.type === PersonType.Bot);
-            await this.conversation!.sendMessageToBot(botMembers[0].id, {payload: typingPayload});
-
-            this.scenarioMarker.completeScenario(TelemetryEvent.SendTypingEvent, {
+            this.scenarioMarker.startScenario(TelemetryEvent.SendTypingEvent, {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string
             });
 
-        } catch (error) {
-            console.error("OmnichannelChatSDK/sendTypingEvent/error");
+            try {
+                await this.conversation!.indicateTypingStatus(0);
+                const members: IPerson[] = await this.conversation!.getMembers();
+                const botMembers = members.filter((member: IPerson) => member.type === PersonType.Bot);
+                await this.conversation!.sendMessageToBot(botMembers[0].id, {payload: typingPayload});
 
-            this.scenarioMarker.failScenario(TelemetryEvent.SendTypingEvent, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string
-            });
-            return error;
+                this.scenarioMarker.completeScenario(TelemetryEvent.SendTypingEvent, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+
+            } catch (error) {
+                console.error("OmnichannelChatSDK/sendTypingEvent/error");
+
+                this.scenarioMarker.failScenario(TelemetryEvent.SendTypingEvent, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+                return error;
+            }
         }
     }
 
     public async onTypingEvent(onTypingEventCallback: CallableFunction): Promise<void> {
-        this.conversation?.registerOnNewMessage((message: IRawMessage) => {
-            const {messageType} = message;
+        if (this.liveChatVersion === LiveChatVersion.V2) {
 
-            // Filter out customer messages
-            if (isCustomerMessage(message)) {
-                return;
-            }
+        } else {
+            this.conversation?.registerOnNewMessage((message: IRawMessage) => {
+                const {messageType} = message;
 
-            if (messageType === MessageType.Typing) {
-                onTypingEventCallback(message);
-            }
-        });
+                // Filter out customer messages
+                if (isCustomerMessage(message)) {
+                    return;
+                }
+
+                if (messageType === MessageType.Typing) {
+                    onTypingEventCallback(message);
+                }
+            });
+        }
     }
 
     public async onAgentEndSession(onAgentEndSessionCallback: (message: IRawThread) => void): Promise<void> {
-        this.scenarioMarker.startScenario(TelemetryEvent.OnAgentEndSession, {
-            RequestId: this.requestId,
-            ChatId: this.chatToken.chatId as string
-        });
 
-        try {
-            this.conversation?.registerOnThreadUpdate((message: IRawThread) => {
-                const {members} = message;
+        if (this.liveChatVersion === LiveChatVersion.V2) {
 
-                // Agent ending conversation would have 1 member left in the chat thread
-                if (members.length === 1) {
-                    onAgentEndSessionCallback(message);
-                }
-            });
-            this.scenarioMarker.completeScenario(TelemetryEvent.OnAgentEndSession, {
+        } else {
+            this.scenarioMarker.startScenario(TelemetryEvent.OnAgentEndSession, {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string
             });
 
-        } catch (error) {
-            this.scenarioMarker.failScenario(TelemetryEvent.OnAgentEndSession, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string
-            });
+            try {
+                this.conversation?.registerOnThreadUpdate((message: IRawThread) => {
+                    const {members} = message;
+
+                    // Agent ending conversation would have 1 member left in the chat thread
+                    if (members.length === 1) {
+                        onAgentEndSessionCallback(message);
+                    }
+                });
+                this.scenarioMarker.completeScenario(TelemetryEvent.OnAgentEndSession, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+
+            } catch (error) {
+                this.scenarioMarker.failScenario(TelemetryEvent.OnAgentEndSession, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+            }
         }
     }
 
