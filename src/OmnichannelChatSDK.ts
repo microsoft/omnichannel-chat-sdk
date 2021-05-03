@@ -576,6 +576,11 @@ class OmnichannelChatSDK {
     public async onNewMessage(onNewMessageCallback: CallableFunction, optionalParams: OnNewMessageOptionalParams | unknown = {}): Promise<void> {
         if (this.liveChatVersion === LiveChatVersion.V2) {
             this.chatClient?.on("chatMessageReceived", (event: ChatMessageReceivedEvent) => {
+
+                if (event.message) {
+                    Object.assign(event, {content: event.message});
+                }
+
                 onNewMessageCallback(event);
             });
         } else {
