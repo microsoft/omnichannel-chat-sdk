@@ -53,7 +53,7 @@ import LiveWorkItemDetails from "./core/LiveWorkItemDetails";
 import LiveWorkItemState from "./core/LiveWorkItemState";
 import LiveChatVersion from "./core/LiveChatVersion";
 import ACSClient from "./core/ACSClient";
-import { AzureCommunicationTokenCredential } from "@azure/communication-common";
+import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
 import { ChatClient, ChatThreadClient } from "@azure/communication-chat";
 import { ChatMessageReceivedEvent } from '@azure/communication-signaling';
 
@@ -576,6 +576,14 @@ class OmnichannelChatSDK {
     public async onNewMessage(onNewMessageCallback: CallableFunction, optionalParams: OnNewMessageOptionalParams | unknown = {}): Promise<void> {
         if (this.liveChatVersion === LiveChatVersion.V2) {
             this.chatClient?.on("chatMessageReceived", (event: ChatMessageReceivedEvent) => {
+                const {sender} = event;
+
+                const customerMessageCondition = ((sender as CommunicationUserIdentifier).communicationUserId === (this.chatToken.visitorId || 'teamsvisitor'))
+
+                // Filter out customer messages
+                if (customerMessageCondition) {
+                    return;
+                }
 
                 if (event.message) {
                     Object.assign(event, {content: event.message});
