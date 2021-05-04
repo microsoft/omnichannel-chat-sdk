@@ -1,5 +1,6 @@
 import { ChatClient, ChatThreadClient } from "@azure/communication-chat";
-import { AzureCommunicationTokenCredential } from "@azure/communication-common";
+import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
+import { ChatMessageReceivedEvent } from '@azure/communication-signaling';
 
 export interface ACSSessionInfo {
     id: string;
@@ -14,7 +15,8 @@ export interface ACSClientConfig {
 export class ACSConversation {
     private tokenCredential: AzureCommunicationTokenCredential;
     private chatClient: ChatClient;
-    private chatThreadClient: ChatThreadClient | null = null;
+    private chatThreadClient?: ChatThreadClient;
+    private sessionInfo?: ACSSessionInfo;
 
     constructor(tokenCredential: AzureCommunicationTokenCredential, chatClient: ChatClient) {
         this.tokenCredential = tokenCredential;
@@ -22,7 +24,21 @@ export class ACSConversation {
     }
 
     public async initialize(sessionInfo: ACSSessionInfo) {
-        this.chatThreadClient = await this.chatClient.getChatThreadClient(sessionInfo.threadId);
+        this.sessionInfo = sessionInfo;
+
+        try {
+            this.chatThreadClient = await this.chatClient?.getChatThreadClient(sessionInfo.threadId as string);
+        } catch (error) {
+            console.error(`ACSConversation/chatClient/getChatThreadClient/error ${error}`);
+            throw new Error('GetChatThreadClientFailed');
+        }
+
+        try {
+            await this.chatClient.startRealtimeNotifications();
+        } catch (error) {
+            console.error(`ACSConversation/chatClient/startRealtimeNotifications/error ${error}`);
+            throw new Error('StartRealtimeNotificationsFailed');
+        }
     }
 
     public async getMessages() {
@@ -33,16 +49,41 @@ export class ACSConversation {
 
     }
 
-    public async registerOnNewMessage(): Promise<void> {
+    public async registerOnNewMessage(onNewMessageCallback: CallableFunction): Promise<void> {
+        this.chatClient?.on("chatMessageReceived", (event: ChatMessageReceivedEvent) => {
+            const {sender} = event;
 
+            const customerMessageCondition = ((sender as CommunicationUserIdentifier).communicationUserId === (this.sessionInfo?.id as string))
+
+            // Filter out customer messages
+            if (customerMessageCondition) {
+                return;
+            }
+
+            if (event.message) {
+                Object.assign(event, {content: event.message});
+            }
+
+            onNewMessageCallback(event);
+        });
     }
 
     public async registerOnThreadUpdate(): Promise<void> {
 
     }
 
-    public async sendMessage(): Promise<void> {
+    public async sendMessage(message: any): Promise<void> {
+        const sendMessageRequest = {
+            content: message.content,
+            senderDisplayName: undefined
+        }
 
+        try {
+            const response = await this.chatThreadClient?.sendMessage(sendMessageRequest);
+            console.log(response);
+        } catch (error) {
+            console.error(`ACSClient/sendMessage/error ${error}`);
+        }
     }
 
     public async sendFileMessage(): Promise<void> {
