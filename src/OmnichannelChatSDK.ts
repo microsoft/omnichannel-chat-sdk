@@ -52,9 +52,7 @@ import { createIC3ClientLogger, createOCSDKLogger, IC3ClientLogger, OCSDKLogger 
 import LiveWorkItemDetails from "./core/LiveWorkItemDetails";
 import LiveWorkItemState from "./core/LiveWorkItemState";
 import LiveChatVersion from "./core/LiveChatVersion";
-import ACSClient from "./core/ACSClient";
-import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
-import { ChatClient, ChatThreadClient } from "@azure/communication-chat";
+import ACSClient, { ACSConversation } from "./core/ACSClient";
 import { ChatMessageReceivedEvent } from '@azure/communication-signaling';
 
 const acsResourceEndpoint = "https://{0}-Trial-acs.communication.azure.com";
@@ -70,8 +68,6 @@ class OmnichannelChatSDK {
     public chatSDKConfig: IChatSDKConfig;
     public isInitialized: boolean;
     public requestId: string;
-    private chatClient: ChatClient | null = null;
-    private chatThreadClient: ChatThreadClient | null = null;
     private chatToken: IChatToken;
     private liveChatConfig: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private liveChatVersion: number;
@@ -79,7 +75,7 @@ class OmnichannelChatSDK {
     private authSettings: IAuthSettings | null = null;
     private authenticatedUserToken: string | null = null;
     private preChatSurvey: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-    private conversation: IConversation | null = null;
+    private conversation: IConversation | ACSConversation | null = null;
     private callingOption: CallingOptionsOptionSetNumber = CallingOptionsOptionSetNumber.NoCalling;
     private telemetry: typeof AriaTelemetry | null = null;
     private scenarioMarker: ScenarioMarker;
@@ -267,8 +263,6 @@ class OmnichannelChatSDK {
         }
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
-            const tokenCredential = new AzureCommunicationTokenCredential(this.chatToken.token as string);
-
             const chatAdapterConfig = {
                 token: this.chatToken.token,
                 id: this.chatToken.visitorId || 'teamsvisitor',
@@ -277,24 +271,22 @@ class OmnichannelChatSDK {
             };
 
             try {
-                this.chatClient = new ChatClient(chatAdapterConfig.environmentUrl, tokenCredential);
+                await this.ACSClient?.initialize({
+                    token: chatAdapterConfig.token as string,
+                    environmentUrl: chatAdapterConfig.environmentUrl
+                });
             } catch (error) {
-                console.error(`OmnichannelChatSDK/startChat/ChatClient/error ${error}`);
-                throw new Error('ChatClientInitFailed');
+                console.error(`OmnichannelChatSDK/startChat/initialize/error ${error}`);
+                return error;
             }
 
             try {
-                this.chatThreadClient = await this.chatClient?.getChatThreadClient(chatAdapterConfig.threadId as string);
+                this.conversation = await this.ACSClient?.joinConversation({
+                    id: chatAdapterConfig.id,
+                    threadId: chatAdapterConfig.threadId as string
+                }) as ACSConversation;
             } catch (error) {
-                console.error(`OmnichannelChatSDK/startChat/ChatThreadClient/error ${error}`);
-                throw new Error('GetChatThreadClientFailed');
-            }
-
-            try {
-                await this.chatClient.startRealtimeNotifications();
-            } catch (error) {
-                console.error(`OmnichannelChatSDK/startChat/startRealtimeNotifications/error ${error}`);
-                throw new Error('StartRealtimeNotificationsFailed');
+                console.error(`OmnichannelChatSDK/startChat/joinConversation/error ${error}`);
             }
         } else {
             try {
@@ -364,8 +356,6 @@ class OmnichannelChatSDK {
             this.conversation = null;
             this.requestId = uuidv4();
             this.chatToken = {};
-            this.chatClient = null;
-            this.chatThreadClient = null;
 
             this.ic3ClientLogger?.setRequestId(this.requestId);
             this.ic3ClientLogger?.setChatId('');
@@ -510,7 +500,7 @@ class OmnichannelChatSDK {
         if (this.liveChatVersion === LiveChatVersion.V2) {
 
         } else {
-            return this.conversation?.getMessages();
+            return (this.conversation as IConversation)?.getMessages();
         }
     }
 
@@ -541,7 +531,7 @@ class OmnichannelChatSDK {
             }
 
             try {
-                await this.chatThreadClient?.sendMessage(sendMessageRequest);
+                await (this.conversation as ACSConversation)?.sendMessage(sendMessageRequest);
             } catch (error) {
 
             }
@@ -575,20 +565,7 @@ class OmnichannelChatSDK {
 
     public async onNewMessage(onNewMessageCallback: CallableFunction, optionalParams: OnNewMessageOptionalParams | unknown = {}): Promise<void> {
         if (this.liveChatVersion === LiveChatVersion.V2) {
-            this.chatClient?.on("chatMessageReceived", (event: ChatMessageReceivedEvent) => {
-                const {sender} = event;
-
-                const customerMessageCondition = ((sender as CommunicationUserIdentifier).communicationUserId === (this.chatToken.visitorId || 'teamsvisitor'))
-
-                // Filter out customer messages
-                if (customerMessageCondition) {
-                    return;
-                }
-
-                if (event.message) {
-                    Object.assign(event, {content: event.message});
-                }
-
+            (this.conversation as ACSConversation)?.registerOnNewMessage((event: ChatMessageReceivedEvent) => {
                 onNewMessageCallback(event);
             });
         } else {
@@ -641,10 +618,10 @@ class OmnichannelChatSDK {
             });
 
             try {
-                await this.conversation!.indicateTypingStatus(0);
-                const members: IPerson[] = await this.conversation!.getMembers();
+                await (this.conversation as IConversation)!.indicateTypingStatus(0);
+                const members: IPerson[] = await (this.conversation as IConversation)!.getMembers();
                 const botMembers = members.filter((member: IPerson) => member.type === PersonType.Bot);
-                await this.conversation!.sendMessageToBot(botMembers[0].id, {payload: typingPayload});
+                await (this.conversation as IConversation)!.sendMessageToBot(botMembers[0].id, {payload: typingPayload});
 
                 this.scenarioMarker.completeScenario(TelemetryEvent.SendTypingEvent, {
                     RequestId: this.requestId,
@@ -724,9 +701,9 @@ class OmnichannelChatSDK {
         let fileMetadata: IFileMetadata;
 
         if (platform.isReactNative() || platform.isNode()) {
-            fileMetadata = await this.conversation!.sendFileData(fileInfo as IFileInfo, FileSharingProtocolType.AmsBasedFileSharing);
+            fileMetadata = await (this.conversation as IConversation)!.sendFileData(fileInfo as IFileInfo, FileSharingProtocolType.AmsBasedFileSharing);
         } else {
-            fileMetadata = await this.conversation!.uploadFile(fileInfo as File, FileSharingProtocolType.AmsBasedFileSharing);
+            fileMetadata = await (this.conversation as IConversation)!.uploadFile(fileInfo as File, FileSharingProtocolType.AmsBasedFileSharing);
         }
 
         const messageToSend: IRawMessage = {
@@ -772,7 +749,7 @@ class OmnichannelChatSDK {
         })
 
         try {
-            const downloadedFile = await this.conversation!.downloadFile(fileMetadata);
+            const downloadedFile = await (this.conversation as IConversation)!.downloadFile(fileMetadata);
             this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment, {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string
