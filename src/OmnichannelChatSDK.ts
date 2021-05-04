@@ -54,6 +54,7 @@ import LiveWorkItemState from "./core/LiveWorkItemState";
 import LiveChatVersion from "./core/LiveChatVersion";
 import ACSClient, { ACSConversation } from "./core/ACSClient";
 import { ChatMessageReceivedEvent } from '@azure/communication-signaling';
+import { ChatMessage } from "@azure/communication-chat";
 
 const acsResourceEndpoint = "https://{0}-Trial-acs.communication.azure.com";
 
@@ -496,9 +497,9 @@ class OmnichannelChatSDK {
         return this.chatToken;
     }
 
-    public async getMessages(): Promise<IMessage[] | undefined> {
+    public async getMessages(): Promise<IMessage[] | ChatMessage[] | undefined> {
         if (this.liveChatVersion === LiveChatVersion.V2) {
-
+            return (this.conversation as ACSConversation)?.getMessages();
         } else {
             return (this.conversation as IConversation)?.getMessages();
         }
