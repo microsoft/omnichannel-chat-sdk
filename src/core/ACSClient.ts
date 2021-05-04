@@ -1,4 +1,4 @@
-import { ChatClient, ChatThreadClient } from "@azure/communication-chat";
+import { ChatClient, ChatMessage, ChatThreadClient } from "@azure/communication-chat";
 import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
 import { ChatMessageReceivedEvent } from '@azure/communication-signaling';
 
@@ -41,8 +41,23 @@ export class ACSConversation {
         }
     }
 
-    public async getMessages() {
+    public async getMessages(): Promise<ChatMessage[]> {
 
+        const messages: ChatMessage[] = [];
+        const pagedAsyncIterableIterator = await (this.chatThreadClient as ChatThreadClient).listMessages();
+        let nextMessage = await pagedAsyncIterableIterator.next();
+        while (!nextMessage.done) {
+            let chatMessage = nextMessage.value;
+
+            // Filter text type messages only
+            if (chatMessage.type === 'text') {
+                messages.push(chatMessage);
+            }
+
+            nextMessage = await pagedAsyncIterableIterator.next();
+        }
+
+        return messages;
     }
 
     public async getMembers() {
