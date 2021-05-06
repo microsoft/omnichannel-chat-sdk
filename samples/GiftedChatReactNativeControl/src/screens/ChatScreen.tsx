@@ -155,7 +155,9 @@ const ChatScreen = (props: ChatScreenProps) => {
     if (buttonId === buttons.startChat.id) {
       console.info('[ClickStartChat]');
       await chatSDK!.startChat();
-      chatSDK!.onNewMessage(onNewMessage);
+      chatSDK!.onNewMessage(onNewMessage, {
+        rehydrate: true
+      });
       chatSDK!.onTypingEvent(onTypingEvent);
       chatSDK!.onAgentEndSession(onAgentEndSession);
 
