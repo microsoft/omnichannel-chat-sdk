@@ -130,17 +130,16 @@ function WebChat() {
     const liveChatContext = await chatSDK?.getCurrentLiveChatContext();
     localStorage.setItem('liveChatContext', JSON.stringify(liveChatContext));
 
-    // chatSDK?.onNewMessage(onNewMessage);
+    chatSDK?.onNewMessage(onNewMessage, {rehydrate: true});
     chatSDK?.onTypingEvent(onTypingEvent);
     chatSDK?.onAgentEndSession(onAgentEndSession);
 
     const chatAdapter = await chatSDK?.createChatAdapter();
 
-    // Recommended way to listen to messages when using WebChat
-    (chatAdapter as any).activity$.subscribe((activity: any) => {
-      console.log(`[activity] ${activity.text}`);
-      dispatch({type: ActionType.SET_LOADING, payload: false});
-    });
+    // (chatAdapter as any).activity$.subscribe((activity: any) => {
+    //   console.log(`[activity] ${activity.text}`);
+    //   dispatch({type: ActionType.SET_LOADING, payload: false});
+    // });
 
     setChatAdapter(chatAdapter);
     dispatch({type: ActionType.SET_LOADING, payload: false});
