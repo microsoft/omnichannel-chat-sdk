@@ -40,7 +40,7 @@
   "dependencies": {
     "@azure/communication-chat": "^1.0.1-alpha.20210428.2",
     "@azure/communication-common": "^1.0.0",
-    "@microsoft/ocsdk": "^0.1.1",
+    "@microsoft/ocsdk": "^0.2.0",
     "@microsoft/omnichannel-ic3core": "^0.1.1"
   }
 }
