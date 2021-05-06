@@ -159,6 +159,11 @@ function ChatWidget() {
     }
   }
 
+  const handleTextInputChange = useCallback(async () => {
+    console.log('[sendTypingEvent]')
+    await chatSDK?.sendTypingEvent();
+  }, [chatSDK]);
+
   return (
     <div>
       <h1> Omnichannel Chat SDK </h1>
@@ -168,6 +173,7 @@ function ChatWidget() {
           subtitle='via omnichannel-sdk & react-chat-widget control'
           handleNewUserMessage={handleNewUserMessage}
           handleQuickButtonClicked={handleQuickButtonClicked}
+          handleTextInputChange={handleTextInputChange}
         />
       </div>
     </div>

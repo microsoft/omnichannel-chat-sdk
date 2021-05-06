@@ -13,12 +13,12 @@ The sample app includes the following scenarios:
 - [x] Outgoing messages
 - [x] Outgoing file attachments
 - [ ] Receive typing
-- [ ] Send typing
+- [x] Send typing
 - [ ] Receive agent end session event
 - [ ] Download transcript
 - [ ] Email transcript
 - [ ] Pre-Chat Survey
-- [X] Reconnect existing chat
+- [x] Reconnect existing chat
 - [ ] Escalation to Voice & Video
 
 ## Prerequisites
