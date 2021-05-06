@@ -10,7 +10,7 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
   },
   "dependencies": {
-    "@microsoft/omnichannel-chat-sdk": "^0.1.1-main.fadb071",
+    "@microsoft/omnichannel-chat-sdk": "^0.2.1-main.daf9db6",
     "adaptivecards-reactnative": "^2.2.2",
     "buffer": "^6.0.3",
     "react": "16.9.0",
@@ -19,7 +19,7 @@
     "react-native-dotenv": "^2.4.3",
     "react-native-fs": "^2.16.6",
     "react-native-gifted-chat": "^0.16.3",
-    "react-native-navigation": "^7.6.0"
+    "react-native-navigation": "^7.9.0"
   },
   "devDependencies": {
     "@babel/core": "^7.6.2",
