@@ -1382,21 +1382,21 @@
     "@types/yargs" "^15.0.0"
     chalk "^4.0.0"
 
-"@microsoft/ocsdk@^0.1.1":
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/@microsoft/ocsdk/-/ocsdk-0.1.1.tgz#e2c1e95f8bcadb9b630f9fa5ee07919e73ad515e"
-  integrity sha512-06owdRQ88g93CNSIalpGsXvV5+y8yCSQVEOnX0OQNF8H++ud9Rve+Q9db5ym+bE64BtDa4W/U8iyByJfLQFAfA==
+"@microsoft/ocsdk@^0.2.0":
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/@microsoft/ocsdk/-/ocsdk-0.2.0.tgz#e2b8e6c47d9f0fd75739e85be8244ddd9a7dc8f1"
+  integrity sha512-4JrWGrzOpm2EclkkOCo+pP2GMBmPcYyr01bA6LtdD2LP/oB0b9pmNUThZ5NzsVhp4sp545MHSBiLLkBYV+Jexw==
   dependencies:
     "@babel/runtime" "^7.10.3"
     "@types/node" "^12.12.7"
     axios "^0.21.1"
 
-"@microsoft/omnichannel-chat-sdk@^0.1.1-main.c05dc32":
-  version "0.1.1-main.c05dc32"
-  resolved "https://registry.yarnpkg.com/@microsoft/omnichannel-chat-sdk/-/omnichannel-chat-sdk-0.1.1-main.c05dc32.tgz#e15d9d749d7ae2c0d8cf5a49f7c2b2df0c78f9c1"
-  integrity sha512-EBOc1b2XeHlOdVWbBC5vbufPqYe8i7Hsn8W/Gyh32lfyHcO9QORj754jqKnf7SCwFHJb8dGFcWMSGZGRfbwqvQ==
+"@microsoft/omnichannel-chat-sdk@^0.2.1-main.daf9db6":
+  version "0.2.1-main.daf9db6"
+  resolved "https://registry.yarnpkg.com/@microsoft/omnichannel-chat-sdk/-/omnichannel-chat-sdk-0.2.1-main.daf9db6.tgz#e91b0ac011d2f707fbc956a013c1a0fdc369596f"
+  integrity sha512-AOqdgzV7Gif3bCPj/Se8cJgvMK7mEzlSAwJuG4XjZ0S/3K5k03ol1rE9nFUfVjg9WTqlS0kbAfhzWu8UKiF9rA==
   dependencies:
-    "@microsoft/ocsdk" "^0.1.1"
+    "@microsoft/ocsdk" "^0.2.0"
     "@microsoft/omnichannel-ic3core" "^0.1.1"
 
 "@microsoft/omnichannel-ic3core@^0.1.1":
