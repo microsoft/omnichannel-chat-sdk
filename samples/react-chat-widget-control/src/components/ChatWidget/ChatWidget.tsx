@@ -80,43 +80,6 @@ function ChatWidget() {
 
       await chatSDK?.startChat(optionalParams);
 
-      // Rehydrate messages
-      const messages: any = await chatSDK?.getMessages();
-      console.log(`[Rehydrate] ${messages.length} message(s)`);
-      for (const message of messages.reverse()) {
-        if (isSystemMessage(message)) {
-          addResponseMessage(message.content);
-        } else if (isCustomerMessage(message)) {
-          // Renders attachment
-          if (message.fileMetadata) {
-            console.log(`[Rehydrate][Attachment][User] ${message.fileMetadata.name}`);
-            const blob = await chatSDK?.downloadFileAttachment(message.fileMetadata);
-            const fileReader = new FileReader();
-            fileReader.readAsDataURL(blob as Blob);
-            fileReader.onloadend = () => {
-              addUserMessage(`![attachment](${fileReader.result})`);
-            }
-            continue;
-          }
-
-          addUserMessage(message.content);
-        } else {
-          // Renders attachment
-          if (message.fileMetadata) {
-            console.log(`[Rehydrate][Attachment][Agent] ${message.fileMetadata.name}`);
-            const blob = await chatSDK?.downloadFileAttachment(message.fileMetadata);
-            const fileReader = new FileReader();
-            fileReader.readAsDataURL(blob as Blob);
-            fileReader.onloadend = () => {
-              addResponseMessage(`![attachment](${fileReader.result})`);
-            }
-            continue;
-          }
-
-          addResponseMessage(message.content);
-        }
-      }
-
       const chatToken = await chatSDK?.getChatToken();
       console.log(`[chatToken]`);
       console.log(chatToken);
@@ -126,17 +89,39 @@ function ChatWidget() {
       localStorage.setItem('liveChatContext', JSON.stringify(liveChatContext));
 
       chatSDK?.onNewMessage(async (message: any) => {
-        if (message.fileMetadata) {
-          console.log(`[onNewMessage][Attachment] ${message.fileMetadata.name}`);
-          const blob = await chatSDK?.downloadFileAttachment(message.fileMetadata);
-          const fileReader = new FileReader();
-          fileReader.readAsDataURL(blob as Blob);
-          fileReader.onloadend = () => {
-            addResponseMessage(`![attachment](${fileReader.result})`);
+        if (isSystemMessage(message)) {
+          addResponseMessage(message.content);
+        } else if (isCustomerMessage(message)) {
+          // Renders attachment
+          if (message.fileMetadata) {
+            console.log(`[onNewMessage][Attachment][User] ${message.fileMetadata.name}`);
+            const blob = await chatSDK?.downloadFileAttachment(message.fileMetadata);
+            const fileReader = new FileReader();
+            fileReader.readAsDataURL(blob as Blob);
+            fileReader.onloadend = () => {
+              addUserMessage(`![attachment](${fileReader.result})`);
+              return;
+            }
+          } else {
+            addUserMessage(message.content);
           }
-          return;
+        } else {
+          // Renders attachment
+          if (message.fileMetadata) {
+            console.log(`[onNewMessage][Attachment][Agent] ${message.fileMetadata.name}`);
+            const blob = await chatSDK?.downloadFileAttachment(message.fileMetadata);
+            const fileReader = new FileReader();
+            fileReader.readAsDataURL(blob as Blob);
+            fileReader.onloadend = () => {
+              addResponseMessage(`![attachment](${fileReader.result})`);
+              return;
+            }
+          } else {
+            addResponseMessage(message.content);
+          }
         }
-        addResponseMessage(message.content);
+      }, {
+        rehydrate: true
       });
 
       setHasChatStarted(true);
@@ -174,6 +159,11 @@ function ChatWidget() {
     }
   }
 
+  const handleTextInputChange = useCallback(async () => {
+    console.log('[sendTypingEvent]')
+    await chatSDK?.sendTypingEvent();
+  }, [chatSDK]);
+
   return (
     <div>
       <h1> Omnichannel Chat SDK </h1>
@@ -183,6 +173,7 @@ function ChatWidget() {
           subtitle='via omnichannel-sdk & react-chat-widget control'
           handleNewUserMessage={handleNewUserMessage}
           handleQuickButtonClicked={handleQuickButtonClicked}
+          handleTextInputChange={handleTextInputChange}
         />
       </div>
     </div>

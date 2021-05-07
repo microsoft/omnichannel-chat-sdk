@@ -124,23 +124,30 @@ function WebChat() {
 
     dispatch({type: ActionType.SET_CHAT_STARTED, payload: true});
     dispatch({type: ActionType.SET_LOADING, payload: true});
-    await chatSDK?.startChat(optionalParams);
+
+    try {
+      await chatSDK?.startChat(optionalParams);
+    } catch (error) {
+      console.log(`Unable to start chat: ${error.message}`);
+      return;
+    }
 
     // Cache current conversation context
     const liveChatContext = await chatSDK?.getCurrentLiveChatContext();
-    localStorage.setItem('liveChatContext', JSON.stringify(liveChatContext));
+    if (liveChatContext &&  Object.keys(liveChatContext).length) {
+      localStorage.setItem('liveChatContext', JSON.stringify(liveChatContext));
+    }
 
-    // chatSDK?.onNewMessage(onNewMessage);
+    chatSDK?.onNewMessage(onNewMessage, {rehydrate: true});
     chatSDK?.onTypingEvent(onTypingEvent);
     chatSDK?.onAgentEndSession(onAgentEndSession);
 
     const chatAdapter = await chatSDK?.createChatAdapter();
 
-    // Recommended way to listen to messages when using WebChat
-    (chatAdapter as any).activity$.subscribe((activity: any) => {
-      console.log(`[activity] ${activity.text}`);
-      dispatch({type: ActionType.SET_LOADING, payload: false});
-    });
+    // (chatAdapter as any).activity$.subscribe((activity: any) => {
+    //   console.log(`[activity] ${activity.text}`);
+    //   dispatch({type: ActionType.SET_LOADING, payload: false});
+    // });
 
     setChatAdapter(chatAdapter);
     dispatch({type: ActionType.SET_LOADING, payload: false});
