@@ -609,7 +609,12 @@ class OmnichannelChatSDK {
 
     public async sendTypingEvent(): Promise<void> {
         if (this.liveChatVersion === LiveChatVersion.V2) {
-
+            try {
+                await this.OCClient.sendTypingIndicator(this.requestId, LiveChatVersion.V2);
+            } catch (error) {
+                console.error("OmnichannelChatSDK/sendTypingEvent/error");
+                throw new Error('OCClientSendTypingFailed');
+            }
         } else {
             const typingPayload = `{isTyping: 0}`;
 
