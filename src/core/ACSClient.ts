@@ -1,4 +1,4 @@
-import { ChatClient, ChatMessage, ChatThreadClient } from "@azure/communication-chat";
+import { ChatClient, ChatMessage, ChatParticipant, ChatThreadClient } from "@azure/communication-chat";
 import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
 import { ChatMessageReceivedEvent } from '@azure/communication-signaling';
 
@@ -10,6 +10,12 @@ export interface ACSSessionInfo {
 export interface ACSClientConfig {
     token: string;
     environmentUrl: string;
+}
+
+export enum ACSParticipantDisplayName {
+    Customer = 'Customer',
+    Agent = '__agent__',
+    System = '__system__'
 }
 
 export class ACSConversation {
@@ -42,7 +48,6 @@ export class ACSConversation {
     }
 
     public async getMessages(): Promise<ChatMessage[]> {
-
         const messages: ChatMessage[] = [];
         const pagedAsyncIterableIterator = await (this.chatThreadClient as ChatThreadClient).listMessages();
         let nextMessage = await pagedAsyncIterableIterator.next();
@@ -60,8 +65,17 @@ export class ACSConversation {
         return messages;
     }
 
-    public async getMembers() {
+    public async getParticipants(): Promise<ChatParticipant[]> {
+        const participants: ChatParticipant[] = [];
+        const pagedAsyncIterableIterator = await (this.chatThreadClient as ChatThreadClient).listParticipants();
+        let next = await pagedAsyncIterableIterator.next();
+        while (!next.done) {
+           let user = next.value;
+           participants.push(user);
+           next = await pagedAsyncIterableIterator.next();
+        }
 
+        return participants;
     }
 
     public async registerOnNewMessage(onNewMessageCallback: CallableFunction): Promise<void> {
