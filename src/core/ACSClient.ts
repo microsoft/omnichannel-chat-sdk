@@ -12,12 +12,6 @@ export interface ACSClientConfig {
     environmentUrl: string;
 }
 
-export enum ACSParticipantDisplayName {
-    Customer = 'Customer',
-    Agent = '__agent__',
-    System = '__system__'
-}
-
 export class ACSConversation {
     private tokenCredential: AzureCommunicationTokenCredential;
     private chatClient: ChatClient;
@@ -109,6 +103,10 @@ export class ACSConversation {
             if (event.message) {
                 Object.assign(event, {content: event.message});
             }
+
+            // Add alias to differentiate sender type
+            const participant = this.participantsMapping[(sender as CommunicationUserIdentifier).communicationUserId];
+            Object.assign(event.sender, {alias: participant.displayName});
 
             onNewMessageCallback(event);
         });
