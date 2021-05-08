@@ -566,6 +566,22 @@ class OmnichannelChatSDK {
 
     public async onNewMessage(onNewMessageCallback: CallableFunction, optionalParams: OnNewMessageOptionalParams | unknown = {}): Promise<void> {
         if (this.liveChatVersion === LiveChatVersion.V2) {
+            const postedMessages = new Set();
+
+            if ((optionalParams as OnNewMessageOptionalParams).rehydrate) {
+                this.debug && console.log('[OmnichannelChatSDK][onNewMessage] rehydrate');
+                const messages = await this.getMessages() as ChatMessage[];
+                for (const message of messages.reverse()) {
+                    const {id} = message;
+                    if (postedMessages.has(id)) {
+                      continue;
+                    }
+
+                    postedMessages.add(id);
+                    onNewMessageCallback(message);
+                }
+            }
+
             (this.conversation as ACSConversation)?.registerOnNewMessage((event: ChatMessageReceivedEvent) => {
                 onNewMessageCallback(event);
             });
