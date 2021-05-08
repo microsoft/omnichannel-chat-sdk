@@ -23,6 +23,7 @@ export class ACSConversation {
     private chatClient: ChatClient;
     private chatThreadClient?: ChatThreadClient;
     private sessionInfo?: ACSSessionInfo;
+    private participantsMapping: any;
 
     constructor(tokenCredential: AzureCommunicationTokenCredential, chatClient: ChatClient) {
         this.tokenCredential = tokenCredential;
@@ -45,6 +46,8 @@ export class ACSConversation {
             console.error(`ACSConversation/chatClient/startRealtimeNotifications/error ${error}`);
             throw new Error('StartRealtimeNotificationsFailed');
         }
+
+        this.participantsMapping = await this.createParticipantsMapping();
     }
 
     public async getMessages(): Promise<ChatMessage[]> {
@@ -133,6 +136,20 @@ export class ACSConversation {
 
     public async disconnect(): Promise<void> {
 
+    }
+
+    private async createParticipantsMapping() {
+        const participants = await this.getParticipants();
+        const participantsMapping = {};
+        for (const participant of participants) {
+          const {id} = participant;
+
+          if (!Object.keys(participantsMapping).includes((id as CommunicationUserIdentifier).communicationUserId)) {
+            Object.assign(participantsMapping, {[(id as CommunicationUserIdentifier).communicationUserId]: participant});
+          }
+        }
+
+        return participantsMapping;
     }
 }
 
