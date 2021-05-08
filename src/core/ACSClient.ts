@@ -58,9 +58,23 @@ export class ACSConversation {
             let chatMessage = nextMessage.value;
 
             // Filter text type messages only
-            if (chatMessage.type === 'text') {
-                messages.push(chatMessage);
+            if (chatMessage.type !== 'text') {
+                nextMessage = await pagedAsyncIterableIterator.next();
+                continue;
             }
+
+            // Flatten out message content
+            if (chatMessage.content?.message) {
+                Object.assign(chatMessage, {content: chatMessage.content?.message});
+            }
+
+            const {sender} = chatMessage;
+
+            // Add alias to differentiate sender type
+            const participant = this.participantsMapping[(sender as CommunicationUserIdentifier).communicationUserId];
+            Object.assign(chatMessage.sender, {alias: participant.displayName});
+
+            messages.push(chatMessage);
 
             nextMessage = await pagedAsyncIterableIterator.next();
         }
