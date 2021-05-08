@@ -53,7 +53,7 @@ import LiveWorkItemDetails from "./core/LiveWorkItemDetails";
 import LiveWorkItemState from "./core/LiveWorkItemState";
 import LiveChatVersion from "./core/LiveChatVersion";
 import ACSClient, { ACSConversation } from "./core/ACSClient";
-import { ChatMessageReceivedEvent } from '@azure/communication-signaling';
+import { ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import { ChatMessage } from "@azure/communication-chat";
 
 const acsResourceEndpoint = "https://{0}-Trial-acs.communication.azure.com";
@@ -665,10 +665,12 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async onAgentEndSession(onAgentEndSessionCallback: (message: IRawThread) => void): Promise<void> {
+    public async onAgentEndSession(onAgentEndSessionCallback: (message: IRawThread | ParticipantsRemovedEvent) => void): Promise<void> {
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
-
+            (this.conversation as ACSConversation).registerOnThreadUpdate((event: ParticipantsRemovedEvent) => {
+                onAgentEndSessionCallback(event);
+            });
         } else {
             this.scenarioMarker.startScenario(TelemetryEvent.OnAgentEndSession, {
                 RequestId: this.requestId,
