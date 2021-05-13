@@ -458,6 +458,20 @@ class OmnichannelChatSDK {
         return this.chatToken;
     }
 
+    public async getCallingToken(): Promise<string> {
+        if (this.chatToken && Object.keys(this.chatToken).length === 0) {
+            return '';
+        }
+
+        if (this.chatToken.voiceVideoCallToken) {
+            console.log(`calling:acs`);
+            return this.chatToken.voiceVideoCallToken.Token;
+        } else {
+            console.log(`calling:skype`);
+            return this.chatToken.token as string;
+        }
+    }
+
     public async getMessages(): Promise<IMessage[] | undefined> {
         return this.conversation?.getMessages();
     }
