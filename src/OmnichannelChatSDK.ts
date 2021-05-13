@@ -664,7 +664,7 @@ class OmnichannelChatSDK {
 
     public async onTypingEvent(onTypingEventCallback: CallableFunction): Promise<void> {
         if (this.liveChatVersion === LiveChatVersion.V2) {
-
+            (this.conversation as ACSConversation).onTypingEvent(onTypingEventCallback);
         } else {
             this.conversation?.registerOnNewMessage((message: IRawMessage) => {
                 const {messageType} = message;

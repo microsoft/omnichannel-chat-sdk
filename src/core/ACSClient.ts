@@ -1,6 +1,6 @@
 import { ChatClient, ChatMessage, ChatParticipant, ChatThreadClient } from "@azure/communication-chat";
 import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
-import { ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
+import { ChatMessageReceivedEvent, ParticipantsRemovedEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
 
 export interface ACSSessionInfo {
     id: string;
@@ -115,6 +115,12 @@ export class ACSConversation {
     public async registerOnThreadUpdate(onThreadUpdateCallback: CallableFunction): Promise<void> {
         this.chatClient?.on("participantsRemoved", (event: ParticipantsRemovedEvent) => {
             onThreadUpdateCallback(event);
+        });
+    }
+
+    public async onTypingEvent(onTypingEventCallback: CallableFunction): Promise<void> {
+        this.chatClient?.on("typingIndicatorReceived", (event: TypingIndicatorReceivedEvent) => {
+            onTypingEventCallback(event);
         });
     }
 
