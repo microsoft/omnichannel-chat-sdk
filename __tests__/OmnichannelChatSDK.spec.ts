@@ -727,6 +727,62 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.sessionInit.mock.calls[0][1]).toMatchObject(sessionInitOptionalParams);
         });
 
+        it('ChatSDK.getCallingToken() should return acs token if available', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient.getChatToken = jest.fn();
+
+            chatSDK.IC3Client = {
+                initialize: jest.fn(),
+                joinConversation: jest.fn()
+            }
+
+            await chatSDK.startChat();
+
+            chatSDK.chatToken = {
+                chatId: '',
+                token: 'skypetoken',
+                regionGTMS: '{}',
+                voiceVideoCallToken: {
+                    ExpiresIn: '',
+                    Token: 'acstoken',
+                    UserId: ''
+                }
+            };
+
+            const callingToken = await chatSDK.getCallingToken();
+            expect(callingToken).toEqual(chatSDK.chatToken.voiceVideoCallToken.Token);
+        });
+
+        it('ChatSDK.getCallingToken() should return skype token if acs token is not available', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient.getChatToken = jest.fn();
+
+            chatSDK.IC3Client = {
+                initialize: jest.fn(),
+                joinConversation: jest.fn()
+            }
+
+            await chatSDK.startChat();
+
+            chatSDK.chatToken = {
+                chatId: '',
+                token: 'skypetoken',
+                regionGTMS: '{}',
+                voiceVideoCallToken: null
+            };
+
+            const callingToken = await chatSDK.getCallingToken();
+            expect(callingToken).toEqual(chatSDK.chatToken.token);
+        });
+
         it('ChatSDK.getCurrentLiveChatContext() should return chat session data', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
