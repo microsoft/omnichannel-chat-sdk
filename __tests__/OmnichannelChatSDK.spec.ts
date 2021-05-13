@@ -783,7 +783,6 @@ describe('Omnichannel Chat SDK', () => {
             expect(callingToken).toEqual(chatSDK.chatToken.token);
         });
 
-
         it('ChatSDK.getCurrentLiveChatContext() should return chat session data', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
