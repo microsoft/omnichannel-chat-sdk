@@ -74,7 +74,7 @@ class OmnichannelChatSDK {
     private scenarioMarker: ScenarioMarker;
     private ic3ClientLogger: IC3ClientLogger | null = null;
     private ocSdkLogger: OCSDKLogger | null = null;
-    private isPersistentChat: boolean = false;
+    private isPersistentChat = false;
 
     constructor(omnichannelConfig: IOmnichannelConfig, chatSDKConfig: IChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
