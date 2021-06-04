@@ -19,7 +19,7 @@ interface PersistentChatConfig {
 interface IChatSDKConfig {
     dataMasking?: IDataMaskingSDKConfig,
     telemetry?: TelemetrySDKConfig,
-    persistentChat ?: PersistentChatConfig,
+    persistentChat?: PersistentChatConfig,
     getAuthToken?: () => Promise<string|null>,
     ic3Config?: IC3Config,
     chatAdapterConfig?: ChatAdapterConfig
