@@ -9,6 +9,10 @@ const defaultChatSDKConfig: IChatSDKConfig = {
     telemetry: {
         disable: false,
         ariaTelemetryKey
+    },
+   persistentChat: {
+        disable: true,
+        tokenUpdateTime: 21600000
     }
 };
 
