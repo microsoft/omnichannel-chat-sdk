@@ -101,6 +101,8 @@ class OmnichannelChatSDK {
 
         validateOmnichannelConfig(omnichannelConfig);
         validateSDKConfig(chatSDKConfig);
+        //my test
+        console.log(chatSDKConfig.persistentChat)
 
         this.chatSDKConfig.telemetry?.disable && this.telemetry?.disable();
 
