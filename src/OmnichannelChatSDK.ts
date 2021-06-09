@@ -981,7 +981,7 @@ class OmnichannelChatSDK {
             const isPreChatEnabled = msdyn_prechatenabled === true || msdyn_prechatenabled == "true";
 
         
-            if (liveWSAndLiveChatEngJoin.msdyn_conversationmode?.toString() === ConversationMode.PersistentChat.toString()) {
+            if (msdyn_conversationmode?.toString() === ConversationMode.PersistentChat.toString()) {
                 this.isPersistentChat = true;
             }
             
