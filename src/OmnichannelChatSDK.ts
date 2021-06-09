@@ -51,6 +51,8 @@ import ScenarioMarker from "./telemetry/ScenarioMarker";
 import { createIC3ClientLogger, createOCSDKLogger, IC3ClientLogger, OCSDKLogger } from "./utils/loggers";
 import LiveWorkItemDetails from "./core/LiveWorkItemDetails";
 import LiveWorkItemState from "./core/LiveWorkItemState";
+import ConversationMode from "./core/ConversationMode";
+
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -975,8 +977,13 @@ class OmnichannelChatSDK {
                 this.authSettings = authSettings;
             }
 
-            const {PreChatSurvey: preChatSurvey, msdyn_prechatenabled, msdyn_callingoptions} = liveWSAndLiveChatEngJoin;
+            const {PreChatSurvey: preChatSurvey, msdyn_prechatenabled, msdyn_callingoptions, msdyn_conversationmode} = liveWSAndLiveChatEngJoin;
             const isPreChatEnabled = msdyn_prechatenabled === true || msdyn_prechatenabled == "true";
+        
+            if (msdyn_conversationmode?.toString() === ConversationMode.PersistentChat.toString()) {
+                this.isPersistentChat = true;
+            }
+            
             if (isPreChatEnabled && preChatSurvey && preChatSurvey.trim().length > 0) {
                 this.preChatSurvey = preChatSurvey;
             }
