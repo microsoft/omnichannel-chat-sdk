@@ -1,6 +1,7 @@
 enum ConversationMode {
-    PersistentChat = 192350001,
-    Livechat = 192350000
+    LiveChat = 192350000,
+    PersistentChat = 192350001
+    
 }
 
 export default ConversationMode;
