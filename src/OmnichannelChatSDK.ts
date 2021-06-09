@@ -978,9 +978,11 @@ class OmnichannelChatSDK {
 
             const {PreChatSurvey: preChatSurvey, msdyn_prechatenabled, msdyn_callingoptions, msdyn_conversationmode} = liveWSAndLiveChatEngJoin;
             const isPreChatEnabled = msdyn_prechatenabled === true || msdyn_prechatenabled == "true";
-
-            if (liveWSAndLiveChatEngJoin.msdyn_conversationmode.toString() === ConversationMode.PersistentChat.toString()) {
-                this.isPersistentChat = true;
+            
+            if(typeof(liveWSAndLiveChatEngJoin.msdyn_conversationmode) === 'string') {
+                if (liveWSAndLiveChatEngJoin.msdyn_conversationmode.toString() === ConversationMode.PersistentChat.toString()) {
+                    this.isPersistentChat = true;
+                }
             }
     
             if (isPreChatEnabled && preChatSurvey && preChatSurvey.trim().length > 0) {
