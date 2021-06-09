@@ -979,13 +979,11 @@ class OmnichannelChatSDK {
 
             const {PreChatSurvey: preChatSurvey, msdyn_prechatenabled, msdyn_callingoptions, msdyn_conversationmode} = liveWSAndLiveChatEngJoin;
             const isPreChatEnabled = msdyn_prechatenabled === true || msdyn_prechatenabled == "true";
-
         
             if (msdyn_conversationmode?.toString() === ConversationMode.PersistentChat.toString()) {
                 this.isPersistentChat = true;
             }
             
-    
             if (isPreChatEnabled && preChatSurvey && preChatSurvey.trim().length > 0) {
                 this.preChatSurvey = preChatSurvey;
             }
