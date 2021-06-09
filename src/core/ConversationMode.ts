@@ -1,5 +1,5 @@
 enum ConversationMode {
-    PersistentChat = 192350001 ,
+    PersistentChat = 192350001,
     Livechat = 192350000
 }
 
