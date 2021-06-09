@@ -967,6 +967,7 @@ class OmnichannelChatSDK {
                 LiveChatConfigAuthSettings: authSettings,
                 LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin
             } = liveChatConfig;
+
             const {setting} = dataMaskingConfig;
             if (setting.msdyn_maskforcustomer) {
                 this.dataMaskingRules = dataMaskingConfig.dataMaskingRules;
@@ -978,12 +979,12 @@ class OmnichannelChatSDK {
 
             const {PreChatSurvey: preChatSurvey, msdyn_prechatenabled, msdyn_callingoptions, msdyn_conversationmode} = liveWSAndLiveChatEngJoin;
             const isPreChatEnabled = msdyn_prechatenabled === true || msdyn_prechatenabled == "true";
-            
-            if(typeof(liveWSAndLiveChatEngJoin.msdyn_conversationmode) === 'string') {
-                if (liveWSAndLiveChatEngJoin.msdyn_conversationmode.toString() === ConversationMode.PersistentChat.toString()) {
-                    this.isPersistentChat = true;
-                }
+
+        
+            if (liveWSAndLiveChatEngJoin.msdyn_conversationmode?.toString() === ConversationMode.PersistentChat.toString()) {
+                this.isPersistentChat = true;
             }
+            
     
             if (isPreChatEnabled && preChatSurvey && preChatSurvey.trim().length > 0) {
                 this.preChatSurvey = preChatSurvey;
