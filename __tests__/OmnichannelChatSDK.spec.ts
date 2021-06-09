@@ -8,6 +8,7 @@ import libraries from "../src/utils/libraries";
 import ChatAdapterProtocols from "../src/core/ChatAdapterProtocols";
 import AriaTelemetry from "../src/telemetry/AriaTelemetry";
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
+import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
 
 describe('Omnichannel Chat SDK', () => {
     AWTLogManager.initialize = jest.fn();
@@ -213,6 +214,19 @@ describe('Omnichannel Chat SDK', () => {
             expect(AriaTelemetry.initialize).toHaveBeenCalledTimes(1);
             expect(chatSDK.chatSDKConfig.telemetry.ariaTelemetryKey).toBe(chatSDKConfig.telemetry.ariaTelemetryKey);
             expect(fn.mock.calls[0][0]).toBe(chatSDKConfig.telemetry.ariaTelemetryKey);
+        });
+
+        it('ChatSDK should be able to pick up the default persistent chat config if not set', () => {
+            const omnichannelConfig = {
+                orgUrl: '',
+                orgId: '',
+                widgetId: ''
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+
+            expect(chatSDK.chatSDKConfig.persistentChat.disable).toBe(defaultChatSDKConfig.persistentChat!.disable);
+            expect(chatSDK.chatSDKConfig.persistentChat.tokenUpdateTime).toBe(defaultChatSDKConfig.persistentChat!.tokenUpdateTime);
         });
     });
 
