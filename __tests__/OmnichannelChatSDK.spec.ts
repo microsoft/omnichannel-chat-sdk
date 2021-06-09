@@ -228,6 +228,26 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.chatSDKConfig.persistentChat.disable).toBe(defaultChatSDKConfig.persistentChat!.disable);
             expect(chatSDK.chatSDKConfig.persistentChat.tokenUpdateTime).toBe(defaultChatSDKConfig.persistentChat!.tokenUpdateTime);
         });
+
+        it('ChatSDK should be able to pick up the custom persistent chat config if set', () => {
+            const omnichannelConfig = {
+                orgUrl: '',
+                orgId: '',
+                widgetId: ''
+            };
+
+            const chatSDKConfig = {
+                persistentChat: {
+                    disable: false,
+                    tokenUpdateTime: 100
+                }
+            }
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+
+            expect(chatSDK.chatSDKConfig.persistentChat.disable).toBe(chatSDKConfig.persistentChat.disable);
+            expect(chatSDK.chatSDKConfig.persistentChat.tokenUpdateTime).toBe(chatSDKConfig.persistentChat.tokenUpdateTime);
+        });
     });
 
     describe('Functionalities', () => {
