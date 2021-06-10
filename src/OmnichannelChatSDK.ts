@@ -55,6 +55,7 @@ import LiveChatVersion from "./core/LiveChatVersion";
 import ACSClient, { ACSConversation } from "./core/ACSClient";
 import { ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import { ChatMessage } from "@azure/communication-chat";
+import ConversationMode from "./core/ConversationMode";
 
 const acsResourceEndpoint = "https://{0}-Trial-acs.communication.azure.com";
 
@@ -82,6 +83,7 @@ class OmnichannelChatSDK {
     private scenarioMarker: ScenarioMarker;
     private ic3ClientLogger: IC3ClientLogger | null = null;
     private ocSdkLogger: OCSDKLogger | null = null;
+    private isPersistentChat = false;
 
     constructor(omnichannelConfig: IOmnichannelConfig, chatSDKConfig: IChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
@@ -495,6 +497,20 @@ class OmnichannelChatSDK {
         }
 
         return this.chatToken;
+    }
+
+    public async getCallingToken(): Promise<string> {
+        if (this.chatToken && Object.keys(this.chatToken).length === 0) {
+            return '';
+        }
+
+        if (this.chatToken.voiceVideoCallToken) {
+            console.log(`calling:acs`);
+            return this.chatToken.voiceVideoCallToken.Token;
+        } else {
+            console.log(`calling:skype`);
+            return this.chatToken.token as string;
+        }
     }
 
     public async getMessages(): Promise<IMessage[] | ChatMessage[] | undefined> {
@@ -1064,8 +1080,13 @@ class OmnichannelChatSDK {
                 this.authSettings = authSettings;
             }
 
-            const {PreChatSurvey: preChatSurvey, msdyn_prechatenabled, msdyn_callingoptions} = liveWSAndLiveChatEngJoin;
+            const {PreChatSurvey: preChatSurvey, msdyn_prechatenabled, msdyn_callingoptions, msdyn_conversationmode} = liveWSAndLiveChatEngJoin;
             const isPreChatEnabled = msdyn_prechatenabled === true || msdyn_prechatenabled == "true";
+
+            if (msdyn_conversationmode?.toString() === ConversationMode.PersistentChat.toString()) {
+                this.isPersistentChat = true;
+            }
+
             if (isPreChatEnabled && preChatSurvey && preChatSurvey.trim().length > 0) {
                 this.preChatSurvey = preChatSurvey;
             }
