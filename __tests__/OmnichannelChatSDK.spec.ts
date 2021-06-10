@@ -9,7 +9,10 @@ import ChatAdapterProtocols from "../src/core/ChatAdapterProtocols";
 import AriaTelemetry from "../src/telemetry/AriaTelemetry";
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
+<<<<<<< HEAD
 import * as settings from '../src/config/settings';
+=======
+>>>>>>> 5ef43b1bc03a52a64d186f791cd1612145fd01a9
 
 describe('Omnichannel Chat SDK', () => {
     AWTLogManager.initialize = jest.fn();
