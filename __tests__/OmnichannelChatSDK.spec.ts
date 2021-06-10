@@ -9,6 +9,7 @@ import ChatAdapterProtocols from "../src/core/ChatAdapterProtocols";
 import AriaTelemetry from "../src/telemetry/AriaTelemetry";
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
+import * as settings from '../src/config/settings';
 
 describe('Omnichannel Chat SDK', () => {
     AWTLogManager.initialize = jest.fn();
@@ -251,6 +252,10 @@ describe('Omnichannel Chat SDK', () => {
     });
 
     describe('Functionalities', () => {
+        (settings as any).ariaTelemetryKey = '';
+        (AriaTelemetry as any)._disable = true;
+        AWTLogManager.initialize = jest.fn();
+
         const omnichannelConfig = {
             orgUrl: '',
             orgId: '',
