@@ -77,7 +77,7 @@ class OmnichannelChatSDK {
     private scenarioMarker: ScenarioMarker;
     private ic3ClientLogger: IC3ClientLogger | null = null;
     private ocSdkLogger: OCSDKLogger | null = null;
-    private isPersistentChat = false;
+    private isPersistentChat: boolean = false;
     private reconnectId: null | string = null;
 
     constructor(omnichannelConfig: IOmnichannelConfig, chatSDKConfig: IChatSDKConfig = defaultChatSDKConfig) {
@@ -159,18 +159,26 @@ class OmnichannelChatSDK {
             RequestId: this.requestId
         });
 
-        if (this.isPersistentChat) {
-            const reconnectableChatsParams: IReconnectableChatsParams = {
-                authenticatedUserToken: this.authenticatedUserToken as string
-            }
-           
-            const reconnectableChatsResponse = await this.OCClient.getReconnectableChats(reconnectableChatsParams);
-           
-            if (reconnectableChatsResponse && reconnectableChatsResponse.reconnectid) {
-                this.reconnectId = reconnectableChatsResponse.reconnectid;
-            }
-        } 
+        try {
+            if (this.isPersistentChat  && ! this.chatSDKConfig.persistentChat?.disable) {
+                const reconnectableChatsParams: IReconnectableChatsParams = {
+                    authenticatedUserToken: this.authenticatedUserToken as string
+                }
+               
+                const reconnectableChatsResponse = await this.OCClient.getReconnectableChats(reconnectableChatsParams);
+               
+                if (reconnectableChatsResponse && reconnectableChatsResponse.reconnectid) {
+                    this.reconnectId = reconnectableChatsResponse.reconnectid;
+                }
+            } 
+        } catch {
+              const exceptionDetails = {
+                  response: "OCClientGetReconnectableChatsFailed"
+              }
 
+              throw Error(exceptionDetails.response);
+        }
+        
         if (optionalParams.liveChatContext && !this.isPersistentChat) {
             this.chatToken = optionalParams.liveChatContext.chatToken || {};
             this.requestId = optionalParams.liveChatContext.requestId || uuidv4();
