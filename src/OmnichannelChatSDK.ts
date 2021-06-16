@@ -17,6 +17,7 @@ import IFileInfo from "@microsoft/omnichannel-ic3core/lib/interfaces/IFileInfo";
 import IFileMetadata from "@microsoft/omnichannel-ic3core/lib/model/IFileMetadata";
 import IGetChatTokenOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTokenOptionalParams";
 import IGetChatTranscriptsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTranscriptsOptionalParams";
+import IReconnectableChatsParams from "@microsoft/ocsdk/lib/Interfaces/IReconnectableChatsParams";
 import IIC3AdapterOptions from "./external/IC3Adapter/IIC3AdapterOptions";
 import ILiveChatContext from "./core/ILiveChatContext";
 import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
@@ -84,6 +85,7 @@ class OmnichannelChatSDK {
     private ic3ClientLogger: IC3ClientLogger | null = null;
     private ocSdkLogger: OCSDKLogger | null = null;
     private isPersistentChat = false;
+    private reconnectId: null | string = null;
 
     constructor(omnichannelConfig: IOmnichannelConfig, chatSDKConfig: IChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
@@ -167,7 +169,27 @@ class OmnichannelChatSDK {
             RequestId: this.requestId
         });
 
-        if (optionalParams.liveChatContext) {
+        if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
+            try {
+                const reconnectableChatsParams: IReconnectableChatsParams = {
+                    authenticatedUserToken: this.authenticatedUserToken as string
+                }
+                
+                const reconnectableChatsResponse = await this.OCClient.getReconnectableChats(reconnectableChatsParams);
+                
+                if (reconnectableChatsResponse && reconnectableChatsResponse.reconnectid) {
+                     this.reconnectId = reconnectableChatsResponse.reconnectid;
+                }
+            } catch {
+                const exceptionDetails = {
+                    response: "OCClientGetReconnectableChatsFailed"
+                }
+
+                throw Error(exceptionDetails.response);
+            }
+        } 
+        
+        if (optionalParams.liveChatContext && !this.isPersistentChat) {
             this.chatToken = optionalParams.liveChatContext.chatToken || {};
             this.requestId = optionalParams.liveChatContext.requestId || uuidv4();
 
