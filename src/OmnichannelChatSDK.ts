@@ -159,25 +159,25 @@ class OmnichannelChatSDK {
             RequestId: this.requestId
         });
 
-        try {
-            if (this.isPersistentChat  && ! this.chatSDKConfig.persistentChat?.disable) {
-                const reconnectableChatsParams: IReconnectableChatsParams = {
-                    authenticatedUserToken: this.authenticatedUserToken as string
+        if (this.isPersistentChat  && !this.chatSDKConfig.persistentChat?.disable) {
+            try {
+                    const reconnectableChatsParams: IReconnectableChatsParams = {
+                        authenticatedUserToken: this.authenticatedUserToken as string
+                    }
+                
+                    const reconnectableChatsResponse = await this.OCClient.getReconnectableChats(reconnectableChatsParams);
+                
+                    if (reconnectableChatsResponse && reconnectableChatsResponse.reconnectid) {
+                        this.reconnectId = reconnectableChatsResponse.reconnectid;
+                    }
+            } catch {
+                const exceptionDetails = {
+                    response: "OCClientGetReconnectableChatsFailed"
                 }
-               
-                const reconnectableChatsResponse = await this.OCClient.getReconnectableChats(reconnectableChatsParams);
-               
-                if (reconnectableChatsResponse && reconnectableChatsResponse.reconnectid) {
-                    this.reconnectId = reconnectableChatsResponse.reconnectid;
-                }
-            } 
-        } catch {
-              const exceptionDetails = {
-                  response: "OCClientGetReconnectableChatsFailed"
-              }
 
-              throw Error(exceptionDetails.response);
-        }
+                throw Error(exceptionDetails.response);
+            }
+        } 
         
         if (optionalParams.liveChatContext && !this.isPersistentChat) {
             this.chatToken = optionalParams.liveChatContext.chatToken || {};
