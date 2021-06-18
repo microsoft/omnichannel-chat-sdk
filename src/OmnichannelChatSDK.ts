@@ -79,7 +79,6 @@ class OmnichannelChatSDK {
     private ocSdkLogger: OCSDKLogger | null = null;
     private isPersistentChat = false;
     private reconnectId: null | string = null;
-    private isReconnectChat = false;
 
     constructor(omnichannelConfig: IOmnichannelConfig, chatSDKConfig: IChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
@@ -332,13 +331,12 @@ class OmnichannelChatSDK {
         });
 
         const sessionCloseOptionalParams: ISessionCloseOptionalParams = {};
- 
+       
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
-            if (this.reconnectId !== null) {
-                this.isReconnectChat = true;
-            }
+            const isReconnectChat = this.reconnectId !== null? true: false;
+          
             sessionCloseOptionalParams.isPersistentChat = this.isPersistentChat;
-            sessionCloseOptionalParams.isReconnectChat = this.isReconnectChat;
+            sessionCloseOptionalParams.isReconnectChat = isReconnectChat;
         }
         
         if (this.authenticatedUserToken) {
