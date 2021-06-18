@@ -227,6 +227,10 @@ class OmnichannelChatSDK {
             initContext: {} as InitContext
         };
 
+        if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
+            sessionInitOptionalParams.reconnectId = this.reconnectId as string;
+        }
+
         if (optionalParams.customContext) {
             (sessionInitOptionalParams.initContext! as any).customContextData = optionalParams.customContext; // eslint-disable-line @typescript-eslint/no-explicit-any
         }
@@ -327,6 +331,14 @@ class OmnichannelChatSDK {
         });
 
         const sessionCloseOptionalParams: ISessionCloseOptionalParams = {};
+       
+        if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
+            const isReconnectChat = this.reconnectId !== null? true: false;
+          
+            sessionCloseOptionalParams.isPersistentChat = this.isPersistentChat;
+            sessionCloseOptionalParams.isReconnectChat = isReconnectChat;
+        }
+        
         if (this.authenticatedUserToken) {
             sessionCloseOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
         }
@@ -444,6 +456,11 @@ class OmnichannelChatSDK {
                 if (this.authenticatedUserToken) {
                     getChatTokenOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
                 }
+
+                if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
+                    getChatTokenOptionalParams.reconnectId = this.reconnectId as string;
+                }
+        
                 const chatToken = await this.OCClient.getChatToken(this.requestId, getChatTokenOptionalParams);
                 const {ChatId: chatId, Token: token, RegionGtms: regionGtms, ExpiresIn: expiresIn, VisitorId: visitorId, VoiceVideoCallToken: voiceVideoCallToken} = chatToken;
                 this.chatToken = {
