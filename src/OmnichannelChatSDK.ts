@@ -80,8 +80,7 @@ class OmnichannelChatSDK {
     private ocSdkLogger: OCSDKLogger | null = null;
     private isPersistentChat = false;
     private reconnectId: null | string = null;
-    private PersistentChatTokenUpdateTime = 21600000;
-    public  PersistentChatTimer: any;
+    private  PersistentChatTimer: any;
 
     constructor(omnichannelConfig: IOmnichannelConfig, chatSDKConfig: IChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
@@ -365,7 +364,7 @@ class OmnichannelChatSDK {
             this.PersistentChatTimer = setInterval(async  () => {
                await this.getChatToken(false);
                this.updateChatToken(this.chatToken.token as string, this.chatToken.regionGTMS);
-            }, this.PersistentChatTokenUpdateTime);
+            }, this.chatSDKConfig.persistentChat?.tokenUpdateTime);
         }
     }
 
