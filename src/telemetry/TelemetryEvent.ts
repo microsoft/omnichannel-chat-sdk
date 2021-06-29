@@ -22,7 +22,8 @@ enum TelemetryEvent {
     AcceptVideoCall = "AcceptVideoCall",
     RejectCall = "RejectCall",
     StopCall = "StopCall",
-    OnCallDisconnected = "OnCallDisconnected"
+    OnCallDisconnected = "OnCallDisconnected",
+    UpdateChatToken = "UpdateChatToken"
 }
 
 export const startEvent = (event: TelemetryEvent): string => {
