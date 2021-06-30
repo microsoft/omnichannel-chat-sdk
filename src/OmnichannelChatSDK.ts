@@ -1135,7 +1135,7 @@ class OmnichannelChatSDK {
                 ExceptionDetails: JSON.stringify(exceptionDetails)
             });
 
-            console.error(`OmnichannelChatSDK/startChat/updateChatToken/error ${error}`);
+            console.error(`OmnichannelChatSDK/updateChatToken/error ${error}`);
         }
     }
 }
