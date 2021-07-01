@@ -53,6 +53,7 @@ import { createIC3ClientLogger, createOCSDKLogger, IC3ClientLogger, OCSDKLogger 
 import LiveWorkItemDetails from "./core/LiveWorkItemDetails";
 import LiveWorkItemState from "./core/LiveWorkItemState";
 import ConversationMode from "./core/ConversationMode";
+import { defaultMessageTags } from "./core/MessageTags";
 
 
 class OmnichannelChatSDK {
@@ -164,9 +165,9 @@ class OmnichannelChatSDK {
                 const reconnectableChatsParams: IReconnectableChatsParams = {
                     authenticatedUserToken: this.authenticatedUserToken as string
                 }
-                
+
                 const reconnectableChatsResponse = await this.OCClient.getReconnectableChats(reconnectableChatsParams);
-                
+
                 if (reconnectableChatsResponse && reconnectableChatsResponse.reconnectid) {
                      this.reconnectId = reconnectableChatsResponse.reconnectid;
                 }
@@ -177,8 +178,8 @@ class OmnichannelChatSDK {
 
                 throw Error(exceptionDetails.response);
             }
-        } 
-        
+        }
+
         if (optionalParams.liveChatContext && !this.isPersistentChat) {
             this.chatToken = optionalParams.liveChatContext.chatToken || {};
             this.requestId = optionalParams.liveChatContext.requestId || uuidv4();
@@ -331,14 +332,14 @@ class OmnichannelChatSDK {
         });
 
         const sessionCloseOptionalParams: ISessionCloseOptionalParams = {};
-       
+
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
             const isReconnectChat = this.reconnectId !== null? true: false;
-          
+
             sessionCloseOptionalParams.isPersistentChat = this.isPersistentChat;
             sessionCloseOptionalParams.isReconnectChat = isReconnectChat;
         }
-        
+
         if (this.authenticatedUserToken) {
             sessionCloseOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
         }
@@ -460,7 +461,7 @@ class OmnichannelChatSDK {
                 if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
                     getChatTokenOptionalParams.reconnectId = this.reconnectId as string;
                 }
-        
+
                 const chatToken = await this.OCClient.getChatToken(this.requestId, getChatTokenOptionalParams);
                 const {ChatId: chatId, Token: token, RegionGtms: regionGtms, ExpiresIn: expiresIn, VisitorId: visitorId, VoiceVideoCallToken: voiceVideoCallToken} = chatToken;
                 this.chatToken = {
@@ -545,7 +546,7 @@ class OmnichannelChatSDK {
             deliveryMode: DeliveryMode.Bridged,
             messageType: MessageType.UserMessage,
             properties: undefined,
-            tags: [], // OC tag (system)
+            tags: [...defaultMessageTags],
             sender: {
               displayName : "Customer",
               id : "customer",
@@ -694,7 +695,7 @@ class OmnichannelChatSDK {
             contentType: MessageContentType.Text,
             deliveryMode: DeliveryMode.Bridged,
             messageType: MessageType.UserMessage,
-            tags: [],
+            tags: [...defaultMessageTags],
             sender: {
                 displayName: "Customer",
                 id: "customer",
@@ -1018,11 +1019,11 @@ class OmnichannelChatSDK {
 
             const {PreChatSurvey: preChatSurvey, msdyn_prechatenabled, msdyn_callingoptions, msdyn_conversationmode} = liveWSAndLiveChatEngJoin;
             const isPreChatEnabled = msdyn_prechatenabled === true || msdyn_prechatenabled == "true";
-        
+
             if (msdyn_conversationmode?.toString() === ConversationMode.PersistentChat.toString()) {
                 this.isPersistentChat = true;
             }
-            
+
             if (isPreChatEnabled && preChatSurvey && preChatSurvey.trim().length > 0) {
                 this.preChatSurvey = preChatSurvey;
             }
