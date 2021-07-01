@@ -1,8 +1,16 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import {SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
-import {SDKProvider as IC3SDKProvider} from '@microsoft/omnichannel-ic3core';
+import ACSClient, { ACSConversation } from "./core/ACSClient";
+import AriaTelemetry from "./telemetry/AriaTelemetry";
+import CallingOptionsOptionSetNumber from "./core/CallingOptionsOptionSetNumber";
 import ChatAdapterProtocols from "./core/ChatAdapterProtocols";
+import { ChatMessage } from "@azure/communication-chat";
+import { ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
+import ConversationMode from "./core/ConversationMode";
+import { createIC3ClientLogger, createOCSDKLogger, IC3ClientLogger, OCSDKLogger } from "./utils/loggers";
+import createTelemetry from "./utils/createTelemetry";
+import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
+import { defaultMessageTags } from "./core/MessageTags";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/FileSharingProtocolType";
 import HostType from "@microsoft/omnichannel-ic3core/lib/interfaces/HostType";
@@ -13,11 +21,11 @@ import IChatSDKMessage from "./core/IChatSDKMessage";
 import IChatToken from "./external/IC3Adapter/IChatToken";
 import IChatTranscriptBody from "./core/IChatTranscriptBody";
 import IConversation from "@microsoft/omnichannel-ic3core/lib/model/IConversation";
+import IEmailTranscriptOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IEmailTranscriptOptionalParams";
 import IFileInfo from "@microsoft/omnichannel-ic3core/lib/interfaces/IFileInfo";
 import IFileMetadata from "@microsoft/omnichannel-ic3core/lib/model/IFileMetadata";
 import IGetChatTokenOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTokenOptionalParams";
 import IGetChatTranscriptsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTranscriptsOptionalParams";
-import IReconnectableChatsParams from "@microsoft/ocsdk/lib/Interfaces/IReconnectableChatsParams";
 import IIC3AdapterOptions from "./external/IC3Adapter/IIC3AdapterOptions";
 import ILiveChatContext from "./core/ILiveChatContext";
 import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
@@ -27,36 +35,30 @@ import IOmnichannelConfiguration from "@microsoft/ocsdk/lib/Interfaces/IOmnichan
 import IPerson from "@microsoft/omnichannel-ic3core/lib/model/IPerson";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
 import IRawThread from "@microsoft/omnichannel-ic3core/lib/interfaces/IRawThread";
+import IReconnectableChatsParams from "@microsoft/ocsdk/lib/Interfaces/IReconnectableChatsParams";
+import {isCustomerMessage} from "./utils/utilities";
+import ISDKConfiguration from "@microsoft/ocsdk/lib/Interfaces/ISDKConfiguration";
 import ISessionInitOptionalParams from "@microsoft/ocsdk/lib/Interfaces/ISessionInitOptionalParams";
 import ISessionCloseOptionalParams from "@microsoft/ocsdk/lib/Interfaces/ISessionCloseOptionalParams";
-import IEmailTranscriptOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IEmailTranscriptOptionalParams";
+import libraries from "./utils/libraries";
 import IStartChatOptionalParams from "./core/IStartChatOptionalParams";
+import LiveChatVersion from "./core/LiveChatVersion";
+import LiveWorkItemDetails from "./core/LiveWorkItemDetails";
+import LiveWorkItemState from "./core/LiveWorkItemState";
+import { loadScript } from "./utils/WebUtils";
 import MessageContentType from "@microsoft/omnichannel-ic3core/lib/model/MessageContentType";
 import MessageType from "@microsoft/omnichannel-ic3core/lib/model/MessageType";
 import OnNewMessageOptionalParams from "./core/OnNewMessageOptionalParams";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import platform from "./utils/platform";
 import ProtocolType from "@microsoft/omnichannel-ic3core/lib/interfaces/ProtocoleType";
-import libraries from "./utils/libraries";
-import {isCustomerMessage} from "./utils/utilities";
+import ScenarioMarker from "./telemetry/ScenarioMarker";
+import {SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
+import {SDKProvider as IC3SDKProvider} from '@microsoft/omnichannel-ic3core';
+import TelemetryEvent from "./telemetry/TelemetryEvent";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 import validateSDKConfig, {defaultChatSDKConfig} from "./validators/SDKConfigValidators";
-import ISDKConfiguration from "@microsoft/ocsdk/lib/Interfaces/ISDKConfiguration";
-import { loadScript } from "./utils/WebUtils";
-import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
-import CallingOptionsOptionSetNumber from "./core/CallingOptionsOptionSetNumber";
-import createTelemetry from "./utils/createTelemetry";
-import AriaTelemetry from "./telemetry/AriaTelemetry";
-import TelemetryEvent from "./telemetry/TelemetryEvent";
-import ScenarioMarker from "./telemetry/ScenarioMarker";
-import { createIC3ClientLogger, createOCSDKLogger, IC3ClientLogger, OCSDKLogger } from "./utils/loggers";
-import LiveWorkItemDetails from "./core/LiveWorkItemDetails";
-import LiveWorkItemState from "./core/LiveWorkItemState";
-import LiveChatVersion from "./core/LiveChatVersion";
-import ACSClient, { ACSConversation } from "./core/ACSClient";
-import { ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
-import { ChatMessage } from "@azure/communication-chat";
-import ConversationMode from "./core/ConversationMode";
+
 
 const acsResourceEndpoint = "https://{0}-Trial-acs.communication.azure.com";
 
@@ -174,9 +176,9 @@ class OmnichannelChatSDK {
                 const reconnectableChatsParams: IReconnectableChatsParams = {
                     authenticatedUserToken: this.authenticatedUserToken as string
                 }
-                
+
                 const reconnectableChatsResponse = await this.OCClient.getReconnectableChats(reconnectableChatsParams);
-                
+
                 if (reconnectableChatsResponse && reconnectableChatsResponse.reconnectid) {
                      this.reconnectId = reconnectableChatsResponse.reconnectid;
                 }
@@ -187,8 +189,8 @@ class OmnichannelChatSDK {
 
                 throw Error(exceptionDetails.response);
             }
-        } 
-        
+        }
+
         if (optionalParams.liveChatContext && !this.isPersistentChat) {
             this.chatToken = optionalParams.liveChatContext.chatToken || {};
             this.requestId = optionalParams.liveChatContext.requestId || uuidv4();
@@ -369,14 +371,14 @@ class OmnichannelChatSDK {
         });
 
         const sessionCloseOptionalParams: ISessionCloseOptionalParams = {};
-       
+
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
             const isReconnectChat = this.reconnectId !== null? true: false;
-          
+
             sessionCloseOptionalParams.isPersistentChat = this.isPersistentChat;
             sessionCloseOptionalParams.isReconnectChat = isReconnectChat;
         }
-        
+
         if (this.authenticatedUserToken) {
             sessionCloseOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
         }
@@ -498,7 +500,7 @@ class OmnichannelChatSDK {
                 if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
                     getChatTokenOptionalParams.reconnectId = this.reconnectId as string;
                 }
-        
+
                 const chatToken = await this.OCClient.getChatToken(this.requestId, getChatTokenOptionalParams);
                 const {ChatId: chatId, Token: token, RegionGtms: regionGtms, ExpiresIn: expiresIn, VisitorId: visitorId, VoiceVideoCallToken: voiceVideoCallToken} = chatToken;
                 this.chatToken = {
@@ -599,7 +601,7 @@ class OmnichannelChatSDK {
                 deliveryMode: DeliveryMode.Bridged,
                 messageType: MessageType.UserMessage,
                 properties: undefined,
-                tags: [], // OC tag (system)
+                tags: [...defaultMessageTags],
                 sender: {
                     displayName : "Customer",
                     id : "customer",
@@ -791,7 +793,7 @@ class OmnichannelChatSDK {
             contentType: MessageContentType.Text,
             deliveryMode: DeliveryMode.Bridged,
             messageType: MessageType.UserMessage,
-            tags: [],
+            tags: [...defaultMessageTags],
             sender: {
                 displayName: "Customer",
                 id: "customer",

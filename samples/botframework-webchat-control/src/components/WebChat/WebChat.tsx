@@ -152,7 +152,7 @@ function WebChat() {
     setChatAdapter(chatAdapter);
     dispatch({type: ActionType.SET_LOADING, payload: false});
 
-    if ((chatSDK as any).getVoiceVideoCalling) {
+    if ((chatSDK as any)?.getVoiceVideoCalling) {
       const chatToken: any = await chatSDK?.getChatToken();
       setChatToken(chatToken);
     }
