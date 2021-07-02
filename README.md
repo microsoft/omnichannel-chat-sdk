@@ -16,6 +16,7 @@ Please make sure you have a chat widget configured before using this package or 
 - [Common Scenarios](#common-scenarios)
 - [Feature Comparisons](#feature-comparisons)
 - [Telemetry](#telemetry)
+- [Troubleshooting Guide](docs/TROUBLESHOOTING_GUIDE.md)
 
 ## Live Chat Widget vs. Chat SDK
 
