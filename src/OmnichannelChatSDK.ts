@@ -28,6 +28,7 @@ import IGetChatTokenOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetCha
 import IGetChatTranscriptsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTranscriptsOptionalParams";
 import IIC3AdapterOptions from "./external/IC3Adapter/IIC3AdapterOptions";
 import ILiveChatContext from "./core/ILiveChatContext";
+import IInitializationInfo from "@microsoft/omnichannel-ic3core/lib/model/IInitializationInfo";
 import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import InitContext from "@microsoft/ocsdk/lib/Model/InitContext";
 import IOmnichannelConfig from "./core/IOmnichannelConfig";
@@ -36,6 +37,7 @@ import IPerson from "@microsoft/omnichannel-ic3core/lib/model/IPerson";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
 import IRawThread from "@microsoft/omnichannel-ic3core/lib/interfaces/IRawThread";
 import IReconnectableChatsParams from "@microsoft/ocsdk/lib/Interfaces/IReconnectableChatsParams";
+import IRegionGtms from "@microsoft/omnichannel-ic3core/lib/model/IRegionGtms";
 import {isCustomerMessage} from "./utils/utilities";
 import ISDKConfiguration from "@microsoft/ocsdk/lib/Interfaces/ISDKConfiguration";
 import ISessionInitOptionalParams from "@microsoft/ocsdk/lib/Interfaces/ISessionInitOptionalParams";
@@ -88,6 +90,7 @@ class OmnichannelChatSDK {
     private ocSdkLogger: OCSDKLogger | null = null;
     private isPersistentChat = false;
     private reconnectId: null | string = null;
+    private refreshTokenTimer: number | null = null;
 
     constructor(omnichannelConfig: IOmnichannelConfig, chatSDKConfig: IChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
@@ -362,6 +365,13 @@ class OmnichannelChatSDK {
                 return error;
             }
         }
+
+        if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
+            this.refreshTokenTimer = setInterval(async () => {
+               await this.getChatToken(false);
+               this.updateChatToken(this.chatToken.token as string, this.chatToken.regionGTMS);
+            }, this.chatSDKConfig.persistentChat?.tokenUpdateTime);
+        }
     }
 
     public async endChat(): Promise<void> {
@@ -414,6 +424,11 @@ class OmnichannelChatSDK {
 
             console.error(`OmnichannelChatSDK/endChat/error ${error}`);
             return error;
+        }
+
+        if (this.refreshTokenTimer !== null) {
+            clearInterval(this.refreshTokenTimer);
+            this.refreshTokenTimer = null;
         }
     }
 
@@ -757,6 +772,11 @@ class OmnichannelChatSDK {
                     // Agent ending conversation would have 1 member left in the chat thread
                     if (members.length === 1) {
                         onAgentEndSessionCallback(message);
+
+                        if (this.refreshTokenTimer !== null) {
+                            clearInterval(this.refreshTokenTimer);
+                            this.refreshTokenTimer = null;
+                        }
                     }
                 });
                 this.scenarioMarker.completeScenario(TelemetryEvent.OnAgentEndSession, {
@@ -1188,6 +1208,40 @@ class OmnichannelChatSDK {
         }
 
         return libraries.getIC3AdapterCDNUrl();
+    }
+
+    private async updateChatToken(newToken: string, newRegionGTMS: IRegionGtms): Promise<void> {
+        this.scenarioMarker.startScenario(TelemetryEvent.UpdateChatToken, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string
+        })
+
+        try {
+            const sessionInfo: IInitializationInfo = {
+                token: newToken,
+                regionGtms: newRegionGTMS,
+                visitor: true
+            }
+
+            await this.IC3Client.initialize(sessionInfo);
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.UpdateChatToken, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            })
+        } catch (error) {
+            const exceptionDetails = {
+                response: "UpdateChatTokenFailed"
+            }
+
+            this.scenarioMarker.failScenario(TelemetryEvent.UpdateChatToken, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string,
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
+            console.error(`OmnichannelChatSDK/updateChatToken/error ${error}`);
+        }
     }
 }
 
