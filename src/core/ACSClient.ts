@@ -1,6 +1,8 @@
 import { ChatClient, ChatMessage, ChatParticipant, ChatThreadClient } from "@azure/communication-chat";
 import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
 import { ChatMessageReceivedEvent, ParticipantsRemovedEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
+import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
+import ACSParticipantDisplayName from "./ACSParticipantDisplayName";
 
 export interface ACSSessionInfo {
     id: string;
@@ -127,11 +129,18 @@ export class ACSConversation {
     public async sendMessage(message: any): Promise<void> {
         const sendMessageRequest = {
             content: message.content,
-            senderDisplayName: undefined
+        }
+
+        const sendMessageOptions = {
+            senderDisplayName: ACSParticipantDisplayName.Customer,
+            metadata: {
+                deliveryMode: DeliveryMode.Bridged,
+                tags: 'ChannelId-lcw'
+            }
         }
 
         try {
-            const response = await this.chatThreadClient?.sendMessage(sendMessageRequest);
+            const response = await this.chatThreadClient?.sendMessage(sendMessageRequest, sendMessageOptions);
             console.log(response);
         } catch (error) {
             console.error(`ACSClient/sendMessage/error ${error}`);

@@ -600,7 +600,6 @@ class OmnichannelChatSDK {
         if (this.liveChatVersion === LiveChatVersion.V2) {
             const sendMessageRequest = {
                 content: message.content,
-                senderDisplayName: undefined
             }
 
             try {
