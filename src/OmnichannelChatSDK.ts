@@ -205,7 +205,6 @@ class OmnichannelChatSDK {
         return null;
     }
 
-
     public async startChat(optionalParams: IStartChatOptionalParams = {}): Promise<void> {
         this.scenarioMarker.startScenario(TelemetryEvent.StartChat, {
             RequestId: this.requestId
