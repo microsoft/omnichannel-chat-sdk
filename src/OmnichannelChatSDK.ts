@@ -81,6 +81,8 @@ class OmnichannelChatSDK {
     private ic3ClientLogger: IC3ClientLogger | null = null;
     private ocSdkLogger: OCSDKLogger | null = null;
     private isPersistentChat = false;
+    private isChatReconnect = false;
+    private isAuthenticated = false;
     private reconnectId: null | string = null;
     private refreshTokenTimer: number | null = null;
 
@@ -158,10 +160,78 @@ class OmnichannelChatSDK {
         return this.liveChatConfig;
     }
 
+    public async getPreviousActiveSession(): Promise<string | null> {
+        try {
+            const reconnectableChatsParams: IReconnectableChatsParams = {
+                authenticatedUserToken: this.authenticatedUserToken as string
+            }
+
+            const reconnectableChatsResponse = await this.OCClient.getReconnectableChats(reconnectableChatsParams);
+
+            if (reconnectableChatsResponse && reconnectableChatsResponse.reconnectid) {  
+                return reconnectableChatsResponse.reconnectid as string
+            }
+        } catch {
+            const exceptionDetails = {
+                response: "GetPreviousActiveSessionFailed"
+            }
+
+            throw Error(exceptionDetails.response);
+        }
+
+        return null;
+    }
+
+    public retrieveReconnectId(): any {
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+
+            if (urlParams.get('oc.reconnectid') !== null) {
+                return urlParams.get('oc.reconnectid');
+            }
+        } catch {
+            const exceptionDetails = {
+                response: "RetrieveReconnectIdFailed"
+            }
+
+            throw Error(exceptionDetails.response);
+        }
+
+        return null;
+    }
+
+    public async getReconnectRedirectionURL(reconnectId: string): Promise<any> {
+        try {
+            const  reconnectAvailabilityResponse = await this.OCClient.getReconnectAvailability(reconnectId);
+
+            if (reconnectAvailabilityResponse && !reconnectAvailabilityResponse.isReconnectAvailable) {
+                if (reconnectAvailabilityResponse.reconnectRedirectionURL) {
+                    return reconnectAvailabilityResponse.reconnectRedirectionURL as string;
+                } 
+            } else {
+                    //Reconnect URL is not expired, set the reconnect id
+                    this.reconnectId = reconnectId;
+            }
+        } catch {
+            const exceptionDetails = {
+                response: "GetReconnectRedirectionURLFailed"
+            }
+
+            throw Error(exceptionDetails.response); 
+        }
+
+        return null;
+    }
+
+
     public async startChat(optionalParams: IStartChatOptionalParams = {}): Promise<void> {
         this.scenarioMarker.startScenario(TelemetryEvent.StartChat, {
             RequestId: this.requestId
         });
+
+        if (this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat && optionalParams.previousChatId) {
+             this.reconnectId = optionalParams.previousChatId;
+        }
 
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
             try {
@@ -183,7 +253,7 @@ class OmnichannelChatSDK {
             }
         }
 
-        if (optionalParams.liveChatContext && !this.isPersistentChat) {
+        if (optionalParams.liveChatContext && !this.isPersistentChat && !this.isChatReconnect) {
             this.chatToken = optionalParams.liveChatContext.chatToken || {};
             this.requestId = optionalParams.liveChatContext.requestId || uuidv4();
 
@@ -232,6 +302,10 @@ class OmnichannelChatSDK {
         };
 
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
+            sessionInitOptionalParams.reconnectId = this.reconnectId as string;
+        }
+
+        if (this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat) {
             sessionInitOptionalParams.reconnectId = this.reconnectId as string;
         }
 
@@ -348,6 +422,12 @@ class OmnichannelChatSDK {
 
             sessionCloseOptionalParams.isPersistentChat = this.isPersistentChat;
             sessionCloseOptionalParams.isReconnectChat = isReconnectChat;
+        }
+
+        if (this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat) {
+            const isChatReconnect = this.reconnectId !== null? true: false;
+
+            sessionCloseOptionalParams.isReconnectChat = isChatReconnect;
         }
 
         if (this.authenticatedUserToken) {
@@ -474,6 +554,10 @@ class OmnichannelChatSDK {
                 }
 
                 if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
+                    getChatTokenOptionalParams.reconnectId = this.reconnectId as string;
+                }
+
+                if (this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat) {
                     getChatTokenOptionalParams.reconnectId = this.reconnectId as string;
                 }
 
@@ -1037,8 +1121,16 @@ class OmnichannelChatSDK {
                 this.authSettings = authSettings;
             }
 
-            const {PreChatSurvey: preChatSurvey, msdyn_prechatenabled, msdyn_callingoptions, msdyn_conversationmode} = liveWSAndLiveChatEngJoin;
+            const {PreChatSurvey: preChatSurvey, msdyn_prechatenabled, msdyn_callingoptions, msdyn_conversationmode, msdyn_enablechatreconnect} = liveWSAndLiveChatEngJoin;
             const isPreChatEnabled = msdyn_prechatenabled === true || msdyn_prechatenabled == "true";
+
+            if (this.authSettings) {
+                this.isAuthenticated = true;
+            } 
+
+            if (msdyn_enablechatreconnect && !this.isPersistentChat) { 
+                this.isChatReconnect = true;
+            }
 
             if (msdyn_conversationmode?.toString() === ConversationMode.PersistentChat.toString()) {
                 this.isPersistentChat = true;
