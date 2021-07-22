@@ -13,6 +13,9 @@ const defaultChatSDKConfig: IChatSDKConfig = {
     persistentChat: {
         disable: true,
         tokenUpdateTime: 21600000
+    },
+    chatReconnect: {
+        disable: true,
     }
 };
 
