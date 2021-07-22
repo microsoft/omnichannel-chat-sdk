@@ -182,25 +182,7 @@ class OmnichannelChatSDK {
         return null;
     }
 
-    public retrieveReconnectId(): any {
-        try {
-            const urlParams = new URLSearchParams(window.location.search);
-
-            if (urlParams.get('oc.reconnectid') !== null) {
-                return urlParams.get('oc.reconnectid');
-            }
-        } catch {
-            const exceptionDetails = {
-                response: "RetrieveReconnectIdFailed"
-            }
-
-            throw Error(exceptionDetails.response);
-        }
-
-        return null;
-    }
-
-    public async getReconnectRedirectionURL(reconnectId: string): Promise<any> {
+    public async getReconnectRedirectionURL(reconnectId: string): Promise<string | null> {
         try {
             const  reconnectAvailabilityResponse = await this.OCClient.getReconnectAvailability(reconnectId);
 
