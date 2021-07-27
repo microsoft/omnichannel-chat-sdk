@@ -56,6 +56,8 @@ import {SDKProvider as IC3SDKProvider} from '@microsoft/omnichannel-ic3core';
 import TelemetryEvent from "./telemetry/TelemetryEvent";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 import validateSDKConfig, {defaultChatSDKConfig} from "./validators/SDKConfigValidators";
+import IChatReconnectOptionalParams from "./core/IChatReconnectOptionalParams";
+import IChatReconnectContext from "./core/IChatReconnectContext";
 
 
 class OmnichannelChatSDK {
@@ -160,51 +162,56 @@ class OmnichannelChatSDK {
         return this.liveChatConfig;
     }
 
-    public async getPreviousActiveSession(): Promise<string | null> {
-        try {
-            const reconnectableChatsParams: IReconnectableChatsParams = {
-                authenticatedUserToken: this.authenticatedUserToken as string
-            }
-
-            const reconnectableChatsResponse = await this.OCClient.getReconnectableChats(reconnectableChatsParams);
-
-            if (reconnectableChatsResponse && reconnectableChatsResponse.reconnectid) {  
-                return reconnectableChatsResponse.reconnectid as string
-            }
-        } catch {
-            const exceptionDetails = {
-                response: "GetPreviousActiveSessionFailed"
-            }
-
-            throw Error(exceptionDetails.response);
+    public async getChatReconnectContext(optionalParams: IChatReconnectOptionalParams = {}):  Promise<IChatReconnectContext> {
+        const context: IChatReconnectContext = {
+            reconnectId: null,
+            redirectURL: null
         }
 
-        return null;
-    }
-
-    public async getReconnectRedirectionURL(reconnectId: string): Promise<string | null> {
-        try {
-            const  reconnectAvailabilityResponse = await this.OCClient.getReconnectAvailability(reconnectId);
-
-            if (reconnectAvailabilityResponse && !reconnectAvailabilityResponse.isReconnectAvailable) {
-                if (reconnectAvailabilityResponse.reconnectRedirectionURL) {
-                    return reconnectAvailabilityResponse.reconnectRedirectionURL as string;
-                } 
-            } else {
-                    //Reconnect URL is not expired, set the reconnect id
-                    this.reconnectId = reconnectId;
+        if (this.isAuthenticated) {
+            try {
+                const reconnectableChatsParams: IReconnectableChatsParams = {
+                    authenticatedUserToken: this.authenticatedUserToken as string
+                }
+    
+                const reconnectableChatsResponse = await this.OCClient.getReconnectableChats(reconnectableChatsParams);
+    
+                if (reconnectableChatsResponse && reconnectableChatsResponse.reconnectid) {  
+                    context.reconnectId = reconnectableChatsResponse.reconnectid as string
+                }
+            } catch {
+                const exceptionDetails = {
+                    response: "GetPreviousActiveSessionFailed"
+                }
+    
+                throw Error(exceptionDetails.response);
             }
-        } catch {
-            const exceptionDetails = {
-                response: "GetReconnectRedirectionURLFailed"
+        } else {
+            try {
+                if (optionalParams.reconnectId) {
+                    const  reconnectAvailabilityResponse = await this.OCClient.getReconnectAvailability(optionalParams.reconnectId);
+        
+                    if (reconnectAvailabilityResponse && !reconnectAvailabilityResponse.isReconnectAvailable) {
+                        if (reconnectAvailabilityResponse.reconnectRedirectionURL) {
+                            context.redirectURL = reconnectAvailabilityResponse.reconnectRedirectionURL as string;
+                        } 
+                    } else {
+                            //Reconnect URL is not expired, set the reconnect id
+                            this.reconnectId = optionalParams.reconnectId as string;
+                    }
+                }
+            } catch {
+                const exceptionDetails = {
+                    response: "GetReconnectRedirectionURLFailed"
+                }
+    
+                throw Error(exceptionDetails.response); 
             }
-
-            throw Error(exceptionDetails.response); 
         }
-
-        return null;
+        
+        return context
     }
-
+    
     public async startChat(optionalParams: IStartChatOptionalParams = {}): Promise<void> {
         this.scenarioMarker.startScenario(TelemetryEvent.StartChat, {
             RequestId: this.requestId
