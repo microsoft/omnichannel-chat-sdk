@@ -84,7 +84,7 @@ class OmnichannelChatSDK {
     private ocSdkLogger: OCSDKLogger | null = null;
     private isPersistentChat = false;
     private isChatReconnect = false;
-    private reconnectId: undefined | null | string = null;
+    private reconnectId: null | string = null;
     private refreshTokenTimer: number | null = null;
 
     constructor(omnichannelConfig: IOmnichannelConfig, chatSDKConfig: IChatSDKConfig = defaultChatSDKConfig) {
@@ -243,7 +243,7 @@ class OmnichannelChatSDK {
         });
 
         if (this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat && optionalParams.reconnectId) {
-             this.reconnectId = optionalParams.reconnectId;
+             this.reconnectId = optionalParams.reconnectId as string;
         }
 
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
