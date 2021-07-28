@@ -11,4 +11,5 @@ export default interface IStartChatOptionalParams {
     device?: string;
     initContext?: InitContext;
     previousChatId?: string;
+    reconnectId?: string;
 }
