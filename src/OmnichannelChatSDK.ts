@@ -204,14 +204,14 @@ class OmnichannelChatSDK {
         } else {
             if (optionalParams.reconnectId) {
                 try {
-                    const  reconnectAvailabilityResponse = await this.OCClient.getReconnectAvailability(optionalParams.reconnectId);
+                    const reconnectAvailabilityResponse = await this.OCClient.getReconnectAvailability(optionalParams.reconnectId);
 
                     if (reconnectAvailabilityResponse && !reconnectAvailabilityResponse.isReconnectAvailable) {
                         if (reconnectAvailabilityResponse.reconnectRedirectionURL) {
                             context.redirectURL = reconnectAvailabilityResponse.reconnectRedirectionURL as string;
                         } 
                     } else {
-                            context.reconnectId = optionalParams.reconnectId as string;
+                        context.reconnectId = optionalParams.reconnectId as string;
                     }
                     
                     this.scenarioMarker.completeScenario(TelemetryEvent.GetChatReconnectContext, {
