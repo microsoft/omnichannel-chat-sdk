@@ -404,6 +404,7 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
             }
         }
     }
+    
     const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
     await chatSDK.initialize();
     
