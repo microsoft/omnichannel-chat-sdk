@@ -243,7 +243,7 @@ class OmnichannelChatSDK {
         });
 
         if (this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat && optionalParams.reconnectId) {
-             this.reconnectId = optionalParams.reconnectId as string;
+            this.reconnectId = optionalParams.reconnectId as string;
         }
 
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
