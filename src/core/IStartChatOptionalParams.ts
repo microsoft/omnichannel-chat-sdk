@@ -10,4 +10,5 @@ export default interface IStartChatOptionalParams {
     locale?: string;
     device?: string;
     initContext?: InitContext;
+    reconnectId?: string;
 }
