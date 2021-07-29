@@ -424,62 +424,7 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
     // Start new chat option
     chatSDK.startChat();  
 ```
-### Chat Reconnect with Authenticated User using URL
- 
-```ts
-    const chatSDKConfig = {
-        chatReconnect: {
-            disable: false,
-        },
-        getAuthToken: async () => {
-            const response = await fetch("http://contosohelp.com/token");
-            if (response.ok) {
-                return await response.text();
-            }
-            else {
-                return null
-            }
-        }
-    }
 
-    const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
-    await chatSDK.initialize();
-    
-    ....
-    
-    const optionalParams: any = {};
-    
-    //retrieve the reconnect ID from the URL
-    const retrieveReconnectId = function(): any {
-        const urlParams = new URLSearchParams(window.location.search);
-
-        if (urlParams.get('oc.reconnectid') !== null) {
-            return urlParams.get('oc.reconnectid');
-        } else {
-            return null;
-        }
-    }
-     
-    const params = {
-        reconnectId: retrieveReconnectId(),
-    }
-
-    const chatReconnectContext = await chatSDK?.getChatReconnectContext(params); 
-    
-    // if Chat session has expired, redirect URL if there is any URL set in the configuration
-    if (chatReconnectContext.redirectURL) {
-        window.location.replace(chatReconnectContext.redirectURL);
-    } 
-    
-    // if Chat session available, reconnect to previous chat
-    if (chatReconnectContext.reconnectId) {
-        await chatSDK.startChat({
-            reconnectId: chatReconnectContext.reconnectId
-        });
-    } else {  // No previous chat session available, Start new chat session
-        await chatSDK.startChat();
-    }
-```
 ### Chat Reconnect with Unauthenticated User
 
 ```ts
