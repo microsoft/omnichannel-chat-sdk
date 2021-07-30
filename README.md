@@ -46,6 +46,8 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 | File Attachments | ✔ | ✔ |
 | Custom Context | ✔ | ✔ |
 | Proactive Chat | ✔ | BYOI **\*** |
+| Persistent Chat | ✔ | ✔ |
+| Chat Reconnect | ✔ | ✔ |
 
 **\*** BYOI: Bring Your Own Implementation
 
@@ -66,6 +68,7 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 | OmnichannelChatSDK.getLiveChatConfig() | Get live chat config | |
 | OmnichannelChatSDK.getDataMaskingRules() | Get active data masking rules | |
 | OmnichannelChatSDK.getCurrentLiveChatContext() | Get current live chat context information to reconnect to the same chat | |
+| OmnichannelChatSDK.getChatReconnectContext() | Get current reconnectable chat context information to reconnect to a previous existing chat session | |
 | OmnichannelChatSDK.getConversationDetails() | Get details of the current conversation such as its state & when the agent joined the conversation | |
 | OmnichannelChatSDK.getChatToken() | Get chat token | |
 | OmnichannelChatSDK.getCallingToken() | Get calling token | |
@@ -111,6 +114,15 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 ### Get Current Live Chat Context
 ```ts
     const liveChatContext = await chatSDK.getCurrentLiveChatContext();
+```
+
+### Get Current Chat Reconnect Context
+```ts
+    const optionalParams = {
+        reconnectId: '', // reconnect Id
+    };
+    
+    const chatReconnectContext = await chatSDK.getChatReconnectContext(optionalParams); 
 ```
 
 ### Get Conversation Details
@@ -349,6 +361,116 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
     await chatSDK.initialize();
 
     // from this point, this acts like a regular chat widget
+```
+
+### Persistent Chat
+
+```ts
+    const chatSDKConfig = {
+        persistentChat: {
+            disable: false,
+            tokenUpdateTime: 21600000
+        },
+        getAuthToken: async () => {
+            const response = await fetch("http://contosohelp.com/token");
+            if (response.ok) {
+                return await response.text();
+            }
+            else {
+                return null
+            }
+        }
+    }
+
+    const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+    await chatSDK.initialize();
+
+    // from this point, this acts like a persistent chat
+```
+### Chat Reconnect with Authenticated User
+
+```ts
+    const chatSDKConfig = {
+        chatReconnect: {
+            disable: false,
+        },
+        getAuthToken: async () => {
+            const response = await fetch("http://contosohelp.com/token");
+            if (response.ok) {
+                return await response.text();
+            }
+            else {
+                return null
+            }
+        }
+    }
+    
+    const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+    await chatSDK.initialize();
+    
+    ....
+    
+    const chatReconnectContext = await chatSDK?.getChatReconnectContext(); 
+    
+    if (chatReconnectContext.reconnectId) {
+       // Add UX with options to reconnect to previous existing chat or start new chat
+    } 
+   
+    // Reconnect chat option
+    const optionalParams = {};
+    optionalParams.reconnectId = chatReconnectContext.reconnectId;
+    chatSDK.startChat(optionalParams);
+
+    // Start new chat option
+    chatSDK.startChat();  
+```
+
+### Chat Reconnect with Unauthenticated User
+
+```ts
+    const chatSDKConfig = {
+        chatReconnect: {
+            disable: false,
+        },
+    }
+
+    const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+    await chatSDK.initialize();
+
+    ....
+    
+    const optionalParams: any = {};
+    
+    //retrieve the reconnect ID from the URL
+    const  retrieveReconnectId = function(): any {
+        const urlParams = new URLSearchParams(window.location.search);
+
+        if (urlParams.get('oc.reconnectid') !== null) {
+            return urlParams.get('oc.reconnectid');
+        } else {
+            return null;
+        }
+    }
+     
+    const params = {
+        reconnectId: retrieveReconnectId(),
+    }
+
+    const chatReconnectContext = await chatSDK?.getChatReconnectContext(params); 
+    
+    // if the reconnect id is invalid or expired, redirect URL if there is any URL set in the configuration
+    if (chatReconnectContext.redirectURL) {
+        window.location.replace(chatReconnectContext.redirectURL);
+    } 
+    
+    // Valid reconnect id, reconnect to previous chat
+    if (chatReconnectContext.reconnectId) {
+        await chatSDK.startChat({
+            reconnectId: chatReconnectContext.reconnectId
+        });
+    } else {  // ReconnectId from URL is not valid, start new chat session
+        await chatSDK.startChat();
+    }
 ```
 
 ### Use [BotFramework-WebChat](https://github.com/microsoft/BotFramework-WebChat)
