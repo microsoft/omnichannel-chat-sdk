@@ -5,10 +5,14 @@ import fetchOmnichannelConfig from '../../utils/fetchOmnichannelConfig';
 import fetchTelemetryConfig from '../../utils/fetchTelemetryConfig';
 import fetchDebugConfig from '../../utils/fetchDebugConfig';
 import 'react-chat-widget/lib/styles.css';
+import fetchPersistentChatConfig from '../../utils/fetchPersistentChatConfig';
+import fetchChatReconnectConfig from '../../utils/fetchChatReconnectConmfig';
 
 const omnichannelConfig: any = fetchOmnichannelConfig();
 const telemetryConfig: any = fetchTelemetryConfig();
 const debugConfig: any = fetchDebugConfig();
+const persistentChatConfig = fetchPersistentChatConfig();
+const chatReconnectConfig = fetchChatReconnectConfig();
 
 console.log(`%c [OmnichannelConfig]`, 'background-color:#001433;color:#fff');
 console.log(omnichannelConfig);
@@ -19,6 +23,7 @@ console.log(telemetryConfig);
 console.log(`%c [debugConfig]`, 'background-color:#001433;color:#fff');
 console.log(debugConfig);
 
+
 const quickButtons = [
   {label: 'Attachment', value: 'Attachment'},
 ]
@@ -27,11 +32,12 @@ function ChatWidget() {
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
   const [open, setOpen] = useState<boolean>(false);
   const [hasChatStarted, setHasChatStarted] = useState<boolean>(false);
-
+  
   useEffect(() => {
     const init = async () => {
       const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
-        ...telemetryConfig
+       ...telemetryConfig ,
+       ...chatReconnectConfig, 
       });
 
       chatSDK.setDebug(!debugConfig.disable);
@@ -77,7 +83,47 @@ function ChatWidget() {
         console.log("[liveChatContext]");
         optionalParams.liveChatContext = JSON.parse(cachedLiveChatContext);
       }
+      if (chatReconnectConfig){ 
+        const  retrieveReconnectId = function(): any {
+              const urlParams = new URLSearchParams(window.location.search);
 
+              if (urlParams.get('oc.reconnectid') !== null) {
+                  return urlParams.get('oc.reconnectid');
+              }
+              else
+              {
+                return null;
+              }
+        }
+      
+
+        console.log('prevchatreconnectid')
+        console.log('[reconnectAvailability)')
+        const previousChatID = retrieveReconnectId();
+        console.log(previousChatID)
+      console.log("wee")
+        const params = {
+          reconnectId: previousChatID,
+        }
+
+       
+          const chatReconnectContext = await chatSDK?.getChatReconnectContext(params); 
+          console.log(chatReconnectContext)
+
+          if ( chatReconnectContext !== null && chatReconnectContext !== undefined){
+            if (chatReconnectContext.redirectURL !== null && chatReconnectContext.redirectURL !== undefined){
+                window.location.replace(chatReconnectContext.redirectURL);
+            }else{
+              console.log("1234")
+              
+              optionalParams.reconnectId = chatReconnectContext.reconnectId
+            }
+          }
+        
+
+    }
+
+    console.log(optionalParams)
       await chatSDK?.startChat(optionalParams);
 
       const chatToken = await chatSDK?.getChatToken();
