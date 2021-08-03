@@ -188,10 +188,10 @@ class OmnichannelChatSDK {
                 const reconnectableChatsParams: IReconnectableChatsParams = {
                     authenticatedUserToken: this.authenticatedUserToken as string
                 }
-    
+
                 const reconnectableChatsResponse = await this.OCClient.getReconnectableChats(reconnectableChatsParams);
-    
-                if (reconnectableChatsResponse && reconnectableChatsResponse.reconnectid) {  
+
+                if (reconnectableChatsResponse && reconnectableChatsResponse.reconnectid) {
                     context.reconnectId = reconnectableChatsResponse.reconnectid as string
                 }
 
@@ -203,13 +203,13 @@ class OmnichannelChatSDK {
                 const exceptionDetails = {
                     response: "OCClientGetReconnectableChatsFailed"
                 }
-    
+
                 this.scenarioMarker.failScenario(TelemetryEvent.GetChatReconnectContext, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string,
                     ExceptionDetails: JSON.stringify(exceptionDetails)
                 });
-    
+
                 console.error(`OmnichannelChatSDK/GetChatReconnectContext/error ${error}`);
             }
         } else {
@@ -220,11 +220,11 @@ class OmnichannelChatSDK {
                     if (reconnectAvailabilityResponse && !reconnectAvailabilityResponse.isReconnectAvailable) {
                         if (reconnectAvailabilityResponse.reconnectRedirectionURL) {
                             context.redirectURL = reconnectAvailabilityResponse.reconnectRedirectionURL as string;
-                        } 
+                        }
                     } else {
                         context.reconnectId = optionalParams.reconnectId as string;
                     }
-                    
+
                     this.scenarioMarker.completeScenario(TelemetryEvent.GetChatReconnectContext, {
                         RequestId: this.requestId,
                         ChatId: this.chatToken.chatId as string
@@ -233,13 +233,13 @@ class OmnichannelChatSDK {
                     const exceptionDetails = {
                         response: "OCClientGetReconnectAvailabilityFailed"
                     }
-        
+
                     this.scenarioMarker.failScenario(TelemetryEvent.GetChatReconnectContext, {
                         RequestId: this.requestId,
                         ChatId: this.chatToken.chatId as string,
                         ExceptionDetails: JSON.stringify(exceptionDetails)
                     });
-        
+
                     console.error(`OmnichannelChatSDK/GetChatReconnectContext/error ${error}`);
                 }
             }
@@ -247,7 +247,7 @@ class OmnichannelChatSDK {
 
         return context
     }
-    
+
     public async startChat(optionalParams: IStartChatOptionalParams = {}): Promise<void> {
         this.scenarioMarker.startScenario(TelemetryEvent.StartChat, {
             RequestId: this.requestId
@@ -702,7 +702,7 @@ class OmnichannelChatSDK {
             try {
                 await (this.conversation as ACSConversation)?.sendMessage(sendMessageRequest);
             } catch (error) {
-
+                console.error("OmnichannelChatSDK/sendMessage/error");
             }
         } else {
             const messageToSend: IRawMessage = {
@@ -1240,7 +1240,7 @@ class OmnichannelChatSDK {
             const {PreChatSurvey: preChatSurvey, msdyn_prechatenabled, msdyn_callingoptions, msdyn_conversationmode, msdyn_enablechatreconnect} = liveWSAndLiveChatEngJoin;
             const isPreChatEnabled = msdyn_prechatenabled === true || msdyn_prechatenabled == "true";
 
-            if (msdyn_enablechatreconnect && !this.isPersistentChat) { 
+            if (msdyn_enablechatreconnect && !this.isPersistentChat) {
                 this.isChatReconnect = true;
             }
 

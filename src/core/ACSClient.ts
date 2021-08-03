@@ -26,7 +26,7 @@ export class ACSConversation {
         this.chatClient = chatClient;
     }
 
-    public async initialize(sessionInfo: ACSSessionInfo) {
+    public async initialize(sessionInfo: ACSSessionInfo): Promise<void> {
         this.sessionInfo = sessionInfo;
 
         try {
@@ -51,7 +51,7 @@ export class ACSConversation {
         const pagedAsyncIterableIterator = await (this.chatThreadClient as ChatThreadClient).listMessages();
         let nextMessage = await pagedAsyncIterableIterator.next();
         while (!nextMessage.done) {
-            let chatMessage = nextMessage.value;
+            const chatMessage = nextMessage.value;
 
             // Filter text type messages only
             if (chatMessage.type !== 'text') {
@@ -83,7 +83,7 @@ export class ACSConversation {
         const pagedAsyncIterableIterator = await (this.chatThreadClient as ChatThreadClient).listParticipants();
         let next = await pagedAsyncIterableIterator.next();
         while (!next.done) {
-           let user = next.value;
+           const user = next.value;
            participants.push(user);
            next = await pagedAsyncIterableIterator.next();
         }
@@ -155,11 +155,11 @@ export class ACSConversation {
 
     }
 
-    public async uploadFile() {
+    public async uploadFile(): Promise<void> {
 
     }
 
-    public async downloadFile() {
+    public async downloadFile(): Promise<void> {
 
     }
 
