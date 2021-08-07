@@ -52,7 +52,7 @@ import MessageContentType from "@microsoft/omnichannel-ic3core/lib/model/Message
 import MessageType from "@microsoft/omnichannel-ic3core/lib/model/MessageType";
 import OnNewMessageOptionalParams from "./core/OnNewMessageOptionalParams";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
-import platform from "./utils/platform";
+import platform, { isBrowser } from "./utils/platform";
 import ProtocolType from "@microsoft/omnichannel-ic3core/lib/interfaces/ProtocoleType";
 import ScenarioMarker from "./telemetry/ScenarioMarker";
 import {SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
@@ -62,6 +62,9 @@ import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 import validateSDKConfig, {defaultChatSDKConfig} from "./validators/SDKConfigValidators";
 import ChatReconnectOptionalParams from "./core/ChatReconnectOptionalParams";
 import ChatReconnectContext from "./core/ChatReconnectContext";
+import createAMSClient from "@microsoft/omnichannel-amsclient";
+import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
+import FramedlessClient from "@microsoft/omnichannel-amsclient/lib/FramedlessClient";
 
 
 const acsResourceEndpoint = "https://{0}-Trial-acs.communication.azure.com";
@@ -73,6 +76,7 @@ class OmnichannelChatSDK {
     public OCClient: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     public IC3Client: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     public ACSClient: ACSClient | null = null;
+    public AMSClient: FramedClient | FramedlessClient | null = null;
     public omnichannelConfig: IOmnichannelConfig;
     public chatSDKConfig: IChatSDKConfig;
     public isInitialized: boolean;
@@ -135,6 +139,7 @@ class OmnichannelChatSDK {
     /* istanbul ignore next */
     public setDebug(flag: boolean): void {
         this.debug = flag;
+        this.AMSClient?.setDebug(flag);
         this.telemetry?.setDebug(flag);
         this.scenarioMarker.setDebug(flag);
         this.ic3ClientLogger?.setDebug(flag);
@@ -154,11 +159,17 @@ class OmnichannelChatSDK {
             const OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, {} as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
             const IC3Client = await this.getIC3Client();
             const acsClient = new ACSClient();
+            const amsClient = await createAMSClient({
+                framedMode: isBrowser(),
+                debug: false,
+                logger: undefined
+            });
 
             // Assign & Update flag only if all dependencies have been initialized succesfully
             this.OCClient = OCClient;
             this.IC3Client = IC3Client;
             this.ACSClient = acsClient;
+            this.AMSClient = amsClient;
 
             await this.getChatConfig();
 
