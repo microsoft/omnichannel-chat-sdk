@@ -65,7 +65,7 @@ import ChatReconnectContext from "./core/ChatReconnectContext";
 import createAMSClient from "@microsoft/omnichannel-amsclient";
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
 import FramedlessClient from "@microsoft/omnichannel-amsclient/lib/FramedlessClient";
-
+import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 
 const acsResourceEndpoint = "https://{0}-Trial-acs.communication.azure.com";
 
@@ -901,75 +901,95 @@ class OmnichannelChatSDK {
     }
 
     public async uploadFileAttachment(fileInfo: IFileInfo | File): Promise<IRawMessage> {
-        this.scenarioMarker.startScenario(TelemetryEvent.UploadFileAttachment, {
-            RequestId: this.requestId,
-            ChatId: this.chatToken.chatId as string
-        });
-
-        let fileMetadata: IFileMetadata;
-
-        if (platform.isReactNative() || platform.isNode()) {
-            fileMetadata = await (this.conversation as IConversation)!.sendFileData(fileInfo as IFileInfo, FileSharingProtocolType.AmsBasedFileSharing);
+        if (this.liveChatVersion === LiveChatVersion.V2) {
+            // const createObjectResponse: any = await (this.AMSClient as any).createObject(this.chatToken?.chatId as string, fileInfo as any);
+            // const documentId = createObjectResponse.id;
+            // const uploadDocumentResponse = await (this.AMSClient as any).uploadDocument(documentId, fileInfo as any);
+            return {} as IRawMessage;
         } else {
-            fileMetadata = await (this.conversation as IConversation)!.uploadFile(fileInfo as File, FileSharingProtocolType.AmsBasedFileSharing);
-        }
-
-        const messageToSend: IRawMessage = {
-            content: "",
-            timestamp: new Date(),
-            contentType: MessageContentType.Text,
-            deliveryMode: DeliveryMode.Bridged,
-            messageType: MessageType.UserMessage,
-            tags: [...defaultMessageTags],
-            sender: {
-                displayName: "Customer",
-                id: "customer",
-                type: PersonType.User,
-            },
-            fileMetadata: fileMetadata
-        };
-
-        try {
-            await this.conversation!.sendFileMessage(fileMetadata, messageToSend);
-
-            this.scenarioMarker.completeScenario(TelemetryEvent.UploadFileAttachment, {
+            this.scenarioMarker.startScenario(TelemetryEvent.UploadFileAttachment, {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string
             });
 
-            return messageToSend;
-        } catch (error) {
-            console.error(`OmnichannelChatSDK/uploadFileAttachment/error: ${error}`);
+            let fileMetadata: IFileMetadata;
 
-            this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string
-            });
+            if (platform.isReactNative() || platform.isNode()) {
+                fileMetadata = await (this.conversation as IConversation)!.sendFileData(fileInfo as IFileInfo, FileSharingProtocolType.AmsBasedFileSharing);
+            } else {
+                fileMetadata = await (this.conversation as IConversation)!.uploadFile(fileInfo as File, FileSharingProtocolType.AmsBasedFileSharing);
+            }
 
-            return error;
+            const messageToSend: IRawMessage = {
+                content: "",
+                timestamp: new Date(),
+                contentType: MessageContentType.Text,
+                deliveryMode: DeliveryMode.Bridged,
+                messageType: MessageType.UserMessage,
+                tags: [...defaultMessageTags],
+                sender: {
+                    displayName: "Customer",
+                    id: "customer",
+                    type: PersonType.User,
+                },
+                fileMetadata: fileMetadata
+            };
+
+            try {
+                await this.conversation!.sendFileMessage(fileMetadata, messageToSend);
+
+                this.scenarioMarker.completeScenario(TelemetryEvent.UploadFileAttachment, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+
+                return messageToSend;
+            } catch (error) {
+                console.error(`OmnichannelChatSDK/uploadFileAttachment/error: ${error}`);
+
+                this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+
+                return error;
+            }
         }
     }
 
-    public async downloadFileAttachment(fileMetadata: IFileMetadata): Promise<Blob> {
-        this.scenarioMarker.startScenario(TelemetryEvent.DownloadFileAttachment, {
-            RequestId: this.requestId,
-            ChatId: this.chatToken.chatId as string
-        })
+    public async downloadFileAttachment(fileMetadata: FileMetadata): Promise<Blob> {
+        if (this.liveChatVersion === LiveChatVersion.V2) {
+            try {
+                // const response: any = await this.AMSClient?.getViewStatus(fileMetadata);
 
-        try {
-            const downloadedFile = await (this.conversation as IConversation)!.downloadFile(fileMetadata);
-            this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment, {
+                // const {view_location} = response;
+                // const viewResponse: any = await this.AMSClient?.getView(fileMetadata, view_location);
+                // return viewResponse;
+                return new Blob([]);
+            } catch {
+                throw new Error('downloadFile');
+            }
+        } else {
+            this.scenarioMarker.startScenario(TelemetryEvent.DownloadFileAttachment, {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string
-            });
-            return downloadedFile;
-        } catch (error) {
-            console.error(`OmnichannelChatSDK/downloadFileAttachment/error: ${error}`);
-            this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string
-            });
-            throw new Error('DownloadFileAttachmentFailed');
+            })
+
+            try {
+                const downloadedFile = await (this.conversation as IConversation)!.downloadFile(fileMetadata);
+                this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+                return downloadedFile;
+            } catch (error) {
+                console.error(`OmnichannelChatSDK/downloadFileAttachment/error: ${error}`);
+                this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+                throw new Error('DownloadFileAttachmentFailed');
+            }
         }
     }
 
