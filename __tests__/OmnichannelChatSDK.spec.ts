@@ -248,6 +248,36 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.chatSDKConfig.persistentChat.disable).toBe(chatSDKConfig.persistentChat.disable);
             expect(chatSDK.chatSDKConfig.persistentChat.tokenUpdateTime).toBe(chatSDKConfig.persistentChat.tokenUpdateTime);
         });
+
+        it('ChatSDK should be able to pick up the default chat reconnect config if not set', () => {
+            const omnichannelConfig = {
+                orgUrl: '',
+                orgId: '',
+                widgetId: ''
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+
+            expect(chatSDK.chatSDKConfig.chatReconnect.disable).toBe(defaultChatSDKConfig.chatReconnect!.disable);
+        });
+
+        it('ChatSDK should be able to pick up the custom chat reconnect config if set', () => {
+            const omnichannelConfig = {
+                orgUrl: '',
+                orgId: '',
+                widgetId: ''
+            };
+
+            const chatSDKConfig = {
+                chatReconnect: {
+                    disable: false
+                }
+            }
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+
+            expect(chatSDK.chatSDKConfig.chatReconnect.disable).toBe(defaultChatSDKConfig.chatReconnect!.disable);
+        });
     });
 
     describe('Functionalities', () => {
