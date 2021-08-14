@@ -9,6 +9,7 @@ import ChatAdapterProtocols from "../src/core/ChatAdapterProtocols";
 import AriaTelemetry from "../src/telemetry/AriaTelemetry";
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
+import ConversationMode from '../src/core/ConversationMode';
 
 describe('Omnichannel Chat SDK', () => {
     AWTLogManager.initialize = jest.fn();
@@ -276,7 +277,7 @@ describe('Omnichannel Chat SDK', () => {
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
 
-            expect(chatSDK.chatSDKConfig.chatReconnect.disable).toBe(defaultChatSDKConfig.chatReconnect!.disable);
+            expect(chatSDK.chatSDKConfig.chatReconnect.disable).toBe(chatSDKConfig.chatReconnect.disable);
         });
     });
 
@@ -1628,6 +1629,48 @@ describe('Omnichannel Chat SDK', () => {
             await chatSDK.endChat();
             expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(1);
             expect(chatSDK.OCClient.sessionClose.mock.calls[0][1]).toMatchObject(sessionCloseOptionalParams);
+        });
+
+        it('ChatSDK.startChat() should call OCClient.getReconnectableChats() & setInterval() on Persistent Chat', async () => {
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                },
+                persistentChat: {
+                    disable: false,
+                    tokenUpdateTime: 1
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK.isPersistentChat = true;
+            chatSDK.updateChatToken = jest.fn();
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'getReconnectableChats').mockResolvedValue(Promise.resolve({
+                reconnectid: 'reconnectid'
+            }));
+            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve());
+            jest.spyOn(global, 'setInterval');
+
+            await chatSDK.startChat();
+
+            expect(chatSDK.OCClient.getReconnectableChats).toHaveBeenCalledTimes(1);
+            expect(global.setInterval).toHaveBeenCalledTimes(1);
+
+            // Clean up
+            clearInterval(chatSDK.refreshTokenTimer);
         });
     });
 })
