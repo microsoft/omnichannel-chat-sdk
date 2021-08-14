@@ -1708,5 +1708,36 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.sessionClose.mock.calls[0][1].isPersistentChat).toBe(true);
             expect(chatSDK.OCClient.sessionClose.mock.calls[0][1].isReconnectChat).toBe(true);
         });
+
+        it('ChatSDK.updateChatToken() should initialize IC3Client with new session info', async () => {
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                },
+                persistentChat: {
+                    disable: false,
+                    tokenUpdateTime: 1
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK.isPersistentChat = true;
+            global.setInterval = jest.fn();
+
+            await chatSDK.initialize();
+
+            const newToken = {};
+            const newRegionGTMS = {};
+
+            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
+
+            await chatSDK.updateChatToken(newToken, newRegionGTMS);
+
+            expect(chatSDK.IC3Client.initialize).toHaveBeenCalledTimes(1);
+            expect(chatSDK.IC3Client.initialize.mock.calls[0][0].token).toBe(newToken);
+            expect(chatSDK.IC3Client.initialize.mock.calls[0][0].regionGtms).toBe(newRegionGTMS);
+        });
     });
 })
