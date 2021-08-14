@@ -822,6 +822,27 @@ describe('Omnichannel Chat SDK', () => {
             expect(callingToken).toEqual(chatSDK.chatToken.voiceVideoCallToken.Token);
         });
 
+        it('ChatSDK.getCallingToken() should return nothing if chatToken is invalid', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient.getChatToken = jest.fn();
+
+            chatSDK.IC3Client = {
+                initialize: jest.fn(),
+                joinConversation: jest.fn()
+            }
+
+            await chatSDK.startChat();
+
+            chatSDK.chatToken = {};
+
+            const callingToken = await chatSDK.getCallingToken();
+            expect(callingToken).toEqual('');
+        });
+
         it('ChatSDK.getCallingToken() should return skype token if acs token is not available', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
