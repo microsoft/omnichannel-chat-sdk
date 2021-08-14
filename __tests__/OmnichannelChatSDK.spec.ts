@@ -1857,5 +1857,70 @@ describe('Omnichannel Chat SDK', () => {
 
             expect(chatSDK.OCClient.getChatToken.mock.calls[0][1].reconnectId).toBe(chatSDK.reconnectId);
         });
+
+        it('ChatSDK.startChat() should pass reconnectId to OCClient.sessionInit if any on Chat Reconnect', async () => {
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                },
+                chatReconnect: {
+                    disable: false,
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK.isChatReconnect = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.reconnectId = 'reconnectId';
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve());
+
+            await chatSDK.startChat();
+
+            expect(chatSDK.OCClient.sessionInit.mock.calls[0][1].reconnectId).toBe(chatSDK.reconnectId);
+        });
+
+        it('ChatSDK.endChat() should pass isReconnectChat to OCClient.sessionClose() call \'s optional paramaters on Chat Reconnect', async () => {
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                },
+                chatReconnect: {
+                    disable: false,
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK.isChatReconnect = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.reconnectId = 'reconnectId';
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'sessionClose').mockResolvedValue(Promise.resolve());
+
+            await chatSDK.startChat();
+            await chatSDK.endChat();
+
+            expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(1);
+            expect(chatSDK.OCClient.sessionClose.mock.calls[0][1].isReconnectChat).toBe(true);
+        });
     });
 })
