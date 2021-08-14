@@ -1631,6 +1631,36 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.sessionClose.mock.calls[0][1]).toMatchObject(sessionCloseOptionalParams);
         });
 
+        it('ChatSDK.isPersistentChat should be true on Persistent Chat', async () => {
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                },
+                persistentChat: {
+                    disable: false,
+                    tokenUpdateTime: 1
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+
+            chatSDK.OCClient = {};
+            chatSDK.OCClient.getChatConfig = jest.fn(() => Promise.resolve({
+                DataMaskingInfo: {
+                    setting: {
+                        msdyn_maskforcustomer: 'false'
+                    }
+                },
+                LiveWSAndLiveChatEngJoin: {
+                    msdyn_conversationmode: ConversationMode.PersistentChat
+                }
+            }));
+
+            await chatSDK.getChatConfig();
+
+            expect(chatSDK.isPersistentChat).toBe(true);
+        });
+
         it('ChatSDK.startChat() should call OCClient.getReconnectableChats() & setInterval() on Persistent Chat', async () => {
             const chatSDKConfig = {
                 telemetry: {
@@ -1673,7 +1703,7 @@ describe('Omnichannel Chat SDK', () => {
             clearInterval(chatSDK.refreshTokenTimer);
         });
 
-        it('ChatSDK.endChat() should pass isPersistentChat & isReconnectChat to OCClient.sessionClose() call \'s optional paramaters', async () => {
+        it('ChatSDK.endChat() should pass isPersistentChat & isReconnectChat to OCClient.sessionClose() call \'s optional paramaters on Persistent Chat', async () => {
             const chatSDKConfig = {
                 telemetry: {
                     disable: true
@@ -1738,6 +1768,35 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.IC3Client.initialize).toHaveBeenCalledTimes(1);
             expect(chatSDK.IC3Client.initialize.mock.calls[0][0].token).toBe(newToken);
             expect(chatSDK.IC3Client.initialize.mock.calls[0][0].regionGtms).toBe(newRegionGTMS);
+        });
+
+        it('ChatSDK.isChatReconnect should be true on Chat Reconnect', async () => {
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                },
+                chatReconnect: {
+                    disable: false,
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+
+            chatSDK.OCClient = {};
+            chatSDK.OCClient.getChatConfig = jest.fn(() => Promise.resolve({
+                DataMaskingInfo: {
+                    setting: {
+                        msdyn_maskforcustomer: 'false'
+                    }
+                },
+                LiveWSAndLiveChatEngJoin: {
+                    msdyn_enablechatreconnect: true
+                }
+            }));
+
+            await chatSDK.getChatConfig();
+
+            expect(chatSDK.isChatReconnect).toBe(true);
         });
     });
 })
