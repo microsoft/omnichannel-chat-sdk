@@ -121,8 +121,8 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
     const optionalParams = {
         reconnectId: '', // reconnect Id
     };
-    
-    const chatReconnectContext = await chatSDK.getChatReconnectContext(optionalParams); 
+
+    const chatReconnectContext = await chatSDK.getChatReconnectContext(optionalParams);
 ```
 
 ### Get Conversation Details
@@ -404,25 +404,25 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
             }
         }
     }
-    
+
     const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
     await chatSDK.initialize();
-    
-    ....
-    
-    const chatReconnectContext = await chatSDK?.getChatReconnectContext(); 
-    
+
+    ...
+
+    const chatReconnectContext = await chatSDK.getChatReconnectContext();
+
     if (chatReconnectContext.reconnectId) {
        // Add UX with options to reconnect to previous existing chat or start new chat
-    } 
-   
+    }
+
     // Reconnect chat option
     const optionalParams = {};
     optionalParams.reconnectId = chatReconnectContext.reconnectId;
     chatSDK.startChat(optionalParams);
 
     // Start new chat option
-    chatSDK.startChat();  
+    chatSDK.startChat();
 ```
 
 ### Chat Reconnect with Unauthenticated User
@@ -438,37 +438,31 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
     await chatSDK.initialize();
 
     ....
-    
+
     const optionalParams: any = {};
-    
-    //retrieve the reconnect ID from the URL
-    const  retrieveReconnectId = function(): any {
-        const urlParams = new URLSearchParams(window.location.search);
 
-        if (urlParams.get('oc.reconnectid') !== null) {
-            return urlParams.get('oc.reconnectid');
-        } else {
-            return null;
-        }
-    }
-     
+    // Retrieve reconnect id from the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const reconnectId = urlParams.get('oc.reconnectid');
+
     const params = {
-        reconnectId: retrieveReconnectId(),
-    }
+        reconnectId
+    };
 
-    const chatReconnectContext = await chatSDK?.getChatReconnectContext(params); 
-    
-    // if the reconnect id is invalid or expired, redirect URL if there is any URL set in the configuration
+    // Validate reconnect id
+    const chatReconnectContext = await chatSDK.getChatReconnectContext(params);
+
+    // If the reconnect id is invalid or expired, redirect URL if there is any URL set in the configuration
     if (chatReconnectContext.redirectURL) {
         window.location.replace(chatReconnectContext.redirectURL);
-    } 
-    
+    }
+
     // Valid reconnect id, reconnect to previous chat
     if (chatReconnectContext.reconnectId) {
         await chatSDK.startChat({
             reconnectId: chatReconnectContext.reconnectId
         });
-    } else {  // ReconnectId from URL is not valid, start new chat session
+    } else {  // Reconnect id from URL is not valid, start new chat session
         await chatSDK.startChat();
     }
 ```
