@@ -11,6 +11,9 @@ All notable changes to this project will be documented in this file.
 - Add `getCallingToken`
 - Send `ChannelId-lcw` message tag
 
+### Fixed
+- `msdyn_enablechatreconnect` not being parsed properly
+
 ## [0.2.0] - 2021-04-30
 ### Added
 - React Native sample app using Omnichannel Chat SDK with [react-native-gifted-chat](https://github.com/FaridSafi/react-native-gifted-chat)
