@@ -958,7 +958,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async downloadFileAttachment(fileMetadata: FileMetadata): Promise<Blob> {
+    public async downloadFileAttachment(fileMetadata: FileMetadata | IFileMetadata): Promise<Blob> {
         if (this.liveChatVersion === LiveChatVersion.V2) {
             try {
                 // const response: any = await this.AMSClient?.getViewStatus(fileMetadata);
@@ -977,7 +977,7 @@ class OmnichannelChatSDK {
             })
 
             try {
-                const downloadedFile = await (this.conversation as IConversation)!.downloadFile(fileMetadata);
+                const downloadedFile = await (this.conversation as IConversation)!.downloadFile(fileMetadata as IFileMetadata);
                 this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string
