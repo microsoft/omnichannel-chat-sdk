@@ -1849,6 +1849,35 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.isChatReconnect).toBe(true);
         });
 
+        it('ChatSDK.isChatReconnect should be false if msdyn_enablechatreconnect is false', async () => {
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                },
+                chatReconnect: {
+                    disable: false,
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+
+            chatSDK.OCClient = {};
+            chatSDK.OCClient.getChatConfig = jest.fn(() => Promise.resolve({
+                DataMaskingInfo: {
+                    setting: {
+                        msdyn_maskforcustomer: 'false'
+                    }
+                },
+                LiveWSAndLiveChatEngJoin: {
+                    msdyn_enablechatreconnect: "false"
+                }
+            }));
+
+            await chatSDK.getChatConfig();
+
+            expect(chatSDK.isChatReconnect).toBe(false);
+        });
+
         it('ChatSDK.getChatToken() should pass reconnectId to OCClient.getChatToken if any on Chat Reconnect', async () => {
             const chatSDKConfig = {
                 telemetry: {
