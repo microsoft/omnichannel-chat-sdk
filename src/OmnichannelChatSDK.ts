@@ -971,7 +971,7 @@ class OmnichannelChatSDK {
                 const adapter = new window.Microsoft.BotFramework.WebChat.IC3Adapter(adapterConfig);
 
                 // Keep iframe communication alive to reuse the same IC3Client instance
-                window.Microsoft.BotFramework.WebChat.IC3SDKProvider.disposeSdk = () => {};
+                window.Microsoft.BotFramework.WebChat.IC3SDKProvider.disposeSdk = () => {}; // eslint-disable-line @typescript-eslint/no-empty-function
 
                 this.scenarioMarker.completeScenario(TelemetryEvent.CreateIC3Adapter);
 
