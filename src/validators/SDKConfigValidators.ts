@@ -1,4 +1,4 @@
-import IChatSDKConfig, { IDataMaskingSDKConfig } from "../core/IChatSDKConfig";
+import IChatSDKConfig, { IDataMaskingSDKConfig, PersistentChatConfig } from "../core/IChatSDKConfig";
 import {ariaTelemetryKey} from "../config/settings";
 
 const defaultChatSDKConfig: IChatSDKConfig = {
@@ -33,9 +33,19 @@ const validateDataMaskingConfig = (dataMaskingConfig: IDataMaskingSDKConfig) => 
     }
 }
 
+const validatePersistentChatConfig = (persistentChatConfig: PersistentChatConfig): void => {
+    if (typeof persistentChatConfig.tokenUpdateTime !== "number" || !persistentChatConfig.tokenUpdateTime) {
+        persistentChatConfig.tokenUpdateTime = defaultChatSDKConfig.persistentChat!.tokenUpdateTime;
+    }
+}
+
 const validateSDKConfig = (chatSDKConfig: IChatSDKConfig): void => {
     if (chatSDKConfig.dataMasking) {
         validateDataMaskingConfig(chatSDKConfig.dataMasking);
+    }
+
+    if (chatSDKConfig.persistentChat) {
+        validatePersistentChatConfig(chatSDKConfig.persistentChat);
     }
 }
 
