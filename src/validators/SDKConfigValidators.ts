@@ -35,7 +35,7 @@ const validateDataMaskingConfig = (dataMaskingConfig: IDataMaskingSDKConfig) => 
 
 const validatePersistentChatConfig = (persistentChatConfig: PersistentChatConfig): void => {
     if (typeof persistentChatConfig.tokenUpdateTime !== "number" || !persistentChatConfig.tokenUpdateTime) {
-        persistentChatConfig.tokenUpdateTime = defaultChatSDKConfig.persistentChat!.tokenUpdateTime;
+        persistentChatConfig.tokenUpdateTime = defaultChatSDKConfig!.persistentChat!.tokenUpdateTime; // eslint-disable-line @typescript-eslint/no-non-null-assertion
     }
 }
 
