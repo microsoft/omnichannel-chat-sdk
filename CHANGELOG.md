@@ -10,6 +10,11 @@ All notable changes to this project will be documented in this file.
 - Uptake [@microsoft/ocsdk@0.2.0](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.2.0)
 - Add `getCallingToken`
 - Send `ChannelId-lcw` message tag
+- Uptake [IC3Client@2021.08.14.1](https://comms.omnichannelengagementhub.com/release/2021.08.14.1/Scripts/SDK/SDK.min.js)
+- Uptake [botframework-webchat-adapter-ic3@0.1.0-master.2dba07b](https://www.npmjs.com/package/botframework-webchat-adapter-ic3/v/0.1.0-master.2dba07b)
+
+### Fixed
+- `msdyn_enablechatreconnect` not being parsed properly
 
 ## [0.2.0] - 2021-04-30
 ### Added
