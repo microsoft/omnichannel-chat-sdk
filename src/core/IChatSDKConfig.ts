@@ -31,7 +31,8 @@ interface IChatSDKConfig {
 }
 
 export {
-    IDataMaskingSDKConfig
+    IDataMaskingSDKConfig,
+    PersistentChatConfig
 };
 
 export default IChatSDKConfig;
