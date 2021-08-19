@@ -1137,13 +1137,14 @@ class OmnichannelChatSDK {
 
             const {PreChatSurvey: preChatSurvey, msdyn_prechatenabled, msdyn_callingoptions, msdyn_conversationmode, msdyn_enablechatreconnect} = liveWSAndLiveChatEngJoin;
             const isPreChatEnabled = msdyn_prechatenabled === true || msdyn_prechatenabled == "true";
-
-            if ((msdyn_enablechatreconnect === true || msdyn_enablechatreconnect == "true") && !this.isPersistentChat) {
-                this.isChatReconnect = true;
-            }
+            const isChatReconnectEnabled = msdyn_enablechatreconnect === true || msdyn_enablechatreconnect == "true";
 
             if (msdyn_conversationmode?.toString() === ConversationMode.PersistentChat.toString()) {
                 this.isPersistentChat = true;
+            }
+
+            if (isChatReconnectEnabled && !this.isPersistentChat) {
+                this.isChatReconnect = true;
             }
 
             if (isPreChatEnabled && preChatSurvey && preChatSurvey.trim().length > 0) {
