@@ -41,7 +41,7 @@
     "@azure/communication-chat": "^1.1.0-alpha.20210705.1",
     "@azure/communication-common": "^1.0.0",
     "@microsoft/ocsdk": "^0.2.0",
-    "@microsoft/omnichannel-amsclient": "0.1.0-main.a4f0d5f",
+    "@microsoft/omnichannel-amsclient": "0.1.0-main.d300e6b",
     "@microsoft/omnichannel-ic3core": "^0.1.1"
   }
 }
