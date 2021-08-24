@@ -396,7 +396,8 @@ class OmnichannelChatSDK {
                 token: this.chatToken.token,
                 id: this.chatToken.visitorId || 'teamsvisitor',
                 threadId: this.chatToken.chatId,
-                environmentUrl: this.chatToken.ACSEndpoint as string
+                environmentUrl: this.chatToken.ACSEndpoint as string,
+                pollingInterval: 1000
             };
 
             try {
@@ -412,7 +413,8 @@ class OmnichannelChatSDK {
             try {
                 this.conversation = await this.ACSClient?.joinConversation({
                     id: chatAdapterConfig.id,
-                    threadId: chatAdapterConfig.threadId as string
+                    threadId: chatAdapterConfig.threadId as string,
+                    pollingInterval: chatAdapterConfig.pollingInterval
                 }) as ACSConversation;
             } catch (error) {
                 console.error(`OmnichannelChatSDK/startChat/joinConversation/error ${error}`);
@@ -761,7 +763,10 @@ class OmnichannelChatSDK {
             }
 
             (this.conversation as ACSConversation)?.registerOnNewMessage((event: ChatMessageReceivedEvent) => {
-                onNewMessageCallback(event);
+                const {id} = event;
+                if (!postedMessages.has(id)) {
+                    onNewMessageCallback(event);
+                }
             });
         } else {
             const postedMessages = new Set();

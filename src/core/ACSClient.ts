@@ -7,6 +7,7 @@ import ACSParticipantDisplayName from "./ACSParticipantDisplayName";
 export interface ACSSessionInfo {
     id: string;
     threadId: string;
+    pollingInterval: number;
 }
 
 export interface ACSClientConfig {
@@ -92,7 +93,41 @@ export class ACSConversation {
     }
 
     public async registerOnNewMessage(onNewMessageCallback: CallableFunction): Promise<void> {
+        let isReceivingNotifications = false;
+        const postedMessageIds = new Set()
+
+        const pollForMessages = async (delay: number) => {
+            if (isReceivingNotifications) {
+              return;
+            }
+
+            // Poll messages until WS established connection
+            const messages = await this.getMessages();
+            for (const message of messages.reverse()) {
+                const {id, sender} = message;
+                const customerMessageCondition = ((sender as CommunicationUserIdentifier).communicationUserId === (this.sessionInfo?.id as string))
+
+                // Filter out customer messages
+                if (customerMessageCondition) {
+                    return;
+                }
+
+                if (!postedMessageIds.has(id)) {
+                    onNewMessageCallback(message);
+                    postedMessageIds.add(id);
+                }
+            }
+
+            setTimeout(() => {
+                pollForMessages(delay);
+            }, delay);
+        };
+
+        await pollForMessages(this.sessionInfo?.pollingInterval as number);
+
         this.chatClient?.on("chatMessageReceived", (event: ChatMessageReceivedEvent) => {
+            isReceivingNotifications = true;
+
             const {sender} = event;
 
             const customerMessageCondition = ((sender as CommunicationUserIdentifier).communicationUserId === (this.sessionInfo?.id as string))
