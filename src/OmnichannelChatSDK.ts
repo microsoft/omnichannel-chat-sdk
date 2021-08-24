@@ -67,7 +67,6 @@ import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
 import FramedlessClient from "@microsoft/omnichannel-amsclient/lib/FramedlessClient";
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 
-const acsResourceEndpoint = "https://{0}-Trial-acs.communication.azure.com";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -397,7 +396,7 @@ class OmnichannelChatSDK {
                 token: this.chatToken.token,
                 id: this.chatToken.visitorId || 'teamsvisitor',
                 threadId: this.chatToken.chatId,
-                environmentUrl: acsResourceEndpoint.replace('{0}', this.omnichannelConfig.orgId)
+                environmentUrl: this.chatToken.ACSEndpoint as string
             };
 
             try {
@@ -624,7 +623,7 @@ class OmnichannelChatSDK {
                 }
 
                 const chatToken = await this.OCClient.getChatToken(this.requestId, getChatTokenOptionalParams);
-                const {ChatId: chatId, Token: token, RegionGtms: regionGtms, ExpiresIn: expiresIn, VisitorId: visitorId, VoiceVideoCallToken: voiceVideoCallToken} = chatToken;
+                const {ChatId: chatId, Token: token, RegionGtms: regionGtms, ExpiresIn: expiresIn, VisitorId: visitorId, VoiceVideoCallToken: voiceVideoCallToken, ACSEndpoint} = chatToken;
                 this.chatToken = {
                     chatId,
                     regionGTMS: JSON.parse(regionGtms),
@@ -632,7 +631,8 @@ class OmnichannelChatSDK {
                     token,
                     expiresIn,
                     visitorId,
-                    voiceVideoCallToken
+                    voiceVideoCallToken,
+                    ACSEndpoint
                 };
 
                 this.scenarioMarker.completeScenario(TelemetryEvent.GetChatToken, {
