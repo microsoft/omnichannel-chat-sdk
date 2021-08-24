@@ -157,21 +157,24 @@ class OmnichannelChatSDK {
         try {
             this.OCSDKProvider = OCSDKProvider;
             const OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, {} as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
-            const IC3Client = await this.getIC3Client();
-            const acsClient = new ACSClient();
-            const amsClient = await createAMSClient({
-                framedMode: isBrowser(),
-                debug: false,
-                logger: undefined
-            });
-
-            // Assign & Update flag only if all dependencies have been initialized succesfully
-            this.OCClient = OCClient;
-            this.IC3Client = IC3Client;
-            this.ACSClient = acsClient;
-            this.AMSClient = amsClient;
 
             await this.getChatConfig();
+
+            if (this.liveChatVersion === LiveChatVersion.V2) {
+                const acsClient = new ACSClient();
+                const amsClient = await createAMSClient({
+                    framedMode: isBrowser(),
+                    debug: false,
+                    logger: undefined
+                });
+
+                this.ACSClient = acsClient;
+                this.AMSClient = amsClient;
+            } else {
+                this.IC3Client = await this.getIC3Client();
+            }
+
+            this.OCClient = OCClient;
 
             this.isInitialized = true;
 
