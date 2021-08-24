@@ -8,4 +8,5 @@ export default interface IChatToken {
     expiresIn?: string;
     visitorId?: string;
     voiceVideoCallToken?: any;
+    ACSEndpoint?: string;
 }
