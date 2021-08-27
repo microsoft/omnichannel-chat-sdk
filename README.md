@@ -34,8 +34,8 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 | Web Support | ✔ | ✔ |
 | React Native Support | ❌ | ✔ |
 | Escalation to Voice & Video | ✔ | Web Only |
-| Co-browse | ✔ | ❌ |
-| Screen Sharing | ✔ | ❌ |
+| Co-browse | ✔ | Web Only |
+| Screen Sharing | ✔ | Web Only |
 | Authenticated Chat | ✔ | ✔ |
 | Pre-chat Survey | ✔ | ✔ |
 | Post-chat Survey | ✔ | ❌ |
@@ -47,6 +47,9 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 | File Attachments | ✔ | ✔ |
 | Custom Context | ✔ | ✔ |
 | Proactive Chat | ✔ | BYOI **\*** |
+| Persistent Chat | ✔ | ✔ |
+| Chat Reconnect | ✔ | ✔ |
+| Operating Hours | ✔ | ✔ |
 
 **\*** BYOI: Bring Your Own Implementation
 
@@ -67,8 +70,10 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 | OmnichannelChatSDK.getLiveChatConfig() | Get live chat config | |
 | OmnichannelChatSDK.getDataMaskingRules() | Get active data masking rules | |
 | OmnichannelChatSDK.getCurrentLiveChatContext() | Get current live chat context information to reconnect to the same chat | |
+| OmnichannelChatSDK.getChatReconnectContext() | Get current reconnectable chat context information to reconnect to a previous existing chat session | |
 | OmnichannelChatSDK.getConversationDetails() | Get details of the current conversation such as its state & when the agent joined the conversation | |
 | OmnichannelChatSDK.getChatToken() | Get chat token | |
+| OmnichannelChatSDK.getCallingToken() | Get calling token | |
 | OmnichannelChatSDK.getMessages() | Get all messages | |
 | OmnichannelChatSDK.sendMessage() | Send message | |
 | OmnichannelChatSDK.onNewMessage() | Handles system message, client/agent messages, adaptive cards, attachments to download | |
@@ -113,6 +118,15 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
     const liveChatContext = await chatSDK.getCurrentLiveChatContext();
 ```
 
+### Get Current Chat Reconnect Context
+```ts
+    const optionalParams = {
+        reconnectId: '', // reconnect Id
+    };
+
+    const chatReconnectContext = await chatSDK.getChatReconnectContext(optionalParams);
+```
+
 ### Get Conversation Details
 ```ts
     const conversationDetails = await chatSDK.getConversationDetails();
@@ -121,6 +135,11 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 ### Get Chat Token
 ```ts
     const chatToken = await chatSDK.getChatToken();
+```
+
+### Get Calling Token
+```ts
+    const callingToken = await chatSDK.getCallingToken();
 ```
 
 ### Get Live Chat Config
@@ -346,6 +365,125 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
     // from this point, this acts like a regular chat widget
 ```
 
+### Persistent Chat
+
+```ts
+    const chatSDKConfig = {
+        persistentChat: {
+            disable: false,
+            tokenUpdateTime: 21600000
+        },
+        getAuthToken: async () => {
+            const response = await fetch("http://contosohelp.com/token");
+            if (response.ok) {
+                return await response.text();
+            }
+            else {
+                return null
+            }
+        }
+    }
+
+    const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+    await chatSDK.initialize();
+
+    // from this point, this acts like a persistent chat
+```
+### Chat Reconnect with Authenticated User
+
+```ts
+    const chatSDKConfig = {
+        chatReconnect: {
+            disable: false,
+        },
+        getAuthToken: async () => {
+            const response = await fetch("http://contosohelp.com/token");
+            if (response.ok) {
+                return await response.text();
+            }
+            else {
+                return null
+            }
+        }
+    }
+
+    const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+    await chatSDK.initialize();
+
+    ...
+
+    const chatReconnectContext = await chatSDK.getChatReconnectContext();
+
+    if (chatReconnectContext.reconnectId) {
+       // Add UX with options to reconnect to previous existing chat or start new chat
+    }
+
+    // Reconnect chat option
+    const optionalParams = {};
+    optionalParams.reconnectId = chatReconnectContext.reconnectId;
+    chatSDK.startChat(optionalParams);
+
+    // Start new chat option
+    chatSDK.startChat();
+```
+
+### Chat Reconnect with Unauthenticated User
+
+```ts
+    const chatSDKConfig = {
+        chatReconnect: {
+            disable: false,
+        },
+    }
+
+    const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+    await chatSDK.initialize();
+
+    ....
+
+    const optionalParams: any = {};
+
+    // Retrieve reconnect id from the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const reconnectId = urlParams.get('oc.reconnectid');
+
+    const params = {
+        reconnectId
+    };
+
+    // Validate reconnect id
+    const chatReconnectContext = await chatSDK.getChatReconnectContext(params);
+
+    // If the reconnect id is invalid or expired, redirect URL if there is any URL set in the configuration
+    if (chatReconnectContext.redirectURL) {
+        window.location.replace(chatReconnectContext.redirectURL);
+    }
+
+    // Valid reconnect id, reconnect to previous chat
+    if (chatReconnectContext.reconnectId) {
+        await chatSDK.startChat({
+            reconnectId: chatReconnectContext.reconnectId
+        });
+    } else {  // Reconnect id from URL is not valid, start new chat session
+        await chatSDK.startChat();
+    }
+```
+
+### Operating Hours
+
+```ts
+    const chatConfig = await chatSDK.getLiveChatConfig();
+    const {LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin} = liveChatConfig;
+    const {OutOfOperatingHours: outOfOperatingHours} = liveWSAndLiveChatEngJoin;
+
+    if (outOfOperatingHours === "True") {
+        // Handles UX on Out of Operating Hours
+    } else {
+        await chatSDK.startChat();
+        // Renders Custom Chat Widget
+    }
+```
+
 ### Use [BotFramework-WebChat](https://github.com/microsoft/BotFramework-WebChat)
 
 **NOTE**: Currently supported on web only
@@ -365,18 +503,10 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
     await chatSDK.startChat(optionalParams);
     const chatAdapter = await chatSDK.createChatAdapter();
 
-    // Subscribes to incoming message (OPTION 1)
+    // Subscribes to incoming message
     chatSDK.onNewMessage((message) => {
       console.log(`[NewMessage] ${message.content}`); // IC3 protocol message data
       console.log(message);
-    });
-
-    // Subscribes to incoming message (OPTION 2)
-    (chatAdapter as any).activity$.subscribe((activity: any) => {
-        if (activity.type === "message") {
-            console.log("[Message activity]");
-            console.log(activity); // DirectLine protocol activity data
-        }
     });
 
     ...

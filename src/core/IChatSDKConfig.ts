@@ -11,16 +11,28 @@ interface TelemetrySDKConfig {
     ariaTelemetryKey?: string
 }
 
+interface PersistentChatConfig {
+    disable: boolean;
+    tokenUpdateTime: number;
+}
+
+interface ChatReconnectConfig {
+    disable: boolean;
+}
+
 interface IChatSDKConfig {
     dataMasking?: IDataMaskingSDKConfig,
     telemetry?: TelemetrySDKConfig,
+    persistentChat?: PersistentChatConfig,
+    chatReconnect?: ChatReconnectConfig,
     getAuthToken?: () => Promise<string|null>,
     ic3Config?: IC3Config,
     chatAdapterConfig?: ChatAdapterConfig
 }
 
 export {
-    IDataMaskingSDKConfig
+    IDataMaskingSDKConfig,
+    PersistentChatConfig
 };
 
 export default IChatSDKConfig;
