@@ -1568,7 +1568,7 @@ describe('Omnichannel Chat SDK', () => {
                 disconnect: jest.fn()
             };
 
-            const conversationDisconnectFn = spyOn(chatSDK.conversation, 'disconnect');
+            const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
             await chatSDK.endChat();
 
             expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(1);
