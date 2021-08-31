@@ -29,13 +29,13 @@
     "customer"
   ],
   "devDependencies": {
-    "@types/jest": "^26.0.10",
-    "@typescript-eslint/eslint-plugin": "^4.9.1",
-    "@typescript-eslint/parser": "^4.9.1",
-    "eslint": "^7.15.0",
+    "@types/jest": "^26.0.24",
+    "@typescript-eslint/eslint-plugin": "^4.30.0",
+    "@typescript-eslint/parser": "^4.30.0",
+    "eslint": "^7.32.0",
     "jest": "^26.6.3",
-    "ts-jest": "^26.5.1",
-    "typescript": "^3.9.5"
+    "ts-jest": "^26.5.6",
+    "typescript": "^3.9.10"
   },
   "dependencies": {
     "@microsoft/ocsdk": "^0.2.0",
