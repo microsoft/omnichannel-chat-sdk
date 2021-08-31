@@ -12,6 +12,9 @@ All notable changes to this project will be documented in this file.
 - Send `ChannelId-lcw` message tag
 - Uptake [IC3Client@2021.08.14.1](https://comms.omnichannelengagementhub.com/release/2021.08.14.1/Scripts/SDK/SDK.min.js)
 - Uptake [botframework-webchat-adapter-ic3@0.1.0-master.2dba07b](https://www.npmjs.com/package/botframework-webchat-adapter-ic3/v/0.1.0-master.2dba07b)
+- Uptake [jest@27.1.0](https://www.npmjs.com/package/jest/v/27.1.0)
+- Update [@types/jest@27.0.1](https://www.npmjs.com/package/@types/jest/v/27.0.1)
+- Uptake [ts-jest@27.0.5](https://www.npmjs.com/package/ts-jest/v/27.0.5)
 
 ### Fixed
 - `msdyn_enablechatreconnect` not being parsed properly
