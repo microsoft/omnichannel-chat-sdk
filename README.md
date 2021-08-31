@@ -16,6 +16,7 @@ Please make sure you have a chat widget configured before using this package or 
 - [Common Scenarios](#common-scenarios)
 - [Feature Comparisons](#feature-comparisons)
 - [Telemetry](#telemetry)
+- [Troubleshooting Guide](docs/TROUBLESHOOTING_GUIDE.md)
 
 ## Live Chat Widget vs. Chat SDK
 
@@ -48,6 +49,7 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 | Proactive Chat | ✔ | BYOI **\*** |
 | Persistent Chat | ✔ | ✔ |
 | Chat Reconnect | ✔ | ✔ |
+| Operating Hours | ✔ | ✔ |
 
 **\*** BYOI: Bring Your Own Implementation
 
@@ -467,6 +469,21 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
     }
 ```
 
+### Operating Hours
+
+```ts
+    const chatConfig = await chatSDK.getLiveChatConfig();
+    const {LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin} = liveChatConfig;
+    const {OutOfOperatingHours: outOfOperatingHours} = liveWSAndLiveChatEngJoin;
+
+    if (outOfOperatingHours === "True") {
+        // Handles UX on Out of Operating Hours
+    } else {
+        await chatSDK.startChat();
+        // Renders Custom Chat Widget
+    }
+```
+
 ### Use [BotFramework-WebChat](https://github.com/microsoft/BotFramework-WebChat)
 
 **NOTE**: Currently supported on web only
@@ -486,18 +503,10 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
     await chatSDK.startChat(optionalParams);
     const chatAdapter = await chatSDK.createChatAdapter();
 
-    // Subscribes to incoming message (OPTION 1)
+    // Subscribes to incoming message
     chatSDK.onNewMessage((message) => {
       console.log(`[NewMessage] ${message.content}`); // IC3 protocol message data
       console.log(message);
-    });
-
-    // Subscribes to incoming message (OPTION 2)
-    (chatAdapter as any).activity$.subscribe((activity: any) => {
-        if (activity.type === "message") {
-            console.log("[Message activity]");
-            console.log(activity); // DirectLine protocol activity data
-        }
     });
 
     ...
