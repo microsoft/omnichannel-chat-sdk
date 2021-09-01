@@ -81,7 +81,7 @@ describe('ScenarioMarker', () => {
             error: jest.fn()
         }
 
-        spyOn(console, 'warn');
+        jest.spyOn(console, 'warn');
         scenarioMarker.failScenario(scenario);
         expect(console.warn).toHaveBeenCalledTimes(1);
     });
@@ -94,7 +94,7 @@ describe('ScenarioMarker', () => {
             error: jest.fn()
         }
 
-        spyOn(console, 'warn');
+        jest.spyOn(console, 'warn');
         scenarioMarker.completeScenario(scenario);
         expect(console.warn).toHaveBeenCalledTimes(1);
     });

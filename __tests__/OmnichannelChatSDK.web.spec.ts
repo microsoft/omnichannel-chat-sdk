@@ -44,8 +44,8 @@ describe('Omnichannel Chat SDK (Web)', () => {
 
         await chatSDK.startChat();
 
-        spyOn(libraries, 'getIC3AdapterCDNUrl');
-        spyOn(WebUtils, 'loadScript');
+        jest.spyOn(libraries, 'getIC3AdapterCDNUrl');
+        jest.spyOn(WebUtils, 'loadScript');
 
         try {
             await chatSDK.createChatAdapter();
