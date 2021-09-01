@@ -10,6 +10,7 @@ Please make sure you have a chat widget configured before using this package or 
 ## Table of Contents
 - [Live Chat Widget vs. Chat SDK](#live-chat-widget-vs-chat-sdk)
 - [Installation](#installation)
+- [Installation on React Native](#installation-on-react-native)
 - [API Reference](#api-reference)
 - [API Examples](#api-examples)
 - [Sample Apps](samples/)
@@ -58,6 +59,34 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 ```
     npm install @microsoft/omnichannel-chat-sdk --save
 ```
+
+## Installation on React Native
+
+The following steps will be required to run Omnichannel Chat SDK on React Native:
+
+1. Run `npm install node-libs-react-native --save-dev`
+1. Update *metro.config.js* to use React Native compatible Node Core modules
+    ```ts
+    module.exports = {
+        // ...
+        resolver: {
+            extraNodeModules: {
+            ...require('node-libs-react-native'),
+            net: require.resolve('node-libs-react-native/mock/net'),
+            tls: require.resolve('node-libs-react-native/mock/tls')
+        }
+    };
+    ```
+
+1. Import 'node-libs-react-native/globals' on top of your entry point file
+    ```ts
+    import 'node-libs-react-native/globals';
+    ```
+
+1. Install `react-native-randomBytes`
+    ```
+    npm install react-native-randombytes --save-dev
+    ```
 
 ## API Reference
 
