@@ -16,6 +16,7 @@ import fetchOmnichannelConfig from '../../utils/fetchOmnichannelConfig';
 import fetchTelemetryConfig from '../../utils/fetchTelemetryConfig';
 import fetchCallingConfig from '../../utils/fetchCallingConfig';
 import fetchDebugConfig from '../../utils/fetchDebugConfig';
+import * as AdaptiveCards from 'adaptivecards';
 import './WebChat.css';
 
 const omnichannelConfig: any = fetchOmnichannelConfig();
@@ -48,9 +49,15 @@ const styleOptions = {
   bubbleFromUserBackground: 'rgb(246, 246, 246)'
 }
 
+const patchAdaptiveCard = (adaptiveCard: any) => {
+  return JSON.parse(adaptiveCard.replaceAll("&#42;", "*"));  // HTML entities '&#42;' is not unescaped for some reason
+}
+
 function WebChat() {
   const {state, dispatch} = useContext(Store);
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
+  const [preChatSurvey, setPreChatSurvey] = useState(undefined);
+  const [preChatResponse, setPreChatResponse] = useState(undefined);
   const [chatAdapter, setChatAdapter] = useState<any>(undefined);
   const [webChatStore, setWebChatStore] = useState(undefined);
   const [chatToken, setChatToken] = useState(undefined);
@@ -82,6 +89,14 @@ function WebChat() {
         } catch (e) {
           console.log(`Failed to load VoiceVideoCalling: ${e}`);
         }
+      }
+
+      let preChatSurvey = await chatSDK.getPreChatSurvey(false);
+      if (preChatSurvey) {
+        console.info('[PreChatSurvey]');
+        preChatSurvey = patchAdaptiveCard(preChatSurvey);
+        console.log(preChatSurvey);
+        setPreChatSurvey(preChatSurvey);
       }
     }
 
@@ -123,40 +138,39 @@ function WebChat() {
     }
 
     dispatch({type: ActionType.SET_CHAT_STARTED, payload: true});
-    dispatch({type: ActionType.SET_LOADING, payload: true});
 
-    try {
-      await chatSDK?.startChat(optionalParams);
-    } catch (error) {
-      console.log(`Unable to start chat: ${error.message}`);
-      return;
+    // Start chats only if there's an existing live chat context or no PreChat
+    if (cachedLiveChatContext || !preChatSurvey) {
+      dispatch({type: ActionType.SET_LOADING, payload: true});
+
+      try {
+        await chatSDK?.startChat(optionalParams);
+      } catch (error) {
+        console.log(`Unable to start chat: ${error.message}`);
+        return;
+      }
+
+      // Cache current conversation context
+      const liveChatContext = await chatSDK?.getCurrentLiveChatContext();
+      if (liveChatContext && Object.keys(liveChatContext).length) {
+        localStorage.setItem('liveChatContext', JSON.stringify(liveChatContext));
+      }
+
+      chatSDK?.onNewMessage(onNewMessage, {rehydrate: true});
+      chatSDK?.onTypingEvent(onTypingEvent);
+      chatSDK?.onAgentEndSession(onAgentEndSession);
+
+      const chatAdapter = await chatSDK?.createChatAdapter();
+
+      setChatAdapter(chatAdapter);
+      dispatch({type: ActionType.SET_LOADING, payload: false});
+
+      if ((chatSDK as any)?.getVoiceVideoCalling) {
+        const chatToken: any = await chatSDK?.getChatToken();
+        setChatToken(chatToken);
+      }
     }
-
-    // Cache current conversation context
-    const liveChatContext = await chatSDK?.getCurrentLiveChatContext();
-    if (liveChatContext &&  Object.keys(liveChatContext).length) {
-      localStorage.setItem('liveChatContext', JSON.stringify(liveChatContext));
-    }
-
-    chatSDK?.onNewMessage(onNewMessage, {rehydrate: true});
-    chatSDK?.onTypingEvent(onTypingEvent);
-    chatSDK?.onAgentEndSession(onAgentEndSession);
-
-    const chatAdapter = await chatSDK?.createChatAdapter();
-
-    // (chatAdapter as any).activity$.subscribe((activity: any) => {
-    //   console.log(`[activity] ${activity.text}`);
-    //   dispatch({type: ActionType.SET_LOADING, payload: false});
-    // });
-
-    setChatAdapter(chatAdapter);
-    dispatch({type: ActionType.SET_LOADING, payload: false});
-
-    if ((chatSDK as any)?.getVoiceVideoCalling) {
-      const chatToken: any = await chatSDK?.getChatToken();
-      setChatToken(chatToken);
-    }
-  }, [chatSDK, state, dispatch, onAgentEndSession, onNewMessage, onTypingEvent]);
+  }, [chatSDK, state, dispatch, onAgentEndSession, onNewMessage, onTypingEvent, preChatSurvey]);
 
   const endChat = useCallback(async () => {
     console.log('[endChat]');
@@ -166,6 +180,8 @@ function WebChat() {
     (VoiceVideoCallingSDK as any)?.close();
     setChatAdapter(undefined);
     setChatToken(undefined);
+    setPreChatSurvey(undefined);
+    setPreChatResponse(undefined);
     localStorage.removeItem('liveChatContext');
     dispatch({type: ActionType.SET_CHAT_STARTED, payload: false});
   }, [chatSDK, dispatch, VoiceVideoCallingSDK]);
@@ -186,6 +202,56 @@ function WebChat() {
     await chatSDK?.emailLiveChatTranscript(transcriptBody);
   }, [chatSDK]);
 
+  const renderPreChatSurvey = useCallback(() => {
+    const adaptiveCard = new AdaptiveCards.AdaptiveCard();
+    adaptiveCard.parse(preChatSurvey);
+    adaptiveCard.onExecuteAction = async (action: AdaptiveCards.Action) => { // Adaptive Card event handler
+        const preChatResponse = (action as any).data;
+
+        setPreChatResponse(preChatResponse);
+
+        const optionalParams: any = {};
+        if (preChatResponse) {
+          optionalParams.preChatResponse = preChatResponse;
+        }
+
+        dispatch({type: ActionType.SET_LOADING, payload: true});
+
+        try {
+          await chatSDK?.startChat(optionalParams);
+        } catch (error) {
+          console.log(`Unable to start chat: ${error.message}`);
+          return;
+        }
+
+        // Cache current conversation context
+        const liveChatContext = await chatSDK?.getCurrentLiveChatContext();
+        if (liveChatContext && Object.keys(liveChatContext).length) {
+          localStorage.setItem('liveChatContext', JSON.stringify(liveChatContext));
+        }
+
+        chatSDK?.onNewMessage(onNewMessage, {rehydrate: true});
+        chatSDK?.onTypingEvent(onTypingEvent);
+        chatSDK?.onAgentEndSession(onAgentEndSession);
+
+        const chatAdapter = await chatSDK?.createChatAdapter();
+
+        setChatAdapter(chatAdapter);
+        dispatch({type: ActionType.SET_LOADING, payload: false});
+
+        if ((chatSDK as any)?.getVoiceVideoCalling) {
+          const chatToken: any = await chatSDK?.getChatToken();
+          setChatToken(chatToken);
+        }
+    }
+
+    const renderedCard = adaptiveCard.render(); // Renders as HTML element
+    return <div ref={(n) => { // Returns React element
+      n && n.firstChild && n.removeChild(n.firstChild); // Removes duplicates fix
+      renderedCard && n && n.appendChild(renderedCard);
+    }} />
+  }, [chatSDK, preChatSurvey])
+
   return (
     <>
       <div>
@@ -199,6 +265,9 @@ function WebChat() {
             title={'Live Chat via Chat SDK'}
             onClick={endChat}
           />
+          {
+            preChatSurvey && !preChatResponse && renderPreChatSurvey()
+          }
           {
             state.isLoading && <Loading />
           }

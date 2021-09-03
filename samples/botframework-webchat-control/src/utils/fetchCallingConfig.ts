@@ -1,6 +1,6 @@
 const fetchCallingConfig = () => {
     const callingConfig = {
-        disable: false
+        disable: true
     }
 
     const urlParams = new URLSearchParams(window.location.search);
