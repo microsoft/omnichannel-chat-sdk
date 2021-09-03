@@ -2,9 +2,12 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+
+## [0.3.0] - 2021-09-03
 ### Added
 - Persistent Chat Support
 - Chat Reconnect Support
+- Operating Hours Documentation
 
 ### Changed
 - Uptake [@microsoft/ocsdk@0.2.0](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.2.0)
@@ -18,6 +21,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - `msdyn_enablechatreconnect` not being parsed properly
+- Fix unable to start multiple conversations with same instance due to chat client being disposed
+- Pass logger to adapter
 
 ## [0.2.0] - 2021-04-30
 ### Added
