@@ -416,8 +416,24 @@ class OmnichannelChatSDK {
                     threadId: chatAdapterConfig.threadId as string,
                     pollingInterval: chatAdapterConfig.pollingInterval
                 }) as ACSConversation;
+
+                this.scenarioMarker.completeScenario(TelemetryEvent.StartChat, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
             } catch (error) {
+                const exceptionDetails = {
+                    response: "ACSClientJoinConversationFailed"
+                };
+
+                this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string,
+                    ExceptionDetails: JSON.stringify(exceptionDetails)
+                });
+
                 console.error(`OmnichannelChatSDK/startChat/joinConversation/error ${error}`);
+                throw Error(exceptionDetails.response);
             }
         } else {
             try {
