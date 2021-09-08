@@ -833,20 +833,31 @@ class OmnichannelChatSDK {
     }
 
     public async sendTypingEvent(): Promise<void> {
+        this.scenarioMarker.startScenario(TelemetryEvent.SendTypingEvent, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string
+        });
+
         if (this.liveChatVersion === LiveChatVersion.V2) {
             try {
                 await this.OCClient.sendTypingIndicator(this.requestId, LiveChatVersion.V2);
+
+                this.scenarioMarker.completeScenario(TelemetryEvent.SendTypingEvent, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
             } catch (error) {
                 console.error("OmnichannelChatSDK/sendTypingEvent/error");
+
+                this.scenarioMarker.failScenario(TelemetryEvent.SendTypingEvent, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+
                 throw new Error('OCClientSendTypingFailed');
             }
         } else {
             const typingPayload = `{isTyping: 0}`;
-
-            this.scenarioMarker.startScenario(TelemetryEvent.SendTypingEvent, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string
-            });
 
             try {
                 await (this.conversation as IConversation)!.indicateTypingStatus(0);
@@ -858,7 +869,6 @@ class OmnichannelChatSDK {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string
                 });
-
             } catch (error) {
                 console.error("OmnichannelChatSDK/sendTypingEvent/error");
 
@@ -891,17 +901,28 @@ class OmnichannelChatSDK {
     }
 
     public async onAgentEndSession(onAgentEndSessionCallback: (message: IRawThread | ParticipantsRemovedEvent) => void): Promise<void> {
+        this.scenarioMarker.startScenario(TelemetryEvent.OnAgentEndSession, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string
+        });
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
-            (this.conversation as ACSConversation).registerOnThreadUpdate((event: ParticipantsRemovedEvent) => {
-                onAgentEndSessionCallback(event);
-            });
-        } else {
-            this.scenarioMarker.startScenario(TelemetryEvent.OnAgentEndSession, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string
-            });
+            try {
+                (this.conversation as ACSConversation).registerOnThreadUpdate((event: ParticipantsRemovedEvent) => {
+                    onAgentEndSessionCallback(event);
+                });
 
+                this.scenarioMarker.completeScenario(TelemetryEvent.OnAgentEndSession, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+            } catch (error) {
+                this.scenarioMarker.failScenario(TelemetryEvent.OnAgentEndSession, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+            }
+        } else {
             try {
                 this.conversation?.registerOnThreadUpdate((message: IRawThread) => {
                     const {members} = message;
