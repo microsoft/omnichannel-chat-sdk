@@ -1,2 +1,2 @@
-export const defaultMessageTags = ['ChannelId-lcw'];
+export const defaultMessageTags = ['ChannelId-lcw', 'FromCustomer'];
 
