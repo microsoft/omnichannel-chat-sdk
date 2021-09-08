@@ -418,6 +418,7 @@ class OmnichannelChatSDK {
                     ExceptionDetails: JSON.stringify(exceptionDetails)
                 });
 
+                console.error(`OmnichannelChatSDK/startChat/initialize/error ${error}`);
                 return error;
             }
 
@@ -443,6 +444,7 @@ class OmnichannelChatSDK {
                     ExceptionDetails: JSON.stringify(exceptionDetails)
                 });
 
+                console.error(`OmnichannelChatSDK/startChat/joinConversation/error ${error}`);
                 throw Error(exceptionDetails.response);
             }
 
