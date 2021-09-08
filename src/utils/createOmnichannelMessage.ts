@@ -24,7 +24,7 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
 
         omnichannelMessage.content = content || '';
         omnichannelMessage.properties.tags = metadata.tags || [];
-        omnichannelMessage.tags = metadata.tags? metadata.tags.replaceAll("\"","").split(",").filter((tag: string) => tag.length > 0): [];
+        omnichannelMessage.tags = metadata.tags? metadata.tags.replace(/\"/g, "").split(",").filter((tag: string) => tag.length > 0): [];
         omnichannelMessage.timestamp = createdOn;
         omnichannelMessage.messageType = MessageType.UserMessage; // Backward compatibility
         omnichannelMessage.sender = {
