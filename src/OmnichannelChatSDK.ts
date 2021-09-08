@@ -66,6 +66,7 @@ import createAMSClient from "@microsoft/omnichannel-amsclient";
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
 import FramedlessClient from "@microsoft/omnichannel-amsclient/lib/FramedlessClient";
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
+import createOmnichannelMessage from "./utils/createOmnichannelMessage";
 
 
 class OmnichannelChatSDK {
@@ -784,14 +785,26 @@ class OmnichannelChatSDK {
                     }
 
                     postedMessages.add(id);
-                    onNewMessageCallback(message);
+
+                    const omnichannelMessage = createOmnichannelMessage(message as any, {
+                        liveChatVersion: this.liveChatVersion,
+                        debug: this.debug
+                    });
+
+                    onNewMessageCallback(omnichannelMessage);
                 }
             }
 
             (this.conversation as ACSConversation)?.registerOnNewMessage((event: ChatMessageReceivedEvent) => {
                 const {id} = event;
+
+                const omnichannelMessage = createOmnichannelMessage(event, {
+                    liveChatVersion: this.liveChatVersion,
+                    debug: this.debug
+                });
+
                 if (!postedMessages.has(id)) {
-                    onNewMessageCallback(event);
+                    onNewMessageCallback(omnichannelMessage);
                 }
             });
         } else {
@@ -808,7 +821,13 @@ class OmnichannelChatSDK {
                     }
 
                     postedMessages.add(clientmessageid);
-                    onNewMessageCallback(message);
+
+                    const omnichannelMessage = createOmnichannelMessage(message as any, {
+                        liveChatVersion: this.liveChatVersion,
+                        debug: this.debug
+                    });
+
+                    onNewMessageCallback(omnichannelMessage);
                 }
             }
 
@@ -826,7 +845,12 @@ class OmnichannelChatSDK {
                 }
 
                 if (messageType !== MessageType.Typing) {
-                    onNewMessageCallback(message);
+                    const omnichannelMessage = createOmnichannelMessage(message as any, {
+                        liveChatVersion: this.liveChatVersion,
+                        debug: this.debug
+                    });
+
+                    onNewMessageCallback(omnichannelMessage);
                 }
             });
         }
