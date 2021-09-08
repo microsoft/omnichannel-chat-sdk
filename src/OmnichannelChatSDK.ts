@@ -67,6 +67,7 @@ import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
 import FramedlessClient from "@microsoft/omnichannel-amsclient/lib/FramedlessClient";
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 import createOmnichannelMessage from "./utils/createOmnichannelMessage";
+import OmnichannelChatToken from "@microsoft/omnichannel-amsclient/lib/OmnichannelChatToken";
 
 
 class OmnichannelChatSDK {
@@ -417,7 +418,6 @@ class OmnichannelChatSDK {
                     ExceptionDetails: JSON.stringify(exceptionDetails)
                 });
 
-                console.error(`OmnichannelChatSDK/startChat/initialize/error ${error}`);
                 return error;
             }
 
@@ -443,7 +443,24 @@ class OmnichannelChatSDK {
                     ExceptionDetails: JSON.stringify(exceptionDetails)
                 });
 
-                console.error(`OmnichannelChatSDK/startChat/joinConversation/error ${error}`);
+                throw Error(exceptionDetails.response);
+            }
+
+            try {
+                await this.AMSClient?.initialize({
+                    chatToken: this.chatToken as OmnichannelChatToken
+                });
+            } catch (error) {
+                const exceptionDetails = {
+                    response: "AMSClientInitializeFailed"
+                };
+
+                this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string,
+                    ExceptionDetails: JSON.stringify(exceptionDetails)
+                });
+
                 throw Error(exceptionDetails.response);
             }
         } else {
@@ -1035,12 +1052,11 @@ class OmnichannelChatSDK {
     public async downloadFileAttachment(fileMetadata: FileMetadata | IFileMetadata): Promise<Blob> {
         if (this.liveChatVersion === LiveChatVersion.V2) {
             try {
-                // const response: any = await this.AMSClient?.getViewStatus(fileMetadata);
+                const response: any = await this.AMSClient?.getViewStatus(fileMetadata);
 
-                // const {view_location} = response;
-                // const viewResponse: any = await this.AMSClient?.getView(fileMetadata, view_location);
-                // return viewResponse;
-                return new Blob([]);
+                const {view_location} = response;
+                const viewResponse: any = await this.AMSClient?.getView(fileMetadata, view_location);
+                return viewResponse;
             } catch {
                 throw new Error('downloadFile');
             }
