@@ -68,6 +68,7 @@ import FramedlessClient from "@microsoft/omnichannel-amsclient/lib/FramedlessCli
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 import createOmnichannelMessage from "./utils/createOmnichannelMessage";
 import OmnichannelChatToken from "@microsoft/omnichannel-amsclient/lib/OmnichannelChatToken";
+import OmnichannelMessage from "./core/messaging/OmnichannelMessage";
 
 
 class OmnichannelChatSDK {
@@ -994,18 +995,71 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async uploadFileAttachment(fileInfo: IFileInfo | File): Promise<IRawMessage> {
-        if (this.liveChatVersion === LiveChatVersion.V2) {
-            // const createObjectResponse: any = await (this.AMSClient as any).createObject(this.chatToken?.chatId as string, fileInfo as any);
-            // const documentId = createObjectResponse.id;
-            // const uploadDocumentResponse = await (this.AMSClient as any).uploadDocument(documentId, fileInfo as any);
-            return {} as IRawMessage;
-        } else {
-            this.scenarioMarker.startScenario(TelemetryEvent.UploadFileAttachment, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string
-            });
+    public async uploadFileAttachment(fileInfo: IFileInfo | File): Promise<IRawMessage | OmnichannelMessage> {
+        this.scenarioMarker.startScenario(TelemetryEvent.UploadFileAttachment, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string
+        });
 
+        if (this.liveChatVersion === LiveChatVersion.V2) {
+            const createObjectResponse: any = await (this.AMSClient as any).createObject(this.chatToken?.chatId as string, fileInfo as any);
+            const documentId = createObjectResponse.id;
+            const uploadDocumentResponse = await (this.AMSClient as any).uploadDocument(documentId, fileInfo as any);
+
+            const fileIdsProperty = {
+                amsReferences: JSON.stringify([documentId])
+            };
+
+            const fileMetaProperty = {
+                amsMetadata: JSON.stringify([{
+                    contentType: fileInfo.type,
+                    fileName: fileInfo.name
+                }])
+            }
+
+            const sendMessageRequest = {
+                content: '',
+                metadata:  {
+                    ...fileIdsProperty,
+                    ...fileMetaProperty
+                }
+            };
+
+            const messageToSend: IRawMessage = {
+                content: "",
+                timestamp: new Date(),
+                contentType: MessageContentType.Text,
+                deliveryMode: DeliveryMode.Bridged,
+                messageType: MessageType.UserMessage,
+                tags: [...defaultMessageTags],
+                sender: {
+                    displayName: "Customer",
+                    id: "customer",
+                    type: PersonType.User,
+                },
+                fileMetadata: uploadDocumentResponse
+            };
+
+            try {
+                await (this.conversation as ACSConversation)?.sendMessage(sendMessageRequest);
+
+                this.scenarioMarker.completeScenario(TelemetryEvent.UploadFileAttachment, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+
+                return messageToSend;
+            } catch (error) {
+                console.error("OmnichannelChatSDK/uploadFileAttachment/sendMessage/error");
+
+                this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+            }
+
+            return {} as OmnichannelMessage;
+        } else {
             let fileMetadata: IFileMetadata;
 
             if (platform.isReactNative() || platform.isNode()) {
@@ -1052,22 +1106,29 @@ class OmnichannelChatSDK {
     }
 
     public async downloadFileAttachment(fileMetadata: FileMetadata | IFileMetadata): Promise<Blob> {
+        this.scenarioMarker.startScenario(TelemetryEvent.DownloadFileAttachment, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string
+        });
+
         if (this.liveChatVersion === LiveChatVersion.V2) {
             try {
                 const response: any = await this.AMSClient?.getViewStatus(fileMetadata);
-
                 const {view_location} = response;
                 const viewResponse: any = await this.AMSClient?.getView(fileMetadata, view_location);
+                this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
                 return viewResponse;
             } catch {
-                throw new Error('downloadFile');
+                this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+                throw new Error('DownloadFileAttachmentFailed');
             }
         } else {
-            this.scenarioMarker.startScenario(TelemetryEvent.DownloadFileAttachment, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string
-            })
-
             try {
                 const downloadedFile = await (this.conversation as IConversation)!.downloadFile(fileMetadata as IFileMetadata);
                 this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment, {
@@ -1381,7 +1442,7 @@ class OmnichannelChatSDK {
                 this.preChatSurvey = preChatSurvey;
             }
 
-            if (this.authSettings){
+            if (this.authSettings) {
                 if (this.chatSDKConfig.getAuthToken){
                     this.debug && console.log("OmnichannelChatSDK/getChatConfig/auth settings with auth and getAuthToken!", this.authSettings, this.chatSDKConfig.getAuthToken);
                     const token = await this.chatSDKConfig.getAuthToken();
