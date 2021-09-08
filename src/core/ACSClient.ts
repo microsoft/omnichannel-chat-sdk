@@ -3,6 +3,7 @@ import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "
 import { ChatMessageReceivedEvent, ParticipantsRemovedEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import ACSParticipantDisplayName from "./ACSParticipantDisplayName";
+import { defaultMessageTags } from "./MessageTags";
 
 export interface ACSSessionInfo {
     id: string;
@@ -162,6 +163,10 @@ export class ACSConversation {
     }
 
     public async sendMessage(message: any): Promise<void> {
+        if (!message.metadata) {
+            message.metadata = {};
+        }
+
         const sendMessageRequest = {
             content: message.content,
         }
@@ -170,7 +175,8 @@ export class ACSConversation {
             senderDisplayName: ACSParticipantDisplayName.Customer,
             metadata: {
                 deliveryMode: DeliveryMode.Bridged,
-                tags: 'ChannelId-lcw'
+                tags: JSON.stringify([defaultMessageTags]),
+                ...message.metadata
             }
         }
 
