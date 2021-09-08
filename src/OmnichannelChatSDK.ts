@@ -406,6 +406,16 @@ class OmnichannelChatSDK {
                     environmentUrl: chatAdapterConfig.environmentUrl
                 });
             } catch (error) {
+                const exceptionDetails = {
+                    response: "ACSClientInitializeFailed"
+                };
+
+                this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string,
+                    ExceptionDetails: JSON.stringify(exceptionDetails)
+                });
+
                 console.error(`OmnichannelChatSDK/startChat/initialize/error ${error}`);
                 return error;
             }
