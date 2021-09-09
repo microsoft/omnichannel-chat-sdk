@@ -833,21 +833,23 @@ class OmnichannelChatSDK {
             if ((optionalParams as OnNewMessageOptionalParams).rehydrate) {
                 this.debug && console.log('[OmnichannelChatSDK][onNewMessage] rehydrate');
                 const messages = await this.getMessages() as IRawMessage[];
-                for (const message of messages.reverse()) {
-                    const {clientmessageid} = message;
+                if (messages) {
+                    for (const message of messages.reverse()) {
+                        const {clientmessageid} = message;
 
-                    if (postedMessages.has(clientmessageid)) {
-                        continue;
+                        if (postedMessages.has(clientmessageid)) {
+                            continue;
+                        }
+
+                        postedMessages.add(clientmessageid);
+
+                        const omnichannelMessage = createOmnichannelMessage(message as any, {
+                            liveChatVersion: this.liveChatVersion,
+                            debug: this.debug
+                        });
+
+                        onNewMessageCallback(omnichannelMessage);
                     }
-
-                    postedMessages.add(clientmessageid);
-
-                    const omnichannelMessage = createOmnichannelMessage(message as any, {
-                        liveChatVersion: this.liveChatVersion,
-                        debug: this.debug
-                    });
-
-                    onNewMessageCallback(omnichannelMessage);
                 }
             }
 

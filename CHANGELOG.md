@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- `onNewMessage` with `rehydrate` flag set to `true` crashing when `getMessages` returns `undefined`
+
 ## [0.3.0] - 2021-09-03
 ### Added
 - Persistent Chat Support

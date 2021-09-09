@@ -1475,6 +1475,33 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(1);
         });
 
+        it('ChatSDK.onNewMessage() with rehydrate flag & with no messages should not break', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient.sessionInit = jest.fn();
+            chatSDK.IC3Client.initialize = jest.fn();
+            chatSDK.IC3Client.joinConversation = jest.fn();
+
+            const messages = undefined;
+            await chatSDK.startChat();
+
+            chatSDK.conversation = {
+                registerOnNewMessage: jest.fn(),
+                getMessages: jest.fn()
+            };
+
+            jest.spyOn(chatSDK, 'getMessages').mockResolvedValue(messages);
+
+            await chatSDK.onNewMessage(() => {}, {rehydrate: true});
+
+            expect(chatSDK.getMessages).toHaveBeenCalledTimes(1);
+            expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(1);
+        });
+
         it('Ability to add multiple "onNewMessage" event handler', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
