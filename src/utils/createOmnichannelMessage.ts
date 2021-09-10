@@ -7,16 +7,19 @@ import { uuidv4 } from '@microsoft/ocsdk';
 
 const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEvent, optionalParams: any): OmnichannelMessage => {
     let omnichannelMessage = {} as OmnichannelMessage;
-    omnichannelMessage.id = uuidv4();
     omnichannelMessage.liveChatVersion = optionalParams.liveChatVersion || LiveChatVersion.V1;
 
     optionalParams.debug && console.log(message);
 
     if (optionalParams.liveChatVersion === LiveChatVersion.V1) {
+        const {clientmessageid} = message as any;
+
+        omnichannelMessage.id = clientmessageid;
         omnichannelMessage = {...message} as OmnichannelMessage;
     } else {
-        const {content, metadata, sender, senderDisplayName, createdOn} = message as any;
+        const {id, content, metadata, sender, senderDisplayName, createdOn} = message as any;
 
+        omnichannelMessage.id = id;
         omnichannelMessage.messageid = undefined;
         omnichannelMessage.clientmessageid = undefined;
         omnichannelMessage.deliveryMode = DeliveryMode.Bridged; // Backward compatibility
@@ -34,7 +37,7 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
         } as IPerson;
 
         // TODO: Handle multiple attachments
-        if (metadata.amsMetadata && metadata.amsReferences) {
+        if (metadata && metadata.amsMetadata && metadata.amsReferences) {
             omnichannelMessage.fileMetadata = {} as IFileMetadata; // Backward compatibility
             omnichannelMessage.fileMetadata.fileSharingProtocolType = 0;
 
