@@ -23,8 +23,8 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
         omnichannelMessage.properties = {}; // Backward compatibility
 
         omnichannelMessage.content = content || '';
-        omnichannelMessage.properties.tags = metadata.tags || [];
-        omnichannelMessage.tags = metadata.tags? metadata.tags.replace(/\"/g, "").split(",").filter((tag: string) => tag.length > 0): [];
+        omnichannelMessage.properties.tags = metadata && metadata.tags? metadata.tags : [];
+        omnichannelMessage.tags = metadata && metadata.tags? metadata.tags.replace(/\"/g, "").split(",").filter((tag: string) => tag.length > 0): [];
         omnichannelMessage.timestamp = createdOn;
         omnichannelMessage.messageType = MessageType.UserMessage; // Backward compatibility
         omnichannelMessage.sender = {
