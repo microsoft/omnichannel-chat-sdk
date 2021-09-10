@@ -69,7 +69,7 @@ import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 import createOmnichannelMessage from "./utils/createOmnichannelMessage";
 import OmnichannelChatToken from "@microsoft/omnichannel-amsclient/lib/OmnichannelChatToken";
 import OmnichannelMessage from "./core/messaging/OmnichannelMessage";
-
+import AMSFileManager from "./external/ACSAdapter/AMSFileManager";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -1223,48 +1223,74 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async createChatAdapter(protocol: string = ChatAdapterProtocols.IC3): Promise<unknown> {
+    public async createChatAdapter(protocol: string | null = null): Promise<unknown> {
         if (platform.isNode() || platform.isReactNative()) {
             return Promise.reject('ChatAdapter is only supported on browser');
         }
 
-        if (protocol !== ChatAdapterProtocols.IC3) {
-            return Promise.reject(`ChatAdapter for protocol ${protocol} currently not supported`);
+        if (protocol === ChatAdapterProtocols.ACS || this.liveChatVersion === LiveChatVersion.V2) {
+            const featuresOption = {
+                enableAdaptiveCards: false,
+                enableThreadMemberUpdateNotification: true,
+                enableLeaveThreadOnWindowClosed: false
+            };
+
+            try {
+                const ChatAdapter = require('acs_webchat-chat-adapter');
+                const fileManager = new AMSFileManager(this.AMSClient as FramedClient);
+                const adapter = ChatAdapter.createACSAdapter(
+                    this.chatToken.token as string,
+                    this.chatToken.visitorId || 'teamsvisitor',
+                    this.chatToken.chatId as string,
+                    this.chatToken.ACSEndpoint as string,
+                    fileManager,
+                    1000,
+                    'Customer',
+                    undefined,
+                    featuresOption,
+                );
+
+                return adapter;
+            } catch {
+                throw new Error('Failed to load ACSAdapter');
+            }
+        } else if (protocol === ChatAdapterProtocols.IC3 || this.liveChatVersion === LiveChatVersion.V1) {
+            return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
+                const ic3AdapterCDNUrl = this.resolveChatAdapterUrl(protocol || ChatAdapterProtocols.IC3);
+                this.telemetry?.setCDNPackages({
+                    IC3Adapter: ic3AdapterCDNUrl
+                });
+
+                this.scenarioMarker.startScenario(TelemetryEvent.CreateIC3Adapter);
+
+                await loadScript(ic3AdapterCDNUrl, () => {
+                    /* istanbul ignore next */
+                    this.debug && console.debug('IC3Adapter loaded!');
+                    const adapterConfig: IIC3AdapterOptions = {
+                        chatToken: this.chatToken,
+                        userDisplayName: 'Customer',
+                        userId: 'teamsvisitor',
+                        sdkURL: this.resolveIC3ClientUrl(),
+                        sdk: this.IC3Client
+                    };
+
+                    const adapter = new window.Microsoft.BotFramework.WebChat.IC3Adapter(adapterConfig);
+                    adapter.logger = this.ic3ClientLogger;
+
+                    // Keep iframe communication alive to reuse the same IC3Client instance
+                    window.Microsoft.BotFramework.WebChat.IC3SDKProvider.disposeSdk = () => {}; // eslint-disable-line @typescript-eslint/no-empty-function
+
+                    this.scenarioMarker.completeScenario(TelemetryEvent.CreateIC3Adapter);
+
+                    resolve(adapter);
+                }, () => {
+                    this.scenarioMarker.failScenario(TelemetryEvent.CreateIC3Adapter);
+                    reject('Failed to load IC3Adapter');
+                });
+            });
         }
 
-        return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
-            const ic3AdapterCDNUrl = this.resolveChatAdapterUrl(protocol);
-            this.telemetry?.setCDNPackages({
-                IC3Adapter: ic3AdapterCDNUrl
-            });
-
-            this.scenarioMarker.startScenario(TelemetryEvent.CreateIC3Adapter);
-
-            await loadScript(ic3AdapterCDNUrl, () => {
-                /* istanbul ignore next */
-                this.debug && console.debug('IC3Adapter loaded!');
-                const adapterConfig: IIC3AdapterOptions = {
-                    chatToken: this.chatToken,
-                    userDisplayName: 'Customer',
-                    userId: 'teamsvisitor',
-                    sdkURL: this.resolveIC3ClientUrl(),
-                    sdk: this.IC3Client
-                };
-
-                const adapter = new window.Microsoft.BotFramework.WebChat.IC3Adapter(adapterConfig);
-                adapter.logger = this.ic3ClientLogger;
-
-                // Keep iframe communication alive to reuse the same IC3Client instance
-                window.Microsoft.BotFramework.WebChat.IC3SDKProvider.disposeSdk = () => {}; // eslint-disable-line @typescript-eslint/no-empty-function
-
-                this.scenarioMarker.completeScenario(TelemetryEvent.CreateIC3Adapter);
-
-                resolve(adapter);
-            }, () => {
-                this.scenarioMarker.failScenario(TelemetryEvent.CreateIC3Adapter);
-                reject('Failed to load IC3Adapter');
-            });
-        });
+        return Promise.reject(`ChatAdapter for protocol ${protocol} currently not supported`);
     }
 
     public async getVoiceVideoCalling(params: any = {}): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
