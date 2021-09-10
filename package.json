@@ -29,6 +29,7 @@
     "customer"
   ],
   "devDependencies": {
+    "@types/core-js": "^2.5.5",
     "@types/jest": "^27.0.1",
     "@typescript-eslint/eslint-plugin": "^4.30.0",
     "@typescript-eslint/parser": "^4.30.0",
@@ -42,6 +43,7 @@
     "@azure/communication-common": "^1.0.0",
     "@microsoft/ocsdk": "^0.2.0",
     "@microsoft/omnichannel-amsclient": "0.1.0-main.32eec41",
-    "@microsoft/omnichannel-ic3core": "^0.1.1"
+    "@microsoft/omnichannel-ic3core": "^0.1.1",
+    "acs_webchat-chat-adapter": "0.0.27"
   }
 }
