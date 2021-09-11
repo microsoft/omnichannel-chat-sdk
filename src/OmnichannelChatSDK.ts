@@ -829,6 +829,7 @@ class OmnichannelChatSDK {
 
                 if (!postedMessages.has(id)) {
                     onNewMessageCallback(omnichannelMessage);
+                    postedMessages.add(id);
                 }
             });
         } else {

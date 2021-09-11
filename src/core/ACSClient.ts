@@ -113,6 +113,7 @@ export class ACSConversation {
                     return;
                 }
 
+                // Filter out duplicate messages
                 if (!postedMessageIds.has(id)) {
                     onNewMessageCallback(message);
                     postedMessageIds.add(id);
@@ -129,12 +130,17 @@ export class ACSConversation {
         this.chatClient?.on("chatMessageReceived", (event: ChatMessageReceivedEvent) => {
             isReceivingNotifications = true;
 
-            const {sender} = event;
+            const {id, sender} = event;
 
             const customerMessageCondition = ((sender as CommunicationUserIdentifier).communicationUserId === (this.sessionInfo?.id as string))
 
             // Filter out customer messages
             if (customerMessageCondition) {
+                return;
+            }
+
+            // Filter out duplicate messages
+            if (postedMessageIds.has(id)) {
                 return;
             }
 
@@ -147,6 +153,7 @@ export class ACSConversation {
             Object.assign(event.sender, {alias: participant.displayName});
 
             onNewMessageCallback(event);
+            postedMessageIds.add(id);
         });
     }
 
