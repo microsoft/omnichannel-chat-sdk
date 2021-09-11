@@ -399,7 +399,7 @@ class OmnichannelChatSDK {
                 token: this.chatToken.token,
                 id: this.chatToken.visitorId || 'teamsvisitor',
                 threadId: this.chatToken.chatId,
-                environmentUrl: this.chatToken.ACSEndpoint as string,
+                environmentUrl: this.chatToken.acsEndpoint as string,
                 pollingInterval: 1000
             };
 
@@ -672,7 +672,7 @@ class OmnichannelChatSDK {
                 }
 
                 const chatToken = await this.OCClient.getChatToken(this.requestId, getChatTokenOptionalParams);
-                const {ChatId: chatId, Token: token, RegionGtms: regionGtms, ExpiresIn: expiresIn, VisitorId: visitorId, VoiceVideoCallToken: voiceVideoCallToken, ACSEndpoint} = chatToken;
+                const {ChatId: chatId, Token: token, RegionGtms: regionGtms, ExpiresIn: expiresIn, VisitorId: visitorId, VoiceVideoCallToken: voiceVideoCallToken, ACSEndpoint: acsEndpoint, AttachmentConfiguration: attachmentConfiguration} = chatToken;
                 this.chatToken = {
                     chatId,
                     regionGTMS: JSON.parse(regionGtms),
@@ -681,8 +681,12 @@ class OmnichannelChatSDK {
                     expiresIn,
                     visitorId,
                     voiceVideoCallToken,
-                    ACSEndpoint
+                    acsEndpoint,
                 };
+
+                if (attachmentConfiguration && attachmentConfiguration.AttachmentServiceEndpoint) {
+                    this.chatToken.amsEndpoint = attachmentConfiguration.AttachmentServiceEndpoint;
+                }
 
                 this.scenarioMarker.completeScenario(TelemetryEvent.GetChatToken, {
                     RequestId: this.requestId,
@@ -1242,7 +1246,7 @@ class OmnichannelChatSDK {
                     this.chatToken.token as string,
                     this.chatToken.visitorId || 'teamsvisitor',
                     this.chatToken.chatId as string,
-                    this.chatToken.ACSEndpoint as string,
+                    this.chatToken.acsEndpoint as string,
                     fileManager,
                     1000,
                     'Customer',
