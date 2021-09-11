@@ -8,7 +8,7 @@ export const isSystemMessage = (message: any): boolean => { // eslint-disable-li
     && properties.tags
     && properties.tags.includes("system");
 
-    const conditionV2 = sender.alias && sender.alias === ACSParticipantDisplayName.System;
+    const conditionV2 = message.tags && message.tags.includes("system");
     return conditionV1 || conditionV2;
 }
 
@@ -16,7 +16,7 @@ export const isCustomerMessage = (message: any): boolean => { // eslint-disable-
     const {sender} = message;
 
     const conditionV1 = sender.id && sender.id.includes('contacts/8:');
-    const conditionV2 = sender.alias && sender.alias === ACSParticipantDisplayName.Customer;
+    const conditionV2 = sender.displayName && sender.displayName === ACSParticipantDisplayName.Customer;
 
     return conditionV1 || conditionV2;
 }

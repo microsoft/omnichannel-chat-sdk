@@ -2,8 +2,11 @@ import { ChatClient, ChatMessage, ChatParticipant, ChatThreadClient } from "@azu
 import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
 import { ChatMessageReceivedEvent, ParticipantsRemovedEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
+import createOmnichannelMessage from "../utils/createOmnichannelMessage";
 import ACSParticipantDisplayName from "./ACSParticipantDisplayName";
+import LiveChatVersion from "./LiveChatVersion";
 import { defaultMessageTags } from "./MessageTags";
+import OmnichannelMessage from "./messaging/OmnichannelMessage";
 
 export interface ACSSessionInfo {
     id: string;
@@ -48,8 +51,8 @@ export class ACSConversation {
         this.participantsMapping = await this.createParticipantsMapping();
     }
 
-    public async getMessages(): Promise<ChatMessage[]> {
-        const messages: ChatMessage[] = [];
+    public async getMessages(): Promise<OmnichannelMessage[]> {
+        const messages: OmnichannelMessage[] = [];
         const pagedAsyncIterableIterator = await (this.chatThreadClient as ChatThreadClient).listMessages();
         let nextMessage = await pagedAsyncIterableIterator.next();
         while (!nextMessage.done) {
@@ -72,7 +75,11 @@ export class ACSConversation {
             const participant = this.participantsMapping[(sender as CommunicationUserIdentifier).communicationUserId];
             Object.assign(chatMessage.sender, {alias: participant.displayName});
 
-            messages.push(chatMessage);
+            const omnichannelMessage = createOmnichannelMessage(chatMessage as any, {
+                liveChatVersion: LiveChatVersion.V2
+            });
+
+            messages.push(omnichannelMessage);
 
             nextMessage = await pagedAsyncIterableIterator.next();
         }
@@ -106,7 +113,7 @@ export class ACSConversation {
             const messages = await this.getMessages();
             for (const message of messages.reverse()) {
                 const {id, sender} = message;
-                const customerMessageCondition = ((sender as CommunicationUserIdentifier).communicationUserId === (this.sessionInfo?.id as string))
+                const customerMessageCondition = sender.displayName === ACSParticipantDisplayName.Customer;
 
                 // Filter out customer messages
                 if (customerMessageCondition) {

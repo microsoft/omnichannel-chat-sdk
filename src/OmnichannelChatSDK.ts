@@ -70,6 +70,7 @@ import createOmnichannelMessage from "./utils/createOmnichannelMessage";
 import OmnichannelChatToken from "@microsoft/omnichannel-amsclient/lib/OmnichannelChatToken";
 import OmnichannelMessage from "./core/messaging/OmnichannelMessage";
 import AMSFileManager from "./external/ACSAdapter/AMSFileManager";
+import ACSParticipantDisplayName from "./core/ACSParticipantDisplayName";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -729,7 +730,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async getMessages(): Promise<IMessage[] | ChatMessage[] | undefined> {
+    public async getMessages(): Promise<IMessage[] | OmnichannelMessage[] | undefined> {
         if (this.liveChatVersion === LiveChatVersion.V2) {
             return (this.conversation as ACSConversation)?.getMessages();
         } else {
@@ -801,7 +802,7 @@ class OmnichannelChatSDK {
 
             if ((optionalParams as OnNewMessageOptionalParams).rehydrate) {
                 this.debug && console.log('[OmnichannelChatSDK][onNewMessage] rehydrate');
-                const messages = await this.getMessages() as ChatMessage[];
+                const messages = await this.getMessages() as OmnichannelMessage[];
                 for (const message of messages.reverse()) {
                     const {id} = message;
                     if (postedMessages.has(id)) {
@@ -809,13 +810,7 @@ class OmnichannelChatSDK {
                     }
 
                     postedMessages.add(id);
-
-                    const omnichannelMessage = createOmnichannelMessage(message as any, {
-                        liveChatVersion: this.liveChatVersion,
-                        debug: this.debug
-                    });
-
-                    onNewMessageCallback(omnichannelMessage);
+                    onNewMessageCallback(message);
                 }
             }
 
@@ -1250,7 +1245,7 @@ class OmnichannelChatSDK {
                     this.chatToken.acsEndpoint as string,
                     fileManager,
                     1000,
-                    'Customer',
+                    ACSParticipantDisplayName.Customer,
                     undefined,
                     featuresOption,
                 );
