@@ -4,7 +4,6 @@ import ACSClient, { ACSConversation } from "./core/ACSClient";
 import AriaTelemetry from "./telemetry/AriaTelemetry";
 import CallingOptionsOptionSetNumber from "./core/CallingOptionsOptionSetNumber";
 import ChatAdapterProtocols from "./core/ChatAdapterProtocols";
-import { ChatMessage } from "@azure/communication-chat";
 import { ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import ConversationMode from "./core/ConversationMode";
 import { createIC3ClientLogger, createOCSDKLogger, IC3ClientLogger, OCSDKLogger } from "./utils/loggers";
@@ -843,7 +842,7 @@ class OmnichannelChatSDK {
 
                         postedMessages.add(clientmessageid);
 
-                        const omnichannelMessage = createOmnichannelMessage(message as any, {
+                        const omnichannelMessage = createOmnichannelMessage(message as IRawMessage, {
                             liveChatVersion: this.liveChatVersion,
                             debug: this.debug
                         });
@@ -867,7 +866,7 @@ class OmnichannelChatSDK {
                 }
 
                 if (messageType !== MessageType.Typing) {
-                    const omnichannelMessage = createOmnichannelMessage(message as any, {
+                    const omnichannelMessage = createOmnichannelMessage(message as IRawMessage, {
                         liveChatVersion: this.liveChatVersion,
                         debug: this.debug
                     });
@@ -1004,9 +1003,9 @@ class OmnichannelChatSDK {
         });
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
-            const createObjectResponse: any = await (this.AMSClient as any).createObject(this.chatToken?.chatId as string, fileInfo as any);
+            const createObjectResponse: any = await this.AMSClient?.createObject(this.chatToken?.chatId as string, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
             const documentId = createObjectResponse.id;
-            const uploadDocumentResponse = await (this.AMSClient as any).uploadDocument(documentId, fileInfo as any);
+            const uploadDocumentResponse: any = await this.AMSClient?.uploadDocument(documentId, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
 
             const fileIdsProperty = {
                 amsReferences: JSON.stringify([documentId])
@@ -1115,9 +1114,9 @@ class OmnichannelChatSDK {
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
             try {
-                const response: any = await this.AMSClient?.getViewStatus(fileMetadata);
+                const response: any = await this.AMSClient?.getViewStatus(fileMetadata);  // eslint-disable-line @typescript-eslint/no-explicit-any
                 const {view_location} = response;
-                const viewResponse: any = await this.AMSClient?.getView(fileMetadata, view_location);
+                const viewResponse: any = await this.AMSClient?.getView(fileMetadata, view_location);  // eslint-disable-line @typescript-eslint/no-explicit-any
                 this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string
@@ -1241,7 +1240,7 @@ class OmnichannelChatSDK {
             };
 
             try {
-                const ChatAdapter = require('acs_webchat-chat-adapter');
+                const ChatAdapter = require('acs_webchat-chat-adapter');  // eslint-disable-line @typescript-eslint/no-var-requires
                 const fileManager = new AMSFileManager(this.AMSClient as FramedClient);
                 const adapter = ChatAdapter.createACSAdapter(
                     this.chatToken.token as string,
