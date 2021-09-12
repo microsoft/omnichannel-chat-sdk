@@ -1,9 +1,10 @@
-import { ChatClient, ChatParticipant, ChatThreadClient } from "@azure/communication-chat";
+import { ChatClient, ChatParticipant, ChatThreadClient, ChatMessage } from "@azure/communication-chat";
 import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
 import { ChatMessageReceivedEvent, ParticipantsRemovedEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import createOmnichannelMessage from "../utils/createOmnichannelMessage";
 import ACSParticipantDisplayName from "./ACSParticipantDisplayName";
+import IChatSDKMessage from "./IChatSDKMessage";
 import LiveChatVersion from "./LiveChatVersion";
 import { defaultMessageTags } from "./MessageTags";
 import OmnichannelMessage from "./messaging/OmnichannelMessage";
@@ -79,7 +80,7 @@ export class ACSConversation {
             const participant = (this.participantsMapping as participantMapping)[(sender as CommunicationUserIdentifier).communicationUserId];
             Object.assign(chatMessage.sender, {alias: participant.displayName});
 
-            const omnichannelMessage = createOmnichannelMessage(chatMessage as any, {
+            const omnichannelMessage = createOmnichannelMessage(chatMessage as ChatMessage, {
                 liveChatVersion: LiveChatVersion.V2
             });
 
@@ -180,7 +181,7 @@ export class ACSConversation {
         });
     }
 
-    public async sendMessage(message: any): Promise<void> {
+    public async sendMessage(message: IChatSDKMessage): Promise<void> {
         if (!message.metadata) {
             message.metadata = {};
         }
