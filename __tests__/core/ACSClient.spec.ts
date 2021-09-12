@@ -192,7 +192,7 @@ describe('ACSClient', () => {
             pollingInterval: 1000,
         });
 
-        jest.spyOn(conversation, 'getMessages');
+        jest.spyOn(conversation, 'getMessages').mockResolvedValue([{id: 'id', sender: {displayName: 'name'}}]);
 
         await conversation.registerOnNewMessage(() => {});
 
