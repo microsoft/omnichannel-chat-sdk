@@ -203,23 +203,23 @@ export class ACSConversation {
     }
 
     public async sendFileMessage(): Promise<void> {
-
+        return undefined;
     }
 
     public async sendFileData():  Promise<void> {
-
+        return undefined;
     }
 
     public async uploadFile(): Promise<void> {
-
+        return undefined;
     }
 
     public async downloadFile(): Promise<void> {
-
+        return undefined;
     }
 
     public async disconnect(): Promise<void> {
-
+        return undefined;
     }
 
     private async createParticipantsMapping() {
@@ -240,10 +240,6 @@ export class ACSConversation {
 class ACSClient {
     private tokenCredential: AzureCommunicationTokenCredential | null = null;
     private chatClient: ChatClient | null = null;
-
-    constructor() {
-
-    }
 
     public async initialize(acsClientConfig: ACSClientConfig): Promise<void> {
         try {
