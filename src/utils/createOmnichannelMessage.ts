@@ -2,19 +2,23 @@ import { ChatMessageReceivedEvent } from '@azure/communication-signaling';
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
 import LiveChatVersion from '../core/LiveChatVersion';
 import OmnichannelMessage, { DeliveryMode, IFileMetadata, IPerson, MessageType, PersonType } from "../core/messaging/OmnichannelMessage";
-import { uuidv4 } from '@microsoft/ocsdk';
 
 
-const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEvent, optionalParams: any): OmnichannelMessage => {
+interface CreateOmnichannelMessageOptionalParams {
+    liveChatVersion: LiveChatVersion;
+    debug: boolean;
+}
+
+const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEvent, optionalParams: CreateOmnichannelMessageOptionalParams): OmnichannelMessage => {
     let omnichannelMessage = {} as OmnichannelMessage;
     omnichannelMessage.liveChatVersion = optionalParams.liveChatVersion || LiveChatVersion.V1;
 
     optionalParams.debug && console.log(message);
 
     if (optionalParams.liveChatVersion === LiveChatVersion.V1) {
-        const {clientmessageid} = message as any;
+        const {clientmessageid} = message as IRawMessage;
 
-        omnichannelMessage.id = clientmessageid;
+        omnichannelMessage.id = clientmessageid as string;
         omnichannelMessage = {...message} as OmnichannelMessage;
     } else {
         const {id, content, metadata, sender, senderDisplayName, createdOn} = message as any;
