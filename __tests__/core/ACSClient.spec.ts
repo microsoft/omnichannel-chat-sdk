@@ -48,6 +48,77 @@ describe('ACSClient', () => {
         expect(conversation.sessionInfo).toBeDefined();
     });
 
+
+    it('ACSClient.initialize() with ChatClient.getChatThreadClient() failure show throw an error', async () => {
+        const client: any = new ACSClient();
+        const config = {
+            token: 'token',
+            environmentUrl: 'url'
+        }
+
+        await client.initialize(config);
+
+        const chatThreadClient: any = {};
+        chatThreadClient.listParticipants = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+
+        client.chatClient = {};
+        client.chatClient.getChatThreadClient = jest.fn(() => Promise.reject());
+        client.chatClient.startRealtimeNotifications = jest.fn();
+
+        jest.spyOn(console, 'error');
+
+        try {
+            await client.joinConversation({
+                id: 'id',
+                threadId: 'threadId',
+                pollingInterval: 1000,
+            });
+        } catch (error) {
+            expect(console.error).toHaveBeenCalled();
+            expect(error.message).toBe('GetChatThreadClientFailed');
+        }
+    });
+
+    it('ACSClient.initialize() with ChatClient.startRealtimeNotifications() failure show throw an error', async () => {
+        const client: any = new ACSClient();
+        const config = {
+            token: 'token',
+            environmentUrl: 'url'
+        }
+
+        await client.initialize(config);
+
+        const chatThreadClient: any = {};
+        chatThreadClient.listParticipants = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+
+        client.chatClient = {};
+        client.chatClient.getChatThreadClient = jest.fn(() => chatThreadClient);
+        client.chatClient.startRealtimeNotifications = jest.fn(() => Promise.reject());
+
+        jest.spyOn(console, 'error');
+
+        try {
+            await client.joinConversation({
+                id: 'id',
+                threadId: 'threadId',
+                pollingInterval: 1000,
+            });
+        } catch (error) {
+            expect(console.error).toHaveBeenCalled();
+            expect(error.message).toBe('StartRealtimeNotificationsFailed');
+        }
+    });
+
     it('ACSClient.conversation.getMessages() should call ChatThreadClient.listMessages()', async () => {
         const client: any = new ACSClient();
         const config = {
