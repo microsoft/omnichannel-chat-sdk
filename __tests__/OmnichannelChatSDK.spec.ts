@@ -988,7 +988,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.getMessages should call conversation.getMessages()', async () => {
+        it('ChatSDK.getMessages() should call conversation.getMessages()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
@@ -1011,6 +1011,38 @@ describe('Omnichannel Chat SDK', () => {
             await chatSDK.getMessages();
             expect(chatSDK.conversation.getMessages).toHaveBeenCalledTimes(1);
         });
+
+
+        it('[LiveChatV2] ChatSDK.getMessages() should call conversation.getMessages()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+
+            chatSDK.liveChatVersion = LiveChatVersion.V2;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn()
+            }
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                getMessages: () => {}
+            }));
+
+            await chatSDK.startChat();
+
+            jest.spyOn(chatSDK.conversation, 'getMessages').mockResolvedValue(Promise.resolve());
+
+            await chatSDK.getMessages();
+            expect(chatSDK.conversation.getMessages).toHaveBeenCalledTimes(1);
+        });
+
 
         it('ChatSDK.sendMessage() should mask characters if enabled', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
