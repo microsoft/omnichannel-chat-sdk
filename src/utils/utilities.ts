@@ -9,7 +9,7 @@ export const isSystemMessage = (message: any): boolean => { // eslint-disable-li
     && properties.tags.includes("system");
 
     const conditionV2 = message.tags && message.tags.includes("system");
-    return conditionV1 || conditionV2;
+    return conditionV1 || conditionV2 || false;
 }
 
 export const isCustomerMessage = (message: any): boolean => { // eslint-disable-line @typescript-eslint/no-explicit-any,  @typescript-eslint/explicit-module-boundary-types
@@ -18,5 +18,5 @@ export const isCustomerMessage = (message: any): boolean => { // eslint-disable-
     const conditionV1 = sender.id && sender.id.includes('contacts/8:');
     const conditionV2 = sender.displayName && sender.displayName === ACSParticipantDisplayName.Customer;
 
-    return conditionV1 || conditionV2;
+    return conditionV1 || conditionV2 || false;
 }

@@ -14,7 +14,7 @@ describe('Utilities', () => {
         expect(utilities.isSystemMessage(message)).toBe(true);
     });
 
-    it('utilities.isSystemMessage() should return true if DOES NOT contain "system" tags', () => {
+    it('utilities.isSystemMessage() should return false if DOES NOT contain "system" tags', () => {
         const message = {
             content: 'sample',
             messageType: MessageType.UserMessage,

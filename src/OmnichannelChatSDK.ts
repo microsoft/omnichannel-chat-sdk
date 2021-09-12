@@ -1228,6 +1228,11 @@ class OmnichannelChatSDK {
             return Promise.reject('ChatAdapter is only supported on browser');
         }
 
+        const supportedChatAdapterProtocols = [ChatAdapterProtocols.ACS, ChatAdapterProtocols.IC3];
+        if (protocol && !supportedChatAdapterProtocols.includes(protocol as string)) {
+            return Promise.reject(`ChatAdapter for protocol ${protocol} currently not supported`);
+        }
+
         if (protocol === ChatAdapterProtocols.ACS || this.liveChatVersion === LiveChatVersion.V2) {
             const featuresOption = {
                 enableAdaptiveCards: false,
