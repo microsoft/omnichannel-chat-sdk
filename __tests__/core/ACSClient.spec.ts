@@ -288,6 +288,90 @@ describe('ACSClient', () => {
         expect(client.chatClient.on.mock.calls[0][0]).toEqual(event);
     });
 
+    it('ACSClient.sendMessage() should call ChatThreadClient.sendMessage()', async () => {
+        const client: any = new ACSClient();
+        const config = {
+            token: 'token',
+            environmentUrl: 'url'
+        }
+
+        await client.initialize(config);
+
+        const chatThreadClient: any = {};
+        chatThreadClient.listParticipants = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+        chatThreadClient.listMessages = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+        chatThreadClient.sendMessage = jest.fn();
+
+        client.chatClient = {};
+        client.chatClient.getChatThreadClient = jest.fn(() => chatThreadClient);
+        client.chatClient.startRealtimeNotifications = jest.fn();
+
+        const conversation = await client.joinConversation({
+            id: 'id',
+            threadId: 'threadId',
+            pollingInterval: 1000,
+        });
+
+        await conversation.sendMessage({
+            content: 'message',
+        });
+
+        expect(chatThreadClient.sendMessage).toHaveBeenCalledTimes(1);
+    });
+
+    it('ACSClient.sendMessage() failure should throw an error', async () => {
+        const client: any = new ACSClient();
+        const config = {
+            token: 'token',
+            environmentUrl: 'url'
+        }
+
+        await client.initialize(config);
+
+        const chatThreadClient: any = {};
+        chatThreadClient.listParticipants = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+        chatThreadClient.listMessages = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+        chatThreadClient.sendMessage = jest.fn(() => Promise.reject());
+
+        client.chatClient = {};
+        client.chatClient.getChatThreadClient = jest.fn(() => chatThreadClient);
+        client.chatClient.startRealtimeNotifications = jest.fn();
+
+        const conversation = await client.joinConversation({
+            id: 'id',
+            threadId: 'threadId',
+            pollingInterval: 1000,
+        });
+
+        try {
+            await conversation.sendMessage({
+                content: 'message',
+            });
+        } catch (error) {
+            expect(error.message).toBe('SendMessageFailed');
+        }
+    });
+
     it('ACSClient.conversation.sendFileMessage() should be mocked', async () => {
         const client: any = new ACSClient();
         const config = {
