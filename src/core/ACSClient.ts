@@ -1,4 +1,4 @@
-import { ChatClient, ChatMessage, ChatParticipant, ChatThreadClient } from "@azure/communication-chat";
+import { ChatClient, ChatParticipant, ChatThreadClient } from "@azure/communication-chat";
 import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
 import { ChatMessageReceivedEvent, ParticipantsRemovedEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
@@ -19,12 +19,16 @@ export interface ACSClientConfig {
     environmentUrl: string;
 }
 
+export interface participantMapping {
+    [key: string]: ChatParticipant;
+}
+
 export class ACSConversation {
     private tokenCredential: AzureCommunicationTokenCredential;
     private chatClient: ChatClient;
     private chatThreadClient?: ChatThreadClient;
     private sessionInfo?: ACSSessionInfo;
-    private participantsMapping: any;
+    private participantsMapping?: participantMapping;
 
     constructor(tokenCredential: AzureCommunicationTokenCredential, chatClient: ChatClient) {
         this.tokenCredential = tokenCredential;
@@ -72,7 +76,7 @@ export class ACSConversation {
             const {sender} = chatMessage;
 
             // Add alias to differentiate sender type
-            const participant = this.participantsMapping[(sender as CommunicationUserIdentifier).communicationUserId];
+            const participant = (this.participantsMapping as participantMapping)[(sender as CommunicationUserIdentifier).communicationUserId];
             Object.assign(chatMessage.sender, {alias: participant.displayName});
 
             const omnichannelMessage = createOmnichannelMessage(chatMessage as any, {
@@ -156,7 +160,7 @@ export class ACSConversation {
             }
 
             // Add alias to differentiate sender type
-            const participant = this.participantsMapping[(sender as CommunicationUserIdentifier).communicationUserId];
+            const participant = (this.participantsMapping as participantMapping)[(sender as CommunicationUserIdentifier).communicationUserId];
             Object.assign(event.sender, {alias: participant.displayName});
 
             onNewMessageCallback(event);

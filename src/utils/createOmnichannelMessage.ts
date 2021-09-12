@@ -6,7 +6,7 @@ import OmnichannelMessage, { DeliveryMode, IFileMetadata, IPerson, MessageType, 
 
 interface CreateOmnichannelMessageOptionalParams {
     liveChatVersion: LiveChatVersion;
-    debug: boolean;
+    debug?: boolean;
 }
 
 const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEvent, optionalParams: CreateOmnichannelMessageOptionalParams): OmnichannelMessage => {
