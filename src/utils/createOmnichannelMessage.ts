@@ -15,12 +15,7 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
 
     optionalParams.debug && console.log(message);
 
-    if (optionalParams.liveChatVersion === LiveChatVersion.V1) {
-        const {clientmessageid} = message as IRawMessage;
-
-        omnichannelMessage.id = clientmessageid as string;
-        omnichannelMessage = {...message} as OmnichannelMessage;
-    } else {
+    if (optionalParams.liveChatVersion === LiveChatVersion.V2) {
         const {id, content, metadata, sender, senderDisplayName, createdOn} = message as any;
 
         omnichannelMessage.id = id;
@@ -56,6 +51,11 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
             omnichannelMessage.fileMetadata.type = fileName.split('.').pop();
             omnichannelMessage.fileMetadata.url = '';
         }
+    } else {
+        const {clientmessageid} = message as IRawMessage;
+
+        omnichannelMessage.id = clientmessageid as string;
+        omnichannelMessage = {...message} as OmnichannelMessage;
     }
 
     return omnichannelMessage as OmnichannelMessage;
