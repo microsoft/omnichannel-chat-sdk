@@ -10,6 +10,7 @@ import AriaTelemetry from "../src/telemetry/AriaTelemetry";
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
 import ConversationMode from '../src/core/ConversationMode';
+import LiveChatVersion from "../src/core/LiveChatVersion";
 
 describe('Omnichannel Chat SDK', () => {
     AWTLogManager.initialize = jest.fn();
@@ -303,6 +304,20 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(1);
             expect(chatSDK.OCClient).toBeDefined();
             expect(chatSDK.IC3Client).toBeDefined();
+        });
+
+        it('[LiveChatV2] ChatSDK.initialize() should instantiate OCSDK & ACSClient & AMSClient', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            chatSDK.liveChatVersion = LiveChatVersion.V2;
+            await chatSDK.initialize();
+
+            expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(1);
+            expect(chatSDK.OCClient).toBeDefined();
+            expect(chatSDK.IC3Client).not.toBeDefined();
+            expect(chatSDK.ACSClient).toBeDefined();
+            expect(chatSDK.AMSClient).toBeDefined();
         });
 
         it('ChatSDK.initialize() call multiple times should instantiate OCSDK & IC3Core/IC3Client only once', async () => {
