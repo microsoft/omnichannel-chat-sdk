@@ -1,4 +1,4 @@
-import {FileMetadata, IFileManager, IFileUploadRequest, IUploadedFile, PermissionsOptions} from "acs_webchat-chat-adapter/src/types/FileManagerTypes";
+import {FileMetadata, IFileUploadRequest, IUploadedFile} from "acs_webchat-chat-adapter/src/types/FileManagerTypes";
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
 
 class AMSFileManager {
@@ -17,14 +17,14 @@ class AMSFileManager {
     }
 
     public async updatePermissions(): Promise<void> {
-        throw new Error('Method not implemented.');
+        return undefined;
     }
 
     public getFileIds(metadata?: Record<string, string>): string[] | undefined {
         try {
             return JSON.parse(metadata?.amsReferences as string) as string[];
         } catch {
-
+            return undefined;
         }
     }
 
@@ -34,7 +34,7 @@ class AMSFileManager {
                 amsReferences: JSON.stringify(fileIds)
             } as Record<string, string>;
         } catch {
-
+            return undefined;
         }
     }
 
@@ -42,7 +42,7 @@ class AMSFileManager {
         try {
             return JSON.parse(metadata?.amsMetadata as string);
         } catch {
-
+            return undefined;
         }
     }
 
@@ -52,7 +52,7 @@ class AMSFileManager {
                 amsMetadata: JSON.stringify(metadata)
             };
         } catch {
-
+            return undefined;
         }
     }
 
@@ -60,7 +60,7 @@ class AMSFileManager {
         if (fileToUpload.contentUrl && fileToUpload.name) {
             const blob = await this.amsClient.fetchBlob(fileToUpload.contentUrl);
             const file = new File([blob], fileToUpload.name, { type: fileToUpload.contentType });
-            const response: any = await this.amsClient.createObject((this.amsClient as any).chatToken.chatId, file);
+            const response: any = await this.amsClient.createObject((this.amsClient as any).chatToken.chatId, file);  // eslint-disable-line @typescript-eslint/no-explicit-any
 
             await this.amsClient.uploadDocument(response.id, file);
 
@@ -81,9 +81,9 @@ class AMSFileManager {
                 type: uploadedFile.metadata.contentType.split("/").pop() as string
             };
 
-            const response: any = await this.amsClient.getViewStatus(fileMetadata);
+            const response: any = await this.amsClient.getViewStatus(fileMetadata);  // eslint-disable-line @typescript-eslint/no-explicit-any
             const {view_location} = response;
-            const blob: any = await this.amsClient.getView(fileMetadata, view_location);
+            const blob: any = await this.amsClient.getView(fileMetadata, view_location);  // eslint-disable-line @typescript-eslint/no-explicit-any
             const file = new File([blob], uploadedFile.metadata.fileName, { type: uploadedFile.metadata.contentType });
             return file;
         }
