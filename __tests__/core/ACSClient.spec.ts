@@ -87,6 +87,50 @@ describe('ACSClient', () => {
         expect(messages).toBeDefined();
     });
 
+    it('ACSClient.conversation.registerOnNewMessage() should call ChatThreadClient.getMessages() & register to "chatMessageReceived" event', async () => {
+        const client: any = new ACSClient();
+        const config = {
+            token: 'token',
+            environmentUrl: 'url'
+        }
+
+        await client.initialize(config);
+
+        const chatThreadClient: any = {};
+        chatThreadClient.listParticipants = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+        chatThreadClient.listMessages = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+
+        client.chatClient = {};
+        client.chatClient.getChatThreadClient = jest.fn(() => chatThreadClient);
+        client.chatClient.startRealtimeNotifications = jest.fn();
+        client.chatClient.on = jest.fn();
+
+        const conversation = await client.joinConversation({
+            id: 'id',
+            threadId: 'threadId',
+            pollingInterval: 1000,
+        });
+
+        jest.spyOn(conversation, 'getMessages');
+
+        await conversation.registerOnNewMessage(() => {});
+
+        const event = "chatMessageReceived";
+        expect(conversation.getMessages).toHaveBeenCalledTimes(1);
+        expect(client.chatClient.on).toHaveBeenCalledTimes(1);
+        expect(client.chatClient.on.mock.calls[0][0]).toEqual(event);
+    });
+
     it('ACSClient.conversation.sendFileMessage() should be mocked', async () => {
         const client: any = new ACSClient();
         const config = {
