@@ -39,11 +39,10 @@
     "typescript": "^3.9.10"
   },
   "dependencies": {
-    "@azure/communication-chat": "^1.1.0-alpha.20210705.1",
-    "@azure/communication-common": "^1.0.0",
+    "@azure/communication-chat": "1.1.0-alpha.20210705.1",
+    "@azure/communication-common": "1.0.0",
     "@microsoft/ocsdk": "^0.2.0",
     "@microsoft/omnichannel-amsclient": "0.1.0-main.27aeb69",
-    "@microsoft/omnichannel-ic3core": "^0.1.1",
-    "acs_webchat-chat-adapter": "0.0.27"
+    "@microsoft/omnichannel-ic3core": "^0.1.1"
   }
 }

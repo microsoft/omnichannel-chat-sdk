@@ -1233,31 +1233,41 @@ class OmnichannelChatSDK {
         }
 
         if (protocol === ChatAdapterProtocols.ACS || this.liveChatVersion === LiveChatVersion.V2) {
-            const featuresOption = {
-                enableAdaptiveCards: false,
-                enableThreadMemberUpdateNotification: true,
-                enableLeaveThreadOnWindowClosed: false
-            };
+            return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
+                const featuresOption = {
+                    enableAdaptiveCards: false,
+                    enableThreadMemberUpdateNotification: true,
+                    enableLeaveThreadOnWindowClosed: false
+                };
 
-            try {
-                const ChatAdapter = require('acs_webchat-chat-adapter');  // eslint-disable-line @typescript-eslint/no-var-requires
-                const fileManager = new AMSFileManager(this.AMSClient as FramedClient);
-                const adapter = ChatAdapter.createACSAdapter(
-                    this.chatToken.token as string,
-                    this.chatToken.visitorId || 'teamsvisitor',
-                    this.chatToken.chatId as string,
-                    this.chatToken.acsEndpoint as string,
-                    fileManager,
-                    1000,
-                    ACSParticipantDisplayName.Customer,
-                    undefined,
-                    featuresOption,
-                );
+                const acsAdapterCDNUrl = this.resolveChatAdapterUrl(protocol || ChatAdapterProtocols.ACS);
 
-                return adapter;
-            } catch {
-                throw new Error('Failed to load ACSAdapter');
-            }
+                await loadScript(acsAdapterCDNUrl, () => {
+                    /* istanbul ignore next */
+                    this.debug && console.debug('ACSAdapter loaded!');
+                    try {
+                        const { ChatAdapter } = window as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+                        const fileManager = new AMSFileManager(this.AMSClient as FramedClient);
+                        const adapter = ChatAdapter.createACSAdapter(
+                            this.chatToken.token as string,
+                            this.chatToken.visitorId || 'teamsvisitor',
+                            this.chatToken.chatId as string,
+                            this.chatToken.acsEndpoint as string,
+                            fileManager,
+                            1000,
+                            ACSParticipantDisplayName.Customer,
+                            undefined,
+                            featuresOption,
+                        );
+
+                        resolve(adapter);
+                    } catch {
+                        throw new Error('Failed to load ACSAdapter');
+                    }
+                }, () => {
+                    reject('Failed to load ACSADapter');
+                });
+            });
         } else if (protocol === ChatAdapterProtocols.IC3 || this.liveChatVersion === LiveChatVersion.V1) {
             return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
                 const ic3AdapterCDNUrl = this.resolveChatAdapterUrl(protocol || ChatAdapterProtocols.IC3);
@@ -1517,19 +1527,26 @@ class OmnichannelChatSDK {
     }
 
     private resolveChatAdapterUrl(protocol: string): string {
-        if (protocol !== ChatAdapterProtocols.IC3) {
+        const supportedChatAdapterProtocols = [ChatAdapterProtocols.ACS, ChatAdapterProtocols.IC3];
+        if (protocol && !supportedChatAdapterProtocols.includes(protocol as string)) {
             throw new Error(`ChatAdapter for protocol ${protocol} currently not supported`);
         }
 
-        if (this.chatSDKConfig.chatAdapterConfig && 'webChatIC3AdapterCDNUrl' in this.chatSDKConfig.chatAdapterConfig) {
-            return this.chatSDKConfig.chatAdapterConfig.webChatIC3AdapterCDNUrl as string;
+        if (protocol === ChatAdapterProtocols.ACS || this.liveChatVersion === LiveChatVersion.V2) {
+            return libraries.getACSAdapterCDNUrl();
+        } else if (protocol === ChatAdapterProtocols.IC3 || this.liveChatVersion === LiveChatVersion.V1) {
+            if (this.chatSDKConfig.chatAdapterConfig && 'webChatIC3AdapterCDNUrl' in this.chatSDKConfig.chatAdapterConfig) {
+                return this.chatSDKConfig.chatAdapterConfig.webChatIC3AdapterCDNUrl as string;
+            }
+
+            if (this.chatSDKConfig.chatAdapterConfig && 'webChatIC3AdapterVersion' in this.chatSDKConfig.chatAdapterConfig) {
+                return libraries.getIC3AdapterCDNUrl(this.chatSDKConfig.chatAdapterConfig.webChatIC3AdapterVersion);
+            }
+
+            return libraries.getIC3AdapterCDNUrl();
         }
 
-        if (this.chatSDKConfig.chatAdapterConfig && 'webChatIC3AdapterVersion' in this.chatSDKConfig.chatAdapterConfig) {
-            return libraries.getIC3AdapterCDNUrl(this.chatSDKConfig.chatAdapterConfig.webChatIC3AdapterVersion);
-        }
-
-        return libraries.getIC3AdapterCDNUrl();
+        return '';
     }
 
     private async updateChatToken(newToken: string, newRegionGTMS: IRegionGtms): Promise<void> {

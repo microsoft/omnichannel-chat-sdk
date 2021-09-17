@@ -1,5 +1,32 @@
-import {FileMetadata, IFileUploadRequest, IUploadedFile} from "acs_webchat-chat-adapter/src/types/FileManagerTypes";
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
+
+type FileMetadata = Record<string, string>;
+
+enum FilePermission {
+    READ,
+    WRITE
+}
+
+interface IUploadedFile {
+   fileId: string;
+   metadata?: FileMetadata;
+}
+
+interface IAttachment {
+    name: string;
+    contentType: string;
+    contentUrl: string;
+    thumbnailUrl?: string;
+}
+
+interface IFileUploadRequest extends IAttachment {
+    permissions?: PermissionsOptions;
+}
+
+interface PermissionsOptions {
+    users: string[];
+    permission: FilePermission;
+}
 
 class AMSFileManager {
     private amsClient: FramedClient;
