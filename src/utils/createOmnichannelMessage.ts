@@ -2,7 +2,7 @@ import { ChatMessage } from "@azure/communication-chat";
 import { ChatMessageReceivedEvent } from '@azure/communication-signaling';
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
 import LiveChatVersion from '../core/LiveChatVersion';
-import OmnichannelMessage, { DeliveryMode, IFileMetadata, IPerson, MessageType, PersonType } from "../core/messaging/OmnichannelMessage";
+import OmnichannelMessage, { IFileMetadata, IPerson, MessageType, PersonType } from "../core/messaging/OmnichannelMessage";
 
 
 interface CreateOmnichannelMessageOptionalParams {
@@ -22,7 +22,7 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
         omnichannelMessage.id = id;
         omnichannelMessage.messageid = undefined;
         omnichannelMessage.clientmessageid = undefined;
-        omnichannelMessage.deliveryMode = DeliveryMode.Bridged; // Backward compatibility
+        omnichannelMessage.deliveryMode = undefined; // Backward compatibility
         omnichannelMessage.properties = {}; // Backward compatibility
 
         omnichannelMessage.content = content || '';

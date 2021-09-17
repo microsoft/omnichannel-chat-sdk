@@ -62,7 +62,7 @@ interface OmnichannelMessage {
     messageid?: string;
     content: string;
     contentType: string;
-    deliveryMode: DeliveryMode;
+    deliveryMode: DeliveryMode | undefined;
     messageType: MessageType;
     sender: IPerson;
     timestamp: Date;
