@@ -6,7 +6,7 @@ export class ConfigurationManager {
 
 const transformLiveChatConfig = (liveChatConfig: IChatConfig): ConfigurationManager => {
     const canUploadAttachment = (liveChatConfig as any)["LiveWSAndLiveChatEngJoin"]["msdyn_enablefileattachmentsforcustomers"] === "true" || false;
-    ConfigurationManager.canUploadAttachment = false;
+    ConfigurationManager.canUploadAttachment = canUploadAttachment;
     return ConfigurationManager;
 };
 
