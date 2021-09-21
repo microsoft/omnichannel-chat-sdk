@@ -1,7 +1,7 @@
 const fetchTelemetryConfig = () => {
     const telemetryConfig = {
         telemetry: {
-            disable: true,
+            disable: false,
             ariaTelemetryKey: ''
         }
     };
