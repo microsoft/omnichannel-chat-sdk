@@ -14,6 +14,7 @@ import { useDidAppearListener, useNavigationButtonPressedListener } from '../uti
 import { parseTranscript } from '../utils/parser';
 import attachementImage from '../assets/img/attachment.png';
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
+import transformLiveChatConfig, { ConfigurationManager } from '../utils/transformLiveChatConfig';
 
 // console.disableYellowBox = true;
 const omnichannelConfig: any = fetchOmnichannelConfig();
@@ -192,7 +193,10 @@ const ChatScreen = (props: ChatScreenProps) => {
       await chatSDK.initialize();
       setChatSDK(chatSDK);
 
-      let preChatSurvey = await chatSDK.getPreChatSurvey();
+      const liveChatConfig = await chatSDK.getLiveChatConfig();
+      transformLiveChatConfig(liveChatConfig);
+
+      let preChatSurvey = await chatSDK?.getPreChatSurvey();
       if (preChatSurvey) {
         console.info('[PreChatSurvey]');
         preChatSurvey = patchAdaptiveCard(preChatSurvey);
@@ -365,6 +369,10 @@ const ChatScreen = (props: ChatScreenProps) => {
   const renderActions = (props: any) => {
     // Hides actions on agent ending the session
     if (state.agentEndSessionEvent) {
+      return null;
+    }
+
+    if (!ConfigurationManager.canUploadAttachment) {
       return null;
     }
 
