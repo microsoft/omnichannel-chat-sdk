@@ -10,7 +10,7 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
   },
   "dependencies": {
-    "@microsoft/omnichannel-chat-sdk": "^0.2.1-main.daf9db6",
+    "@microsoft/omnichannel-chat-sdk": "^0.3.1-main.dcd02d3",
     "adaptivecards-reactnative": "^2.2.2",
     "buffer": "^6.0.3",
     "react": "16.9.0",
