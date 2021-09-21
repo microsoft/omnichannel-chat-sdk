@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - `onNewMessage` with `rehydrate` flag set to `true` crashing when `getMessages` returns `undefined`
+- Fix `AriaTelemetry` unable to read property `logEvent` of undefined on `React Native`
 
 ## [0.3.0] - 2021-09-03
 ### Added

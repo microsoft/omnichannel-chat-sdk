@@ -12,10 +12,12 @@ import createCustomStore from './createCustomStore';
 import { createDataMaskingMiddleware } from './createDataMaskingMiddleware';
 import createActivityMiddleware from './createActivityMiddleware';
 import createAvatarMiddleware from './createAvatarMiddleware';
+import createActivityStatusMiddleware from './createActivityStatusMiddleware';
 import fetchOmnichannelConfig from '../../utils/fetchOmnichannelConfig';
 import fetchTelemetryConfig from '../../utils/fetchTelemetryConfig';
 import fetchCallingConfig from '../../utils/fetchCallingConfig';
 import fetchDebugConfig from '../../utils/fetchDebugConfig';
+import transformLiveChatConfig, { ConfigurationManager } from '../../utils/transformLiveChatConfig';
 import * as AdaptiveCards from 'adaptivecards';
 import './WebChat.css';
 
@@ -38,6 +40,8 @@ console.log(debugConfig);
 
 const activityMiddleware: any = createActivityMiddleware();
 const avatarMiddleware: any = createAvatarMiddleware();
+const activityStatusMiddleware: any = createActivityStatusMiddleware();
+
 const styleOptions = {
   bubbleBorderRadius: 10,
   bubbleNubSize: 10,
@@ -51,6 +55,10 @@ const styleOptions = {
 
 const patchAdaptiveCard = (adaptiveCard: any) => {
   return JSON.parse(adaptiveCard.replaceAll("&#42;", "*"));  // HTML entities '&#42;' is not unescaped for some reason
+}
+
+const createWebChatStyleOptions = () => {
+  (styleOptions as any).hideUploadButton = !ConfigurationManager.canUploadAttachment;
 }
 
 function WebChat() {
@@ -73,6 +81,11 @@ function WebChat() {
 
       await chatSDK.initialize();
       setChatSDK(chatSDK);
+
+      const liveChatConfig = await chatSDK.getLiveChatConfig();
+      transformLiveChatConfig(liveChatConfig);
+
+      createWebChatStyleOptions();
 
       const liveChatContext = localStorage.getItem('liveChatContext');
       if (liveChatContext && Object.keys(JSON.parse(liveChatContext)).length > 0) {
@@ -282,6 +295,7 @@ function WebChat() {
             !state.isLoading && state.hasChatStarted && chatAdapter && webChatStore && activityMiddleware && <ReactWebChat
               activityMiddleware={activityMiddleware}
               avatarMiddleware={avatarMiddleware}
+              activityStatusMiddleware={activityStatusMiddleware}
               userID="teamsvisitor"
               directLine={chatAdapter}
               sendTypingIndicator={true}
