@@ -134,7 +134,7 @@ class AriaTelemetry {
         /* istanbul ignore next */
         this._debug && console.log(event.properties.Event);
 
-        !AriaTelemetry._disable && AriaTelemetry.logger.logEvent(event);
+        !AriaTelemetry._disable && AriaTelemetry.logger?.logEvent(event);
     }
 
     public static debug(properties: AWTEventData["properties"], scenarioType: ScenarioType = ScenarioType.EVENTS): void {
@@ -180,7 +180,7 @@ class AriaTelemetry {
         /* istanbul ignore next */
         this._debug && console.log(event.properties.Event);
 
-        !AriaTelemetry._disable && AriaTelemetry.logger.logEvent(event);
+        !AriaTelemetry._disable && AriaTelemetry.logger?.logEvent(event);
     }
 
     public static warn(properties: AWTEventData["properties"], scenarioType: ScenarioType = ScenarioType.EVENTS): void {
@@ -226,7 +226,7 @@ class AriaTelemetry {
         /* istanbul ignore next */
         this._debug && console.log(event.properties.Event);
 
-        !AriaTelemetry._disable && AriaTelemetry.logger.logEvent(event);
+        !AriaTelemetry._disable && AriaTelemetry.logger?.logEvent(event);
     }
 
     public static error(properties: AWTEventData["properties"], scenarioType: ScenarioType = ScenarioType.EVENTS): void {
@@ -272,7 +272,7 @@ class AriaTelemetry {
         /* istanbul ignore next */
         this._debug && console.log(event.properties.Event);
 
-        !AriaTelemetry._disable && AriaTelemetry.logger.logEvent(event);
+        !AriaTelemetry._disable && AriaTelemetry.logger?.logEvent(event);
     }
 
     public static log(properties: AWTEventData["properties"], scenarioType: ScenarioType = ScenarioType.EVENTS): void {
@@ -318,7 +318,7 @@ class AriaTelemetry {
         /* istanbul ignore next */
         this._debug && console.log(event.properties.Event);
 
-        !AriaTelemetry._disable && AriaTelemetry.logger.logEvent(event);
+        !AriaTelemetry._disable && AriaTelemetry.logger?.logEvent(event);
     }
 
     private static get logger(): AWTLogger {

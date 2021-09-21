@@ -4,6 +4,7 @@ import {OmnichannelChatSDK, isCustomerMessage, isSystemMessage} from '@microsoft
 import fetchOmnichannelConfig from '../../utils/fetchOmnichannelConfig';
 import fetchTelemetryConfig from '../../utils/fetchTelemetryConfig';
 import fetchDebugConfig from '../../utils/fetchDebugConfig';
+import transformLiveChatConfig, { ConfigurationManager } from '../../utils/transformLiveChatConfig';
 import 'react-chat-widget/lib/styles.css';
 
 const omnichannelConfig: any = fetchOmnichannelConfig();
@@ -19,9 +20,15 @@ console.log(telemetryConfig);
 console.log(`%c [debugConfig]`, 'background-color:#001433;color:#fff');
 console.log(debugConfig);
 
-const quickButtons = [
-  {label: 'Attachment', value: 'Attachment'},
-]
+const createQuickButtons = () => {
+  const quickButtons = [];
+
+  if (ConfigurationManager.canUploadAttachment) {
+    quickButtons.push({label: 'Attachment', value: 'Attachment'});
+  }
+
+  return quickButtons;
+}
 
 function ChatWidget() {
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
@@ -39,12 +46,16 @@ function ChatWidget() {
       await chatSDK.initialize();
       setChatSDK(chatSDK);
 
+      const liveChatConfig = await chatSDK.getLiveChatConfig();
+      transformLiveChatConfig(liveChatConfig);
+
       const liveChatContext = localStorage.getItem('liveChatContext');
       if (liveChatContext && Object.keys(JSON.parse(liveChatContext)).length > 0) {
         console.log("[liveChatContext]");
         console.log(liveChatContext);
       }
 
+      const quickButtons = createQuickButtons();
       setQuickButtons(quickButtons);
     }
 

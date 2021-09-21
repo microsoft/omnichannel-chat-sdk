@@ -7,12 +7,17 @@ import DocumentPicker from 'react-native-document-picker';
 import { DownloadDirectoryPath, ExternalDirectoryPath, LibraryDirectoryPath, readFile, writeFile } from 'react-native-fs';
 import { Actions, Composer, GiftedChat, IMessage, Send } from 'react-native-gifted-chat';
 import { Navigation } from 'react-native-navigation';
-import { orgId, orgUrl, widgetId, email } from '@env';
+import { email } from '@env';
 import TypingIndicator from '../components/TypingIndicator/TypingIndicator';
 import { ActionType, Store } from '../context';
 import { useDidAppearListener, useNavigationButtonPressedListener } from '../utils/hooks';
 import { parseTranscript } from '../utils/parser';
 import attachementImage from '../assets/img/attachment.png';
+import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
+import transformLiveChatConfig, { ConfigurationManager } from '../utils/transformLiveChatConfig';
+
+// console.disableYellowBox = true;
+const omnichannelConfig: any = fetchOmnichannelConfig();
 
 const typingAnimationDuration = 1500;
 const buttons = {
@@ -34,7 +39,7 @@ type ChatScreenProps = {
 const createGiftedChatMessage = (message: any): IMessage => {
   const agentName = message.sender?.displayName;
   return {
-    _id: message.clientmessageid,
+    _id: message.id || message.clientmessageid || uuidv4(),
     text: message.content,
     createdAt: new Date(),
     system: isSystemMessage(message),
@@ -181,18 +186,17 @@ const ChatScreen = (props: ChatScreenProps) => {
   useEffect(() => {
     const init = async () => {
       // console.log(props);
-      const omnichannelConfig  = {
-        orgId,
-        orgUrl,
-        widgetId
-      };
-
+      console.log("\x1b[46m", `[OmnichannelConfig]`, "\x1b[0m");
       console.info(omnichannelConfig);
+
       const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
       await chatSDK.initialize();
       setChatSDK(chatSDK);
 
-      let preChatSurvey = await chatSDK.getPreChatSurvey();
+      const liveChatConfig = await chatSDK.getLiveChatConfig();
+      transformLiveChatConfig(liveChatConfig);
+
+      let preChatSurvey = await chatSDK?.getPreChatSurvey();
       if (preChatSurvey) {
         console.info('[PreChatSurvey]');
         preChatSurvey = patchAdaptiveCard(preChatSurvey);
@@ -365,6 +369,10 @@ const ChatScreen = (props: ChatScreenProps) => {
   const renderActions = (props: any) => {
     // Hides actions on agent ending the session
     if (state.agentEndSessionEvent) {
+      return null;
+    }
+
+    if (!ConfigurationManager.canUploadAttachment) {
       return null;
     }
 
