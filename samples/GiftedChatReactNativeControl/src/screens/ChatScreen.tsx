@@ -14,6 +14,8 @@ import { useDidAppearListener, useNavigationButtonPressedListener } from '../uti
 import { parseTranscript } from '../utils/parser';
 import attachementImage from '../assets/img/attachment.png';
 
+// console.disableYellowBox = true;
+
 const typingAnimationDuration = 1500;
 const buttons = {
   endChat: {
@@ -34,7 +36,7 @@ type ChatScreenProps = {
 const createGiftedChatMessage = (message: any): IMessage => {
   const agentName = message.sender?.displayName;
   return {
-    _id: message.clientmessageid,
+    _id: message.id || message.clientmessageid || uuidv4(),
     text: message.content,
     createdAt: new Date(),
     system: isSystemMessage(message),
