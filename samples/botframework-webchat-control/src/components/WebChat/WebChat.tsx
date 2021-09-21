@@ -16,6 +16,7 @@ import fetchOmnichannelConfig from '../../utils/fetchOmnichannelConfig';
 import fetchTelemetryConfig from '../../utils/fetchTelemetryConfig';
 import fetchCallingConfig from '../../utils/fetchCallingConfig';
 import fetchDebugConfig from '../../utils/fetchDebugConfig';
+import transformLiveChatConfig, { ConfigurationManager } from '../../utils/transformLiveChatConfig';
 import * as AdaptiveCards from 'adaptivecards';
 import './WebChat.css';
 
@@ -53,6 +54,10 @@ const patchAdaptiveCard = (adaptiveCard: any) => {
   return JSON.parse(adaptiveCard.replaceAll("&#42;", "*"));  // HTML entities '&#42;' is not unescaped for some reason
 }
 
+const createWebChatStyleOptions = () => {
+  (styleOptions as any).hideUploadButton = !ConfigurationManager.canUploadAttachment;
+}
+
 function WebChat() {
   const {state, dispatch} = useContext(Store);
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
@@ -73,6 +78,11 @@ function WebChat() {
 
       await chatSDK.initialize();
       setChatSDK(chatSDK);
+
+      const liveChatConfig = await chatSDK.getLiveChatConfig();
+      transformLiveChatConfig(liveChatConfig);
+
+      createWebChatStyleOptions();
 
       const liveChatContext = localStorage.getItem('liveChatContext');
       if (liveChatContext && Object.keys(JSON.parse(liveChatContext)).length > 0) {
