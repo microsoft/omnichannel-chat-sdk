@@ -7,14 +7,16 @@ import DocumentPicker from 'react-native-document-picker';
 import { DownloadDirectoryPath, ExternalDirectoryPath, LibraryDirectoryPath, readFile, writeFile } from 'react-native-fs';
 import { Actions, Composer, GiftedChat, IMessage, Send } from 'react-native-gifted-chat';
 import { Navigation } from 'react-native-navigation';
-import { orgId, orgUrl, widgetId, email } from '@env';
+import { email } from '@env';
 import TypingIndicator from '../components/TypingIndicator/TypingIndicator';
 import { ActionType, Store } from '../context';
 import { useDidAppearListener, useNavigationButtonPressedListener } from '../utils/hooks';
 import { parseTranscript } from '../utils/parser';
 import attachementImage from '../assets/img/attachment.png';
+import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 
 // console.disableYellowBox = true;
+const omnichannelConfig: any = fetchOmnichannelConfig();
 
 const typingAnimationDuration = 1500;
 const buttons = {
@@ -183,13 +185,9 @@ const ChatScreen = (props: ChatScreenProps) => {
   useEffect(() => {
     const init = async () => {
       // console.log(props);
-      const omnichannelConfig  = {
-        orgId,
-        orgUrl,
-        widgetId
-      };
-
+      console.log("\x1b[46m", `[OmnichannelConfig]`, "\x1b[0m");
       console.info(omnichannelConfig);
+
       const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
       await chatSDK.initialize();
       setChatSDK(chatSDK);
