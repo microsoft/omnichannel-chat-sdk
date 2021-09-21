@@ -12,6 +12,7 @@ import createCustomStore from './createCustomStore';
 import { createDataMaskingMiddleware } from './createDataMaskingMiddleware';
 import createActivityMiddleware from './createActivityMiddleware';
 import createAvatarMiddleware from './createAvatarMiddleware';
+import createActivityStatusMiddleware from './createActivityStatusMiddleware';
 import fetchOmnichannelConfig from '../../utils/fetchOmnichannelConfig';
 import fetchTelemetryConfig from '../../utils/fetchTelemetryConfig';
 import fetchCallingConfig from '../../utils/fetchCallingConfig';
@@ -39,6 +40,8 @@ console.log(debugConfig);
 
 const activityMiddleware: any = createActivityMiddleware();
 const avatarMiddleware: any = createAvatarMiddleware();
+const activityStatusMiddleware: any = createActivityStatusMiddleware();
+
 const styleOptions = {
   bubbleBorderRadius: 10,
   bubbleNubSize: 10,
@@ -292,6 +295,7 @@ function WebChat() {
             !state.isLoading && state.hasChatStarted && chatAdapter && webChatStore && activityMiddleware && <ReactWebChat
               activityMiddleware={activityMiddleware}
               avatarMiddleware={avatarMiddleware}
+              activityStatusMiddleware={activityStatusMiddleware}
               userID="teamsvisitor"
               directLine={chatAdapter}
               sendTypingIndicator={true}
