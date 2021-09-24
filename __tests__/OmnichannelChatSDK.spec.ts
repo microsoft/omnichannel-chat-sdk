@@ -10,6 +10,7 @@ import AriaTelemetry from "../src/telemetry/AriaTelemetry";
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
 import ConversationMode from '../src/core/ConversationMode';
+import * as settings from '../src/config/settings';
 
 describe('Omnichannel Chat SDK', () => {
     AWTLogManager.initialize = jest.fn();
@@ -798,6 +799,7 @@ describe('Omnichannel Chat SDK', () => {
 
             await chatSDK.initialize();
 
+            chatSDK.OCClient = {};
             chatSDK.OCClient.getChatToken = jest.fn();
 
             chatSDK.IC3Client = {
@@ -828,6 +830,7 @@ describe('Omnichannel Chat SDK', () => {
 
             await chatSDK.initialize();
 
+            chatSDK.OCClient = {};
             chatSDK.OCClient.getChatToken = jest.fn();
 
             chatSDK.IC3Client = {
@@ -849,6 +852,7 @@ describe('Omnichannel Chat SDK', () => {
 
             await chatSDK.initialize();
 
+            chatSDK.OCClient = {};
             chatSDK.OCClient.getChatToken = jest.fn();
 
             chatSDK.IC3Client = {
@@ -1610,15 +1614,17 @@ describe('Omnichannel Chat SDK', () => {
             chatSDK.getChatToken = jest.fn();
 
             await chatSDK.initialize();
+
+            chatSDK.OCClient = {};
+            chatSDK.OCClient.sessionInit = jest.fn();
+            chatSDK.OCClient.sessionClose = jest.fn();
+
             await chatSDK.startChat();
 
-            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
                 disconnect: () => {}
             }));
-
-            jest.spyOn(chatSDK.OCClient, 'sessionClose').mockRejectedValue(Promise.reject());
 
             try {
                 await chatSDK.endChat();
