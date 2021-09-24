@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- Uptake [@microsoft/ocsdk@0.3.0](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.3.0)
+- Use `lockfileVersion: 2` in `package-lock.json` via npm v7
+
 ### Fixed
 - `onNewMessage` with `rehydrate` flag set to `true` crashing when `getMessages` returns `undefined`
 - Fix `AriaTelemetry` unable to read property `logEvent` of undefined on `React Native`
