@@ -31,7 +31,7 @@ describe('createOmnichannelMessage', () => {
         expect(omnichannelMessage.id).toBeDefined();
         expect(omnichannelMessage.messageid).toBe(undefined);
         expect(omnichannelMessage.clientmessageid).toBe(undefined);
-        expect(omnichannelMessage.deliveryMode).toBe(DeliveryMode.Bridged);
+        expect(omnichannelMessage.deliveryMode).toBe(undefined);
         expect(omnichannelMessage.content).toBe(sampleMessage.content);
         expect(omnichannelMessage.tags).toEqual(sampleMessage.metadata.tags.split(','));
         expect(omnichannelMessage.timestamp).toBe(sampleMessage.createdOn);
