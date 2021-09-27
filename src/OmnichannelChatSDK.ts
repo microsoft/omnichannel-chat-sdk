@@ -1325,30 +1325,9 @@ class OmnichannelChatSDK {
         const result = msdyn_widgetsnippet.match(widgetSnippetSourceRegex);
         if (result && result.length) {
             return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
-                const spoolSDKCDNUrl = `${result[1]}/livechatwidget/WebChatControl/lib/spool-sdk/sdk.bundle.js`;
-
-                this.telemetry?.setCDNPackages({
-                    SpoolSDK: spoolSDKCDNUrl
-                });
-
                 this.scenarioMarker.startScenario(TelemetryEvent.GetVoiceVideoCalling);
 
-                await loadScript(spoolSDKCDNUrl, () => {
-                    /* istanbul ignore next */
-                    this.debug && console.debug(`${spoolSDKCDNUrl} loaded!`);
-                }, () => {
-                    const exceptionDetails = {
-                        response: "SpoolSDKLoadFailed"
-                    };
-
-                    this.scenarioMarker.failScenario(TelemetryEvent.GetVoiceVideoCalling, {
-                        ExceptionDetails: JSON.stringify(exceptionDetails)
-                    });
-
-                    reject('Failed to load SpoolSDK');
-                });
-
-                const LiveChatWidgetLibCDNUrl = `${result[1]}/livechatwidget/WebChatControl/lib/LiveChatWidgetLibs.min.js`;
+                const LiveChatWidgetLibCDNUrl = `${result[1]}/livechatwidget/WebChatControl/lib/CallingBundle.js`;
 
                 this.telemetry?.setCDNPackages({
                     VoiceVideoCalling: LiveChatWidgetLibCDNUrl

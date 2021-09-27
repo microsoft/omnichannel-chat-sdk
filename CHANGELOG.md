@@ -3,9 +3,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- Uptake [@microsoft/ocsdk@0.3.0](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.3.0)
+- Use `lockfileVersion: 2` in `package-lock.json` via npm v7
+
 ### Fixed
 - `onNewMessage` with `rehydrate` flag set to `true` crashing when `getMessages` returns `undefined`
 - Fix `AriaTelemetry` unable to read property `logEvent` of undefined on `React Native`
+- Fix `Escalation to Voice & Video` library not being imported properly
 
 ## [0.3.0] - 2021-09-03
 ### Added
@@ -31,7 +36,7 @@ All notable changes to this project will be documented in this file.
 ## [0.2.0] - 2021-04-30
 ### Added
 - React Native sample app using Omnichannel Chat SDK with [react-native-gifted-chat](https://github.com/FaridSafi/react-native-gifted-chat)
-- Escalation to Voice & View support (Web Only)
+- Escalation to Voice & Video support (Web Only)
 - React sample app using Omnichannel Chat SDK with [BotFramework-WebChat](https://github.com/microsoft/BotFramework-WebChat)
 - Expose `sessiontInit`'s `initContext` on `startChat`'s optional paramaters
 - Add ability to use custom `ic3Config` & `chatAdapterConfig`

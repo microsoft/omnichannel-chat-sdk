@@ -6,11 +6,9 @@ import createVoiceVideoCalling from '../../src/api/createVoiceVideoCalling';
 const VoiceVideoCallingProxy = require('../../src/api/createVoiceVideoCalling').VoiceVideoCallingProxy;
 
 describe('createVoiceVideoCalling', () => {
-    (window as any).Microsoft = {};
-    (window as any).Microsoft.OmniChannel = {};
-    (window as any).Microsoft.OmniChannel.SDK = {};
-    (window as any).Microsoft.OmniChannel.SDK.VoiceVideoCalling = {};
-    (window as any).Microsoft.OmniChannel.SDK.VoiceVideoCalling.getInstance = () => ({
+    (window as any)["Microsoft.Omnichannel.Calling.SDK"] = {};
+    (window as any)["Microsoft.Omnichannel.Calling.SDK"].VoiceVideoCalling = {};
+    (window as any)["Microsoft.Omnichannel.Calling.SDK"].VoiceVideoCalling.getInstance = () => ({
         load: jest.fn().mockResolvedValue(Promise.resolve()),
         initialize: jest.fn(),
         isInitialized: jest.fn().mockResolvedValue(true),
@@ -61,7 +59,6 @@ describe('createVoiceVideoCalling', () => {
             const proxy = await createVoiceVideoCalling();
 
             const params = {
-                environment: 'prod',
                 logger: {
                     logInfo: () => {}
                 },
@@ -85,7 +82,6 @@ describe('createVoiceVideoCalling', () => {
             const proxy = await createVoiceVideoCalling();
 
             const params = {
-                environment: 'prod',
                 logger: {
                     logInfo: () => {}
                 },
@@ -108,7 +104,6 @@ describe('createVoiceVideoCalling', () => {
             const proxy = await createVoiceVideoCalling();
 
             const params = {
-                environment: 'prod',
                 logger: {
                     logInfo: () => {}
                 },
@@ -131,7 +126,6 @@ describe('createVoiceVideoCalling', () => {
             const proxy = await createVoiceVideoCalling();
 
             const params = {
-                environment: 'prod',
                 logger: {
                     logInfo: () => {}
                 },
@@ -154,7 +148,6 @@ describe('createVoiceVideoCalling', () => {
             const proxy = await createVoiceVideoCalling();
 
             const params = {
-                environment: 'prod',
                 logger: {
                     logInfo: () => {}
                 },
@@ -178,7 +171,6 @@ describe('createVoiceVideoCalling', () => {
             const proxy = await createVoiceVideoCalling();
 
             const params = {
-                environment: 'prod',
                 logger: {
                     logInfo: () => {}
                 },
@@ -202,7 +194,6 @@ describe('createVoiceVideoCalling', () => {
             const proxy = await createVoiceVideoCalling();
 
             const params = {
-                environment: 'prod',
                 logger: {
                     logInfo: () => {}
                 },
@@ -226,7 +217,6 @@ describe('createVoiceVideoCalling', () => {
             const proxy = await createVoiceVideoCalling();
 
             const params = {
-                environment: 'prod',
                 logger: {
                     logInfo: () => {}
                 },
@@ -250,7 +240,6 @@ describe('createVoiceVideoCalling', () => {
             const proxy = await createVoiceVideoCalling();
 
             const params = {
-                environment: 'prod',
                 logger: {
                     logInfo: () => {}
                 },
@@ -274,7 +263,6 @@ describe('createVoiceVideoCalling', () => {
             const proxy = await createVoiceVideoCalling();
 
             const params = {
-                environment: 'prod',
                 logger: {
                     logInfo: () => {}
                 },
@@ -298,7 +286,6 @@ describe('createVoiceVideoCalling', () => {
             const proxy = await createVoiceVideoCalling();
 
             const params = {
-                environment: 'prod',
                 logger: {
                     logInfo: () => {}
                 },
@@ -322,7 +309,6 @@ describe('createVoiceVideoCalling', () => {
             const proxy = await createVoiceVideoCalling();
 
             const params = {
-                environment: 'prod',
                 logger: {
                     logInfo: () => {}
                 },
