@@ -455,7 +455,7 @@ class OmnichannelChatSDK {
                 ChatId: this.chatToken.chatId as string
             });
 
-            this.conversation!.disconnect();
+            this.conversation?.disconnect();
             this.conversation = null;
             this.requestId = uuidv4();
             this.chatToken = {};
