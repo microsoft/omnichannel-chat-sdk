@@ -58,7 +58,7 @@ export class VoiceVideoCallingProxy {
     private constructor() {
         this.debug = false;
         this.callClientName = 'ElevateToVoiceVideo';
-        this.proxy = (window as any)["Microsoft.Omnichannel.Calling.SDK"].VoiceVideoCalling;
+        this.proxy = (window as any)["Microsoft.Omnichannel.Calling.SDK"].VoiceVideoCalling; // eslint-disable-line @typescript-eslint/no-explicit-any
         this.proxyInstance = this.proxy.getInstance();
     }
 
