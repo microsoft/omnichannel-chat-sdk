@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - `onNewMessage` with `rehydrate` flag set to `true` crashing when `getMessages` returns `undefined`
 - Fix `AriaTelemetry` unable to read property `logEvent` of undefined on `React Native`
+- Fix `Escalation to Voice & Video` library not being imported properly
 
 ## [0.3.0] - 2021-09-03
 ### Added
@@ -35,7 +36,7 @@ All notable changes to this project will be documented in this file.
 ## [0.2.0] - 2021-04-30
 ### Added
 - React Native sample app using Omnichannel Chat SDK with [react-native-gifted-chat](https://github.com/FaridSafi/react-native-gifted-chat)
-- Escalation to Voice & View support (Web Only)
+- Escalation to Voice & Video support (Web Only)
 - React sample app using Omnichannel Chat SDK with [BotFramework-WebChat](https://github.com/microsoft/BotFramework-WebChat)
 - Expose `sessiontInit`'s `initContext` on `startChat`'s optional paramaters
 - Add ability to use custom `ic3Config` & `chatAdapterConfig`
