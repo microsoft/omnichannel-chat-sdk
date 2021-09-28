@@ -12,6 +12,7 @@ interface BaseContract {
     RequestId?: string;
     ChatId?: string;
     CallId?: string;
+    Domain?: string;
     ExceptionDetails?: string;
     ElapsedTimeInMilliseconds?: string;
     ChatSDKVersion: string;
@@ -96,6 +97,7 @@ class AriaTelemetry {
             name: ScenarioType.EVENTS,
             properties: {
                 ...AriaTelemetry.populateBaseProperties(),
+                ...AriaTelemetry.fillWebPlatformData(),
                 ...AriaTelemetry.fillMobilePlatformData(),
                 ...properties,
                 LogLevel: LogLevel.INFO
@@ -142,6 +144,7 @@ class AriaTelemetry {
             name: ScenarioType.EVENTS,
             properties: {
                 ...AriaTelemetry.populateBaseProperties(),
+                ...AriaTelemetry.fillWebPlatformData(),
                 ...AriaTelemetry.fillMobilePlatformData(),
                 ...properties,
                 LogLevel: LogLevel.DEBUG
@@ -188,6 +191,7 @@ class AriaTelemetry {
             name: ScenarioType.EVENTS,
             properties: {
                 ...AriaTelemetry.populateBaseProperties(),
+                ...AriaTelemetry.fillWebPlatformData(),
                 ...AriaTelemetry.fillMobilePlatformData(),
                 ...properties,
                 LogLevel: LogLevel.WARN,
@@ -234,6 +238,7 @@ class AriaTelemetry {
             name: ScenarioType.EVENTS,
             properties: {
                 ...AriaTelemetry.populateBaseProperties(),
+                ...AriaTelemetry.fillWebPlatformData(),
                 ...AriaTelemetry.fillMobilePlatformData(),
                 ...properties,
                 LogLevel: LogLevel.ERROR
@@ -280,6 +285,7 @@ class AriaTelemetry {
             name: ScenarioType.EVENTS,
             properties: {
                 ...AriaTelemetry.populateBaseProperties(),
+                ...AriaTelemetry.fillWebPlatformData(),
                 ...AriaTelemetry.fillMobilePlatformData(),
                 ...properties,
                 LogLevel: LogLevel.LOG
@@ -343,6 +349,7 @@ class AriaTelemetry {
             RequestId: '',
             ChatId: '',
             CallId: '',
+            Domain: '',
             ExceptionDetails: '',
             ElapsedTimeInMilliseconds: '',
             ChatSDKVersion: require('../../package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
@@ -372,6 +379,26 @@ class AriaTelemetry {
         } catch {
             /* istanbul ignore next */
             this._debug && console.log("[AriaTelemetry][fillMobilePlatformData][Web]");
+        }
+
+        return platformData;
+    }
+
+    private static fillWebPlatformData() {
+        const platformData: any = {}; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+        if (!window) {
+            return platformData;
+        }
+
+        try {
+            platformData.Domain = window.location.origin || '';
+
+            /* istanbul ignore next */
+            this._debug && console.log(`[AriaTelemetry][fillWebPlatformData]`);
+        } catch {
+            /* istanbul ignore next */
+            this._debug && console.log("[AriaTelemetry][fillWebPlatformData][Error]");
         }
 
         return platformData;
