@@ -12,6 +12,8 @@ describe('AriaTelemetry', () => {
         (AriaTelemetry as any)._logger = {
             logEvent: jest.fn()
         };
+
+        (global as any).window = {};
     });
 
     it('AriaTelemetry.disable() have telemetry enabled by default', () => {
@@ -114,6 +116,11 @@ describe('AriaTelemetry', () => {
         const mobilePlatformData = (AriaTelemetry as any).fillMobilePlatformData();
         expect(mobilePlatformData.DeviceInfo_OsName).toBe(mobileOS);
         expect(mobilePlatformData.DeviceInfo_OsVersion).toBe(platformData.Version);
+    });
+
+    it('AriaTelemetry.fillWebPlatformData() should return nothing if window object does not exist', () => {
+        const webPlatformData = (AriaTelemetry as any).fillWebPlatformData();
+        expect(Object.keys(webPlatformData).length).toBe(0);
     });
 
     it('AriaTelemetry.debug() should call AriaTelemetry.logger.logEvent()', () => {
