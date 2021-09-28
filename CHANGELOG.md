@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Uptake [@microsoft/ocsdk@0.3.0](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.3.0)
+- Uptake [@microsoft/omnichannel-ic3core@0.1.2](https://www.npmjs.com/package/@microsoft/omnichannel-ic3core/v/0.1.2)
 
 ### Fixed
 - `onNewMessage` with `rehydrate` flag set to `true` crashing when `getMessages` returns `undefined`
