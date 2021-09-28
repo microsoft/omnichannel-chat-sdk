@@ -1,6 +1,6 @@
 import AriaTelemetry from '../../src/telemetry/AriaTelemetry';
-import * as settings from '../../src/config/settings';
 import ScenarioType from '../../src/telemetry/ScenarioType';
+import * as settings from '../../src/config/settings';
 
 describe('AriaTelemetry', () => {
     (settings as any).ariaTelemetryKey = '';
