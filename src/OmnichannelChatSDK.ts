@@ -544,7 +544,23 @@ class OmnichannelChatSDK {
      * @param parse Whether to parse PreChatSurvey to JSON or not.
      */
     public async getPreChatSurvey(parse = true): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
-        return parse ? JSON.parse(this.preChatSurvey) : this.preChatSurvey;
+        this.scenarioMarker.startScenario(TelemetryEvent.GetPreChatSurvey, {
+            RequestId: this.requestId
+        });
+
+        try {
+            const result = parse? JSON.parse(this.preChatSurvey): this.preChatSurvey;
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.GetPreChatSurvey, {
+                RequestId: this.requestId
+            });
+
+            return result;
+        } catch {
+            this.scenarioMarker.failScenario(TelemetryEvent.GetPreChatSurvey, {
+                RequestId: this.requestId
+            });
+        }
     }
 
     public async getLiveChatConfig(cached = true): Promise<IChatConfig> {
