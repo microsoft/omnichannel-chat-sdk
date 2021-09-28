@@ -544,22 +544,14 @@ class OmnichannelChatSDK {
      * @param parse Whether to parse PreChatSurvey to JSON or not.
      */
     public async getPreChatSurvey(parse = true): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
-        this.scenarioMarker.startScenario(TelemetryEvent.GetPreChatSurvey, {
-            RequestId: this.requestId
-        });
+        this.scenarioMarker.startScenario(TelemetryEvent.GetPreChatSurvey);
 
         try {
             const result = parse? JSON.parse(this.preChatSurvey): this.preChatSurvey;
-
-            this.scenarioMarker.completeScenario(TelemetryEvent.GetPreChatSurvey, {
-                RequestId: this.requestId
-            });
-
+            this.scenarioMarker.completeScenario(TelemetryEvent.GetPreChatSurvey);
             return result;
         } catch {
-            this.scenarioMarker.failScenario(TelemetryEvent.GetPreChatSurvey, {
-                RequestId: this.requestId
-            });
+            this.scenarioMarker.failScenario(TelemetryEvent.GetPreChatSurvey);
         }
     }
 
@@ -1152,8 +1144,9 @@ class OmnichannelChatSDK {
                 this.preChatSurvey = preChatSurvey;
             }
 
-            if (this.authSettings){
-                if (this.chatSDKConfig.getAuthToken){
+            if (this.authSettings) {
+                if (this.chatSDKConfig.getAuthToken) {
+
                     this.debug && console.log("OmnichannelChatSDK/getChatConfig/auth settings with auth and getAuthToken!", this.authSettings, this.chatSDKConfig.getAuthToken);
                     const token = await this.chatSDKConfig.getAuthToken();
                     if (token) {
