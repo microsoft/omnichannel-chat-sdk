@@ -831,8 +831,6 @@ describe('Omnichannel Chat SDK', () => {
                 initContext: {}
             }
 
-            // console.warn(chatSDK.OCClient.sessionInit.mock.calls[0][1]);
-
             expect(chatSDK.OCClient.sessionInit.mock.calls[0][1]).toMatchObject(sessionInitOptionalParams);
         });
 
