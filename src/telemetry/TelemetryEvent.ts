@@ -5,6 +5,7 @@ enum TelemetryEvent {
     StartChat = "StartChat",
     EndChat = "EndChat",
     GetLiveChatConfig = "GetLiveChatConfig",
+    GetAuthToken = "GetAuthToken",
     GetPreChatSurvey = "GetPreChatSurvey",
     GetChatToken = "GetChatToken",
     GetConversationDetails = "GetConversationDetails",

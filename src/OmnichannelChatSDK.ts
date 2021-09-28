@@ -545,7 +545,6 @@ class OmnichannelChatSDK {
      */
     public async getPreChatSurvey(parse = true): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
         this.scenarioMarker.startScenario(TelemetryEvent.GetPreChatSurvey);
-
         try {
             const result = parse? JSON.parse(this.preChatSurvey): this.preChatSurvey;
             this.scenarioMarker.completeScenario(TelemetryEvent.GetPreChatSurvey);
@@ -1145,19 +1144,40 @@ class OmnichannelChatSDK {
             }
 
             if (this.authSettings) {
+                this.scenarioMarker.startScenario(TelemetryEvent.GetAuthToken);
                 if (this.chatSDKConfig.getAuthToken) {
+                    try {
+                        const token = await this.chatSDKConfig.getAuthToken();
 
-                    this.debug && console.log("OmnichannelChatSDK/getChatConfig/auth settings with auth and getAuthToken!", this.authSettings, this.chatSDKConfig.getAuthToken);
-                    const token = await this.chatSDKConfig.getAuthToken();
-                    if (token) {
-                        this.authenticatedUserToken = token;
+                        if (token) {
+                            this.authenticatedUserToken = token;
+                            this.scenarioMarker.completeScenario(TelemetryEvent.GetAuthToken);
+                        } else {
+                            const exceptionDetails = {
+                                response: "UndefinedAuthToken"
+                            };
+
+                            this.scenarioMarker.failScenario(TelemetryEvent.GetAuthToken, {
+                                ExceptionDetails: JSON.stringify(exceptionDetails)
+                            });
+                        }
+                    } catch {
+                        const exceptionDetails = {
+                            response: "GetAuthTokenFailed"
+                        };
+
+                        this.scenarioMarker.failScenario(TelemetryEvent.GetAuthToken, {
+                            ExceptionDetails: JSON.stringify(exceptionDetails)
+                        });
                     }
-                    else {
-                        console.warn("OmnichannelChatSDK/getChatConfig/auth, chat requires auth, but getAuthToken() returned null");
-                    }
-                }
-                else {
-                    console.warn("OmnichannelChatSDK/getChatConfig/auth, chat requires auth, but getAuthToken() is missing");
+                } else {
+                    const exceptionDetails = {
+                        response: "GetAuthTokenNotFound"
+                    };
+
+                    this.scenarioMarker.failScenario(TelemetryEvent.GetAuthToken, {
+                        ExceptionDetails: JSON.stringify(exceptionDetails)
+                    });
                 }
             }
 
