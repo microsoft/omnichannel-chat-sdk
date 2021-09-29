@@ -200,8 +200,7 @@ export class ACSConversation {
         }
 
         try {
-            const response = await this.chatThreadClient?.sendMessage(sendMessageRequest, sendMessageOptions);
-            console.log(response);
+            await this.chatThreadClient?.sendMessage(sendMessageRequest, sendMessageOptions);
         } catch (error) {
             throw new Error('SendMessageFailed');
         }

@@ -728,10 +728,12 @@ class OmnichannelChatSDK {
         }
 
         if (this.chatToken.voiceVideoCallToken) {
-            console.log(`calling:acs`);
+            /* istanbul ignore next */
+            this.debug && console.log(`calling:acs`);
             return this.chatToken.voiceVideoCallToken.Token;
         } else {
-            console.log(`calling:skype`);
+            /* istanbul ignore next */
+            this.debug && console.log(`calling:skype`);
             return this.chatToken.token as string;
         }
     }
