@@ -45,6 +45,84 @@ describe('AMSFileManager', () => {
         expect(response).toBe(undefined);
     });
 
+    it('AMSFileManager.getFileIds() should return a JSON data', async () => {
+        const amsClient: any = {};
+
+        const fileManager = new AMSFileManager(amsClient);
+
+        const amsReferences = [{id: 'id'}];
+        const metadata = {
+            amsReferences: JSON.stringify(amsReferences)
+        };
+
+        const response = fileManager.getFileIds(metadata);
+        expect(response).toStrictEqual(amsReferences);
+    });
+
+    it('AMSFileManager.getFileIds() should return a nothing if invalid', async () => {
+        const amsClient: any = {};
+
+        const fileManager = new AMSFileManager(amsClient);
+
+        const metadata = {};
+
+        const response = fileManager.getFileIds(metadata);
+        expect(response).toBeFalsy();
+    });
+
+
+    it('AMSFileManager.createFileIdProperty() should return a JSON data', async () => {
+        const amsClient: any = {};
+
+        const fileManager = new AMSFileManager(amsClient);
+
+        const fileIds = ['id', 'id'];
+
+        const response: any = fileManager.createFileIdProperty(fileIds);
+        expect(response.amsReferences).toBe(JSON.stringify(fileIds));
+    });
+
+    it('AMSFileManager.getFileMetadata() should return a JSON data', async () => {
+        const amsClient: any = {};
+
+        const fileManager = new AMSFileManager(amsClient);
+
+        const amsMetadata  = {
+            data: 'data'
+        }
+
+        const metadata = {
+            amsMetadata: JSON.stringify(amsMetadata)
+        };
+
+        const response = fileManager.getFileMetadata(metadata);
+        expect(response).toStrictEqual(amsMetadata);
+    });
+
+    it('AMSFileManager.getFileMetadata() should return a nothing if invalid', async () => {
+        const amsClient: any = {};
+
+        const fileManager = new AMSFileManager(amsClient);
+
+        const metadata = {};
+
+        const response = fileManager.getFileMetadata(metadata);
+        expect(response).toBeFalsy();
+    });
+
+    it('AMSFileManager.createFileMetadataProperty() should return a JSON data', async () => {
+        const amsClient: any = {};
+
+        const fileManager = new AMSFileManager(amsClient);
+
+        const metadata: any = {
+            data: 'data'
+        };
+
+        const response: any = fileManager.createFileMetadataProperty(metadata);
+        expect(response.amsMetadata).toBe(JSON.stringify(metadata));
+    });
+
     it('AMSFileManager.uploadFileToAMS() should make AMS calls to upload attachment', async () => {
         const amsClient: any = {};
         amsClient.chatToken = {};
