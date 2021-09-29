@@ -10,6 +10,41 @@ describe('AMSFileManager', () => {
         expect((fileManager as any).amsClient).toBe(amsClient);
     });
 
+    it('AMSFileManager.uploadFiles() should call AMSFileManager.uploadFileToAMS()', async () => {
+        const amsClient: any = {};
+
+        const fileManager = new AMSFileManager(amsClient);
+        (fileManager as any).uploadFileToAMS = jest.fn(() => Promise.resolve({}));
+
+        const fileUploadRequests: any = [{}, {}];
+
+        const response = await fileManager.uploadFiles(fileUploadRequests);
+        expect((fileManager as any).uploadFileToAMS).toHaveBeenCalledTimes(fileUploadRequests.length);
+        expect(response).not.toBeFalsy();
+    });
+
+    it('AMSFileManager.downloadFiles() should call AMSFileManager.downloadFileFromAMS()', async () => {
+        const amsClient: any = {};
+
+        const fileManager = new AMSFileManager(amsClient);
+        (fileManager as any).downloadFileFromAMS = jest.fn(() => Promise.resolve({}));
+
+        const uploadedFiles: any = [{}, {}];
+
+        const response = await fileManager.downloadFiles(uploadedFiles);
+        expect((fileManager as any).downloadFileFromAMS).toHaveBeenCalledTimes(uploadedFiles.length);
+        expect(response).not.toBeFalsy();
+    });
+
+    it('AMSFileManager.updatePermissions() should be undefined', async () => {
+        const amsClient: any = {};
+
+        const fileManager = new AMSFileManager(amsClient);
+
+        const response = await fileManager.updatePermissions();
+        expect(response).toBe(undefined);
+    });
+
     it('AMSFileManager.uploadFileToAMS() should make AMS calls to upload attachment', async () => {
         const amsClient: any = {};
         amsClient.chatToken = {};
