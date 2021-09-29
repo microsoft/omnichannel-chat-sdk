@@ -1,4 +1,4 @@
-import { getIC3ClientCDNUrl, getIC3AdapterCDNUrl } from "../../src/utils/libraries";
+import { getIC3ClientCDNUrl, getIC3AdapterCDNUrl, getACSAdapterCDNUrl } from "../../src/utils/libraries";
 
 describe('Libraries', () => {
     it('IC3Client should come from a production URL', () => {
@@ -11,5 +11,11 @@ describe('Libraries', () => {
         const productionUrl = "https://webchatic3.blob.core.windows.net/webchat-ic3adapter";
         const ic3AdapterCDNUrl = getIC3AdapterCDNUrl();
         expect(ic3AdapterCDNUrl.includes(productionUrl)).toBe(true);
+    });
+
+    it('WebChatACSAdapter should come from a production URL', () => {
+        const productionUrl = "https://unpkg.com/acs_webchat-chat-adapter";
+        const acsAdapterCDNUrl = getACSAdapterCDNUrl();
+        expect(acsAdapterCDNUrl.includes(productionUrl)).toBe(true);
     });
 });
