@@ -1,7 +1,7 @@
-import LiveChatVersion from '../../src/core/LiveChatVersion';
-import createOmnichannelMessage from '../../src/utils/createOmnichannelMessage';
+import LiveChatVersion from '../../../src/core/LiveChatVersion';
+import createOmnichannelMessage from '../../../src/utils/createOmnichannelMessage';
 import { ChatMessageReceivedEvent } from '@azure/communication-signaling';
-import { DeliveryMode, MessageType } from '../../src/core/messaging/OmnichannelMessage';
+import { DeliveryMode, MessageType } from '../../../src/core/messaging/OmnichannelMessage';
 import PersonType from '@microsoft/omnichannel-ic3core/lib/model/PersonType';
 
 describe('createOmnichannelMessage', () => {
