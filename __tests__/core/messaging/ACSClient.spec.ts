@@ -1,4 +1,4 @@
-import ACSClient, { ACSConversation } from "../../src/core/ACSClient";
+import ACSClient from "../../../src/core/messaging/ACSClient";
 
 jest.mock('@azure/communication-common');
 jest.mock('@azure/communication-chat');

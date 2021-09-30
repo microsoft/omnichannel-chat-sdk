@@ -5,7 +5,7 @@ import IFileMetadata from "@microsoft/omnichannel-ic3core/lib/model/IFileMetadat
 import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import libraries from "../src/utils/libraries";
-import ChatAdapterProtocols from "../src/core/ChatAdapterProtocols";
+import ChatAdapterProtocols from "../src/core/messaging/ChatAdapterProtocols";
 import AriaTelemetry from "../src/telemetry/AriaTelemetry";
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";

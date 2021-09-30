@@ -2,12 +2,12 @@ import { ChatClient, ChatParticipant, ChatThreadClient, ChatMessage } from "@azu
 import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
 import { ChatMessageReceivedEvent, ParticipantsRemovedEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
-import createOmnichannelMessage from "../utils/createOmnichannelMessage";
+import createOmnichannelMessage from "../../utils/createOmnichannelMessage";
 import ACSParticipantDisplayName from "./ACSParticipantDisplayName";
 import IChatSDKMessage from "./IChatSDKMessage";
-import LiveChatVersion from "./LiveChatVersion";
+import LiveChatVersion from "../LiveChatVersion";
 import { defaultMessageTags } from "./MessageTags";
-import OmnichannelMessage from "./messaging/OmnichannelMessage";
+import OmnichannelMessage from "./OmnichannelMessage";
 
 export interface ACSSessionInfo {
     id: string;

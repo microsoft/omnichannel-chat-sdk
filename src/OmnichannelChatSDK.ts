@@ -1,22 +1,22 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import ACSClient, { ACSConversation } from "./core/ACSClient";
+import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
 import AriaTelemetry from "./telemetry/AriaTelemetry";
 import CallingOptionsOptionSetNumber from "./core/CallingOptionsOptionSetNumber";
-import ChatAdapterProtocols from "./core/ChatAdapterProtocols";
+import ChatAdapterProtocols from "./core/messaging/ChatAdapterProtocols";
 import { ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import ConversationMode from "./core/ConversationMode";
 import { createIC3ClientLogger, createOCSDKLogger, IC3ClientLogger, OCSDKLogger } from "./utils/loggers";
 import createTelemetry from "./utils/createTelemetry";
 import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
-import { defaultMessageTags } from "./core/MessageTags";
+import { defaultMessageTags } from "./core/messaging/MessageTags";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/FileSharingProtocolType";
 import HostType from "@microsoft/omnichannel-ic3core/lib/interfaces/HostType";
 import IAuthSettings from "./core/IAuthSettings";
 import IChatConfig from "./core/IChatConfig";
 import IChatSDKConfig from "./core/IChatSDKConfig";
-import IChatSDKMessage from "./core/IChatSDKMessage";
+import IChatSDKMessage from "./core/messaging/IChatSDKMessage";
 import IChatToken from "./external/IC3Adapter/IChatToken";
 import IChatTranscriptBody from "./core/IChatTranscriptBody";
 import IConversation from "@microsoft/omnichannel-ic3core/lib/model/IConversation";
@@ -49,7 +49,7 @@ import LiveWorkItemState from "./core/LiveWorkItemState";
 import { loadScript } from "./utils/WebUtils";
 import MessageContentType from "@microsoft/omnichannel-ic3core/lib/model/MessageContentType";
 import MessageType from "@microsoft/omnichannel-ic3core/lib/model/MessageType";
-import OnNewMessageOptionalParams from "./core/OnNewMessageOptionalParams";
+import OnNewMessageOptionalParams from "./core/messaging/OnNewMessageOptionalParams";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import platform, { isBrowser } from "./utils/platform";
 import ProtocolType from "@microsoft/omnichannel-ic3core/lib/interfaces/ProtocoleType";
@@ -69,7 +69,7 @@ import createOmnichannelMessage from "./utils/createOmnichannelMessage";
 import OmnichannelChatToken from "@microsoft/omnichannel-amsclient/lib/OmnichannelChatToken";
 import OmnichannelMessage from "./core/messaging/OmnichannelMessage";
 import AMSFileManager from "./external/ACSAdapter/AMSFileManager";
-import ACSParticipantDisplayName from "./core/ACSParticipantDisplayName";
+import ACSParticipantDisplayName from "./core/messaging/ACSParticipantDisplayName";
 
 class OmnichannelChatSDK {
     private debug: boolean;

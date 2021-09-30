@@ -1,5 +1,5 @@
-import ChatAdapterConfig from "./ChatAdapterConfig";
-import IC3Config from "./IC3Config";
+import ChatAdapterConfig from "./messaging/ChatAdapterConfig";
+import IC3Config from "./messaging/IC3Config";
 
 interface IDataMaskingSDKConfig {
     disable: boolean,
