@@ -141,7 +141,59 @@ describe('Omnichannel Chat SDK', () => {
             expect(url).toBe(libraries.getIC3AdapterCDNUrl());
         });
 
-        it('ChatSDK should throw an error if ChatSDK.resolveChatAdapterUrl() is called with other protocol than IC3', async () => {
+        it('ChatSDK should be able to pick custom webChatACSAdapterVersion if set', async () => {
+            const omnichannelConfig = {
+                orgUrl: '',
+                orgId: '',
+                widgetId: ''
+            };
+
+            const chatSDKConfig = {
+                chatAdapterConfig: {
+                    webChatACSAdapterVersion: 'version'
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            const url = chatSDK.resolveChatAdapterUrl(ChatAdapterProtocols.ACS);
+
+            expect(url).toBe(libraries.getACSAdapterCDNUrl(chatSDKConfig.chatAdapterConfig.webChatACSAdapterVersion));
+        });
+
+        it('ChatSDK should be able to pick custom webChatACSAdapterCDNUrl if set', async () => {
+            const omnichannelConfig = {
+                orgUrl: '',
+                orgId: '',
+                widgetId: ''
+            };
+
+            const chatSDKConfig = {
+                chatAdapterConfig: {
+                    webChatACSAdapterVersion: 'version',
+                    webChatACSAdapterCDNUrl: 'cdn'
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            const url = chatSDK.resolveChatAdapterUrl(ChatAdapterProtocols.ACS);
+
+            expect(url).toBe(chatSDKConfig.chatAdapterConfig.webChatACSAdapterCDNUrl);
+        });
+
+        it('ChatSDK should pick the default webChatACSAdapterCDNUrl if no chatAdapterConfig is set', async () => {
+            const omnichannelConfig = {
+                orgUrl: '',
+                orgId: '',
+                widgetId: ''
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            const url = chatSDK.resolveChatAdapterUrl(ChatAdapterProtocols.ACS);
+
+            expect(url).toBe(libraries.getACSAdapterCDNUrl());
+        });
+
+        it('ChatSDK should throw an error if ChatSDK.resolveChatAdapterUrl() is called with other protocol than supported protocols', async () => {
             const omnichannelConfig = {
                 orgUrl: '',
                 orgId: '',
