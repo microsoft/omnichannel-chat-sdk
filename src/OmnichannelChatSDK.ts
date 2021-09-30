@@ -13,12 +13,12 @@ import { defaultMessageTags } from "./core/messaging/MessageTags";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/FileSharingProtocolType";
 import HostType from "@microsoft/omnichannel-ic3core/lib/interfaces/HostType";
-import IAuthSettings from "./core/IAuthSettings";
-import IChatConfig from "./core/IChatConfig";
-import IChatSDKConfig from "./core/IChatSDKConfig";
-import IChatSDKMessage from "./core/messaging/IChatSDKMessage";
+import AuthSettings from "./core/AuthSettings";
+import ChatConfig from "./core/ChatConfig";
+import ChatSDKConfig from "./core/ChatSDKConfig";
+import ChatSDKMessage from "./core/messaging/ChatSDKMessage";
 import IChatToken from "./external/IC3Adapter/IChatToken";
-import IChatTranscriptBody from "./core/IChatTranscriptBody";
+import ChatTranscriptBody from "./core/ChatTranscriptBody";
 import IConversation from "@microsoft/omnichannel-ic3core/lib/model/IConversation";
 import IEmailTranscriptOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IEmailTranscriptOptionalParams";
 import IFileInfo from "@microsoft/omnichannel-ic3core/lib/interfaces/IFileInfo";
@@ -26,11 +26,11 @@ import IFileMetadata from "@microsoft/omnichannel-ic3core/lib/model/IFileMetadat
 import IGetChatTokenOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTokenOptionalParams";
 import IGetChatTranscriptsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTranscriptsOptionalParams";
 import IIC3AdapterOptions from "./external/IC3Adapter/IIC3AdapterOptions";
-import ILiveChatContext from "./core/ILiveChatContext";
+import LiveChatContext from "./core/LiveChatContext";
 import IInitializationInfo from "@microsoft/omnichannel-ic3core/lib/model/IInitializationInfo";
 import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import InitContext from "@microsoft/ocsdk/lib/Model/InitContext";
-import IOmnichannelConfig from "./core/IOmnichannelConfig";
+import OmnichannelConfig from "./core/OmnichannelConfig";
 import IOmnichannelConfiguration from "@microsoft/ocsdk/lib/Interfaces/IOmnichannelConfiguration";
 import IPerson from "@microsoft/omnichannel-ic3core/lib/model/IPerson";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
@@ -42,7 +42,7 @@ import ISDKConfiguration from "@microsoft/ocsdk/lib/Interfaces/ISDKConfiguration
 import ISessionInitOptionalParams from "@microsoft/ocsdk/lib/Interfaces/ISessionInitOptionalParams";
 import ISessionCloseOptionalParams from "@microsoft/ocsdk/lib/Interfaces/ISessionCloseOptionalParams";
 import libraries from "./utils/libraries";
-import IStartChatOptionalParams from "./core/IStartChatOptionalParams";
+import StartChatOptionalParams from "./core/StartChatOptionalParams";
 import LiveChatVersion from "./core/LiveChatVersion";
 import LiveWorkItemDetails from "./core/LiveWorkItemDetails";
 import LiveWorkItemState from "./core/LiveWorkItemState";
@@ -79,15 +79,15 @@ class OmnichannelChatSDK {
     public IC3Client: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     public ACSClient: ACSClient | null = null;
     public AMSClient: FramedClient | FramedlessClient | null = null;
-    public omnichannelConfig: IOmnichannelConfig;
-    public chatSDKConfig: IChatSDKConfig;
+    public omnichannelConfig: OmnichannelConfig;
+    public chatSDKConfig: ChatSDKConfig;
     public isInitialized: boolean;
     public requestId: string;
     private chatToken: IChatToken;
     private liveChatConfig: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private liveChatVersion: number;
     private dataMaskingRules: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-    private authSettings: IAuthSettings | null = null;
+    private authSettings: AuthSettings | null = null;
     private authenticatedUserToken: string | null = null;
     private preChatSurvey: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private conversation: IConversation | ACSConversation | null = null;
@@ -101,7 +101,7 @@ class OmnichannelChatSDK {
     private reconnectId: null | string = null;
     private refreshTokenTimer: number | null = null;
 
-    constructor(omnichannelConfig: IOmnichannelConfig, chatSDKConfig: IChatSDKConfig = defaultChatSDKConfig) {
+    constructor(omnichannelConfig: OmnichannelConfig, chatSDKConfig: ChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
         this.omnichannelConfig = omnichannelConfig;
         this.chatSDKConfig = {
@@ -148,7 +148,7 @@ class OmnichannelChatSDK {
         this.ocSdkLogger?.setDebug(flag);
     }
 
-    public async initialize(): Promise<IChatConfig> {
+    public async initialize(): Promise<ChatConfig> {
         this.scenarioMarker.startScenario(TelemetryEvent.InitializeChatSDK);
 
         if (this.isInitialized) {
@@ -259,7 +259,7 @@ class OmnichannelChatSDK {
         return context
     }
 
-    public async startChat(optionalParams: IStartChatOptionalParams = {}): Promise<void> {
+    public async startChat(optionalParams: StartChatOptionalParams = {}): Promise<void> {
         this.scenarioMarker.startScenario(TelemetryEvent.StartChat, {
             RequestId: this.requestId
         });
@@ -583,11 +583,11 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async getCurrentLiveChatContext(): Promise<ILiveChatContext | {}> {
+    public async getCurrentLiveChatContext(): Promise<LiveChatContext | {}> {
         const chatToken = await this.getChatToken();
         const {requestId} = this;
 
-        const chatSession: ILiveChatContext = {
+        const chatSession: LiveChatContext = {
             chatToken,
             requestId
         }
@@ -650,7 +650,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async getLiveChatConfig(cached = true): Promise<IChatConfig> {
+    public async getLiveChatConfig(cached = true): Promise<ChatConfig> {
         if (cached) {
             return this.liveChatConfig;
         }
@@ -765,7 +765,7 @@ class OmnichannelChatSDK {
         return this.dataMaskingRules;
     }
 
-    public async sendMessage(message: IChatSDKMessage): Promise<void> {
+    public async sendMessage(message: ChatSDKMessage): Promise<void> {
         this.scenarioMarker.startScenario(TelemetryEvent.SendMessages, {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
@@ -1201,7 +1201,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async emailLiveChatTranscript(body: IChatTranscriptBody): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+    public async emailLiveChatTranscript(body: ChatTranscriptBody): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
         const emailTranscriptOptionalParams: IEmailTranscriptOptionalParams = {};
 
         this.scenarioMarker.startScenario(TelemetryEvent.EmailLiveChatTranscript, {
@@ -1479,7 +1479,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    private async getChatConfig(): Promise<IChatConfig> {
+    private async getChatConfig(): Promise<ChatConfig> {
         try {
             const liveChatConfig = await this.OCClient.getChatConfig();
             const {

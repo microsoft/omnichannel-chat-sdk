@@ -4,7 +4,7 @@ import { ChatMessageReceivedEvent, ParticipantsRemovedEvent, TypingIndicatorRece
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import createOmnichannelMessage from "../../utils/createOmnichannelMessage";
 import ACSParticipantDisplayName from "./ACSParticipantDisplayName";
-import IChatSDKMessage from "./IChatSDKMessage";
+import ChatSDKMessage from "./ChatSDKMessage";
 import LiveChatVersion from "../LiveChatVersion";
 import { defaultMessageTags } from "./MessageTags";
 import OmnichannelMessage from "./OmnichannelMessage";
@@ -181,7 +181,7 @@ export class ACSConversation {
         });
     }
 
-    public async sendMessage(message: IChatSDKMessage): Promise<void> {
+    public async sendMessage(message: ChatSDKMessage): Promise<void> {
         if (!message.metadata) {
             message.metadata = {};
         }

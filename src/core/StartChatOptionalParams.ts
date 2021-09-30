@@ -1,8 +1,8 @@
 import InitContext from "@microsoft/ocsdk/lib/Model/InitContext";
-import ILiveChatContext from "./ILiveChatContext";
+import LiveChatContext from "./LiveChatContext";
 
-export default interface IStartChatOptionalParams {
-    liveChatContext?: ILiveChatContext;
+export default interface StartChatOptionalParams {
+    liveChatContext?: LiveChatContext;
     preChatResponse?: object;
     customContext?: object;
     browser?: string;

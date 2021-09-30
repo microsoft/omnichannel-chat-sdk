@@ -1,4 +1,4 @@
-import IOmnichannelConfig from "../core/IOmnichannelConfig";
+import OmnichannelConfig from "../core/OmnichannelConfig";
 import { AWTEventData } from "../external/aria/webjs/AriaSDK";
 import AriaTelemetry from "./AriaTelemetry";
 import StopWatch from "./StopWatch";
@@ -9,7 +9,7 @@ class ScenarioMarker {
     private telemetryEvents: Map<string, StopWatch>;
     private telemetry: typeof AriaTelemetry | null = null;
 
-    constructor(private omnichannelConfig: IOmnichannelConfig) {
+    constructor(private omnichannelConfig: OmnichannelConfig) {
         this.debug = false;
         this.telemetryEvents = new Map();
     }

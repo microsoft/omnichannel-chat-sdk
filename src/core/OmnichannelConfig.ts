@@ -1,4 +1,4 @@
-export default interface IOmnichannelConfig {
+export default interface OmnichannelConfig {
     orgId: string;
     orgUrl: string;
     widgetId: string;

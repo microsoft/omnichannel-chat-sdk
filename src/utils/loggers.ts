@@ -1,5 +1,5 @@
 import LogLevel from "@microsoft/omnichannel-ic3core/lib/logging/LogLevel";
-import IOmnichannelConfig from "../core/IOmnichannelConfig";
+import OmnichannelConfig from "../core/OmnichannelConfig";
 import { AWTEventData } from "../external/aria/webjs/AriaSDK";
 import IIC3SDKLogData from "../external/IC3Client/IIC3SDKLogData";
 import IOCSDKLogData from "../external/OCSDK/IOCSDKLogData";
@@ -12,7 +12,7 @@ export class IC3ClientLogger {
     private chatId = '';
     private telemetry: typeof AriaTelemetry | null = null;
 
-    constructor(private omnichannelConfig: IOmnichannelConfig) {
+    constructor(private omnichannelConfig: OmnichannelConfig) {
         this.debug = false;
     }
 
@@ -90,7 +90,7 @@ export class OCSDKLogger {
     private chatId = '';
     private telemetry: typeof AriaTelemetry | null = null;
 
-    constructor(private omnichannelConfig: IOmnichannelConfig) {
+    constructor(private omnichannelConfig: OmnichannelConfig) {
         this.debug = false;
     }
 
@@ -162,13 +162,13 @@ export class OCSDKLogger {
     }
 }
 
-export const createIC3ClientLogger = (omnichannelConfig: IOmnichannelConfig, debug = false): IC3ClientLogger => {
+export const createIC3ClientLogger = (omnichannelConfig: OmnichannelConfig, debug = false): IC3ClientLogger => {
     const logger = new IC3ClientLogger(omnichannelConfig);
     logger.setDebug(debug);
     return logger;
 }
 
-export const createOCSDKLogger = (omnichannelConfig: IOmnichannelConfig, debug = false): OCSDKLogger => {
+export const createOCSDKLogger = (omnichannelConfig: OmnichannelConfig, debug = false): OCSDKLogger => {
     const logger = new OCSDKLogger(omnichannelConfig);
     logger.setDebug(debug);
     return logger;

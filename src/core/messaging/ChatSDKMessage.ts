@@ -1,4 +1,4 @@
-export default interface IChatSDKMessage {
+export default interface ChatSDKMessage {
     content: string;
     tags?: string[];
     timestamp?: Date;

@@ -1,7 +1,7 @@
 import {SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
 import {SDKProvider as IC3SDKProvider} from '@microsoft/omnichannel-ic3core';
 import OmnichannelChatSDK from "./OmnichannelChatSDK";
-import IChatSDKMessage from "./core/messaging/IChatSDKMessage";
+import ChatSDKMessage from "./core/messaging/ChatSDKMessage";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
 import MessageContentType from "@microsoft/omnichannel-ic3core/lib/model/MessageContentType";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
@@ -15,7 +15,7 @@ export {
     IC3SDKProvider,
     OCSDKProvider,
     uuidv4,
-    IChatSDKMessage,
+    ChatSDKMessage,
     IRawMessage,
     MessageContentType,
     DeliveryMode,
