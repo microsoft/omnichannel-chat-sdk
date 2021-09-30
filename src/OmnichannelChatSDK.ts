@@ -739,10 +739,25 @@ class OmnichannelChatSDK {
     }
 
     public async getMessages(): Promise<IMessage[] | OmnichannelMessage[] | undefined> {
-        if (this.liveChatVersion === LiveChatVersion.V2) {
-            return (this.conversation as ACSConversation)?.getMessages();
-        } else {
-            return (this.conversation as IConversation)?.getMessages();
+        this.scenarioMarker.startScenario(TelemetryEvent.GetMessages, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string
+        });
+
+        try {
+            const messages = await (this.conversation as (IConversation | ACSConversation))?.getMessages();
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.GetMessages, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
+
+            return messages;
+        } catch {
+            this.scenarioMarker.failScenario(TelemetryEvent.GetMessages, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
         }
     }
 
