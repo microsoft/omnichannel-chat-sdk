@@ -28,6 +28,7 @@ interface NPMPackagesInfo {
 interface CDNPackagesInfo {
     IC3Client?: string;
     IC3Adapter?: string;
+    ACSAdapter?: string;
     SpoolSDK?: string;
     VoiceVideoCalling?: string;
 }

@@ -1265,6 +1265,9 @@ class OmnichannelChatSDK {
                 };
 
                 const acsAdapterCDNUrl = this.resolveChatAdapterUrl(protocol || ChatAdapterProtocols.ACS);
+                this.telemetry?.setCDNPackages({
+                    ACSAdapter: acsAdapterCDNUrl
+                });
 
                 await loadScript(acsAdapterCDNUrl, () => {
                     /* istanbul ignore next */
