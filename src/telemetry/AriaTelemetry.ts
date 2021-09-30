@@ -23,6 +23,8 @@ interface BaseContract {
 interface NPMPackagesInfo {
     OCSDK: string;
     IC3Core?: string;
+    ACSChat?: string;
+    ACSCommon?: string;
 }
 
 interface CDNPackagesInfo {
@@ -341,6 +343,8 @@ class AriaTelemetry {
         const packagesInfo: NPMPackagesInfo = {
             OCSDK: require('@microsoft/ocsdk/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
             IC3Core: require('@microsoft/omnichannel-ic3core/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
+            ACSChat: require('@azure/communication-chat').version, // eslint-disable-line @typescript-eslint/no-var-requires
+            ACSCommon: require('@azure/communication-common').version, // eslint-disable-line @typescript-eslint/no-var-requires
         };
 
         return {
