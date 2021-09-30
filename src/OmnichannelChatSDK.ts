@@ -766,6 +766,11 @@ class OmnichannelChatSDK {
     }
 
     public async sendMessage(message: IChatSDKMessage): Promise<void> {
+        this.scenarioMarker.startScenario(TelemetryEvent.SendMessages, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string
+        });
+
         const {disable, maskingCharacter} = this.chatSDKConfig.dataMasking!;
 
         let {content} = message;
@@ -788,8 +793,18 @@ class OmnichannelChatSDK {
 
             try {
                 await (this.conversation as ACSConversation)?.sendMessage(sendMessageRequest);
+
+                this.scenarioMarker.completeScenario(TelemetryEvent.SendMessages, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
             } catch (error) {
-                console.error("OmnichannelChatSDK/sendMessage/error");
+                this.scenarioMarker.failScenario(TelemetryEvent.SendMessages, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+
+                throw new Error('ChatSDKSendMessageFailed');
             }
         } else {
             const messageToSend: IRawMessage = {
@@ -815,7 +830,21 @@ class OmnichannelChatSDK {
                 messageToSend.timestamp = message.timestamp;
             }
 
-            return this.conversation!.sendMessage(messageToSend);
+            try {
+                await (this.conversation as IConversation).sendMessage(messageToSend);
+
+                this.scenarioMarker.completeScenario(TelemetryEvent.SendMessages, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+            } catch {
+                this.scenarioMarker.failScenario(TelemetryEvent.SendMessages, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+
+                throw new Error('ChatSDKSendMessageFailed');
+            }
         }
     }
 
