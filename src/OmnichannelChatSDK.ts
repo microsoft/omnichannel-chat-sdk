@@ -1,12 +1,18 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
+import ACSParticipantDisplayName from "./core/messaging/ACSParticipantDisplayName";
+import AMSFileManager from "./external/ACSAdapter/AMSFileManager";
 import AriaTelemetry from "./telemetry/AriaTelemetry";
 import CallingOptionsOptionSetNumber from "./core/CallingOptionsOptionSetNumber";
 import ChatAdapterProtocols from "./core/messaging/ChatAdapterProtocols";
+import ChatReconnectContext from "./core/ChatReconnectContext";
+import ChatReconnectOptionalParams from "./core/ChatReconnectOptionalParams";
 import { ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import ConversationMode from "./core/ConversationMode";
+import createAMSClient from "@microsoft/omnichannel-amsclient";
 import { createIC3ClientLogger, createOCSDKLogger, IC3ClientLogger, OCSDKLogger } from "./utils/loggers";
+import createOmnichannelMessage from "./utils/createOmnichannelMessage";
 import createTelemetry from "./utils/createTelemetry";
 import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
 import { defaultMessageTags } from "./core/messaging/MessageTags";
@@ -23,6 +29,9 @@ import IConversation from "@microsoft/omnichannel-ic3core/lib/model/IConversatio
 import IEmailTranscriptOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IEmailTranscriptOptionalParams";
 import IFileInfo from "@microsoft/omnichannel-ic3core/lib/interfaces/IFileInfo";
 import IFileMetadata from "@microsoft/omnichannel-ic3core/lib/model/IFileMetadata";
+import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
+import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
+import FramedlessClient from "@microsoft/omnichannel-amsclient/lib/FramedlessClient";
 import IGetChatTokenOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTokenOptionalParams";
 import IGetChatTranscriptsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTranscriptsOptionalParams";
 import IIC3AdapterOptions from "./external/IC3Adapter/IIC3AdapterOptions";
@@ -50,6 +59,8 @@ import { loadScript } from "./utils/WebUtils";
 import MessageContentType from "@microsoft/omnichannel-ic3core/lib/model/MessageContentType";
 import MessageType from "@microsoft/omnichannel-ic3core/lib/model/MessageType";
 import OnNewMessageOptionalParams from "./core/messaging/OnNewMessageOptionalParams";
+import OmnichannelChatToken from "@microsoft/omnichannel-amsclient/lib/OmnichannelChatToken";
+import OmnichannelMessage from "./core/messaging/OmnichannelMessage";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import platform, { isBrowser } from "./utils/platform";
 import ProtocolType from "@microsoft/omnichannel-ic3core/lib/interfaces/ProtocoleType";
@@ -59,17 +70,6 @@ import {SDKProvider as IC3SDKProvider} from '@microsoft/omnichannel-ic3core';
 import TelemetryEvent from "./telemetry/TelemetryEvent";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 import validateSDKConfig, {defaultChatSDKConfig} from "./validators/SDKConfigValidators";
-import ChatReconnectOptionalParams from "./core/ChatReconnectOptionalParams";
-import ChatReconnectContext from "./core/ChatReconnectContext";
-import createAMSClient from "@microsoft/omnichannel-amsclient";
-import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
-import FramedlessClient from "@microsoft/omnichannel-amsclient/lib/FramedlessClient";
-import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
-import createOmnichannelMessage from "./utils/createOmnichannelMessage";
-import OmnichannelChatToken from "@microsoft/omnichannel-amsclient/lib/OmnichannelChatToken";
-import OmnichannelMessage from "./core/messaging/OmnichannelMessage";
-import AMSFileManager from "./external/ACSAdapter/AMSFileManager";
-import ACSParticipantDisplayName from "./core/messaging/ACSParticipantDisplayName";
 
 class OmnichannelChatSDK {
     private debug: boolean;
