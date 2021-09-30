@@ -587,6 +587,11 @@ class OmnichannelChatSDK {
         const chatToken = await this.getChatToken();
         const {requestId} = this;
 
+        this.scenarioMarker.startScenario(TelemetryEvent.GetCurrentLiveChatContext, {
+            RequestId: requestId,
+            ChatId: chatToken.chatId as string
+        })
+
         const chatSession: LiveChatContext = {
             chatToken,
             requestId
@@ -595,6 +600,11 @@ class OmnichannelChatSDK {
         if (Object.keys(chatSession.chatToken).length === 0) {
             return {};
         }
+
+        this.scenarioMarker.completeScenario(TelemetryEvent.GetCurrentLiveChatContext, {
+            RequestId: requestId,
+            ChatId: chatToken.chatId as string
+        });
 
         return chatSession;
     }
@@ -849,6 +859,11 @@ class OmnichannelChatSDK {
     }
 
     public async onNewMessage(onNewMessageCallback: CallableFunction, optionalParams: OnNewMessageOptionalParams | unknown = {}): Promise<void> {
+        this.scenarioMarker.startScenario(TelemetryEvent.OnNewMessage, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string
+        });
+
         if (this.liveChatVersion === LiveChatVersion.V2) {
             const postedMessages = new Set();
 
@@ -866,19 +881,31 @@ class OmnichannelChatSDK {
                 }
             }
 
-            (this.conversation as ACSConversation)?.registerOnNewMessage((event: ChatMessageReceivedEvent) => {
-                const {id} = event;
+            try {
+                (this.conversation as ACSConversation)?.registerOnNewMessage((event: ChatMessageReceivedEvent) => {
+                    const {id} = event;
 
-                const omnichannelMessage = createOmnichannelMessage(event, {
-                    liveChatVersion: this.liveChatVersion,
-                    debug: this.debug
+                    const omnichannelMessage = createOmnichannelMessage(event, {
+                        liveChatVersion: this.liveChatVersion,
+                        debug: this.debug
+                    });
+
+                    if (!postedMessages.has(id)) {
+                        onNewMessageCallback(omnichannelMessage);
+                        postedMessages.add(id);
+                    }
                 });
 
-                if (!postedMessages.has(id)) {
-                    onNewMessageCallback(omnichannelMessage);
-                    postedMessages.add(id);
-                }
-            });
+                this.scenarioMarker.completeScenario(TelemetryEvent.OnNewMessage, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+            } catch {
+                this.scenarioMarker.failScenario(TelemetryEvent.OnNewMessage, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+            }
         } else {
             const postedMessages = new Set();
 
@@ -905,28 +932,40 @@ class OmnichannelChatSDK {
                 }
             }
 
-            this.conversation?.registerOnNewMessage((message: IRawMessage) => {
-                const {clientmessageid, messageType} = message;
+            try {
+                this.conversation?.registerOnNewMessage((message: IRawMessage) => {
+                    const {clientmessageid, messageType} = message;
 
-                // Filter out customer messages
-                if (isCustomerMessage(message)) {
-                    return;
-                }
+                    // Filter out customer messages
+                    if (isCustomerMessage(message)) {
+                        return;
+                    }
 
-                // Skip duplicates
-                if (postedMessages.has(clientmessageid)) {
-                    return;
-                }
+                    // Skip duplicates
+                    if (postedMessages.has(clientmessageid)) {
+                        return;
+                    }
 
-                if (messageType !== MessageType.Typing) {
-                    const omnichannelMessage = createOmnichannelMessage(message as IRawMessage, {
-                        liveChatVersion: this.liveChatVersion,
-                        debug: this.debug
-                    });
+                    if (messageType !== MessageType.Typing) {
+                        const omnichannelMessage = createOmnichannelMessage(message as IRawMessage, {
+                            liveChatVersion: this.liveChatVersion,
+                            debug: this.debug
+                        });
 
-                    onNewMessageCallback(omnichannelMessage);
-                }
-            });
+                        onNewMessageCallback(omnichannelMessage);
+                    }
+                });
+
+                this.scenarioMarker.completeScenario(TelemetryEvent.OnNewMessage, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+            } catch {
+                this.scenarioMarker.failScenario(TelemetryEvent.OnNewMessage, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+            }
         }
     }
 
@@ -945,8 +984,6 @@ class OmnichannelChatSDK {
                     ChatId: this.chatToken.chatId as string
                 });
             } catch (error) {
-                console.error("OmnichannelChatSDK/sendTypingEvent/error");
-
                 this.scenarioMarker.failScenario(TelemetryEvent.SendTypingEvent, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string
@@ -980,21 +1017,50 @@ class OmnichannelChatSDK {
     }
 
     public async onTypingEvent(onTypingEventCallback: CallableFunction): Promise<void> {
+        this.scenarioMarker.startScenario(TelemetryEvent.OnTypingEvent, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string
+        });
+
         if (this.liveChatVersion === LiveChatVersion.V2) {
-            (this.conversation as ACSConversation).onTypingEvent(onTypingEventCallback);
+            try {
+                (this.conversation as ACSConversation).onTypingEvent(onTypingEventCallback);
+
+                this.scenarioMarker.completeScenario(TelemetryEvent.OnTypingEvent, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+            } catch {
+                this.scenarioMarker.failScenario(TelemetryEvent.OnTypingEvent, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+            }
         } else {
-            this.conversation?.registerOnNewMessage((message: IRawMessage) => {
-                const {messageType} = message;
+            try {
+                this.conversation?.registerOnNewMessage((message: IRawMessage) => {
+                    const {messageType} = message;
 
-                // Filter out customer messages
-                if (isCustomerMessage(message)) {
-                    return;
-                }
+                    // Filter out customer messages
+                    if (isCustomerMessage(message)) {
+                        return;
+                    }
 
-                if (messageType === MessageType.Typing) {
-                    onTypingEventCallback(message);
-                }
-            });
+                    if (messageType === MessageType.Typing) {
+                        onTypingEventCallback(message);
+                    }
+                });
+
+                this.scenarioMarker.completeScenario(TelemetryEvent.OnTypingEvent, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+            } catch {
+                this.scenarioMarker.failScenario(TelemetryEvent.OnTypingEvent, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
+                });
+            }
         }
     }
 
