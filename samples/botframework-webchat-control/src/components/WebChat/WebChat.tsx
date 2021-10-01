@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState, useContext } from 'react';
 import ReactWebChat from 'botframework-webchat';
 import { IRawMessage, OmnichannelChatSDK } from '@microsoft/omnichannel-chat-sdk';
-import IChatTranscriptBody from '@microsoft/omnichannel-chat-sdk/lib/core/IChatTranscriptBody';
 import { ActionType, Store } from '../../context';
 import Loading from '../Loading/Loading';
 import ChatButton from '../ChatButton/ChatButton';
@@ -215,7 +214,7 @@ function WebChat() {
 
   const emailTranscript = useCallback(async () => {
     console.log('[emailTranscript]');
-    const transcriptBody: IChatTranscriptBody = {
+    const transcriptBody: any = {
       emailAddress: process.env.REACT_APP_email as string,
       attachmentMessage: 'Transcript',
       locale: 'en'
