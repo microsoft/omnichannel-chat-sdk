@@ -1320,6 +1320,36 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.conversation.sendMessageToBot).toHaveBeenCalledTimes(1);
         });
 
+        it('[LiveChatV2] ChatSDK.sendTypingEvent() should call OCClient.sendTypingIndicator()', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+
+            chatSDK.liveChatVersion = LiveChatVersion.V2;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                sendTypingIndicator: jest.fn()
+            }
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendTyping: jest.fn()
+            }));
+
+            await chatSDK.startChat();
+            await chatSDK.sendTypingEvent();
+
+            expect(chatSDK.OCClient.sendTypingIndicator).toHaveBeenCalledTimes(1);
+            expect(chatSDK.conversation.sendTyping).toHaveBeenCalledTimes(1);
+        });
+
         it('ChatSDK.uploadFileAttachment() should call conversation.sendFileData() & conversation.sendFileMessage()', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
