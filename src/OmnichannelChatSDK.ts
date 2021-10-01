@@ -977,7 +977,11 @@ class OmnichannelChatSDK {
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
             try {
-                await this.OCClient.sendTypingIndicator(this.requestId, LiveChatVersion.V2);
+                await this.OCClient.sendTypingIndicator(this.requestId, LiveChatVersion.V2, {
+                    customerDisplayName: ACSParticipantDisplayName.Customer
+                });
+
+                await (this.conversation as ACSConversation).sendTyping();
 
                 this.scenarioMarker.completeScenario(TelemetryEvent.SendTypingEvent, {
                     RequestId: this.requestId,

@@ -206,6 +206,14 @@ export class ACSConversation {
         }
     }
 
+    public async sendTyping(): Promise<void> {
+        try {
+            await this.chatThreadClient?.sendTypingNotification();
+        } catch {
+            throw new Error('SendTypingFailed');
+        }
+    }
+
     public async sendFileMessage(): Promise<void> {
         return undefined;
     }
