@@ -346,7 +346,7 @@ class AriaTelemetry {
             IC3Core: require('@microsoft/omnichannel-ic3core/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
             ACSChat: require('@azure/communication-chat/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
             ACSCommon: require('@azure/communication-common/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
-            AMSClient:  require('@microsoft/omnichannel-amsclient').version, // eslint-disable-line @typescript-eslint/no-var-requires
+            AMSClient:  require('@microsoft/omnichannel-amsclient/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
         };
 
         return {
