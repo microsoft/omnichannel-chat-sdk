@@ -1350,7 +1350,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.conversation.sendTyping).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.uploadFileAttachment() should call conversation.sendFileData() & conversation.sendFileMessage()', async() => {
+        it('ChatSDK.uploadFileAttachment() should call conversation.sendFileData() & conversation.sendFileMessage()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
@@ -1376,6 +1376,40 @@ describe('Omnichannel Chat SDK', () => {
             await chatSDK.uploadFileAttachment(fileInfo);
             expect(chatSDK.conversation.sendFileData).toHaveBeenCalledTimes(1);
             expect(chatSDK.conversation.sendFileMessage).toHaveBeenCalledTimes(1);
+        });
+
+        it('[LiveChatV2] ChatSDK.uploadFileAttachment() should call AMSClient.createObject, AMSClient.uploadDocument() & conversation.sendMessage()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+
+            chatSDK.liveChatVersion = LiveChatVersion.V2;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn()
+            }
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn(),
+                createObject: jest.fn(() => Promise.resolve({id: 'id'})),
+                uploadDocument: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendMessage: jest.fn()
+            }));
+
+            await chatSDK.startChat();
+
+            const fileInfo = {};
+            await chatSDK.uploadFileAttachment(fileInfo);
+
+            expect(chatSDK.AMSClient.createObject).toHaveBeenCalledTimes(1);
+            expect(chatSDK.AMSClient.uploadDocument).toHaveBeenCalledTimes(1);
+            expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
         });
 
         it('ChatSDK.downloadFileAttachment() should call conversation.downloadFile()', async() => {
