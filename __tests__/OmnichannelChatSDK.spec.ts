@@ -1792,6 +1792,46 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(1);
         });
 
+        it('[LiveChatV2] ChatSDK.onNewMessage() with rehydrate flag should call ChatSDK.getMessages()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+
+            chatSDK.liveChatVersion = LiveChatVersion.V2;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn()
+            }
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                registerOnNewMessage: jest.fn(),
+                getMessages: jest.fn()
+            }));
+
+            const messages = [
+                {id: 2},
+                {id: 1},
+                {id: 1},
+                {id: 0}
+            ]
+
+            await chatSDK.startChat();
+
+            jest.spyOn(chatSDK, 'getMessages').mockResolvedValue(messages);
+
+            await chatSDK.onNewMessage(() => {}, {rehydrate: true});
+
+            expect(chatSDK.getMessages).toHaveBeenCalledTimes(1);
+            expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(1);
+        });
+
         it('Ability to add multiple "onNewMessage" event handler', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
