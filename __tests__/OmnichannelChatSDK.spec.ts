@@ -1437,6 +1437,37 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.conversation.downloadFile).toHaveBeenCalledTimes(1);
         });
 
+        it('[LiveChatV2] ChatSDK.downloadFileAttachment() should call conversation.downloadFile()', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+
+            chatSDK.liveChatVersion = LiveChatVersion.V2;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn()
+            }
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn(),
+                getViewStatus: jest.fn(() => Promise.resolve({view_location: 'view_location'})),
+                getView: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve());
+
+            await chatSDK.startChat();
+
+            const fileMetaData = {};
+            await chatSDK.downloadFileAttachment(fileMetaData);
+
+            expect(chatSDK.AMSClient.getViewStatus).toHaveBeenCalledTimes(1);
+            expect(chatSDK.AMSClient.getView).toHaveBeenCalledTimes(1);
+        });
+
         it('ChatSDK.emailLiveChatTranscript() should call OCClient.emailTranscript()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
