@@ -13,6 +13,7 @@ import { createDataMaskingMiddleware } from './createDataMaskingMiddleware';
 import createActivityMiddleware from './createActivityMiddleware';
 import createAvatarMiddleware from './createAvatarMiddleware';
 import createActivityStatusMiddleware from './createActivityStatusMiddleware';
+import createTypingIndicatorMiddleware from './createTypingIndicatorMiddleware';
 import fetchOmnichannelConfig from '../../utils/fetchOmnichannelConfig';
 import fetchTelemetryConfig from '../../utils/fetchTelemetryConfig';
 import fetchCallingConfig from '../../utils/fetchCallingConfig';
@@ -70,6 +71,7 @@ function WebChat() {
   const [webChatStore, setWebChatStore] = useState(undefined);
   const [chatToken, setChatToken] = useState(undefined);
   const [VoiceVideoCallingSDK, setVoiceVideoCallingSDK] = useState(undefined);
+  const [typingIndicatorMiddleware, setTypingIndicatorMiddleware] = useState(undefined);
 
   useEffect(() => {
     const init = async () => {
@@ -136,6 +138,12 @@ function WebChat() {
     }
 
     console.log('[startChat]');
+
+    const typingIndicatorMiddleware: any = createTypingIndicatorMiddleware(() => {
+      chatSDK?.sendTypingEvent();
+    });
+
+    setTypingIndicatorMiddleware(() => typingIndicatorMiddleware);
 
     const dataMaskingRules = await chatSDK?.getDataMaskingRules();
     const store = createCustomStore();
@@ -292,10 +300,11 @@ function WebChat() {
             />
           }
           {
-            !state.isLoading && state.hasChatStarted && chatAdapter && webChatStore && activityMiddleware && <ReactWebChat
+            !state.isLoading && state.hasChatStarted && chatAdapter && webChatStore && activityMiddleware && typingIndicatorMiddleware && <ReactWebChat
               activityMiddleware={activityMiddleware}
               avatarMiddleware={avatarMiddleware}
               activityStatusMiddleware={activityStatusMiddleware}
+              typingIndicatorMiddleware={typingIndicatorMiddleware}
               userID="teamsvisitor"
               directLine={chatAdapter}
               sendTypingIndicator={true}

@@ -80,3 +80,37 @@
     padding: 0;
     height: auto;
 }
+
+.webchat__typingIndicator {
+    margin-left: 10px;
+    margin-bottom: 5px;
+    display: flex;
+    transition: all .5s ease;
+    align-items: center;
+}
+
+.webchat__typingIndicator > div {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: transparent;
+    font-size: 12px;
+    line-height: 15px;
+    color: #605e5c;
+}
+
+.webchat__typingIndicator .bubble {
+    height: 6px;
+    width: 6px;
+    border-radius: 6px;
+    background: #2266e3;
+    animation: bounce 2s ease infinite;
+    margin-right: 2px;
+}
+
+.webchat__typingIndicator .bubble:nth-child(2) {
+    animation-delay: .166s;
+}
+
+.webchat__typingIndicator .bubble:nth-child(3) {
+    margin-right: 8px;
+    animation-delay: .333s;
+}
