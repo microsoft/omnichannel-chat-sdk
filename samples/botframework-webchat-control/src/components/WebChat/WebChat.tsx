@@ -64,6 +64,7 @@ const createWebChatStyleOptions = () => {
 function WebChat() {
   const {state, dispatch} = useContext(Store);
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
+  const [liveChatContext, setLiveChatContext] = useState<any>(undefined);
   const [preChatSurvey, setPreChatSurvey] = useState(undefined);
   const [preChatResponse, setPreChatResponse] = useState(undefined);
   const [chatAdapter, setChatAdapter] = useState<any>(undefined);
@@ -92,6 +93,7 @@ function WebChat() {
       if (liveChatContext && Object.keys(JSON.parse(liveChatContext)).length > 0) {
         console.log("[liveChatContext]");
         console.log(liveChatContext);
+        setLiveChatContext(liveChatContext);
       }
 
       if ((chatSDK as any).getVoiceVideoCalling && !callingConfig.disable) {
@@ -151,16 +153,15 @@ function WebChat() {
     store.subscribe('DataMasking', createDataMaskingMiddleware(dataMaskingRules));
 
     // Check for active conversation in cache
-    const cachedLiveChatContext = localStorage.getItem('liveChatContext');
-    if (cachedLiveChatContext && Object.keys(JSON.parse(cachedLiveChatContext)).length > 0) {
+    if (liveChatContext && Object.keys(JSON.parse(liveChatContext)).length > 0) {
       console.log("[liveChatContext]");
-      optionalParams.liveChatContext = JSON.parse(cachedLiveChatContext);
+      optionalParams.liveChatContext = JSON.parse(liveChatContext);
     }
 
     dispatch({type: ActionType.SET_CHAT_STARTED, payload: true});
 
     // Start chats only if there's an existing live chat context or no PreChat
-    if (cachedLiveChatContext || !preChatSurvey) {
+    if (liveChatContext || !preChatSurvey) {
       dispatch({type: ActionType.SET_LOADING, payload: true});
 
       try {
@@ -171,9 +172,11 @@ function WebChat() {
       }
 
       // Cache current conversation context
-      const liveChatContext = await chatSDK?.getCurrentLiveChatContext();
-      if (liveChatContext && Object.keys(liveChatContext).length) {
-        localStorage.setItem('liveChatContext', JSON.stringify(liveChatContext));
+      const newliveChatContext = await chatSDK?.getCurrentLiveChatContext();
+      if (newliveChatContext && Object.keys(newliveChatContext).length) {
+        console.log('[newliveChatContext]')
+        console.log(newliveChatContext);
+        localStorage.setItem('liveChatContext', JSON.stringify(newliveChatContext));
       }
 
       chatSDK?.onNewMessage(onNewMessage, {rehydrate: true});
@@ -190,7 +193,7 @@ function WebChat() {
         setChatToken(chatToken);
       }
     }
-  }, [chatSDK, state, dispatch, onAgentEndSession, onNewMessage, onTypingEvent, preChatSurvey]);
+  }, [chatSDK, state, dispatch, onAgentEndSession, onNewMessage, onTypingEvent, liveChatContext, preChatSurvey]);
 
   const endChat = useCallback(async () => {
     console.log('[endChat]');
@@ -200,6 +203,7 @@ function WebChat() {
     (VoiceVideoCallingSDK as any)?.close();
     setChatAdapter(undefined);
     setChatToken(undefined);
+    setLiveChatContext(undefined);
     setPreChatSurvey(undefined);
     setPreChatResponse(undefined);
     localStorage.removeItem('liveChatContext');
@@ -286,7 +290,7 @@ function WebChat() {
             onClick={endChat}
           />
           {
-            preChatSurvey && !preChatResponse && renderPreChatSurvey()
+            (!liveChatContext || !Object.keys(liveChatContext).length) && preChatSurvey && !preChatResponse && renderPreChatSurvey()
           }
           {
             state.isLoading && <Loading />
