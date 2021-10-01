@@ -372,6 +372,88 @@ describe('ACSClient', () => {
         }
     });
 
+    it('ACSClient.conversation.sendTyping() should call ChatThreadClient.sendTypingNotification()', async () => {
+        const client: any = new ACSClient();
+        const config = {
+            token: 'token',
+            environmentUrl: 'url'
+        }
+
+        await client.initialize(config);
+
+        const chatThreadClient: any = {};
+        chatThreadClient.listParticipants = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+        chatThreadClient.listMessages = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+        chatThreadClient.sendTypingNotification = jest.fn();
+
+        client.chatClient = {};
+        client.chatClient.getChatThreadClient = jest.fn(() => chatThreadClient);
+        client.chatClient.startRealtimeNotifications = jest.fn();
+
+        const conversation = await client.joinConversation({
+            id: 'id',
+            threadId: 'threadId',
+            pollingInterval: 1000,
+        });
+
+        await conversation.sendTyping();
+
+        expect(chatThreadClient.sendTypingNotification).toHaveBeenCalledTimes(1);
+    });
+
+    it('ACSClient.conversation.sendTyping() should throw an error if chatThreadClient.sendTypingNotification() fails', async () => {
+        const client: any = new ACSClient();
+        const config = {
+            token: 'token',
+            environmentUrl: 'url'
+        }
+
+        await client.initialize(config);
+
+        const chatThreadClient: any = {};
+        chatThreadClient.listParticipants = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+        chatThreadClient.listMessages = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+        chatThreadClient.sendTypingNotification = jest.fn(() => Promise.reject());
+
+        client.chatClient = {};
+        client.chatClient.getChatThreadClient = jest.fn(() => chatThreadClient);
+        client.chatClient.startRealtimeNotifications = jest.fn();
+
+        const conversation = await client.joinConversation({
+            id: 'id',
+            threadId: 'threadId',
+            pollingInterval: 1000,
+        });
+
+        try {
+            await conversation.sendTyping();
+        } catch (error) {
+            expect(error.message).toBe('SendTypingFailed');
+        }
+
+        expect(chatThreadClient.sendTypingNotification).toHaveBeenCalledTimes(1);
+    });
+
     it('ACSClient.conversation.sendFileMessage() should be mocked', async () => {
         const client: any = new ACSClient();
         const config = {
