@@ -95,9 +95,9 @@ export class ACSConversation {
         const pagedAsyncIterableIterator = await (this.chatThreadClient as ChatThreadClient).listParticipants();
         let next = await pagedAsyncIterableIterator.next();
         while (!next.done) {
-           const user = next.value;
-           participants.push(user);
-           next = await pagedAsyncIterableIterator.next();
+            const user = next.value;
+            participants.push(user);
+            next = await pagedAsyncIterableIterator.next();
         }
 
         return participants;
@@ -236,11 +236,11 @@ export class ACSConversation {
         const participants = await this.getParticipants();
         const participantsMapping = {};
         for (const participant of participants) {
-          const {id} = participant;
+            const {id} = participant;
 
-          if (!Object.keys(participantsMapping).includes((id as CommunicationUserIdentifier).communicationUserId)) {
-            Object.assign(participantsMapping, {[(id as CommunicationUserIdentifier).communicationUserId]: participant});
-          }
+            if (!Object.keys(participantsMapping).includes((id as CommunicationUserIdentifier).communicationUserId)) {
+                Object.assign(participantsMapping, {[(id as CommunicationUserIdentifier).communicationUserId]: participant});
+            }
         }
 
         return participantsMapping;
