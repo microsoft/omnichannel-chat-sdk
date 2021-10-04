@@ -42,14 +42,12 @@ export class ACSConversation {
         try {
             this.chatThreadClient = await this.chatClient?.getChatThreadClient(sessionInfo.threadId as string);
         } catch (error) {
-            console.error(`ACSConversation/chatClient/getChatThreadClient/error ${error}`);
             throw new Error('GetChatThreadClientFailed');
         }
 
         try {
             await this.chatClient.startRealtimeNotifications();
         } catch (error) {
-            console.error(`ACSConversation/chatClient/startRealtimeNotifications/error ${error}`);
             throw new Error('StartRealtimeNotificationsFailed');
         }
 

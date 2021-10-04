@@ -70,8 +70,6 @@ describe('ACSClient', () => {
         client.chatClient.getChatThreadClient = jest.fn(() => Promise.reject());
         client.chatClient.startRealtimeNotifications = jest.fn();
 
-        jest.spyOn(console, 'error');
-
         try {
             await client.joinConversation({
                 id: 'id',
@@ -79,7 +77,6 @@ describe('ACSClient', () => {
                 pollingInterval: 1000,
             });
         } catch (error) {
-            expect(console.error).toHaveBeenCalled();
             expect(error.message).toBe('GetChatThreadClientFailed');
         }
     });
@@ -105,8 +102,6 @@ describe('ACSClient', () => {
         client.chatClient.getChatThreadClient = jest.fn(() => chatThreadClient);
         client.chatClient.startRealtimeNotifications = jest.fn(() => Promise.reject());
 
-        jest.spyOn(console, 'error');
-
         try {
             await client.joinConversation({
                 id: 'id',
@@ -114,7 +109,6 @@ describe('ACSClient', () => {
                 pollingInterval: 1000,
             });
         } catch (error) {
-            expect(console.error).toHaveBeenCalled();
             expect(error.message).toBe('StartRealtimeNotificationsFailed');
         }
     });
