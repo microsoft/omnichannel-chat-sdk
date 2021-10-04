@@ -36,7 +36,6 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
             type: PersonType.Bot
         } as IPerson;
 
-        // TODO: Handle multiple attachments
         if (metadata && metadata.amsMetadata && metadata.amsReferences) {
             omnichannelMessage.fileMetadata = {} as IFileMetadata; // Backward compatibility
             omnichannelMessage.fileMetadata.fileSharingProtocolType = 0;
@@ -54,7 +53,6 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
         }
     } else {
         const {clientmessageid} = message as IRawMessage;
-
         omnichannelMessage.id = clientmessageid as string;
         omnichannelMessage = {...message} as OmnichannelMessage;
     }
