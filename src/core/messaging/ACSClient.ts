@@ -105,7 +105,7 @@ export class ACSConversation {
 
     public async registerOnNewMessage(onNewMessageCallback: CallableFunction): Promise<void> {
         let isReceivingNotifications = false;
-        const postedMessageIds = new Set()
+        const postedMessageIds = new Set();
 
         const pollForMessages = async (delay: number) => {
             if (isReceivingNotifications) {
