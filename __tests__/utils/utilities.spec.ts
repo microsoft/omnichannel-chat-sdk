@@ -26,6 +26,21 @@ describe('Utilities', () => {
         expect(utilities.isSystemMessage(message)).toBe(false);
     });
 
+    it('utilities.isSystemMessage() should not break if `properties.tags` property does not exist', () => {
+        const message = {
+            content: 'sample',
+            messageType: MessageType.UserMessage,
+            properties: {}
+        }
+
+        try {
+            const result = utilities.isSystemMessage(message);
+            expect(result).toBeDefined();
+        } catch {
+
+        }
+    });
+
     it('utilities.isCustomerMessage() should return true if sender id contains "contacts/8:"', () => {
         const message = {
             content: 'sample',
