@@ -37,19 +37,21 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
         } as IPerson;
 
         if (metadata && metadata.amsMetadata && metadata.amsReferences) {
-            omnichannelMessage.fileMetadata = {} as IFileMetadata; // Backward compatibility
-            omnichannelMessage.fileMetadata.fileSharingProtocolType = 0;
+            try {
+                const references = JSON.parse(metadata.amsReferences);
+                const data = JSON.parse(metadata.amsMetadata);
+                const {fileName} = data[0];
 
-            const references = JSON.parse(metadata.amsReferences);
-            omnichannelMessage.fileMetadata.id = references[0];
-
-            const data = JSON.parse(metadata.amsMetadata);
-            const {fileName} = data[0];
-
-            omnichannelMessage.fileMetadata.name = fileName;
-            omnichannelMessage.fileMetadata.size = 0;
-            omnichannelMessage.fileMetadata.type = fileName.split('.').pop();
-            omnichannelMessage.fileMetadata.url = '';
+                omnichannelMessage.fileMetadata = {} as IFileMetadata; // Backward compatibility
+                omnichannelMessage.fileMetadata.fileSharingProtocolType = 0;
+                omnichannelMessage.fileMetadata.id = references[0];
+                omnichannelMessage.fileMetadata.name = fileName;
+                omnichannelMessage.fileMetadata.size = 0;
+                omnichannelMessage.fileMetadata.type = fileName.split('.').pop();
+                omnichannelMessage.fileMetadata.url = '';
+            } catch {
+                // Invalid File Attachment
+            }
         }
     } else {
         const {clientmessageid} = message as IRawMessage;
