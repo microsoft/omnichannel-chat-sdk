@@ -188,6 +188,7 @@ describe('ACSClient', () => {
 
         jest.spyOn(conversation, 'getMessages').mockResolvedValue([{id: 'id', sender: {displayName: 'name'}}]);
 
+        (global as any).setTimeout = jest.fn();
         await conversation.registerOnNewMessage(() => {});
 
         const event = "chatMessageReceived";
