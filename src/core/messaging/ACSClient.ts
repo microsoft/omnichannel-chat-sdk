@@ -1,3 +1,4 @@
+import ACSChatMessageType from "./ACSChatMessageType";
 import { ChatClient, ChatParticipant, ChatThreadClient, ChatMessage } from "@azure/communication-chat";
 import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
 import { ChatMessageReceivedEvent, ParticipantsRemovedEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
@@ -62,7 +63,7 @@ export class ACSConversation {
             const chatMessage = nextMessage.value;
 
             // Filter text type messages only
-            if (chatMessage.type !== 'text') {
+            if (chatMessage.type !== ACSChatMessageType.Text) {
                 nextMessage = await pagedAsyncIterableIterator.next();
                 continue;
             }
