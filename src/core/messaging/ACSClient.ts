@@ -1,4 +1,6 @@
 import ACSChatMessageType from "./ACSChatMessageType";
+import ACSClientConfig from "./ACSClientConfig";
+import ACSSessionInfo from "./ACSSessionInfo";
 import { ChatClient, ChatParticipant, ChatThreadClient, ChatMessage } from "@azure/communication-chat";
 import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
 import { ChatMessageReceivedEvent, ParticipantsRemovedEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
@@ -9,17 +11,6 @@ import ChatSDKMessage from "./ChatSDKMessage";
 import LiveChatVersion from "../LiveChatVersion";
 import { defaultMessageTags } from "./MessageTags";
 import OmnichannelMessage from "./OmnichannelMessage";
-
-export interface ACSSessionInfo {
-    id: string;
-    threadId: string;
-    pollingInterval: number;
-}
-
-export interface ACSClientConfig {
-    token: string;
-    environmentUrl: string;
-}
 
 export interface participantMapping {
     [key: string]: ChatParticipant;
