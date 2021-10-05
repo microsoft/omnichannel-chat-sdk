@@ -50,7 +50,7 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
                 omnichannelMessage.fileMetadata.type = fileName.split('.').pop();
                 omnichannelMessage.fileMetadata.url = '';
             } catch {
-                // Invalid File Attachment
+                // Suppress errors to keep chat flowing
             }
         }
     } else {
