@@ -1,6 +1,5 @@
 import { ConfigurationManager } from "../../utils/transformLiveChatConfig";
 
-
 const createTypingIndicatorMiddleware = (sendTypingEvent = () => {}) => {
     console.log('[createTypingIndicatorMiddleware]');
 
