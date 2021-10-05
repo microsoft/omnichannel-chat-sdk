@@ -7,7 +7,7 @@ const transformLiveChatConfig = (liveChatConfig: any): ConfigurationManager => {
     const liveChatVersion = (liveChatConfig as any)["LiveChatVersion"];
     const canUploadAttachment = (liveChatConfig as any)["LiveWSAndLiveChatEngJoin"]["msdyn_enablefileattachmentsforcustomers"] === "true" || false;
 
-    ConfigurationManager.liveChatVersion = parseInt(liveChatVersion);
+    ConfigurationManager.liveChatVersion = parseInt(liveChatVersion) || 1;
     ConfigurationManager.canUploadAttachment = canUploadAttachment;
 
     return ConfigurationManager;
