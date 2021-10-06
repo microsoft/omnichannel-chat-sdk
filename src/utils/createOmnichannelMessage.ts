@@ -4,7 +4,6 @@ import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
 import LiveChatVersion from '../core/LiveChatVersion';
 import OmnichannelMessage, { IFileMetadata, IPerson, MessageType, PersonType } from "../core/messaging/OmnichannelMessage";
 
-
 interface CreateOmnichannelMessageOptionalParams {
     liveChatVersion: LiveChatVersion;
     debug?: boolean;
