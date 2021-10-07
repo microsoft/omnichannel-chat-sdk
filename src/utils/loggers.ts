@@ -194,6 +194,7 @@ export class ACSClientLogger {
         /* istanbul ignore next */
         this.debug && console.log(`[ACSClientLogger][useTelemetry]`);
         this.telemetry = telemetry;
+        this.scenarioMarker?.useTelemetry(this.telemetry);
     }
 
     public logClientSdkTelemetryEvent(logLevel: LogLevel, event: any): void {  // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
@@ -288,6 +289,7 @@ export class ACSAdapterLogger {
     /* istanbul ignore next */
     public setDebug(flag: boolean): void {
         this.debug = flag;
+        this.scenarioMarker?.setDebug(flag);
     }
 
     public setRequestId(requestId: string): void {
@@ -302,6 +304,7 @@ export class ACSAdapterLogger {
         /* istanbul ignore next */
         this.debug && console.log(`[ACSAdapterLogger][useTelemetry]`);
         this.telemetry = telemetry;
+        this.scenarioMarker?.useTelemetry(this.telemetry);
     }
 
     public logClientSdkTelemetryEvent(logLevel: LogLevel, event: any): void {  // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
