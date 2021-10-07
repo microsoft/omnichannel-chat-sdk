@@ -355,7 +355,7 @@ export class ACSConversation {
         try {
             for (const [event, listeners] of Object.entries(this.eventListeners)) {
                 listeners.forEach(listener => {
-                    this.chatClient.off(event as any, listener as any);
+                    this.chatClient.off(event as any, listener as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
                 });
             }
 

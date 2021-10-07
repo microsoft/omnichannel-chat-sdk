@@ -29,6 +29,15 @@ interface PermissionsOptions {
     permission: FilePermission;
 }
 
+enum AMSFileManagerEvent {
+    AMSUpload = 'AMSUpload',
+    AMSDownload = 'AMSDownload',
+    GetFileIds = 'GetFileIds',
+    CreateFileIdProperty = 'CreateFileIdProperty',
+    GetFileMetadata = 'GetFileMetadata',
+    CreateFileMetadataProperty = 'CreateFileMetadataProperty'
+}
+
 class AMSFileManager {
     private logger: ACSAdapterLogger | null;
     private amsClient: FramedClient;
@@ -51,48 +60,144 @@ class AMSFileManager {
     }
 
     public getFileIds(metadata?: Record<string, string>): string[] | undefined {
+        this.logger?.startScenario(AMSFileManagerEvent.GetFileIds);
+
         try {
-            return JSON.parse(metadata?.amsReferences as string) as string[];
-        } catch {
+            const result = JSON.parse(metadata?.amsReferences as string) as string[];
+            this.logger?.completeScenario(AMSFileManagerEvent.GetFileIds);
+            return result;
+        } catch (error) {
+            const exceptionDetails = {
+                errorObject: `${error}`
+            };
+
+            this.logger?.failScenario(AMSFileManagerEvent.GetFileIds, {
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
             return undefined;
         }
     }
 
     public createFileIdProperty(fileIds: string[]): Record<string, string> | undefined {
+        this.logger?.startScenario(AMSFileManagerEvent.CreateFileIdProperty);
+
         try {
-            return {
+            const result = {
                 amsReferences: JSON.stringify(fileIds)
             } as Record<string, string>;
-        } catch {
+            this.logger?.completeScenario(AMSFileManagerEvent.CreateFileIdProperty);
+            return result;
+        } catch (error) {
+            const exceptionDetails = {
+                errorObject: `${error}`
+            };
+
+            this.logger?.failScenario(AMSFileManagerEvent.CreateFileIdProperty, {
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
             return undefined;
         }
     }
 
     public getFileMetadata(metadata?: Record<string, string>): FileMetadata[] | undefined {
+        this.logger?.startScenario(AMSFileManagerEvent.GetFileMetadata);
+
         try {
-            return JSON.parse(metadata?.amsMetadata as string);
-        } catch {
+            const result = JSON.parse(metadata?.amsMetadata as string);
+            this.logger?.completeScenario(AMSFileManagerEvent.GetFileMetadata);
+            return result;
+        } catch (error) {
+            const exceptionDetails = {
+                errorObject: `${error}`
+            };
+
+            this.logger?.failScenario(AMSFileManagerEvent.GetFileMetadata, {
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
             return undefined;
         }
     }
 
     public createFileMetadataProperty(metadata: FileMetadata[]): Record<string, string> | undefined {
+        this.logger?.startScenario(AMSFileManagerEvent.CreateFileMetadataProperty);
+
         try {
-            return {
+            const result = {
                 amsMetadata: JSON.stringify(metadata)
             };
-        } catch {
+            this.logger?.completeScenario(AMSFileManagerEvent.CreateFileMetadataProperty);
+            return result;
+        } catch (error) {
+            const exceptionDetails = {
+                errorObject: `${error}`
+            };
+
+            this.logger?.failScenario(AMSFileManagerEvent.CreateFileMetadataProperty, {
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
             return undefined;
         }
     }
 
     private async uploadFileToAMS(fileToUpload: IFileUploadRequest): Promise<IUploadedFile | undefined> {
-        if (fileToUpload.contentUrl && fileToUpload.name) {
-            const blob = await this.amsClient.fetchBlob(fileToUpload.contentUrl);
-            const file = new File([blob], fileToUpload.name, { type: fileToUpload.contentType });
-            const response: any = await this.amsClient.createObject((this.amsClient as any).chatToken.chatId, file);  // eslint-disable-line @typescript-eslint/no-explicit-any
+        this.logger?.startScenario(AMSFileManagerEvent.AMSUpload);
 
-            await this.amsClient.uploadDocument(response.id, file);
+        if (fileToUpload.contentUrl && fileToUpload.name) {
+            let blob;
+
+            try {
+                blob = await this.amsClient.fetchBlob(fileToUpload.contentUrl);
+            } catch (error) {
+                const exceptionDetails = {
+                    response: 'AMSFetchBlobFailure',
+                    errorObject: `${error}`
+                };
+
+                this.logger?.failScenario(AMSFileManagerEvent.AMSUpload, {
+                    ExceptionDetails: JSON.stringify(exceptionDetails)
+                });
+
+                return undefined;
+            }
+
+            const file = new File([blob as Blob], fileToUpload.name, { type: fileToUpload.contentType });
+
+            let response: any;  // eslint-disable-line @typescript-eslint/no-explicit-any
+            try {
+                response = await this.amsClient.createObject((this.amsClient as any).chatToken.chatId, file);  // eslint-disable-line @typescript-eslint/no-explicit-any
+            } catch (error) {
+                const exceptionDetails = {
+                    response: 'AMSCreateObjectFailure',
+                    errorObject: `${error}`
+                };
+
+                this.logger?.failScenario(AMSFileManagerEvent.AMSUpload, {
+                    ExceptionDetails: JSON.stringify(exceptionDetails)
+                });
+
+                return undefined;
+            }
+
+            try {
+                await this.amsClient.uploadDocument(response.id, file);
+            } catch (error) {
+                const exceptionDetails = {
+                    response: 'AMSUploadDocumentFailure',
+                    errorObject: `${error}`
+                };
+
+                this.logger?.failScenario(AMSFileManagerEvent.AMSUpload, {
+                    ExceptionDetails: JSON.stringify(exceptionDetails)
+                });
+
+                return undefined;
+            }
+
+            this.logger?.completeScenario(AMSFileManagerEvent.AMSUpload);
 
             return {
                 fileId: response.id,
@@ -105,16 +210,54 @@ class AMSFileManager {
     }
 
     private async downloadFileFromAMS(uploadedFile: IUploadedFile): Promise<File | undefined> {
+        this.logger?.startScenario(AMSFileManagerEvent.AMSDownload);
+
         if (uploadedFile.fileId && uploadedFile.metadata && uploadedFile.metadata.fileName) {
             const fileMetadata = {
                 id: uploadedFile.fileId,
                 type: uploadedFile.metadata.contentType.split("/").pop() as string
             };
 
-            const response: any = await this.amsClient.getViewStatus(fileMetadata);  // eslint-disable-line @typescript-eslint/no-explicit-any
+            let response: any;  // eslint-disable-line @typescript-eslint/no-explicit-any
+
+            try {
+                response = await this.amsClient.getViewStatus(fileMetadata);  // eslint-disable-line @typescript-eslint/no-explicit-any
+            } catch (error) {
+                const exceptionDetails = {
+                    response: 'AMSGetViewStatusFailure',
+                    errorObject: `${error}`
+                };
+
+                this.logger?.failScenario(AMSFileManagerEvent.AMSDownload, {
+                    ExceptionDetails: JSON.stringify(exceptionDetails)
+                });
+
+                return undefined;
+            }
+
             const {view_location} = response;
-            const blob: any = await this.amsClient.getView(fileMetadata, view_location);  // eslint-disable-line @typescript-eslint/no-explicit-any
+
+            let blob: any;  // eslint-disable-line @typescript-eslint/no-explicit-any
+
+            try {
+                blob = await this.amsClient.getView(fileMetadata, view_location);  // eslint-disable-line @typescript-eslint/no-explicit-any
+            } catch (error) {
+                const exceptionDetails = {
+                    response: 'AMSGetViewFailure',
+                    errorObject: `${error}`
+                };
+
+                this.logger?.failScenario(AMSFileManagerEvent.AMSDownload, {
+                    ExceptionDetails: JSON.stringify(exceptionDetails)
+                });
+
+                return undefined;
+            }
+
             const file = new File([blob], uploadedFile.metadata.fileName, { type: uploadedFile.metadata.contentType });
+
+            this.logger?.completeScenario(AMSFileManagerEvent.AMSDownload);
+
             return file;
         }
     }
