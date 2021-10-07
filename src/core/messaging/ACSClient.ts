@@ -177,7 +177,7 @@ export class ACSConversation {
         try {
             const pollForMessages = async (delay: number) => {
                 if (isReceivingNotifications) {
-                return;
+                    return;
                 }
 
                 try {
