@@ -2,7 +2,8 @@ import OmnichannelConfig from "../core/OmnichannelConfig";
 import { AWTEventData } from "../external/aria/webjs/AriaSDK";
 import AriaTelemetry from "./AriaTelemetry";
 import StopWatch from "./StopWatch";
-import TelemetryEvent, {startEvent, failEvent, completeEvent} from "./TelemetryEvent";
+import TelemetryEvent from "./TelemetryEvent";
+import {startEvent, failEvent, completeEvent} from './EventMarker';
 
 class ScenarioMarker {
     private debug: boolean;

@@ -34,16 +34,4 @@ enum TelemetryEvent {
     GetChatReconnectContext = "GetChatReconnectContext"
 }
 
-export const startEvent = (event: TelemetryEvent): string => {
-    return `${event}Started`;
-}
-
-export const completeEvent = (event: TelemetryEvent): string => {
-    return `${event}Completed`;
-}
-
-export const failEvent = (event: TelemetryEvent): string => {
-    return `${event}Failed`;
-}
-
 export default TelemetryEvent;
