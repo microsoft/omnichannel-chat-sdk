@@ -201,6 +201,43 @@ describe('loggers', () => {
 
             expect(telemetry.info).toBeCalledTimes(1);
         });
+
+        it('ACSClientLogger.startScenario() should call ScenarioMarker.startScenario()', () => {
+            const logger = new ACSClientLogger(omnichannelConfig);
+
+            (logger as any).scenarioMarker = {
+                startScenario: jest.fn(),
+            }
+
+            logger.startScenario('');
+
+            expect((logger as any).scenarioMarker.startScenario).toHaveBeenCalledTimes(1);
+        });
+
+
+        it('ACSClientLogger.failScenario() should call ScenarioMarker.failScenario()', () => {
+            const logger = new ACSClientLogger(omnichannelConfig);
+
+            (logger as any).scenarioMarker = {
+                failScenario: jest.fn(),
+            }
+
+            logger.failScenario('');
+
+            expect((logger as any).scenarioMarker.failScenario).toHaveBeenCalledTimes(1);
+        });
+
+        it('ACSClientLogger.completeScenario() should call ScenarioMarker.completeScenario()', () => {
+            const logger = new ACSClientLogger(omnichannelConfig);
+
+            (logger as any).scenarioMarker = {
+                completeScenario: jest.fn(),
+            }
+
+            logger.completeScenario('');
+
+            expect((logger as any).scenarioMarker.completeScenario).toHaveBeenCalledTimes(1);
+        });
     });
 
     describe('ACSAdapterLogger', () => {
@@ -267,6 +304,43 @@ describe('loggers', () => {
             logger.logClientSdkTelemetryEvent(LogLevel.INFO, eventData as any);
 
             expect(telemetry.info).toBeCalledTimes(1);
+        });
+
+        it('ACSAdapterLogger.startScenario() should call ScenarioMarker.startScenario()', () => {
+            const logger = new ACSAdapterLogger(omnichannelConfig);
+
+            (logger as any).scenarioMarker = {
+                startScenario: jest.fn(),
+            }
+
+            logger.startScenario('');
+
+            expect((logger as any).scenarioMarker.startScenario).toHaveBeenCalledTimes(1);
+        });
+
+
+        it('ACSAdapterLogger.failScenario() should call ScenarioMarker.failScenario()', () => {
+            const logger = new ACSAdapterLogger(omnichannelConfig);
+
+            (logger as any).scenarioMarker = {
+                failScenario: jest.fn(),
+            }
+
+            logger.failScenario('');
+
+            expect((logger as any).scenarioMarker.failScenario).toHaveBeenCalledTimes(1);
+        });
+
+        it('ACSAdapterLogger.completeScenario() should call ScenarioMarker.completeScenario()', () => {
+            const logger = new ACSAdapterLogger(omnichannelConfig);
+
+            (logger as any).scenarioMarker = {
+                completeScenario: jest.fn(),
+            }
+
+            logger.completeScenario('');
+
+            expect((logger as any).scenarioMarker.completeScenario).toHaveBeenCalledTimes(1);
         });
     });
 })
