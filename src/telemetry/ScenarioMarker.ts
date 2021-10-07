@@ -23,7 +23,7 @@ class ScenarioMarker {
         this.telemetry?.setDebug(flag);
     }
 
-    public setScenarioType(scenarioType: ScenarioType) {
+    public setScenarioType(scenarioType: ScenarioType): void {
         this.scenarioType = scenarioType;
     }
 

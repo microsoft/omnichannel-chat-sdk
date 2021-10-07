@@ -11,9 +11,7 @@ import createOmnichannelMessage from "../../utils/createOmnichannelMessage";
 import { defaultMessageTags } from "./MessageTags";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import LiveChatVersion from "../LiveChatVersion";
-import LogLevel from "../../telemetry/LogLevel";
 import OmnichannelMessage from "./OmnichannelMessage";
-import { startEvent, failEvent, completeEvent } from "../../telemetry/EventMarker";
 
 enum ACSClientEvent {
     InitializeACSClient = 'InitializeACSClient',
