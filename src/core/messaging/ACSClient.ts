@@ -132,106 +132,155 @@ export class ACSConversation {
                 ExceptionDetails: JSON.stringify(exceptionDetails)
             });
 
-            throw new Error('GetMessages');
+            throw new Error(ACSClientEvent.GetMessages);
         }
 
         return messages;
     }
 
     public async getParticipants(): Promise<ChatParticipant[]> {
+        this.logger?.startScenario(ACSClientEvent.GetParticipants);
+
         const participants: ChatParticipant[] = [];
-        const pagedAsyncIterableIterator = await (this.chatThreadClient as ChatThreadClient).listParticipants();
-        let next = await pagedAsyncIterableIterator.next();
-        while (!next.done) {
-            const user = next.value;
-            participants.push(user);
-            next = await pagedAsyncIterableIterator.next();
+
+        try {
+            const pagedAsyncIterableIterator = await (this.chatThreadClient as ChatThreadClient).listParticipants();
+            let next = await pagedAsyncIterableIterator.next();
+            while (!next.done) {
+                const user = next.value;
+                participants.push(user);
+                next = await pagedAsyncIterableIterator.next();
+            }
+
+            this.logger?.completeScenario(ACSClientEvent.GetParticipants);
+        } catch (error) {
+            const exceptionDetails = {
+                errorObject: `${error}`
+            };
+
+            this.logger?.failScenario(ACSClientEvent.GetParticipants, {
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
+            throw new Error(ACSClientEvent.GetParticipants);
         }
 
         return participants;
     }
 
     public async registerOnNewMessage(onNewMessageCallback: CallableFunction): Promise<void> {
+        this.logger?.startScenario(ACSClientEvent.RegisterOnNewMessage);
+
         let isReceivingNotifications = false;
         const postedMessageIds = new Set();
 
-        const pollForMessages = async (delay: number) => {
-            if (isReceivingNotifications) {
-              return;
-            }
-
-            try {
-                const messages = await this.getMessages();
-                for (const message of messages.reverse()) {
-                    const {id, sender} = message;
-                    const customerMessageCondition = sender.displayName === ACSParticipantDisplayName.Customer;
-
-                    // Filter out customer messages
-                    if (customerMessageCondition) {
-                        continue;
-                    }
-
-                    // Filter out duplicate messages
-                    if (!postedMessageIds.has(id)) {
-                        onNewMessageCallback(message);
-                        postedMessageIds.add(id);
-                    }
+        try {
+            const pollForMessages = async (delay: number) => {
+                if (isReceivingNotifications) {
+                return;
                 }
-            } catch {
-                // Ignore polling failures
-            }
 
-            setTimeout(() => {
-                pollForMessages(delay);
-            }, delay);
-        };
+                try {
+                    const messages = await this.getMessages();
+                    for (const message of messages.reverse()) {
+                        const {id, sender} = message;
+                        const customerMessageCondition = sender.displayName === ACSParticipantDisplayName.Customer;
 
-        // Poll messages until WS established connection
-        await pollForMessages(this.sessionInfo?.pollingInterval as number);
+                        // Filter out customer messages
+                        if (customerMessageCondition) {
+                            continue;
+                        }
 
-        this.chatClient?.on("chatMessageReceived", (event: ChatMessageReceivedEvent) => {
-            isReceivingNotifications = true;
+                        // Filter out duplicate messages
+                        if (!postedMessageIds.has(id)) {
+                            onNewMessageCallback(message);
+                            postedMessageIds.add(id);
+                        }
+                    }
+                } catch {
+                    // Ignore polling failures
+                }
 
-            const {id, sender} = event;
+                setTimeout(() => {
+                    pollForMessages(delay);
+                }, delay);
+            };
 
-            const customerMessageCondition = ((sender as CommunicationUserIdentifier).communicationUserId === (this.sessionInfo?.id as string))
+            // Poll messages until WS established connection
+            await pollForMessages(this.sessionInfo?.pollingInterval as number);
 
-            // Filter out customer messages
-            if (customerMessageCondition) {
-                return;
-            }
+            this.chatClient?.on("chatMessageReceived", (event: ChatMessageReceivedEvent) => {
+                isReceivingNotifications = true;
 
-            // Filter out duplicate messages
-            if (postedMessageIds.has(id)) {
-                return;
-            }
+                const {id, sender} = event;
 
-            if (event.message) {
-                Object.assign(event, {content: event.message});
-            }
+                const customerMessageCondition = ((sender as CommunicationUserIdentifier).communicationUserId === (this.sessionInfo?.id as string))
 
-            // Add alias to differentiate sender type
-            const participant = (this.participantsMapping as participantMapping)[(sender as CommunicationUserIdentifier).communicationUserId];
-            Object.assign(event.sender, {alias: participant.displayName});
+                // Filter out customer messages
+                if (customerMessageCondition) {
+                    return;
+                }
 
-            onNewMessageCallback(event);
-            postedMessageIds.add(id);
-        });
+                // Filter out duplicate messages
+                if (postedMessageIds.has(id)) {
+                    return;
+                }
+
+                if (event.message) {
+                    Object.assign(event, {content: event.message});
+                }
+
+                // Add alias to differentiate sender type
+                const participant = (this.participantsMapping as participantMapping)[(sender as CommunicationUserIdentifier).communicationUserId];
+                Object.assign(event.sender, {alias: participant.displayName});
+
+                onNewMessageCallback(event);
+                postedMessageIds.add(id);
+            });
+            this.logger?.completeScenario(ACSClientEvent.RegisterOnNewMessage);
+        } catch (error) {
+            const exceptionDetails = {
+                errorObject: `${error}`
+            };
+
+            this.logger?.failScenario(ACSClientEvent.RegisterOnNewMessage, {
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
+            throw new Error(ACSClientEvent.RegisterOnNewMessage);
+        }
     }
 
     public async registerOnThreadUpdate(onThreadUpdateCallback: CallableFunction): Promise<void> {
-        this.chatClient?.on("participantsRemoved", (event: ParticipantsRemovedEvent) => {
-            onThreadUpdateCallback(event);
-        });
+        this.logger?.startScenario(ACSClientEvent.RegisterOnThreadUpdate);
+
+        try {
+            this.chatClient?.on("participantsRemoved", (event: ParticipantsRemovedEvent) => {
+                onThreadUpdateCallback(event);
+            });
+            this.logger?.completeScenario(ACSClientEvent.RegisterOnThreadUpdate);
+        } catch (error) {
+            this.logger?.failScenario(ACSClientEvent.RegisterOnThreadUpdate);
+        }
     }
 
     public async onTypingEvent(onTypingEventCallback: CallableFunction): Promise<void> {
-        this.chatClient?.on("typingIndicatorReceived", (event: TypingIndicatorReceivedEvent) => {
-            onTypingEventCallback(event);
-        });
+        this.logger?.startScenario(ACSClientEvent.OnTypingEvent);
+
+        try {
+            this.chatClient?.on("typingIndicatorReceived", (event: TypingIndicatorReceivedEvent) => {
+                onTypingEventCallback(event);
+            });
+
+            this.logger?.completeScenario(ACSClientEvent.OnTypingEvent);
+        } catch (error) {
+            this.logger?.failScenario(ACSClientEvent.OnTypingEvent);
+        }
     }
 
     public async sendMessage(message: ChatSDKMessage): Promise<void> {
+        this.logger?.startScenario(ACSClientEvent.SendMessage);
+
         if (!message.metadata) {
             message.metadata = {};
         }
@@ -251,15 +300,22 @@ export class ACSConversation {
 
         try {
             await this.chatThreadClient?.sendMessage(sendMessageRequest, sendMessageOptions);
+            this.logger?.completeScenario(ACSClientEvent.SendMessage);
         } catch (error) {
+            this.logger?.failScenario(ACSClientEvent.SendMessage);
+
             throw new Error('SendMessageFailed');
         }
     }
 
     public async sendTyping(): Promise<void> {
+        this.logger?.startScenario(ACSClientEvent.SendTyping);
+
         try {
             await this.chatThreadClient?.sendTypingNotification();
+            this.logger?.completeScenario(ACSClientEvent.SendTyping);
         } catch {
+            this.logger?.failScenario(ACSClientEvent.SendTyping);
             throw new Error('SendTypingFailed');
         }
     }
