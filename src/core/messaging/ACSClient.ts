@@ -92,36 +92,58 @@ export class ACSConversation {
     }
 
     public async getMessages(): Promise<OmnichannelMessage[]> {
+        this.logger?.logClientSdkTelemetryEvent(LogLevel.INFO, {
+            Event: startEvent(ACSClientEvent.GetMessages)
+        });
+
         const messages: OmnichannelMessage[] = [];
-        const pagedAsyncIterableIterator = await (this.chatThreadClient as ChatThreadClient).listMessages();
-        let nextMessage = await pagedAsyncIterableIterator.next();
-        while (!nextMessage.done) {
-            const chatMessage = nextMessage.value;
 
-            // Filter text type messages only
-            if (chatMessage.type !== ACSChatMessageType.Text) {
+        try {
+            const pagedAsyncIterableIterator = await (this.chatThreadClient as ChatThreadClient).listMessages();
+            let nextMessage = await pagedAsyncIterableIterator.next();
+            while (!nextMessage.done) {
+                const chatMessage = nextMessage.value;
+
+                // Filter text type messages only
+                if (chatMessage.type !== ACSChatMessageType.Text) {
+                    nextMessage = await pagedAsyncIterableIterator.next();
+                    continue;
+                }
+
+                // Flatten out message content
+                if (chatMessage.content?.message) {
+                    Object.assign(chatMessage, {content: chatMessage.content?.message});
+                }
+
+                const {sender} = chatMessage;
+
+                // Add alias to differentiate sender type
+                const participant = (this.participantsMapping as participantMapping)[(sender as CommunicationUserIdentifier).communicationUserId];
+                Object.assign(chatMessage.sender, {alias: participant.displayName});
+
+                const omnichannelMessage = createOmnichannelMessage(chatMessage as ChatMessage, {
+                    liveChatVersion: LiveChatVersion.V2
+                });
+
+                messages.push(omnichannelMessage);
+
                 nextMessage = await pagedAsyncIterableIterator.next();
-                continue;
             }
 
-            // Flatten out message content
-            if (chatMessage.content?.message) {
-                Object.assign(chatMessage, {content: chatMessage.content?.message});
-            }
-
-            const {sender} = chatMessage;
-
-            // Add alias to differentiate sender type
-            const participant = (this.participantsMapping as participantMapping)[(sender as CommunicationUserIdentifier).communicationUserId];
-            Object.assign(chatMessage.sender, {alias: participant.displayName});
-
-            const omnichannelMessage = createOmnichannelMessage(chatMessage as ChatMessage, {
-                liveChatVersion: LiveChatVersion.V2
+            this.logger?.logClientSdkTelemetryEvent(LogLevel.INFO, {
+                Event: completeEvent(ACSClientEvent.GetMessages)
             });
+        } catch (error) {
+            const telemetryData = {
+                Event: failEvent(ACSClientEvent.GetMessages),
+                ExceptionDetails: {
+                    ErrorObject: `${error}`
+                }
+            };
 
-            messages.push(omnichannelMessage);
+            this.logger?.logClientSdkTelemetryEvent(LogLevel.INFO, telemetryData);
 
-            nextMessage = await pagedAsyncIterableIterator.next();
+            throw new Error('GetMessages');
         }
 
         return messages;
