@@ -1,4 +1,4 @@
-import LogLevel from "@microsoft/omnichannel-ic3core/lib/logging/LogLevel";
+import LogLevel from "../telemetry/LogLevel";
 import OmnichannelConfig from "../core/OmnichannelConfig";
 import { AWTEventData } from "../external/aria/webjs/AriaSDK";
 import IIC3SDKLogData from "../external/IC3Client/IIC3SDKLogData";

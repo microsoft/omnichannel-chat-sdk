@@ -1,49 +1,86 @@
 import ACSChatMessageType from "./ACSChatMessageType";
 import ACSClientConfig from "./ACSClientConfig";
+import { ACSClientLogger } from "../../utils/loggers";
+import ACSParticipantDisplayName from "./ACSParticipantDisplayName";
 import ACSSessionInfo from "./ACSSessionInfo";
 import { ChatClient, ChatParticipant, ChatThreadClient, ChatMessage } from "@azure/communication-chat";
 import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
 import { ChatMessageReceivedEvent, ParticipantsRemovedEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
-import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
-import createOmnichannelMessage from "../../utils/createOmnichannelMessage";
-import ACSParticipantDisplayName from "./ACSParticipantDisplayName";
 import ChatSDKMessage from "./ChatSDKMessage";
-import LiveChatVersion from "../LiveChatVersion";
+import createOmnichannelMessage from "../../utils/createOmnichannelMessage";
 import { defaultMessageTags } from "./MessageTags";
+import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
+import LiveChatVersion from "../LiveChatVersion";
+import LogLevel from "../../telemetry/LogLevel";
 import OmnichannelMessage from "./OmnichannelMessage";
 
 export interface participantMapping {
     [key: string]: ChatParticipant;
 }
 
+enum ACSClientEvent {
+    InitializeACSClient = 'InitializeACSClient',
+    GetParticipants = 'GetParticipants',
+    RegisterOnNewMessage = 'RegisterOnNewMessage',
+    RegisterOnThreadUpdate = 'RegisterOnThreadUpdate',
+    OnTypingEvent = 'OnTypingEvent',
+    GetMessages = 'GetMessages',
+    SendMessage = 'SendMessage',
+    SendTyping = 'SendTyping',
+}
+
 export class ACSConversation {
+    private logger: ACSClientLogger | null = null;
     private tokenCredential: AzureCommunicationTokenCredential;
     private chatClient: ChatClient;
     private chatThreadClient?: ChatThreadClient;
     private sessionInfo?: ACSSessionInfo;
     private participantsMapping?: participantMapping;
 
-    constructor(tokenCredential: AzureCommunicationTokenCredential, chatClient: ChatClient) {
+    constructor(tokenCredential: AzureCommunicationTokenCredential, chatClient: ChatClient, logger: ACSClientLogger | null = null) {
+        this.logger = logger;
         this.tokenCredential = tokenCredential;
         this.chatClient = chatClient;
     }
 
     public async initialize(sessionInfo: ACSSessionInfo): Promise<void> {
+        this.logger?.logClientSdkTelemetryEvent(LogLevel.INFO, {
+            Event: `${ACSClientEvent.InitializeACSClient}Started`,
+        });
+
         this.sessionInfo = sessionInfo;
 
         try {
             this.chatThreadClient = await this.chatClient?.getChatThreadClient(sessionInfo.threadId as string);
         } catch (error) {
+            const telemetryData = {
+                Event: `${ACSClientEvent.InitializeACSClient}Failed`,
+                ExceptionDetails: `${error}`
+            };
+
+            this.logger?.logClientSdkTelemetryEvent(LogLevel.ERROR, telemetryData);
+
             throw new Error('GetChatThreadClientFailed');
         }
 
         try {
             await this.chatClient.startRealtimeNotifications();
         } catch (error) {
+            const telemetryData = {
+                Event: `${ACSClientEvent.InitializeACSClient}Failed`,
+                ExceptionDetails: `${error}`
+            };
+
+            this.logger?.logClientSdkTelemetryEvent(LogLevel.ERROR, telemetryData);
+
             throw new Error('StartRealtimeNotificationsFailed');
         }
 
         this.participantsMapping = await this.createParticipantsMapping();
+
+        this.logger?.logClientSdkTelemetryEvent(LogLevel.INFO, {
+            Event: `${ACSClientEvent.InitializeACSClient}Completed`,
+        });
     }
 
     public async getMessages(): Promise<OmnichannelMessage[]> {
@@ -244,8 +281,13 @@ export class ACSConversation {
 }
 
 class ACSClient {
+    private logger: ACSClientLogger | null = null;
     private tokenCredential: AzureCommunicationTokenCredential | null = null;
     private chatClient: ChatClient | null = null;
+
+    public constructor(logger: ACSClientLogger | null = null) {
+        this.logger = logger;
+    }
 
     public async initialize(acsClientConfig: ACSClientConfig): Promise<void> {
         try {
@@ -262,7 +304,7 @@ class ACSClient {
     }
 
     public async joinConversation(sessionInfo: ACSSessionInfo): Promise<ACSConversation> {
-        const conversation = new ACSConversation(this.tokenCredential as AzureCommunicationTokenCredential, this.chatClient as ChatClient);
+        const conversation = new ACSConversation(this.tokenCredential as AzureCommunicationTokenCredential, this.chatClient as ChatClient, this.logger);
         await conversation.initialize(sessionInfo);
         return conversation;
     }

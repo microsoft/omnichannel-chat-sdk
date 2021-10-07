@@ -1,4 +1,5 @@
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
+import { ACSAdapterLogger } from "../../utils/loggers";
 
 type FileMetadata = Record<string, string>;
 
@@ -29,9 +30,11 @@ interface PermissionsOptions {
 }
 
 class AMSFileManager {
+    private logger: ACSAdapterLogger | null;
     private amsClient: FramedClient;
 
-    public constructor(amsClient: FramedClient) {
+    public constructor(amsClient: FramedClient, logger: ACSAdapterLogger | null = null) {
+        this.logger = logger;
         this.amsClient = amsClient;
     }
 
