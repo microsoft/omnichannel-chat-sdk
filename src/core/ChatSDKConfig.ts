@@ -1,7 +1,7 @@
-import ChatAdapterConfig from "./ChatAdapterConfig";
-import IC3Config from "./IC3Config";
+import ChatAdapterConfig from "./messaging/ChatAdapterConfig";
+import IC3Config from "./messaging/IC3Config";
 
-interface IDataMaskingSDKConfig {
+interface DataMaskingSDKConfig {
     disable: boolean,
     maskingCharacter: string
 }
@@ -20,8 +20,8 @@ interface ChatReconnectConfig {
     disable: boolean;
 }
 
-interface IChatSDKConfig {
-    dataMasking?: IDataMaskingSDKConfig,
+interface ChatSDKConfig {
+    dataMasking?: DataMaskingSDKConfig,
     telemetry?: TelemetrySDKConfig,
     persistentChat?: PersistentChatConfig,
     chatReconnect?: ChatReconnectConfig,
@@ -31,8 +31,8 @@ interface IChatSDKConfig {
 }
 
 export {
-    IDataMaskingSDKConfig,
+    DataMaskingSDKConfig,
     PersistentChatConfig
 };
 
-export default IChatSDKConfig;
+export default ChatSDKConfig;

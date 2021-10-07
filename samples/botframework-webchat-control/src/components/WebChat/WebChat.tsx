@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState, useContext } from 'react';
 import ReactWebChat from 'botframework-webchat';
 import { IRawMessage, OmnichannelChatSDK } from '@microsoft/omnichannel-chat-sdk';
-import IChatTranscriptBody from '@microsoft/omnichannel-chat-sdk/lib/core/IChatTranscriptBody';
 import { ActionType, Store } from '../../context';
 import Loading from '../Loading/Loading';
 import ChatButton from '../ChatButton/ChatButton';
@@ -13,6 +12,7 @@ import { createDataMaskingMiddleware } from './createDataMaskingMiddleware';
 import createActivityMiddleware from './createActivityMiddleware';
 import createAvatarMiddleware from './createAvatarMiddleware';
 import createActivityStatusMiddleware from './createActivityStatusMiddleware';
+import createTypingIndicatorMiddleware from './createTypingIndicatorMiddleware';
 import fetchOmnichannelConfig from '../../utils/fetchOmnichannelConfig';
 import fetchTelemetryConfig from '../../utils/fetchTelemetryConfig';
 import fetchCallingConfig from '../../utils/fetchCallingConfig';
@@ -64,12 +64,14 @@ const createWebChatStyleOptions = () => {
 function WebChat() {
   const {state, dispatch} = useContext(Store);
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
+  const [liveChatContext, setLiveChatContext] = useState<any>(undefined);
   const [preChatSurvey, setPreChatSurvey] = useState(undefined);
   const [preChatResponse, setPreChatResponse] = useState(undefined);
   const [chatAdapter, setChatAdapter] = useState<any>(undefined);
   const [webChatStore, setWebChatStore] = useState(undefined);
   const [chatToken, setChatToken] = useState(undefined);
   const [VoiceVideoCallingSDK, setVoiceVideoCallingSDK] = useState(undefined);
+  const [typingIndicatorMiddleware, setTypingIndicatorMiddleware] = useState(undefined);
 
   useEffect(() => {
     const init = async () => {
@@ -91,6 +93,7 @@ function WebChat() {
       if (liveChatContext && Object.keys(JSON.parse(liveChatContext)).length > 0) {
         console.log("[liveChatContext]");
         console.log(liveChatContext);
+        setLiveChatContext(liveChatContext);
       }
 
       if ((chatSDK as any).getVoiceVideoCalling && !callingConfig.disable) {
@@ -137,6 +140,12 @@ function WebChat() {
 
     console.log('[startChat]');
 
+    const typingIndicatorMiddleware: any = createTypingIndicatorMiddleware(() => {
+      chatSDK?.sendTypingEvent();
+    });
+
+    setTypingIndicatorMiddleware(() => typingIndicatorMiddleware);
+
     const dataMaskingRules = await chatSDK?.getDataMaskingRules();
     const store = createCustomStore();
     setWebChatStore(store.create());
@@ -144,16 +153,15 @@ function WebChat() {
     store.subscribe('DataMasking', createDataMaskingMiddleware(dataMaskingRules));
 
     // Check for active conversation in cache
-    const cachedLiveChatContext = localStorage.getItem('liveChatContext');
-    if (cachedLiveChatContext && Object.keys(JSON.parse(cachedLiveChatContext)).length > 0) {
+    if (liveChatContext && Object.keys(JSON.parse(liveChatContext)).length > 0) {
       console.log("[liveChatContext]");
-      optionalParams.liveChatContext = JSON.parse(cachedLiveChatContext);
+      optionalParams.liveChatContext = JSON.parse(liveChatContext);
     }
 
     dispatch({type: ActionType.SET_CHAT_STARTED, payload: true});
 
     // Start chats only if there's an existing live chat context or no PreChat
-    if (cachedLiveChatContext || !preChatSurvey) {
+    if (liveChatContext || !preChatSurvey) {
       dispatch({type: ActionType.SET_LOADING, payload: true});
 
       try {
@@ -164,9 +172,11 @@ function WebChat() {
       }
 
       // Cache current conversation context
-      const liveChatContext = await chatSDK?.getCurrentLiveChatContext();
-      if (liveChatContext && Object.keys(liveChatContext).length) {
-        localStorage.setItem('liveChatContext', JSON.stringify(liveChatContext));
+      const newliveChatContext = await chatSDK?.getCurrentLiveChatContext();
+      if (newliveChatContext && Object.keys(newliveChatContext).length) {
+        console.log('[newliveChatContext]')
+        console.log(newliveChatContext);
+        localStorage.setItem('liveChatContext', JSON.stringify(newliveChatContext));
       }
 
       chatSDK?.onNewMessage(onNewMessage, {rehydrate: true});
@@ -183,7 +193,7 @@ function WebChat() {
         setChatToken(chatToken);
       }
     }
-  }, [chatSDK, state, dispatch, onAgentEndSession, onNewMessage, onTypingEvent, preChatSurvey]);
+  }, [chatSDK, state, dispatch, onAgentEndSession, onNewMessage, onTypingEvent, liveChatContext, preChatSurvey]);
 
   const endChat = useCallback(async () => {
     console.log('[endChat]');
@@ -193,6 +203,7 @@ function WebChat() {
     (VoiceVideoCallingSDK as any)?.close();
     setChatAdapter(undefined);
     setChatToken(undefined);
+    setLiveChatContext(undefined);
     setPreChatSurvey(undefined);
     setPreChatResponse(undefined);
     localStorage.removeItem('liveChatContext');
@@ -207,7 +218,7 @@ function WebChat() {
 
   const emailTranscript = useCallback(async () => {
     console.log('[emailTranscript]');
-    const transcriptBody: IChatTranscriptBody = {
+    const transcriptBody: any = {
       emailAddress: process.env.REACT_APP_email as string,
       attachmentMessage: 'Transcript',
       locale: 'en'
@@ -279,7 +290,7 @@ function WebChat() {
             onClick={endChat}
           />
           {
-            preChatSurvey && !preChatResponse && renderPreChatSurvey()
+            (!liveChatContext || !Object.keys(liveChatContext).length) && preChatSurvey && !preChatResponse && renderPreChatSurvey()
           }
           {
             state.isLoading && <Loading />
@@ -292,10 +303,11 @@ function WebChat() {
             />
           }
           {
-            !state.isLoading && state.hasChatStarted && chatAdapter && webChatStore && activityMiddleware && <ReactWebChat
+            !state.isLoading && state.hasChatStarted && chatAdapter && webChatStore && activityMiddleware && typingIndicatorMiddleware && <ReactWebChat
               activityMiddleware={activityMiddleware}
               avatarMiddleware={avatarMiddleware}
               activityStatusMiddleware={activityStatusMiddleware}
+              typingIndicatorMiddleware={typingIndicatorMiddleware}
               userID="teamsvisitor"
               directLine={chatAdapter}
               sendTypingIndicator={true}

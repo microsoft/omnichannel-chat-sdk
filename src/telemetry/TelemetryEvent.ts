@@ -9,8 +9,13 @@ enum TelemetryEvent {
     GetPreChatSurvey = "GetPreChatSurvey",
     GetChatToken = "GetChatToken",
     GetConversationDetails = "GetConversationDetails",
+    GetCurrentLiveChatContext = "GetCurrentLiveChatContext",
+    GetMessages = "GetMessages",
+    SendMessages = "SendMessages",
     SendTypingEvent = "SendTypingEvent",
     OnAgentEndSession = "OnAgentEndSession",
+    OnNewMessage = "OnNewMessage",
+    OnTypingEvent = "OnTypingEvent",
     UploadFileAttachment = "UploadFileAttachment",
     DownloadFileAttachment = "DownloadFileAttachment",
     EmailLiveChatTranscript = "EmailLiveChatTranscript",
@@ -27,18 +32,6 @@ enum TelemetryEvent {
     OnCallDisconnected = "OnCallDisconnected",
     UpdateChatToken = "UpdateChatToken",
     GetChatReconnectContext = "GetChatReconnectContext"
-}
-
-export const startEvent = (event: TelemetryEvent): string => {
-    return `${event}Started`;
-}
-
-export const completeEvent = (event: TelemetryEvent): string => {
-    return `${event}Completed`;
-}
-
-export const failEvent = (event: TelemetryEvent): string => {
-    return `${event}Failed`;
 }
 
 export default TelemetryEvent;

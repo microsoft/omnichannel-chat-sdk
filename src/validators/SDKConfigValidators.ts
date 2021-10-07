@@ -1,7 +1,7 @@
-import IChatSDKConfig, { IDataMaskingSDKConfig, PersistentChatConfig } from "../core/IChatSDKConfig";
+import ChatSDKConfig, { DataMaskingSDKConfig, PersistentChatConfig } from "../core/ChatSDKConfig";
 import {ariaTelemetryKey} from "../config/settings";
 
-const defaultChatSDKConfig: IChatSDKConfig = {
+const defaultChatSDKConfig: ChatSDKConfig = {
     dataMasking: {
         disable: false,
         maskingCharacter: '#'
@@ -23,7 +23,7 @@ const defaultChatSDKConfig: IChatSDKConfig = {
  * Validates data masking SDK config.
  * @param dataMaskingConfig DataMasking SDK Config.
  */
-const validateDataMaskingConfig = (dataMaskingConfig: IDataMaskingSDKConfig) => {
+const validateDataMaskingConfig = (dataMaskingConfig: DataMaskingSDKConfig) => {
     if (typeof dataMaskingConfig.disable !== "boolean") {
         dataMaskingConfig.disable = defaultChatSDKConfig!.dataMasking!.disable; // eslint-disable-line @typescript-eslint/no-non-null-assertion
     }
@@ -39,7 +39,7 @@ const validatePersistentChatConfig = (persistentChatConfig: PersistentChatConfig
     }
 }
 
-const validateSDKConfig = (chatSDKConfig: IChatSDKConfig): void => {
+const validateSDKConfig = (chatSDKConfig: ChatSDKConfig): void => {
     if (chatSDKConfig.dataMasking) {
         validateDataMaskingConfig(chatSDKConfig.dataMasking);
     }

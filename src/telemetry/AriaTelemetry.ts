@@ -3,7 +3,7 @@ import { AWTEventPriority } from '../external/aria/common/Enums';
 import { AWTLogManager, AWTLogger, AWTEventData } from '../external/aria/webjs/AriaSDK';
 import LogLevel from '../telemetry/LogLevel';
 import ScenarioType from '../telemetry/ScenarioType';
-import { ic3ClientVersion } from '../config/settings';
+import { ic3ClientVersion, webChatACSAdapterVersion } from '../config/settings';
 
 interface BaseContract {
     OrgId: string;
@@ -23,11 +23,15 @@ interface BaseContract {
 interface NPMPackagesInfo {
     OCSDK: string;
     IC3Core?: string;
+    ACSChat?: string;
+    ACSCommon?: string;
+    AMSClient?: string;
 }
 
 interface CDNPackagesInfo {
     IC3Client?: string;
     IC3Adapter?: string;
+    ACSAdapter?: string;
     SpoolSDK?: string;
     VoiceVideoCalling?: string;
 }
@@ -60,6 +64,30 @@ interface OCSDKContract {
     ExceptionDetails?: string;
     ElapsedTimeInMilliseconds?: string;
     OCSDKVersion: string;
+}
+
+interface ACSClientContract {
+    OrgId: string;
+    OrgUrl: string;
+    WidgetId: string;
+    RequestId?: string;
+    ChatId?: string;
+    Event?: string;
+    ExceptionDetails?: string;
+    ElapsedTimeInMilliseconds?: string;
+    ACSChatVersion: string;
+}
+
+interface ACSAdapterContract {
+    OrgId: string;
+    OrgUrl: string;
+    WidgetId: string;
+    RequestId?: string;
+    ChatId?: string;
+    Event?: string;
+    ExceptionDetails?: string;
+    ElapsedTimeInMilliseconds?: string;
+    ACSAdapterVersion: string;
 }
 
 class AriaTelemetry {
@@ -129,6 +157,30 @@ class AriaTelemetry {
             }
         }
 
+        if (scenarioType == ScenarioType.ACSCLIENT) {
+            event = {
+                name: ScenarioType.ACSCLIENT,
+                properties: {
+                    ...AriaTelemetry.populateACSClientBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.INFO
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
+        if (scenarioType == ScenarioType.ACSADAPTER) {
+            event = {
+                name: ScenarioType.ACSADAPTER,
+                properties: {
+                    ...AriaTelemetry.populateACSAdapterBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.INFO
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
         /* istanbul ignore next */
         this._debug && console.log(`[AriaTelemetry][info] ${scenarioType}`);
         /* istanbul ignore next */
@@ -169,6 +221,30 @@ class AriaTelemetry {
                 name: ScenarioType.OCSDK,
                 properties: {
                     ...AriaTelemetry.populateOCSDKBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.DEBUG
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
+        if (scenarioType == ScenarioType.ACSCLIENT) {
+            event = {
+                name: ScenarioType.ACSCLIENT,
+                properties: {
+                    ...AriaTelemetry.populateACSClientBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.DEBUG
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
+        if (scenarioType == ScenarioType.ACSADAPTER) {
+            event = {
+                name: ScenarioType.ACSADAPTER,
+                properties: {
+                    ...AriaTelemetry.populateACSAdapterBaseProperties(),
                     ...properties,
                     LogLevel: LogLevel.DEBUG
                 },
@@ -223,6 +299,30 @@ class AriaTelemetry {
             }
         }
 
+        if (scenarioType == ScenarioType.ACSCLIENT) {
+            event = {
+                name: ScenarioType.ACSCLIENT,
+                properties: {
+                    ...AriaTelemetry.populateACSClientBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.WARN
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
+        if (scenarioType == ScenarioType.ACSADAPTER) {
+            event = {
+                name: ScenarioType.ACSADAPTER,
+                properties: {
+                    ...AriaTelemetry.populateACSAdapterBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.WARN
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
         /* istanbul ignore next */
         this._debug && console.log(`[AriaTelemetry][warn] ${scenarioType}`);
         /* istanbul ignore next */
@@ -263,6 +363,30 @@ class AriaTelemetry {
                 name: ScenarioType.OCSDK,
                 properties: {
                     ...AriaTelemetry.populateOCSDKBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.ERROR
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
+        if (scenarioType == ScenarioType.ACSCLIENT) {
+            event = {
+                name: ScenarioType.ACSCLIENT,
+                properties: {
+                    ...AriaTelemetry.populateACSClientBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.ERROR
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
+        if (scenarioType == ScenarioType.ACSADAPTER) {
+            event = {
+                name: ScenarioType.ACSADAPTER,
+                properties: {
+                    ...AriaTelemetry.populateACSAdapterBaseProperties(),
                     ...properties,
                     LogLevel: LogLevel.ERROR
                 },
@@ -317,6 +441,30 @@ class AriaTelemetry {
             }
         }
 
+        if (scenarioType == ScenarioType.ACSCLIENT) {
+            event = {
+                name: ScenarioType.ACSCLIENT,
+                properties: {
+                    ...AriaTelemetry.populateACSClientBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.LOG
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
+        if (scenarioType == ScenarioType.ACSADAPTER) {
+            event = {
+                name: ScenarioType.ACSADAPTER,
+                properties: {
+                    ...AriaTelemetry.populateACSAdapterBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.LOG
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
         /* istanbul ignore next */
         this._debug && console.log(`[AriaTelemetry][log]`);
         /* istanbul ignore next */
@@ -340,6 +488,9 @@ class AriaTelemetry {
         const packagesInfo: NPMPackagesInfo = {
             OCSDK: require('@microsoft/ocsdk/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
             IC3Core: require('@microsoft/omnichannel-ic3core/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
+            ACSChat: require('@azure/communication-chat/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
+            ACSCommon: require('@azure/communication-common/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
+            AMSClient:  require('@microsoft/omnichannel-amsclient/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
         };
 
         return {
@@ -435,6 +586,34 @@ class AriaTelemetry {
             ExceptionDetails: '',
             ElapsedTimeInMilliseconds: '',
             OCSDKVersion: require('@microsoft/ocsdk/package.json').version // eslint-disable-line @typescript-eslint/no-var-requires
+        }
+    }
+
+    private static populateACSClientBaseProperties(): ACSClientContract {
+        return {
+            OrgId: '',
+            OrgUrl: '',
+            WidgetId: '',
+            RequestId: '',
+            ChatId: '',
+            Event: '',
+            ExceptionDetails: '',
+            ElapsedTimeInMilliseconds: '',
+            ACSChatVersion: require('@azure/communication-chat/package.json').version // eslint-disable-line @typescript-eslint/no-var-requires
+        }
+    }
+
+    private static populateACSAdapterBaseProperties(): ACSAdapterContract {
+        return {
+            OrgId: '',
+            OrgUrl: '',
+            WidgetId: '',
+            RequestId: '',
+            ChatId: '',
+            Event: '',
+            ExceptionDetails: '',
+            ElapsedTimeInMilliseconds: '',
+            ACSAdapterVersion: webChatACSAdapterVersion
         }
     }
 }
