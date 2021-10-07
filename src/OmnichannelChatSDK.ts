@@ -1391,7 +1391,7 @@ class OmnichannelChatSDK {
                     this.debug && console.debug('ACSAdapter loaded!');
                     try {
                         const { ChatAdapter } = window as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-                        const fileManager = new AMSFileManager(this.AMSClient as FramedClient);
+                        const fileManager = new AMSFileManager(this.AMSClient as FramedClient, this.acsAdapterLogger);
                         const adapter = ChatAdapter.createACSAdapter(
                             this.chatToken.token as string,
                             this.chatToken.visitorId || 'teamsvisitor',
