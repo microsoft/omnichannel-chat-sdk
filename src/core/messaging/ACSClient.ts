@@ -23,6 +23,7 @@ enum ACSClientEvent {
     GetMessages = 'GetMessages',
     SendMessage = 'SendMessage',
     SendTyping = 'SendTyping',
+    Disconnect = 'Disconnect'
 }
 
 interface EventListenersMapping {
@@ -349,10 +350,18 @@ export class ACSConversation {
     }
 
     public async disconnect(): Promise<void> {
-        for (const [event, listeners] of Object.entries(this.eventListeners)) {
-            listeners.forEach(listener => {
-                this.chatClient.off(event as any, listener as any);
-            });
+        this.logger?.startScenario(ACSClientEvent.Disconnect);
+
+        try {
+            for (const [event, listeners] of Object.entries(this.eventListeners)) {
+                listeners.forEach(listener => {
+                    this.chatClient.off(event as any, listener as any);
+                });
+            }
+
+            this.logger?.completeScenario(ACSClientEvent.Disconnect);
+        } catch {
+            this.logger?.failScenario(ACSClientEvent.Disconnect);
         }
     }
 
