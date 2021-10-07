@@ -46,55 +46,47 @@ export class ACSConversation {
     }
 
     public async initialize(sessionInfo: ACSSessionInfo): Promise<void> {
-        this.logger?.logClientSdkTelemetryEvent(LogLevel.INFO, {
-            Event: startEvent(ACSClientEvent.InitializeACSConversation)
-        });
+        this.logger?.startScenario(ACSClientEvent.InitializeACSConversation);
 
         this.sessionInfo = sessionInfo;
 
         try {
             this.chatThreadClient = await this.chatClient?.getChatThreadClient(sessionInfo.threadId as string);
         } catch (error) {
-            const telemetryData = {
-                Event: failEvent(ACSClientEvent.InitializeACSConversation),
-                ExceptionDetails: {
-                    Reason: 'ChatClientGetChatThreadClientFailure',
-                    ErrorObject: `${error}`
-                }
+            const exceptionDetails = {
+                response: 'ChatClientGetChatThreadClientFailure',
+                errorObject: `${error}`
             };
 
-            this.logger?.logClientSdkTelemetryEvent(LogLevel.ERROR, telemetryData);
+            this.logger?.failScenario(ACSClientEvent.InitializeACSConversation, {
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
 
-            throw new Error('GetChatThreadClientFailed');
+            throw new Error(exceptionDetails.response);
         }
 
         try {
             await this.chatClient.startRealtimeNotifications();
         } catch (error) {
-            const telemetryData = {
-                Event: failEvent(ACSClientEvent.InitializeACSConversation),
-                ExceptionDetails: {
-                    Reason: 'ChatClientStartRealtimeNotificationsFailure',
-                    ErrorObject: `${error}`
-                }
+            const exceptionDetails = {
+                response: 'StartRealtimeNotificationsFailed',
+                errorObject: `${error}`
             };
 
-            this.logger?.logClientSdkTelemetryEvent(LogLevel.ERROR, telemetryData);
+            this.logger?.failScenario(ACSClientEvent.InitializeACSConversation, {
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
 
-            throw new Error('StartRealtimeNotificationsFailed');
+            throw new Error(exceptionDetails.response);
         }
 
         this.participantsMapping = await this.createParticipantsMapping();
 
-        this.logger?.logClientSdkTelemetryEvent(LogLevel.INFO, {
-            Event: completeEvent(ACSClientEvent.InitializeACSConversation),
-        });
+        this.logger?.completeScenario(ACSClientEvent.InitializeACSConversation);
     }
 
     public async getMessages(): Promise<OmnichannelMessage[]> {
-        this.logger?.logClientSdkTelemetryEvent(LogLevel.INFO, {
-            Event: startEvent(ACSClientEvent.GetMessages)
-        });
+        this.logger?.startScenario(ACSClientEvent.GetMessages);
 
         const messages: OmnichannelMessage[] = [];
 
@@ -130,18 +122,15 @@ export class ACSConversation {
                 nextMessage = await pagedAsyncIterableIterator.next();
             }
 
-            this.logger?.logClientSdkTelemetryEvent(LogLevel.INFO, {
-                Event: completeEvent(ACSClientEvent.GetMessages)
-            });
+            this.logger?.completeScenario(ACSClientEvent.GetMessages);
         } catch (error) {
-            const telemetryData = {
-                Event: failEvent(ACSClientEvent.GetMessages),
-                ExceptionDetails: {
-                    ErrorObject: `${error}`
-                }
+            const exceptionDetails = {
+                errorObject: `${error}`
             };
 
-            this.logger?.logClientSdkTelemetryEvent(LogLevel.INFO, telemetryData);
+            this.logger?.failScenario(ACSClientEvent.GetMessages, {
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
 
             throw new Error('GetMessages');
         }
