@@ -179,6 +179,7 @@ export class ACSClientLogger {
     /* istanbul ignore next */
     public setDebug(flag: boolean): void {
         this.debug = flag;
+        this.scenarioMarker?.setDebug(flag);
     }
 
     public setRequestId(requestId: string): void {
