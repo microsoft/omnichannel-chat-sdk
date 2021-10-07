@@ -173,7 +173,7 @@ class OmnichannelChatSDK {
             await this.getChatConfig();
 
             if (this.liveChatVersion === LiveChatVersion.V2) {
-                this.ACSClient = new ACSClient();
+                this.ACSClient = new ACSClient(this.acsClientLogger);
                 this.AMSClient = await createAMSClient({
                     framedMode: isBrowser(),
                     debug: false,
