@@ -68,6 +68,7 @@ class AMSFileManager {
             return result;
         } catch (error) {
             const exceptionDetails = {
+                metadata: `${metadata}`,
                 errorObject: `${error}`
             };
 
@@ -90,6 +91,7 @@ class AMSFileManager {
             return result;
         } catch (error) {
             const exceptionDetails = {
+                fileIds: `${fileIds}`,
                 errorObject: `${error}`
             };
 
@@ -110,6 +112,7 @@ class AMSFileManager {
             return result;
         } catch (error) {
             const exceptionDetails = {
+                metadata: `${metadata}`,
                 errorObject: `${error}`
             };
 
@@ -132,6 +135,7 @@ class AMSFileManager {
             return result;
         } catch (error) {
             const exceptionDetails = {
+                metadata: `${metadata}`,
                 errorObject: `${error}`
             };
 
