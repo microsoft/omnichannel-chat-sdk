@@ -2,7 +2,6 @@ import OmnichannelConfig from "../core/OmnichannelConfig";
 import { AWTEventData } from "../external/aria/webjs/AriaSDK";
 import AriaTelemetry from "./AriaTelemetry";
 import StopWatch from "./StopWatch";
-import TelemetryEvent from "./TelemetryEvent";
 import {startEvent, failEvent, completeEvent} from './EventMarker';
 
 class ScenarioMarker {
@@ -26,7 +25,7 @@ class ScenarioMarker {
         this.telemetry = telemetry;
     }
 
-    public startScenario(event: TelemetryEvent, additionalProperties: AWTEventData["properties"] = {}): void {
+    public startScenario(event: string, additionalProperties: AWTEventData["properties"] = {}): void {
         this.debug && console.log(`[ScenarioMarker][startScenario]`);
 
         if (!this.telemetryEvents.has(event)) {
@@ -46,7 +45,7 @@ class ScenarioMarker {
         this.telemetry?.info(properties);
     }
 
-    public failScenario(event: TelemetryEvent, additionalProperties: AWTEventData["properties"] = {}): void {
+    public failScenario(event: string, additionalProperties: AWTEventData["properties"] = {}): void {
         this.debug && console.log(`[ScenarioMarker][failScenario]`);
 
         if (!this.telemetryEvents.has(event)) {
@@ -69,7 +68,7 @@ class ScenarioMarker {
         this.telemetry?.error(properties);
     }
 
-    public completeScenario(event: TelemetryEvent, additionalProperties: AWTEventData["properties"] = {}): void {
+    public completeScenario(event: string, additionalProperties: AWTEventData["properties"] = {}): void {
         this.debug && console.log(`[ScenarioMarker][completeScenario]`);
 
         if (!this.telemetryEvents.has(event)) {
