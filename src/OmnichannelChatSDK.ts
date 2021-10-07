@@ -16,7 +16,7 @@ import ChatTranscriptBody from "./core/ChatTranscriptBody";
 import { ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import ConversationMode from "./core/ConversationMode";
 import createAMSClient from "@microsoft/omnichannel-amsclient";
-import { createIC3ClientLogger, createOCSDKLogger, IC3ClientLogger, OCSDKLogger } from "./utils/loggers";
+import { ACSAdapterLogger, ACSClientLogger, createACSAdapterLogger, createACSClientLogger, createIC3ClientLogger, createOCSDKLogger, IC3ClientLogger, OCSDKLogger } from "./utils/loggers";
 import createOmnichannelMessage from "./utils/createOmnichannelMessage";
 import createTelemetry from "./utils/createTelemetry";
 import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
@@ -96,6 +96,8 @@ class OmnichannelChatSDK {
     private scenarioMarker: ScenarioMarker;
     private ic3ClientLogger: IC3ClientLogger | null = null;
     private ocSdkLogger: OCSDKLogger | null = null;
+    private acsClientLogger: ACSClientLogger | null = null;
+    private acsAdapterLogger: ACSAdapterLogger | null = null;
     private isPersistentChat = false;
     private isChatReconnect = false;
     private reconnectId: null | string = null;
@@ -120,10 +122,14 @@ class OmnichannelChatSDK {
         this.scenarioMarker = new ScenarioMarker(this.omnichannelConfig);
         this.ic3ClientLogger = createIC3ClientLogger(this.omnichannelConfig);
         this.ocSdkLogger = createOCSDKLogger(this.omnichannelConfig);
+        this.acsClientLogger = createACSClientLogger(this.omnichannelConfig);
+        this.acsAdapterLogger = createACSAdapterLogger(this.omnichannelConfig);
 
         this.scenarioMarker.useTelemetry(this.telemetry);
         this.ic3ClientLogger.useTelemetry(this.telemetry);
         this.ocSdkLogger.useTelemetry(this.telemetry);
+        this.acsClientLogger.useTelemetry(this.telemetry);
+        this.acsAdapterLogger.useTelemetry(this.telemetry);
 
         validateOmnichannelConfig(omnichannelConfig);
         validateSDKConfig(chatSDKConfig);
@@ -136,6 +142,8 @@ class OmnichannelChatSDK {
 
         this.ic3ClientLogger?.setRequestId(this.requestId);
         this.ocSdkLogger?.setRequestId(this.requestId);
+        this.acsClientLogger?.setRequestId(this.requestId);
+        this.acsAdapterLogger?.setRequestId(this.requestId);
     }
 
     /* istanbul ignore next */
@@ -146,6 +154,8 @@ class OmnichannelChatSDK {
         this.scenarioMarker.setDebug(flag);
         this.ic3ClientLogger?.setDebug(flag);
         this.ocSdkLogger?.setDebug(flag);
+        this.acsClientLogger?.setDebug(flag);
+        this.acsAdapterLogger?.setDebug(flag);
     }
 
     public async initialize(): Promise<ChatConfig> {
@@ -331,6 +341,8 @@ class OmnichannelChatSDK {
 
         this.ic3ClientLogger?.setChatId(this.chatToken.chatId || '');
         this.ocSdkLogger?.setChatId(this.chatToken.chatId || '');
+        this.acsClientLogger?.setChatId(this.chatToken.chatId || '');
+        this.acsAdapterLogger?.setChatId(this.chatToken.chatId || '');
 
         const sessionInitOptionalParams: ISessionInitOptionalParams = {
             initContext: {} as InitContext
@@ -562,6 +574,12 @@ class OmnichannelChatSDK {
 
             this.ocSdkLogger?.setRequestId(this.requestId);
             this.ocSdkLogger?.setChatId('');
+
+            this.acsClientLogger?.setRequestId(this.requestId);
+            this.acsClientLogger?.setChatId('');
+
+            this.acsAdapterLogger?.setRequestId(this.requestId);
+            this.acsAdapterLogger?.setChatId('');
         } catch (error) {
             const exceptionDetails = {
                 response: "OCClientSessionCloseFailed"
