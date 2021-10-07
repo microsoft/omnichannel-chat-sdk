@@ -25,7 +25,11 @@ enum ACSClientEvent {
     SendTyping = 'SendTyping',
 }
 
-export interface participantMapping {
+interface EventListenersMapping {
+    [key: string]: CallableFunction[];
+}
+
+export interface ParticipantMapping {
     [key: string]: ChatParticipant;
 }
 
@@ -35,12 +39,14 @@ export class ACSConversation {
     private chatClient: ChatClient;
     private chatThreadClient?: ChatThreadClient;
     private sessionInfo?: ACSSessionInfo;
-    private participantsMapping?: participantMapping;
+    private participantsMapping?: ParticipantMapping;
+    private eventListeners: EventListenersMapping;
 
     constructor(tokenCredential: AzureCommunicationTokenCredential, chatClient: ChatClient, logger: ACSClientLogger | null = null) {
         this.logger = logger;
         this.tokenCredential = tokenCredential;
         this.chatClient = chatClient;
+        this.eventListeners = {};
     }
 
     public async initialize(sessionInfo: ACSSessionInfo): Promise<void> {
@@ -108,7 +114,7 @@ export class ACSConversation {
                 const {sender} = chatMessage;
 
                 // Add alias to differentiate sender type
-                const participant = (this.participantsMapping as participantMapping)[(sender as CommunicationUserIdentifier).communicationUserId];
+                const participant = (this.participantsMapping as ParticipantMapping)[(sender as CommunicationUserIdentifier).communicationUserId];
                 Object.assign(chatMessage.sender, {alias: participant.displayName});
 
                 const omnichannelMessage = createOmnichannelMessage(chatMessage as ChatMessage, {
@@ -207,7 +213,7 @@ export class ACSConversation {
             // Poll messages until WS established connection
             await pollForMessages(this.sessionInfo?.pollingInterval as number);
 
-            this.chatClient?.on("chatMessageReceived", (event: ChatMessageReceivedEvent) => {
+            const listener = (event: ChatMessageReceivedEvent) => {
                 isReceivingNotifications = true;
 
                 const {id, sender} = event;
@@ -229,12 +235,15 @@ export class ACSConversation {
                 }
 
                 // Add alias to differentiate sender type
-                const participant = (this.participantsMapping as participantMapping)[(sender as CommunicationUserIdentifier).communicationUserId];
+                const participant = (this.participantsMapping as ParticipantMapping)[(sender as CommunicationUserIdentifier).communicationUserId];
                 Object.assign(event.sender, {alias: participant.displayName});
 
                 onNewMessageCallback(event);
                 postedMessageIds.add(id);
-            });
+            }
+
+            this.chatClient?.on("chatMessageReceived", listener);
+            this.trackListener("chatMessageReceived", listener);
             this.logger?.completeScenario(ACSClientEvent.RegisterOnNewMessage);
         } catch (error) {
             const exceptionDetails = {
@@ -253,9 +262,12 @@ export class ACSConversation {
         this.logger?.startScenario(ACSClientEvent.RegisterOnThreadUpdate);
 
         try {
-            this.chatClient?.on("participantsRemoved", (event: ParticipantsRemovedEvent) => {
+            const listener = (event: ParticipantsRemovedEvent) => {
                 onThreadUpdateCallback(event);
-            });
+            };
+
+            this.chatClient?.on("participantsRemoved", listener);
+            this.trackListener("participantsRemoved", listener);
             this.logger?.completeScenario(ACSClientEvent.RegisterOnThreadUpdate);
         } catch (error) {
             this.logger?.failScenario(ACSClientEvent.RegisterOnThreadUpdate);
@@ -266,10 +278,12 @@ export class ACSConversation {
         this.logger?.startScenario(ACSClientEvent.OnTypingEvent);
 
         try {
-            this.chatClient?.on("typingIndicatorReceived", (event: TypingIndicatorReceivedEvent) => {
+            const listener = (event: TypingIndicatorReceivedEvent) => {
                 onTypingEventCallback(event);
-            });
+            }
 
+            this.chatClient?.on("typingIndicatorReceived", listener);
+            this.trackListener("typingIndicatorReceived", listener);
             this.logger?.completeScenario(ACSClientEvent.OnTypingEvent);
         } catch (error) {
             this.logger?.failScenario(ACSClientEvent.OnTypingEvent);
@@ -335,7 +349,11 @@ export class ACSConversation {
     }
 
     public async disconnect(): Promise<void> {
-        return undefined;
+        for (const [event, listeners] of Object.entries(this.eventListeners)) {
+            listeners.forEach(listener => {
+                this.chatClient.off(event as any, listener as any);
+            });
+        }
     }
 
     private async createParticipantsMapping() {
@@ -350,6 +368,14 @@ export class ACSConversation {
         }
 
         return participantsMapping;
+    }
+
+    private trackListener(event: string, listener: CallableFunction) {
+        if (!(event in this.eventListeners)) {
+            this.eventListeners[event] = [];
+        }
+
+        this.eventListeners[event].push(listener);
     }
 }
 
