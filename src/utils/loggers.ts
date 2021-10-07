@@ -245,7 +245,7 @@ export class ACSClientLogger {
         }
     }
 
-    public startScenario(event: string, additionalProperties: any = {}): void {
+    public startScenario(event: string, additionalProperties: any = {}): void {  // eslint-disable-line @typescript-eslint/no-explicit-any
         const baseProperties = {
             RequestId: this.requestId,
             ChatId: this.chatId
@@ -254,7 +254,7 @@ export class ACSClientLogger {
         this.scenarioMarker?.startScenario(event, {...baseProperties, ...additionalProperties});
     }
 
-    public failScenario(event: string, additionalProperties: any = {}): void {
+    public failScenario(event: string, additionalProperties: any = {}): void {  // eslint-disable-line @typescript-eslint/no-explicit-any
         const baseProperties = {
             RequestId: this.requestId,
             ChatId: this.chatId
@@ -263,7 +263,7 @@ export class ACSClientLogger {
         this.scenarioMarker?.failScenario(event, {...baseProperties, ...additionalProperties});
     }
 
-    public completeScenario(event: string, additionalProperties: any = {}): void {
+    public completeScenario(event: string, additionalProperties: any = {}): void {  // eslint-disable-line @typescript-eslint/no-explicit-any
         const baseProperties = {
             RequestId: this.requestId,
             ChatId: this.chatId
@@ -355,7 +355,7 @@ export class ACSAdapterLogger {
         }
     }
 
-    public startScenario(event: string, additionalProperties: any = {}): void {
+    public startScenario(event: string, additionalProperties: any = {}): void {  // eslint-disable-line @typescript-eslint/no-explicit-any
         const baseProperties = {
             RequestId: this.requestId,
             ChatId: this.chatId
@@ -364,7 +364,7 @@ export class ACSAdapterLogger {
         this.scenarioMarker?.startScenario(event, {...baseProperties, ...additionalProperties});
     }
 
-    public failScenario(event: string, additionalProperties: any = {}): void {
+    public failScenario(event: string, additionalProperties: any = {}): void {  // eslint-disable-line @typescript-eslint/no-explicit-any
         const baseProperties = {
             RequestId: this.requestId,
             ChatId: this.chatId
@@ -373,7 +373,7 @@ export class ACSAdapterLogger {
         this.scenarioMarker?.failScenario(event, {...baseProperties, ...additionalProperties});
     }
 
-    public completeScenario(event: string, additionalProperties: any = {}): void {
+    public completeScenario(event: string, additionalProperties: any = {}): void {  // eslint-disable-line @typescript-eslint/no-explicit-any
         const baseProperties = {
             RequestId: this.requestId,
             ChatId: this.chatId
