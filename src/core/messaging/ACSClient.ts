@@ -13,13 +13,11 @@ import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode"
 import LiveChatVersion from "../LiveChatVersion";
 import LogLevel from "../../telemetry/LogLevel";
 import OmnichannelMessage from "./OmnichannelMessage";
-
-export interface participantMapping {
-    [key: string]: ChatParticipant;
-}
+import { startEvent, failEvent, completeEvent } from "../../telemetry/EventMarker";
 
 enum ACSClientEvent {
     InitializeACSClient = 'InitializeACSClient',
+    InitializeACSConversation = 'InitializeACSConversation',
     GetParticipants = 'GetParticipants',
     RegisterOnNewMessage = 'RegisterOnNewMessage',
     RegisterOnThreadUpdate = 'RegisterOnThreadUpdate',
@@ -27,6 +25,10 @@ enum ACSClientEvent {
     GetMessages = 'GetMessages',
     SendMessage = 'SendMessage',
     SendTyping = 'SendTyping',
+}
+
+export interface participantMapping {
+    [key: string]: ChatParticipant;
 }
 
 export class ACSConversation {
@@ -45,7 +47,7 @@ export class ACSConversation {
 
     public async initialize(sessionInfo: ACSSessionInfo): Promise<void> {
         this.logger?.logClientSdkTelemetryEvent(LogLevel.INFO, {
-            Event: `${ACSClientEvent.InitializeACSClient}Started`,
+            Event: startEvent(ACSClientEvent.InitializeACSConversation)
         });
 
         this.sessionInfo = sessionInfo;
@@ -54,8 +56,11 @@ export class ACSConversation {
             this.chatThreadClient = await this.chatClient?.getChatThreadClient(sessionInfo.threadId as string);
         } catch (error) {
             const telemetryData = {
-                Event: `${ACSClientEvent.InitializeACSClient}Failed`,
-                ExceptionDetails: `${error}`
+                Event: failEvent(ACSClientEvent.InitializeACSConversation),
+                ExceptionDetails: {
+                    Reason: 'ChatClientGetChatThreadClientFailure',
+                    ErrorObject: `${error}`
+                }
             };
 
             this.logger?.logClientSdkTelemetryEvent(LogLevel.ERROR, telemetryData);
@@ -67,8 +72,11 @@ export class ACSConversation {
             await this.chatClient.startRealtimeNotifications();
         } catch (error) {
             const telemetryData = {
-                Event: `${ACSClientEvent.InitializeACSClient}Failed`,
-                ExceptionDetails: `${error}`
+                Event: failEvent(ACSClientEvent.InitializeACSConversation),
+                ExceptionDetails: {
+                    Reason: 'ChatClientStartRealtimeNotificationsFailure',
+                    ErrorObject: `${error}`
+                }
             };
 
             this.logger?.logClientSdkTelemetryEvent(LogLevel.ERROR, telemetryData);
@@ -79,7 +87,7 @@ export class ACSConversation {
         this.participantsMapping = await this.createParticipantsMapping();
 
         this.logger?.logClientSdkTelemetryEvent(LogLevel.INFO, {
-            Event: `${ACSClientEvent.InitializeACSClient}Completed`,
+            Event: completeEvent(ACSClientEvent.InitializeACSConversation),
         });
     }
 
@@ -290,17 +298,43 @@ class ACSClient {
     }
 
     public async initialize(acsClientConfig: ACSClientConfig): Promise<void> {
+        this.logger?.logClientSdkTelemetryEvent(LogLevel.INFO, {
+            Event: startEvent(ACSClientEvent.InitializeACSClient),
+        });
+
         try {
             this.tokenCredential = new AzureCommunicationTokenCredential(acsClientConfig.token);
         } catch (error) {
+            const telemetryData = {
+                Event: failEvent(ACSClientEvent.InitializeACSClient),
+                ExceptionDetails: {
+                    Reason: 'CreateTokenCredentialFailure',
+                    ErrorObject: `${error}`
+                }
+            };
+
+            this.logger?.logClientSdkTelemetryEvent(LogLevel.ERROR, telemetryData);
             throw new Error('CreateTokenCredentialFailed');
         }
 
         try {
             this.chatClient = new ChatClient(acsClientConfig.environmentUrl, this.tokenCredential);
         } catch (error) {
+            const telemetryData = {
+                Event: failEvent(ACSClientEvent.InitializeACSClient),
+                ExceptionDetails: {
+                    Reason: 'CreateChatClientFailure',
+                    ErrorObject: `${error}`
+                }
+            };
+
+            this.logger?.logClientSdkTelemetryEvent(LogLevel.ERROR, telemetryData);
             throw new Error('CreateChatClientFailed');
         }
+
+        this.logger?.logClientSdkTelemetryEvent(LogLevel.INFO, {
+            Event: completeEvent(ACSClientEvent.InitializeACSClient),
+        });
     }
 
     public async joinConversation(sessionInfo: ACSSessionInfo): Promise<ACSConversation> {
