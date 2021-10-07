@@ -1,6 +1,7 @@
-import OmnichannelConfig from "../core/OmnichannelConfig";
-import { AWTEventData } from "../external/aria/webjs/AriaSDK";
 import AriaTelemetry from "./AriaTelemetry";
+import { AWTEventData } from "../external/aria/webjs/AriaSDK";
+import OmnichannelConfig from "../core/OmnichannelConfig";
+import ScenarioType from "./ScenarioType";
 import StopWatch from "./StopWatch";
 import {startEvent, failEvent, completeEvent} from './EventMarker';
 
@@ -8,16 +9,22 @@ class ScenarioMarker {
     private debug: boolean;
     private telemetryEvents: Map<string, StopWatch>;
     private telemetry: typeof AriaTelemetry | null = null;
+    private scenarioType: ScenarioType;
 
     constructor(private omnichannelConfig: OmnichannelConfig) {
         this.debug = false;
         this.telemetryEvents = new Map();
+        this.scenarioType = ScenarioType.EVENTS;
     }
 
     /* istanbul ignore next */
     public setDebug(flag: boolean): void {
         this.debug = flag;
         this.telemetry?.setDebug(flag);
+    }
+
+    public setScenarioType(scenarioType: ScenarioType) {
+        this.scenarioType = scenarioType;
     }
 
     public useTelemetry(telemetry: typeof AriaTelemetry): void {
@@ -42,7 +49,7 @@ class ScenarioMarker {
             ...additionalProperties
         };
 
-        this.telemetry?.info(properties);
+        this.telemetry?.info(properties, this.scenarioType);
     }
 
     public failScenario(event: string, additionalProperties: AWTEventData["properties"] = {}): void {
@@ -65,7 +72,7 @@ class ScenarioMarker {
             ...additionalProperties
         };
 
-        this.telemetry?.error(properties);
+        this.telemetry?.error(properties, this.scenarioType);
     }
 
     public completeScenario(event: string, additionalProperties: AWTEventData["properties"] = {}): void {
@@ -88,7 +95,7 @@ class ScenarioMarker {
             ...additionalProperties
         };
 
-        this.telemetry?.info(properties);
+        this.telemetry?.info(properties, this.scenarioType);
     }
 }
 
