@@ -5,6 +5,7 @@ import IIC3SDKLogData from "../external/IC3Client/IIC3SDKLogData";
 import IOCSDKLogData from "../external/OCSDK/IOCSDKLogData";
 import AriaTelemetry from "../telemetry/AriaTelemetry";
 import ScenarioType from "../telemetry/ScenarioType";
+import ScenarioMarker from "../telemetry/ScenarioMarker";
 
 export class IC3ClientLogger {
     private debug = false;
@@ -167,9 +168,12 @@ export class ACSClientLogger {
     private requestId = '';
     private chatId = '';
     private telemetry: typeof AriaTelemetry | null = null;
+    private scenarioMarker: ScenarioMarker | null = null;
 
     constructor(private omnichannelConfig: OmnichannelConfig) {
         this.debug = false;
+        this.scenarioMarker = new ScenarioMarker(omnichannelConfig);
+        this.scenarioMarker.setScenarioType(ScenarioType.ACSCLIENT);
     }
 
     /* istanbul ignore next */
@@ -238,6 +242,33 @@ export class ACSClientLogger {
                 break;
         }
     }
+
+    public startScenario(event: string, additionalProperties: any = {}): void {
+        const baseProperties = {
+            RequestId: this.requestId,
+            ChatId: this.chatId
+        };
+
+        this.scenarioMarker?.startScenario(event, {...baseProperties, ...additionalProperties});
+    }
+
+    public failScenario(event: string, additionalProperties: any = {}): void {
+        const baseProperties = {
+            RequestId: this.requestId,
+            ChatId: this.chatId
+        };
+
+        this.scenarioMarker?.failScenario(event, {...baseProperties, ...additionalProperties});
+    }
+
+    public completeScenario(event: string, additionalProperties: any = {}): void {
+        const baseProperties = {
+            RequestId: this.requestId,
+            ChatId: this.chatId
+        };
+
+        this.scenarioMarker?.completeScenario(event, {...baseProperties, ...additionalProperties});
+    }
 }
 
 export class ACSAdapterLogger {
@@ -245,9 +276,12 @@ export class ACSAdapterLogger {
     private requestId = '';
     private chatId = '';
     private telemetry: typeof AriaTelemetry | null = null;
+    private scenarioMarker: ScenarioMarker | null = null;
 
     constructor(private omnichannelConfig: OmnichannelConfig) {
         this.debug = false;
+        this.scenarioMarker = new ScenarioMarker(omnichannelConfig);
+        this.scenarioMarker.setScenarioType(ScenarioType.ACSADAPTER);
     }
 
     /* istanbul ignore next */
@@ -315,6 +349,33 @@ export class ACSAdapterLogger {
                 }, ScenarioType.ACSADAPTER);
                 break;
         }
+    }
+
+    public startScenario(event: string, additionalProperties: any = {}): void {
+        const baseProperties = {
+            RequestId: this.requestId,
+            ChatId: this.chatId
+        };
+
+        this.scenarioMarker?.startScenario(event, {...baseProperties, ...additionalProperties});
+    }
+
+    public failScenario(event: string, additionalProperties: any = {}): void {
+        const baseProperties = {
+            RequestId: this.requestId,
+            ChatId: this.chatId
+        };
+
+        this.scenarioMarker?.failScenario(event, {...baseProperties, ...additionalProperties});
+    }
+
+    public completeScenario(event: string, additionalProperties: any = {}): void {
+        const baseProperties = {
+            RequestId: this.requestId,
+            ChatId: this.chatId
+        };
+
+        this.scenarioMarker?.completeScenario(event, {...baseProperties, ...additionalProperties});
     }
 }
 
