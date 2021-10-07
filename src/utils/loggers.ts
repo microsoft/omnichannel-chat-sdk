@@ -162,6 +162,162 @@ export class OCSDKLogger {
     }
 }
 
+export class ACSClientLogger {
+    private debug = false;
+    private requestId = '';
+    private chatId = '';
+    private telemetry: typeof AriaTelemetry | null = null;
+
+    constructor(private omnichannelConfig: OmnichannelConfig) {
+        this.debug = false;
+    }
+
+    /* istanbul ignore next */
+    public setDebug(flag: boolean): void {
+        this.debug = flag;
+    }
+
+    public setRequestId(requestId: string): void {
+        this.requestId = requestId;
+    }
+
+    public setChatId(chatId: string): void {
+        this.chatId = chatId;
+    }
+
+    public useTelemetry(telemetry: typeof AriaTelemetry): void {
+        /* istanbul ignore next */
+        this.debug && console.log(`[ACSClientLogger][useTelemetry]`);
+        this.telemetry = telemetry;
+    }
+
+    public logClientSdkTelemetryEvent(logLevel: LogLevel, event: any): void {  // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+        /* istanbul ignore next */
+        this.debug && console.log(`[ACSClientLogger][logClientSdkTelemetryEvent][${logLevel}]`);
+        /* istanbul ignore next */
+        this.debug && console.log(event);
+
+        const baseProperties: AWTEventData["properties"] = {
+            OrgId: this.omnichannelConfig.orgId,
+            OrgUrl: this.omnichannelConfig.orgUrl,
+            WidgetId: this.omnichannelConfig.widgetId,
+            RequestId: this.requestId,
+            ChatId: this.chatId
+        };
+
+        const additionalProperties: AWTEventData["properties"] = {
+            ...event,
+            ExceptionDetails: event.ExceptionDetails? JSON.stringify(event.ExceptionDetails): '',
+        };
+
+        switch(logLevel) {
+            case LogLevel.DEBUG:
+                this.telemetry?.debug({
+                    ...baseProperties,
+                    ...additionalProperties
+                }, ScenarioType.ACSCLIENT);
+                break;
+            case LogLevel.WARN:
+                this.telemetry?.warn({
+                    ...baseProperties,
+                    ...additionalProperties
+                }, ScenarioType.ACSCLIENT);
+                break;
+            case LogLevel.ERROR:
+                this.telemetry?.error({
+                    ...baseProperties,
+                    ...additionalProperties
+                }, ScenarioType.ACSCLIENT);
+                break;
+            case LogLevel.INFO:
+            default:
+                this.telemetry?.info({
+                    ...baseProperties,
+                    ...additionalProperties
+                }, ScenarioType.ACSCLIENT);
+                break;
+        }
+    }
+}
+
+export class ACSAdapterLogger {
+    private debug = false;
+    private requestId = '';
+    private chatId = '';
+    private telemetry: typeof AriaTelemetry | null = null;
+
+    constructor(private omnichannelConfig: OmnichannelConfig) {
+        this.debug = false;
+    }
+
+    /* istanbul ignore next */
+    public setDebug(flag: boolean): void {
+        this.debug = flag;
+    }
+
+    public setRequestId(requestId: string): void {
+        this.requestId = requestId;
+    }
+
+    public setChatId(chatId: string): void {
+        this.chatId = chatId;
+    }
+
+    public useTelemetry(telemetry: typeof AriaTelemetry): void {
+        /* istanbul ignore next */
+        this.debug && console.log(`[ACSAdapterLogger][useTelemetry]`);
+        this.telemetry = telemetry;
+    }
+
+    public logClientSdkTelemetryEvent(logLevel: LogLevel, event: any): void {  // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+        /* istanbul ignore next */
+        this.debug && console.log(`[ACSAdapterLogger][logClientSdkTelemetryEvent][${logLevel}]`);
+        /* istanbul ignore next */
+        this.debug && console.log(event);
+
+        const baseProperties: AWTEventData["properties"] = {
+            OrgId: this.omnichannelConfig.orgId,
+            OrgUrl: this.omnichannelConfig.orgUrl,
+            WidgetId: this.omnichannelConfig.widgetId,
+            RequestId: this.requestId,
+            ChatId: this.chatId
+        };
+
+        const additionalProperties: AWTEventData["properties"] = {
+            ...event,
+            ExceptionDetails: event.ExceptionDetails? JSON.stringify(event.ExceptionDetails): '',
+        };
+
+        switch(logLevel) {
+            case LogLevel.DEBUG:
+                this.telemetry?.debug({
+                    ...baseProperties,
+                    ...additionalProperties
+                }, ScenarioType.ACSADAPTER);
+                break;
+            case LogLevel.WARN:
+                this.telemetry?.warn({
+                    ...baseProperties,
+                    ...additionalProperties
+                }, ScenarioType.ACSADAPTER);
+                break;
+            case LogLevel.ERROR:
+                this.telemetry?.error({
+                    ...baseProperties,
+                    ...additionalProperties
+                }, ScenarioType.ACSADAPTER);
+                break;
+            case LogLevel.INFO:
+            default:
+                this.telemetry?.info({
+                    ...baseProperties,
+                    ...additionalProperties
+                }, ScenarioType.ACSADAPTER);
+                break;
+        }
+    }
+}
+
 export const createIC3ClientLogger = (omnichannelConfig: OmnichannelConfig, debug = false): IC3ClientLogger => {
     const logger = new IC3ClientLogger(omnichannelConfig);
     logger.setDebug(debug);
@@ -170,6 +326,18 @@ export const createIC3ClientLogger = (omnichannelConfig: OmnichannelConfig, debu
 
 export const createOCSDKLogger = (omnichannelConfig: OmnichannelConfig, debug = false): OCSDKLogger => {
     const logger = new OCSDKLogger(omnichannelConfig);
+    logger.setDebug(debug);
+    return logger;
+}
+
+export const createACSClientLogger = (omnichannelConfig: OmnichannelConfig, debug = false): ACSClientLogger => {
+    const logger = new ACSClientLogger(omnichannelConfig);
+    logger.setDebug(debug);
+    return logger;
+}
+
+export const createACSAdapterLogger = (omnichannelConfig: OmnichannelConfig, debug = false): ACSAdapterLogger => {
+    const logger = new ACSAdapterLogger(omnichannelConfig);
     logger.setDebug(debug);
     return logger;
 }
