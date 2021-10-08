@@ -4,6 +4,7 @@ import { AWTLogManager, AWTLogger, AWTEventData } from '../external/aria/webjs/A
 import LogLevel from '../telemetry/LogLevel';
 import ScenarioType from '../telemetry/ScenarioType';
 import { ic3ClientVersion, webChatACSAdapterVersion } from '../config/settings';
+import { isBrowser, isReactNative } from '../utils/platform';
 
 interface BaseContract {
     OrgId: string;
@@ -18,6 +19,7 @@ interface BaseContract {
     ChatSDKVersion: string;
     NPMPackagesInfo?: string;
     CDNPackagesInfo?: string;
+    PlatformDetails?: string;
 }
 
 interface NPMPackagesInfo {
@@ -88,6 +90,10 @@ interface ACSAdapterContract {
     ExceptionDetails?: string;
     ElapsedTimeInMilliseconds?: string;
     ACSAdapterVersion: string;
+}
+
+enum Renderer {
+    ReactNative = 'ReactNative'
 }
 
 class AriaTelemetry {
@@ -505,24 +511,37 @@ class AriaTelemetry {
             ElapsedTimeInMilliseconds: '',
             ChatSDKVersion: require('../../package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
             NPMPackagesInfo: JSON.stringify(packagesInfo),
-            CDNPackagesInfo: JSON.stringify(AriaTelemetry._CDNPackagesInfo)
+            CDNPackagesInfo: JSON.stringify(AriaTelemetry._CDNPackagesInfo),
+            PlatformDetails: ''
         };
     }
 
     private static fillMobilePlatformData() {
         const platformData: any = {}; // eslint-disable-line @typescript-eslint/no-explicit-any
+        const platformDetails: any = {}; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+        if (!isReactNative()) {
+            return platformData;
+        }
+
         try {
             const ReactNative = require('react-native'); // eslint-disable-line @typescript-eslint/no-var-requires
             const Platform = ReactNative.Platform;
 
-            platformData.DeviceInfo_OsVersion = Platform.Version;
+            platformDetails.Renderer = Renderer.ReactNative;
 
-            if (Platform.OS === 'android') {
+            platformData.DeviceInfo_OsVersion = Platform.Version;
+            platformDetails.DeviceInfo_OsVersion = Platform.Version;
+
+            if (Platform.OS.toLowerCase() === 'android') {
                 platformData.DeviceInfo_OsName = 'Android';
-            } else if (Platform.OS === 'ios') {
+                platformDetails.DeviceInfo_OsName = 'Android'
+            } else if (Platform.OS.toLowerCase() === 'ios') {
                 platformData.DeviceInfo_OsName = 'iOS';
+                platformDetails.DeviceInfo_OsName = 'iOS'
             } else {
                 platformData.DeviceInfo_OsName = `${Platform.OS}`;
+                platformDetails.DeviceInfo_OsName = `${Platform.OS}`;
             }
 
             /* istanbul ignore next */
@@ -532,13 +551,14 @@ class AriaTelemetry {
             this._debug && console.log("[AriaTelemetry][fillMobilePlatformData][Web]");
         }
 
+        platformData.PlatformDetails = JSON.stringify(platformDetails); // Fallback if unable to overwrite Aria's default properties
         return platformData;
     }
 
     private static fillWebPlatformData() {
         const platformData: any = {}; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-        if (!window) {
+        if (!isBrowser()) {
             return platformData;
         }
 
