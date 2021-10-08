@@ -3,11 +3,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.0.0] - 2021-10-08
 ### Added
 - Add `GetAuthToken` & `GetPreChatSurvey` telemetry events
 - Add `Domain` telemetry base property
-- Add `GetCurrentLiveChatContext`, `GetMessages`, `SendMessages`, `OnNewMessage` & `OnTypingEvent ` telemetry events
+- Add `GetCurrentLiveChatContext`, `GetMessages`, `SendMessages`, `OnNewMessage` & `OnTypingEvent` telemetry events
 - Live Chat V2 Support
+- Add `PlatformDetails` telemetry event
 
 ### Changed
 - Uptake [@microsoft/ocsdk@0.3.0](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.3.0)
