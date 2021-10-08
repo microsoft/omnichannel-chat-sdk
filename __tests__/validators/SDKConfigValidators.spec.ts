@@ -23,4 +23,16 @@ describe('SDKConfigValidators', () => {
         expect(chatSDKConfig.dataMasking.maskingCharacter).toBe(defaultChatSDKConfig!.dataMasking!.maskingCharacter);
         expect(chatSDKConfig.dataMasking.maskingCharacter.length).toBe(1);
     });
+
+    it('Persistent Chat Token Update Time SDK config should be set to default values if not set', () => {
+        const chatSDKConfig: any = {};
+        chatSDKConfig.persistentChat = {
+            disable: false
+        };
+
+        validateSDKConfig(chatSDKConfig);
+
+        expect(chatSDKConfig.persistentChat.tokenUpdateTime).toBeDefined();
+        expect(chatSDKConfig.persistentChat.tokenUpdateTime).toStrictEqual(defaultChatSDKConfig!.persistentChat!.tokenUpdateTime);
+    });
 });
