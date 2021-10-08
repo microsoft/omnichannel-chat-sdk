@@ -55,6 +55,24 @@ describe('AriaTelemetry', () => {
         expect((AriaTelemetry as any)._CDNPackagesInfo).toEqual(overridePackages);
     });
 
+    it('AriaTelemetry.populateBaseProperties() should have all the necessary properties', () => {
+        const properties = (AriaTelemetry as any).populateBaseProperties();
+
+        expect(properties.OrgId).toBeDefined();
+        expect(properties.OrgUrl).toBeDefined();
+        expect(properties.WidgetId).toBeDefined();
+        expect(properties.RequestId).toBeDefined();
+        expect(properties.ChatId).toBeDefined();
+        expect(properties.CallId).toBeDefined();
+        expect(properties.Domain).toBeDefined();
+        expect(properties.ExceptionDetails).toBeDefined();
+        expect(properties.ElapsedTimeInMilliseconds).toBeDefined();
+        expect(properties.ChatSDKVersion).toBeDefined();
+        expect(properties.NPMPackagesInfo).toBeDefined();
+        expect(properties.CDNPackagesInfo).toBeDefined();
+        expect(properties.PlatformDetails).toBeDefined();
+    });
+
     it('AriaTelemetry.fillMobilePlatformData() should return {} on Node', () => {
         const platformData = (AriaTelemetry as any).fillMobilePlatformData();
         expect(platformData).toEqual({});
