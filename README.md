@@ -72,9 +72,10 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
         // ...
         resolver: {
             extraNodeModules: {
-            ...require('node-libs-react-native'),
-            net: require.resolve('node-libs-react-native/mock/net'),
-            tls: require.resolve('node-libs-react-native/mock/tls')
+                ...require('node-libs-react-native'),
+                net: require.resolve('node-libs-react-native/mock/net'),
+                tls: require.resolve('node-libs-react-native/mock/tls')
+            }
         }
     };
     ```
