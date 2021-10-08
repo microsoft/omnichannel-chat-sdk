@@ -15,6 +15,7 @@ describe('AriaTelemetry', () => {
         };
 
         (global as any).window = {};
+        (global as any).navigator = undefined;
     });
 
     it('AriaTelemetry.disable() have telemetry enabled by default', () => {
@@ -60,6 +61,9 @@ describe('AriaTelemetry', () => {
     });
 
     it('AriaTelemetry.fillMobilePlatformData() should return correct platform data if OS is Android', () => {
+        (global as any).navigator = {};
+        (global.navigator as any).product = 'ReactNative';
+
         const mobileOS = 'Android';
         const platformData = {
             OS: mobileOS.toLowerCase(),
@@ -80,6 +84,9 @@ describe('AriaTelemetry', () => {
     });
 
     it('AriaTelemetry.fillMobilePlatformData() should return correct platform data if OS is iOS', () => {
+        (global as any).navigator = {};
+        (global.navigator as any).product = 'ReactNative';
+
         const mobileOS = 'iOS';
         const platformData = {
             OS: mobileOS.toLowerCase(),
@@ -100,6 +107,9 @@ describe('AriaTelemetry', () => {
     });
 
     it('AriaTelemetry.fillMobilePlatformData() should return correct platform data if OS is other', () => {
+        (global as any).navigator = {};
+        (global.navigator as any).product = 'ReactNative';
+
         const mobileOS = 'other';
         const platformData = {
             OS: mobileOS.toLowerCase(),
