@@ -31,7 +31,10 @@ enum TelemetryEvent {
     StopCall = "StopCall",
     OnCallDisconnected = "OnCallDisconnected",
     UpdateChatToken = "UpdateChatToken",
-    GetChatReconnectContext = "GetChatReconnectContext"
+    GetChatReconnectContext = "GetChatReconnectContext",
+    GetPostChatSurveyContext = "GetPostChatSurveyContext",
+    RenderPostChatSurvey = "RenderPostChatSurvey",
+    InitializePostChatRenderer = "InitializePostChatRenderer"
 }
 
 export default TelemetryEvent;

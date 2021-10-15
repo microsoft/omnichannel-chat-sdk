@@ -40,7 +40,7 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 | Screen Sharing | ✔ | Web Only |
 | Authenticated Chat | ✔ | ✔ |
 | Pre-chat Survey | ✔ | ✔ |
-| Post-chat Survey | ✔ | ❌ |
+| Post-chat Survey | ✔ | Web Only for In-line Render |
 | Queue Position | ✔ | ✔ |
 | Average Wait Time | ✔ | ✔ |
 | Download Transcript | ✔ | ✔ |
@@ -117,6 +117,10 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
 | OmnichannelChatSDK.downloadFileAttachment() | Download file attachment | |
 | OmnichannelChatSDK.createChatAdapter() | Get IC3Adapter | **Web only** |
 | OmnichannelChatSDK.getVoiceVideoCalling() | Get VoiceVideoCall SDK for Escalation to Voice & Video| **Web only** |
+| OmnichannelChatSDK.getPostChatSurveyContext() | Get post chat survey link and locale. | |
+| OmnichannelChatSDK.initializePostChatRenderer() | Load necessary scripts and styles to render the FormsPro survey | **Web only** |
+| OmnichannelChatSDK.renderPostChatSurvey() | Render the FormsPro survey | **Web only** |
+
 
 ## API examples
 
@@ -192,6 +196,26 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
 ```ts
     const parseToJSON = false;
     const preChatSurvey = await getPreChatSurvey(parseToJSON); // Adaptive Cards payload data as string
+```
+
+### Show PostChat Survey
+`Option 1: Directly use the survey link`
+```ts
+    const context = await chatSDK.getPostChatSurveyContext();
+    if (context) { // if post chat is not enabled on admin side, or the criteria for showing post chat is not met (e.g. no agent joined), then context is null.
+        const linkToSend = context.surveyInviteLink + "&lang=" + context.formsProLocale;
+        // This link is accessible and will redirect to the survey in another tab. Use it as you see fit. 
+    }
+```
+
+`Option 2: Render the FormsPro Survey in a specified container`
+```ts
+    await chatSDK.initializePostChatRender(); // This method is needed to embed FormsPro survey in the widget. It can be called anytime before actually rendering the survey for best performance of you page.
+
+    const context = await chatSDK.getPostChatSurveyContext();
+    if (context) {
+        await chatSDK?.renderPostChatSurvey('containerId', context); // The survey will be embedded in the element with Id "containerId"
+    }
 ```
 
 ### Start Chat

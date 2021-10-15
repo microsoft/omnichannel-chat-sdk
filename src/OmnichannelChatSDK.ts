@@ -1,6 +1,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
+import { ACSAdapterLogger, ACSClientLogger, IC3ClientLogger, OCSDKLogger, createACSAdapterLogger, createACSClientLogger, createIC3ClientLogger, createOCSDKLogger } from "./utils/loggers";
 import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
+import { ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
+import {SDKProvider as OCSDKProvider, uuidv4} from "@microsoft/ocsdk";
+import libraries, { getMsfpEmbedScript } from "./utils/libraries";
+import platform, { isBrowser } from "./utils/platform";
+import validateSDKConfig, {defaultChatSDKConfig} from "./validators/SDKConfigValidators";
+
 import ACSParticipantDisplayName from "./core/messaging/ACSParticipantDisplayName";
 import AMSFileManager from "./external/ACSAdapter/AMSFileManager";
 import AriaTelemetry from "./telemetry/AriaTelemetry";
@@ -13,22 +20,16 @@ import ChatReconnectOptionalParams from "./core/ChatReconnectOptionalParams";
 import ChatSDKConfig from "./core/ChatSDKConfig";
 import ChatSDKMessage from "./core/messaging/ChatSDKMessage";
 import ChatTranscriptBody from "./core/ChatTranscriptBody";
-import { ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import ConversationMode from "./core/ConversationMode";
-import createAMSClient from "@microsoft/omnichannel-amsclient";
-import { ACSAdapterLogger, ACSClientLogger, createACSAdapterLogger, createACSClientLogger, createIC3ClientLogger, createOCSDKLogger, IC3ClientLogger, OCSDKLogger } from "./utils/loggers";
-import createOmnichannelMessage from "./utils/createOmnichannelMessage";
-import createTelemetry from "./utils/createTelemetry";
-import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
-import { defaultMessageTags } from "./core/messaging/MessageTags";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
-import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/FileSharingProtocolType";
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
+import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/FileSharingProtocolType";
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
 import FramedlessClient from "@microsoft/omnichannel-amsclient/lib/FramedlessClient";
 import HostType from "@microsoft/omnichannel-ic3core/lib/interfaces/HostType";
-import IConversation from "@microsoft/omnichannel-ic3core/lib/model/IConversation";
+import {SDKProvider as IC3SDKProvider} from '@microsoft/omnichannel-ic3core';
 import IChatToken from "./external/IC3Adapter/IChatToken";
+import IConversation from "@microsoft/omnichannel-ic3core/lib/model/IConversation";
 import IEmailTranscriptOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IEmailTranscriptOptionalParams";
 import IFileInfo from "@microsoft/omnichannel-ic3core/lib/interfaces/IFileInfo";
 import IFileMetadata from "@microsoft/omnichannel-ic3core/lib/model/IFileMetadata";
@@ -37,39 +38,43 @@ import IGetChatTranscriptsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/I
 import IIC3AdapterOptions from "./external/IC3Adapter/IIC3AdapterOptions";
 import IInitializationInfo from "@microsoft/omnichannel-ic3core/lib/model/IInitializationInfo";
 import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
-import InitContext from "@microsoft/ocsdk/lib/Model/InitContext";
-import ISDKConfiguration from "@microsoft/ocsdk/lib/Interfaces/ISDKConfiguration";
-import ISessionCloseOptionalParams from "@microsoft/ocsdk/lib/Interfaces/ISessionCloseOptionalParams";
-import ISessionInitOptionalParams from "@microsoft/ocsdk/lib/Interfaces/ISessionInitOptionalParams";
-import OmnichannelConfig from "./core/OmnichannelConfig";
 import IOmnichannelConfiguration from "@microsoft/ocsdk/lib/Interfaces/IOmnichannelConfiguration";
 import IPerson from "@microsoft/omnichannel-ic3core/lib/model/IPerson";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
 import IRawThread from "@microsoft/omnichannel-ic3core/lib/interfaces/IRawThread";
 import IReconnectableChatsParams from "@microsoft/ocsdk/lib/Interfaces/IReconnectableChatsParams";
 import IRegionGtms from "@microsoft/omnichannel-ic3core/lib/model/IRegionGtms";
-import {isCustomerMessage} from "./utils/utilities";
-import libraries from "./utils/libraries";
+import ISDKConfiguration from "@microsoft/ocsdk/lib/Interfaces/ISDKConfiguration";
+import ISessionCloseOptionalParams from "@microsoft/ocsdk/lib/Interfaces/ISessionCloseOptionalParams";
+import ISessionInitOptionalParams from "@microsoft/ocsdk/lib/Interfaces/ISessionInitOptionalParams";
+import InitContext from "@microsoft/ocsdk/lib/Model/InitContext";
 import LiveChatContext from "./core/LiveChatContext";
+import LiveChatVersion from "./core/LiveChatVersion";
 import LiveWorkItemDetails from "./core/LiveWorkItemDetails";
 import LiveWorkItemState from "./core/LiveWorkItemState";
-import LiveChatVersion from "./core/LiveChatVersion";
-import { loadScript } from "./utils/WebUtils";
 import MessageContentType from "@microsoft/omnichannel-ic3core/lib/model/MessageContentType";
 import MessageType from "@microsoft/omnichannel-ic3core/lib/model/MessageType";
-import OnNewMessageOptionalParams from "./core/messaging/OnNewMessageOptionalParams";
 import OmnichannelChatToken from "@microsoft/omnichannel-amsclient/lib/OmnichannelChatToken";
+import OmnichannelConfig from "./core/OmnichannelConfig";
 import OmnichannelMessage from "./core/messaging/OmnichannelMessage";
+import OnNewMessageOptionalParams from "./core/messaging/OnNewMessageOptionalParams";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
-import platform, { isBrowser } from "./utils/platform";
+import PostChatContext from "./core/PostChatContext";
 import ProtocolType from "@microsoft/omnichannel-ic3core/lib/interfaces/ProtocoleType";
 import ScenarioMarker from "./telemetry/ScenarioMarker";
-import {SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
-import {SDKProvider as IC3SDKProvider} from '@microsoft/omnichannel-ic3core';
 import StartChatOptionalParams from "./core/StartChatOptionalParams";
 import TelemetryEvent from "./telemetry/TelemetryEvent";
+import createAMSClient from "@microsoft/omnichannel-amsclient";
+import createOmnichannelMessage from "./utils/createOmnichannelMessage";
+import createTelemetry from "./utils/createTelemetry";
+import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
+import { defaultMessageTags } from "./core/messaging/MessageTags";
+import {isCustomerMessage} from "./utils/utilities";
+import { loadScript } from "./utils/WebUtils";
+import { localeIdToString } from "./utils/locale";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
-import validateSDKConfig, {defaultChatSDKConfig} from "./validators/SDKConfigValidators";
+
+declare function renderSurvey(containerName: string, surveyURL: string, firstName: string, lastName: string, locale: string): any;
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -1497,6 +1502,148 @@ class OmnichannelChatSDK {
 
                     reject('Failed to load VoiceVideoCalling');
                 });
+            });
+        }
+    }
+
+    public async getPostChatSurveyContext(): Promise<any> {
+        this.scenarioMarker.startScenario(TelemetryEvent.GetPostChatSurveyContext, {
+            RequestId: this.requestId
+        });
+        let conversationId;
+
+        try {
+            const chatConfig: ChatConfig = this.liveChatConfig;
+            const {LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin, ChatWidgetLanguage: chatWidgetLanguage, LiveChatConfigAuthSettings: authSetting} = chatConfig;
+            const {msdyn_postconversationsurveyenable, msfp_sourcesurveyidentifier, postConversationSurveyOwnerId} = liveWSAndLiveChatEngJoin;
+            const {msdyn_localeid} = chatWidgetLanguage;
+            const localeId: string = msdyn_localeid ?? "1033";
+
+            if (msdyn_postconversationsurveyenable) {
+                const getLWIDetails = await this.OCClient.getLWIDetails(this.requestId);
+                const surveyEnabledParticipantJoined = getLWIDetails?.CanRenderPostChat && getLWIDetails?.CanRenderPostChat === "True";
+                if (!surveyEnabledParticipantJoined) {
+                    return null;
+                }
+
+                conversationId = getLWIDetails?.ConversationId;
+                let surveyInviteLinkRequest = {
+                    "FormId": msfp_sourcesurveyidentifier,
+                    "ConversationId": conversationId,
+                    "OCLocaleCode": localeIdToString[localeId]
+                };
+
+                const optionalParams: any = { // eslint-disable-line @typescript-eslint/no-explicit-any
+                    "requestId": this.requestId
+                };
+                
+                if (this.authenticatedUserToken) {
+                    optionalParams.authenticatedUserToken = this.authenticatedUserToken;
+                }
+
+                const surveyInviteLinkResponse = await this.OCClient.getSurveyInviteLink(postConversationSurveyOwnerId, surveyInviteLinkRequest);
+
+                let surveyInviteLink, formsProLocale;
+                if (surveyInviteLinkResponse != null) {
+                    if (surveyInviteLinkResponse.inviteList != null && surveyInviteLinkResponse.inviteList.length == 1) {
+                        surveyInviteLink = surveyInviteLinkResponse.inviteList[0].invitationLink;
+                    }
+                    else {
+                        throw new Error("Survey Invite link failed to send response.");
+                    }
+
+                    if (surveyInviteLinkResponse.formsProLocaleCode != null) {
+                        formsProLocale = surveyInviteLinkResponse.formsProLocaleCode;
+                    }
+                }
+
+                let postChatContext: PostChatContext = {
+                    surveyInviteLink,
+                    formsProLocale
+                }
+                return postChatContext;
+            }
+        } catch (ex) {
+            this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {
+                ConversationId: conversationId,
+                RequestId: this.requestId,
+                ExceptionDetails: JSON.stringify(ex)
+            });
+
+            return null;
+        }
+    }
+
+    public async initializePostChatRenderer(): Promise<void> {
+        this.scenarioMarker.startScenario(TelemetryEvent.InitializePostChatRenderer, {
+            RequestId: this.requestId
+        });
+
+        try {
+            let msfpEmbedScript = getMsfpEmbedScript();
+            let elm = document.createElement('div');
+            elm.innerHTML = msfpEmbedScript;
+            let scriptNodes = elm.getElementsByTagName('script');
+            let styleNodes = elm.getElementsByTagName('link');
+            for (let i = 0; i < scriptNodes.length; i++) {
+                let node = scriptNodes[i];
+                if (node.src) {
+                    let tmpNode = document.createElement('script');
+                    tmpNode.type = node.type;
+                    tmpNode.src = node.src;
+                    tmpNode.async = false;
+                    if (!window.document.head.contains(tmpNode)) {
+                        document.getElementsByTagName('head')[0].appendChild(tmpNode);
+                    }
+                }
+                if (node.innerHTML) {
+                    let tmpNode = document.createElement('script');
+                    tmpNode.innerHTML = node.innerHTML;
+                    tmpNode.async = false;
+                    if (!window.document.head.contains(tmpNode)) {
+                        window.document.head.appendChild(tmpNode);
+                    }
+                }
+            }
+            for (let i = 0; i < styleNodes.length; i++) {
+                let node = styleNodes[i];
+                if (node.href) {
+                    let tmpNode = document.createElement('link');
+                    tmpNode.type = node.type;
+                    tmpNode.rel = node.rel;
+                    tmpNode.href = node.href;
+                    if (!window.document.head.contains(tmpNode)) {
+                        document.getElementsByTagName('head')[0].appendChild(tmpNode);
+                    }
+                }
+            }
+        } catch (ex) {
+            this.scenarioMarker.failScenario(TelemetryEvent.InitializePostChatRenderer, {
+                RequestId: this.requestId,
+                ExceptionDetails: JSON.stringify(ex)
+            });
+        }
+    }
+
+    public async renderPostChatSurvey(containerId: string, postChatContext: PostChatContext): Promise<void> {
+        this.scenarioMarker.startScenario(TelemetryEvent.RenderPostChatSurvey, {
+            RequestId: this.requestId
+        });
+
+        try {
+            if (!postChatContext) {
+                this.scenarioMarker.failScenario(TelemetryEvent.RenderPostChatSurvey, {
+                    RequestId: this.requestId,
+                    ExceptionDetails: "Post Chat Context is null."
+                });
+                return;
+            }
+
+            await renderSurvey(containerId, postChatContext?.surveyInviteLink, "", "", postChatContext?.formsProLocale);
+        } catch (ex) {
+            this.scenarioMarker.failScenario(TelemetryEvent.RenderPostChatSurvey, {
+                RequestId: this.requestId,
+                ExceptionDetails: JSON.stringify(ex)
             });
         }
     }

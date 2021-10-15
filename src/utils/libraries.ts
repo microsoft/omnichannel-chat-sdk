@@ -1,4 +1,4 @@
-import { ic3ClientVersion, webChatIC3AdapterVersion, webChatACSAdapterVersion } from "../config/settings";
+import { ic3ClientVersion, webChatACSAdapterVersion, webChatIC3AdapterVersion } from "../config/settings";
 
 const getIC3ClientCDNUrl = (version = ic3ClientVersion): string => {
     const IC3ClientCDNUrl = `https://comms.omnichannelengagementhub.com/release/${version}/Scripts/SDK/SDK.min.js`;
@@ -15,14 +15,24 @@ const getACSAdapterCDNUrl = (version = webChatACSAdapterVersion): string => {
     return ACSAdapterCDNUrl;
 }
 
+const getMsfpEmbedScript = (): string => {
+    const msfpEmbedScript = '<script src="https://oc-cdn-ocprod.azureedge.net/livechatwidget/WebChatControl/lib/Embed.min.js" type="text/javascript"></script>' +
+                            '<link rel="stylesheet" type="text/css" href="https://mfpembedcdnwus2.azureedge.net/mfpembedcontwus2/Embed.css" />' +
+                            '<script type = "text/javascript" >function renderSurvey(parentElementId,surveyurl,FirstName, LastName, locale){var se = new SurveyEmbed(surveyurl,"https://mfpembedcdnmsit.azureedge.net/mfpembedcontmsit/","true");' +
+                            'var context = {"First Name": FirstName,"Last Name": LastName,"locale": locale,"showmultilingual":"false"};se.renderInline(parentElementId, context);}</script>';
+    return msfpEmbedScript;
+}
+
 export default {
     getIC3ClientCDNUrl,
     getIC3AdapterCDNUrl,
-    getACSAdapterCDNUrl
+    getACSAdapterCDNUrl,
+    getMsfpEmbedScript
 }
 
 export {
     getIC3ClientCDNUrl,
     getIC3AdapterCDNUrl,
-    getACSAdapterCDNUrl
+    getACSAdapterCDNUrl,
+    getMsfpEmbedScript
 }
