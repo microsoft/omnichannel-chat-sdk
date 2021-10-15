@@ -210,7 +210,7 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
 
 `Option 2: Render the FormsPro Survey in a specified container`
 ```ts
-    await chatSDK.initializePostChatRender(); // This method is needed to embed FormsPro survey in the widget. It can be called anytime before actually rendering the survey for best performance of you page.
+    await chatSDK.initializePostChatRenderer(); // This method is needed to embed FormsPro survey in the widget. It can be called anytime before actually rendering the survey for best performance of you page.
 
     const context = await chatSDK.getPostChatSurveyContext();
     if (context) {
