@@ -116,8 +116,8 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
 | OmnichannelChatSDK.uploadFileAttachment() | Send file attachment | |
 | OmnichannelChatSDK.downloadFileAttachment() | Download file attachment | |
 | OmnichannelChatSDK.createChatAdapter() | Get IC3Adapter | **Web only** |
-| OmnichannelChatSDK.getVoiceVideoCalling() | Get VoiceVideoCall SDK for Escalation to Voice & Video| **Web only** |
-| OmnichannelChatSDK.getPostChatSurveyContext() | Get post chat survey link and locale. | |
+| OmnichannelChatSDK.getVoiceVideoCalling() | Get VoiceVideoCall SDK for Escalation to Voice & Video | **Web only** |
+| OmnichannelChatSDK.getPostChatSurveyContext() | Get post chat survey link and locale | |
 | OmnichannelChatSDK.initializePostChatRenderer() | Load necessary scripts and styles to render the FormsPro survey | **Web only** |
 | OmnichannelChatSDK.renderPostChatSurvey() | Render the FormsPro survey | **Web only** |
 

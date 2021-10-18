@@ -1514,19 +1514,19 @@ class OmnichannelChatSDK {
 
         try {
             const chatConfig: ChatConfig = this.liveChatConfig;
-            const {LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin, ChatWidgetLanguage: chatWidgetLanguage, LiveChatConfigAuthSettings: authSetting} = chatConfig;
+            const {LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin, ChatWidgetLanguage: chatWidgetLanguage} = chatConfig;
             const {msdyn_postconversationsurveyenable, msfp_sourcesurveyidentifier, postConversationSurveyOwnerId} = liveWSAndLiveChatEngJoin;
             const {msdyn_localeid} = chatWidgetLanguage;
             const localeId: string = msdyn_localeid ?? "1033";
 
             if (msdyn_postconversationsurveyenable) {
-                const getLWIDetails = await this.OCClient.getLWIDetails(this.requestId);
-                const surveyEnabledParticipantJoined = getLWIDetails?.CanRenderPostChat && getLWIDetails?.CanRenderPostChat === "True";
+                const liveWorkItemDetails = await this.OCClient.getLWIDetails(this.requestId);
+                const surveyEnabledParticipantJoined = liveWorkItemDetails?.CanRenderPostChat && liveWorkItemDetails?.CanRenderPostChat === "True";
                 if (!surveyEnabledParticipantJoined) {
-                    return null;
+                    return Promise.reject("Post chat should not be showing because no participant has joined.");
                 }
 
-                conversationId = getLWIDetails?.ConversationId;
+                conversationId = liveWorkItemDetails?.ConversationId;
                 let surveyInviteLinkRequest = {
                     "FormId": msfp_sourcesurveyidentifier,
                     "ConversationId": conversationId,
@@ -1549,19 +1549,29 @@ class OmnichannelChatSDK {
                         surveyInviteLink = surveyInviteLinkResponse.inviteList[0].invitationLink;
                     }
                     else {
-                        throw new Error("Survey Invite link failed to send response.");
+                        return Promise.reject("Survey Invite link failed to send response.");
                     }
 
                     if (surveyInviteLinkResponse.formsProLocaleCode != null) {
                         formsProLocale = surveyInviteLinkResponse.formsProLocaleCode;
                     }
-                }
 
-                let postChatContext: PostChatContext = {
-                    surveyInviteLink,
-                    formsProLocale
+                    let postChatContext: PostChatContext = {
+                        surveyInviteLink,
+                        formsProLocale
+                    }
+
+                    return Promise.resolve(postChatContext);
+                } else {
+                    this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {
+                        ConversationId: conversationId,
+                        RequestId: this.requestId,
+                        ExceptionDetails: "surveyInviteLinkResponse is null."
+                    });
+                    return Promise.reject("surveyInviteLinkResponse is null.");
                 }
-                return postChatContext;
+            } else {
+                return Promise.reject("Post Chat is not enabled from admin side.");
             }
         } catch (ex) {
             this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {
@@ -1570,7 +1580,7 @@ class OmnichannelChatSDK {
                 ExceptionDetails: JSON.stringify(ex)
             });
 
-            return null;
+            return Promise.reject("Retrieving post chat context failed " + JSON.stringify(ex));
         }
     }
 
