@@ -1,4 +1,5 @@
 export default interface PostChatContext {
-  surveyInviteLink: string;
   formsProLocale: string;
+  participantJoined: boolean;
+  surveyInviteLink: string;
 }

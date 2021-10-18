@@ -1521,10 +1521,7 @@ class OmnichannelChatSDK {
 
             if (msdyn_postconversationsurveyenable) {
                 const liveWorkItemDetails = await this.OCClient.getLWIDetails(this.requestId);
-                const surveyEnabledParticipantJoined = liveWorkItemDetails?.CanRenderPostChat && liveWorkItemDetails?.CanRenderPostChat === "True";
-                if (!surveyEnabledParticipantJoined) {
-                    return Promise.reject("Post chat should not be showing because no participant has joined.");
-                }
+                const participantJoined: boolean = liveWorkItemDetails?.CanRenderPostChat && liveWorkItemDetails?.CanRenderPostChat === "True";
 
                 conversationId = liveWorkItemDetails?.ConversationId;
                 let surveyInviteLinkRequest = {
@@ -1557,6 +1554,7 @@ class OmnichannelChatSDK {
                     }
 
                     let postChatContext: PostChatContext = {
+                        participantJoined,
                         surveyInviteLink,
                         formsProLocale
                     }

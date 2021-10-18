@@ -3,7 +3,6 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## [1.0.2] - 2021-10-14
 ### Added
 - Add Post Chat Survey Support
 - Add `getPostChatSurveyContext` & `initializePostChatRenderer` and `renderPostChatSurvey` API methods
