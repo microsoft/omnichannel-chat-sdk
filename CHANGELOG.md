@@ -3,6 +3,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- Add Post Chat Survey Support
+- Add `getPostChatSurveyContext` & `initializePostChatRenderer` and `renderPostChatSurvey` API methods
+- Add `GetPostChatSurveyContext`, `RenderPostChatSurvey`, and `InitializePostChatRenderer` telemetry events
+
+### Changed
+- README: added examples on usages of the post chat APIs.
+
 ## [1.0.0] - 2021-10-08
 ### Added
 - Add `GetAuthToken` & `GetPreChatSurvey` telemetry events
