@@ -201,10 +201,14 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
 ### Show PostChat Survey
 `Option 1: Directly use the survey link`
 ```ts
-    const context = await chatSDK.getPostChatSurveyContext();
-    if (context) { // if post chat is not enabled on admin side, or the criteria for showing post chat is not met (e.g. no agent joined), then context is null.
-        const linkToSend = context.surveyInviteLink + "&lang=" + context.formsProLocale;
-        // This link is accessible and will redirect to the survey in another tab. Use it as you see fit. 
+    try {
+        const context = await chatSDK.getPostChatSurveyContext();
+        if (context?.participantJoined) { // participantJoined will be true if an agent has joined the conversation, or a bot has joined the conversation and the bot survey flag has been turned on on the admin side.
+            const linkToSend = context.surveyInviteLink + "&lang=" + context.formsProLocale;
+            // This link is accessible and will redirect to the survey in another tab. Use it as you see fit. 
+        }
+    } catch (ex) {
+        // If the post chat should not show by any reason (e.g. post chat is not enabled), promise will be rejected.
     }
 ```
 
@@ -212,9 +216,13 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
 ```ts
     await chatSDK.initializePostChatRenderer(); // This method is needed to embed FormsPro survey in the widget. It can be called anytime before actually rendering the survey for best performance of you page.
 
-    const context = await chatSDK.getPostChatSurveyContext();
-    if (context) {
-        await chatSDK?.renderPostChatSurvey('containerId', context); // The survey will be embedded in the element with Id "containerId"
+    try {
+        const context = await chatSDK.getPostChatSurveyContext();
+        if (context?.participantJoined) {
+            await chatSDK?.renderPostChatSurvey('containerId', context); // The survey will be embedded in the element with Id "containerId"
+        }
+    } catch (ex) {
+        
     }
 ```
 

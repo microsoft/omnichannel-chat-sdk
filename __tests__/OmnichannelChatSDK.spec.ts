@@ -1,16 +1,18 @@
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
-import IFileInfo from "@microsoft/omnichannel-ic3core/lib/interfaces/IFileInfo";
+
+import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
+import AriaTelemetry from "../src/telemetry/AriaTelemetry";
+import ChatAdapterProtocols from "../src/core/messaging/ChatAdapterProtocols";
+import ConversationMode from '../src/core/ConversationMode';
 import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/FileSharingProtocolType";
+import IFileInfo from "@microsoft/omnichannel-ic3core/lib/interfaces/IFileInfo";
 import IFileMetadata from "@microsoft/omnichannel-ic3core/lib/model/IFileMetadata";
 import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
-import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
-import libraries from "../src/utils/libraries";
-import ChatAdapterProtocols from "../src/core/messaging/ChatAdapterProtocols";
-import AriaTelemetry from "../src/telemetry/AriaTelemetry";
-import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
-import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
-import ConversationMode from '../src/core/ConversationMode';
 import LiveChatVersion from "../src/core/LiveChatVersion";
+import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
+import { assert } from "console";
+import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
+import libraries from "../src/utils/libraries";
 
 describe('Omnichannel Chat SDK', () => {
     AWTLogManager.initialize = jest.fn();
@@ -2483,6 +2485,327 @@ describe('Omnichannel Chat SDK', () => {
             }
 
             expect(chatSDK.OCClient.getReconnectAvailability).toHaveBeenCalledTimes(1);
+        });
+
+        it('ChatSDK.getPostChatSurveyContext() should reject if post chat is disabled', async () => {
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                },
+                chatReconnect: {
+                    disable: false,
+                }
+            };
+
+            const dummyConfig = {
+                LiveWSAndLiveChatEngJoin: {
+                    msdyn_postconversationsurveyenable: false,
+                    msfp_sourcesurveyidentifier: "",
+                    postConversationSurveyOwnerId: ""
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+
+            await chatSDK.initialize();
+
+            chatSDK.liveChatConfig = dummyConfig;
+            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue({CanRenderPostChat: true});
+            jest.spyOn(console, 'error');
+
+            try {
+                const postChatContext = await chatSDK.getPostChatSurveyContext();
+                throw("Should throw error.");
+            } catch (ex) {
+                expect(chatSDK.OCClient.getLWIDetails).not.toHaveBeenCalled();
+            }
+        });
+
+        it('ChatSDK.getPostChatSurveyContext() should reject if survey response is null', async () => {
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                },
+                chatReconnect: {
+                    disable: false,
+                }
+            };
+
+            const dummyConfig = {
+                LiveWSAndLiveChatEngJoin: {
+                    msdyn_postconversationsurveyenable: true,
+                    msfp_sourcesurveyidentifier: "",
+                    postConversationSurveyOwnerId: ""
+                },
+                ChatWidgetLanguage: {
+                    msdyn_localeid: "1033"
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+
+            await chatSDK.initialize();
+
+            chatSDK.liveChatConfig = dummyConfig;
+            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue({});
+            jest.spyOn(chatSDK.OCClient, 'getSurveyInviteLink').mockResolvedValue(null);
+            jest.spyOn(console, 'error');
+
+            try {
+                const postChatContext = await chatSDK.getPostChatSurveyContext();
+                throw("Should throw error.");
+            } catch (ex) {
+                expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
+                expect(chatSDK.OCClient.getSurveyInviteLink).toHaveBeenCalledTimes(1);
+            }
+        });
+
+        it('ChatSDK.getPostChatSurveyContext() should reject if survey response is invalid', async () => {
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                },
+                chatReconnect: {
+                    disable: false,
+                }
+            };
+
+            const dummyConfig = {
+                LiveWSAndLiveChatEngJoin: {
+                    msdyn_postconversationsurveyenable: true,
+                    msfp_sourcesurveyidentifier: "",
+                    postConversationSurveyOwnerId: ""
+                },
+                ChatWidgetLanguage: {
+                    msdyn_localeid: "1033"
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+
+            await chatSDK.initialize();
+
+            chatSDK.liveChatConfig = dummyConfig;
+            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue({});
+            jest.spyOn(chatSDK.OCClient, 'getSurveyInviteLink').mockResolvedValue({
+                inviteList: [],
+                formsProLocaleCode: "en-us"
+            });
+            jest.spyOn(console, 'error');
+
+            try {
+                const postChatContext = await chatSDK.getPostChatSurveyContext();
+                throw("Should throw error.");
+            } catch (ex) {
+                expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
+                expect(chatSDK.OCClient.getSurveyInviteLink).toHaveBeenCalledTimes(1);
+            }
+        });
+
+        it('ChatSDK.getPostChatSurveyContext() should resolve if survey response is valid and CanRenderPostChat is True', async () => {
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                },
+                chatReconnect: {
+                    disable: false,
+                }
+            };
+
+            const dummyConfig = {
+                LiveWSAndLiveChatEngJoin: {
+                    msdyn_postconversationsurveyenable: true,
+                    msfp_sourcesurveyidentifier: "",
+                    postConversationSurveyOwnerId: ""
+                },
+                ChatWidgetLanguage: {
+                    msdyn_localeid: "1033"
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+
+            await chatSDK.initialize();
+
+            chatSDK.liveChatConfig = dummyConfig;
+            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue({
+                CanRenderPostChat: "True",
+                ConversationId: "dummy"
+            });
+            jest.spyOn(chatSDK.OCClient, 'getSurveyInviteLink').mockResolvedValue({
+                inviteList: [
+                    {
+                        invitationLink: "dummy"
+                    }
+                ],
+                formsProLocaleCode: "en-us"
+            });
+            jest.spyOn(console, 'error');
+
+            try {
+                const postChatContext = await chatSDK.getPostChatSurveyContext();
+                expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
+                expect(chatSDK.OCClient.getSurveyInviteLink).toHaveBeenCalledTimes(1);
+                expect(postChatContext.participantJoined).toBe(true);
+            } catch (ex) {
+                throw("Should not throw error. " + ex);
+            }
+        });
+
+        it('ChatSDK.getPostChatSurveyContext() should resolve if survey response is valid and CanRenderPostChat is null', async () => {
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                },
+                chatReconnect: {
+                    disable: false,
+                }
+            };
+
+            const dummyConfig = {
+                LiveWSAndLiveChatEngJoin: {
+                    msdyn_postconversationsurveyenable: true,
+                    msfp_sourcesurveyidentifier: "",
+                    postConversationSurveyOwnerId: ""
+                },
+                ChatWidgetLanguage: {
+                    msdyn_localeid: "1033"
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+
+            await chatSDK.initialize();
+
+            chatSDK.liveChatConfig = dummyConfig;
+            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue({
+                ConversationId: "dummy"
+            });
+            jest.spyOn(chatSDK.OCClient, 'getSurveyInviteLink').mockResolvedValue({
+                inviteList: [
+                    {
+                        invitationLink: "dummy"
+                    }
+                ],
+                formsProLocaleCode: "en-us"
+            });
+            jest.spyOn(console, 'error');
+
+            try {
+                const postChatContext = await chatSDK.getPostChatSurveyContext();
+                expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
+                expect(chatSDK.OCClient.getSurveyInviteLink).toHaveBeenCalledTimes(1);
+                expect(postChatContext.participantJoined).toBeFalsy();
+            } catch (ex) {
+                throw("Should not throw error. " + ex);
+            }
+        });
+
+        it('ChatSDK.initializePostChatRenderer() should reject if window is not defined', async () => {
+            // window.document is undefined by default
+            
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                },
+                chatReconnect: {
+                    disable: false,
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+
+            await chatSDK.initialize();
+
+            jest.spyOn(console, 'error');
+
+            try {
+                await chatSDK.initializePostChatRenderer();
+                throw("Should throw error.");
+            } catch (ex) {
+            }
+        });
+
+        it('ChatSDK.renderPostChatSurvey() should reject if window is not defined', async () => {
+            // window.document is undefined by default 
+
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                },
+                chatReconnect: {
+                    disable: false,
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+
+            await chatSDK.initialize();
+
+            jest.spyOn(console, 'error');
+
+            try {
+                await chatSDK.renderPostChatSurvey("container", {});
+                throw("Should throw error.");
+            } catch (ex) {
+            }
+        });
+
+        it('ChatSDK.renderPostChatSurvey() should reject if post chat context is null', async () => {
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                },
+                chatReconnect: {
+                    disable: false,
+                }
+            };
+            
+            const spyFunc = jest.fn();
+            Object.defineProperty(window, 'document', { value: spyFunc, configurable: true });
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+
+            await chatSDK.initialize();
+
+            jest.spyOn(console, 'error');
+
+            try {
+                await chatSDK.renderPostChatSurvey("container", null);
+                throw("Should throw error.");
+            } catch (ex) {
+            }
+        });
+
+        it('ChatSDK.renderPostChatSurvey() should resolve if post chat context is not null', async () => {
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                },
+                chatReconnect: {
+                    disable: false,
+                }
+            };
+
+            const spyFunc = jest.fn();
+            Object.defineProperty(window, 'document', { value: spyFunc, configurable: true });
+            Object.defineProperty(window, 'renderSurvey', { value: spyFunc, configurable: true });
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+
+            await chatSDK.initialize();
+
+            jest.spyOn(console, 'error');
+
+            try {
+                await chatSDK.renderPostChatSurvey("container", {
+                    formsProLocale: "",
+                    participantJoined: true,
+                    surveyInviteLink: ""
+                });
+            } catch (ex) {
+                throw("Should not throw error. " + ex);
+            }
         });
     });
 })

@@ -69,12 +69,12 @@ import createOmnichannelMessage from "./utils/createOmnichannelMessage";
 import createTelemetry from "./utils/createTelemetry";
 import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
 import { defaultMessageTags } from "./core/messaging/MessageTags";
+import { getLocaleStringFromId } from "./utils/locale";
 import {isCustomerMessage} from "./utils/utilities";
 import { loadScript } from "./utils/WebUtils";
-import { localeIdToString } from "./utils/locale";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 
-declare function renderSurvey(containerName: string, surveyURL: string, firstName: string, lastName: string, locale: string): any;
+declare function renderSurvey(containerName: string, surveyURL: string, firstName: string, lastName: string, locale: string): any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -1506,7 +1506,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async getPostChatSurveyContext(): Promise<any> {
+    public async getPostChatSurveyContext(): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
         this.scenarioMarker.startScenario(TelemetryEvent.GetPostChatSurveyContext, {
             RequestId: this.requestId
         });
@@ -1524,10 +1524,10 @@ class OmnichannelChatSDK {
                 const participantJoined: boolean = liveWorkItemDetails?.CanRenderPostChat && liveWorkItemDetails?.CanRenderPostChat === "True";
 
                 conversationId = liveWorkItemDetails?.ConversationId;
-                let surveyInviteLinkRequest = {
+                const surveyInviteLinkRequest = {
                     "FormId": msfp_sourcesurveyidentifier,
                     "ConversationId": conversationId,
-                    "OCLocaleCode": localeIdToString[localeId]
+                    "OCLocaleCode": getLocaleStringFromId(localeId)
                 };
 
                 const optionalParams: any = { // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -1546,6 +1546,11 @@ class OmnichannelChatSDK {
                         surveyInviteLink = surveyInviteLinkResponse.inviteList[0].invitationLink;
                     }
                     else {
+                        this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {
+                            ConversationId: conversationId,
+                            RequestId: this.requestId,
+                            ExceptionDetails: "Survey Invite link failed to send response."
+                        });
                         return Promise.reject("Survey Invite link failed to send response.");
                     }
 
@@ -1553,7 +1558,7 @@ class OmnichannelChatSDK {
                         formsProLocale = surveyInviteLinkResponse.formsProLocaleCode;
                     }
 
-                    let postChatContext: PostChatContext = {
+                    const postChatContext: PostChatContext = {
                         participantJoined,
                         surveyInviteLink,
                         formsProLocale
@@ -1569,7 +1574,11 @@ class OmnichannelChatSDK {
                     return Promise.reject("surveyInviteLinkResponse is null.");
                 }
             } else {
-                return Promise.reject("Post Chat is not enabled from admin side.");
+                this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {
+                    RequestId: this.requestId,
+                    ExceptionDetails: "Post Chat Survey is disabled. Please check the Omnichannel Administration Portal."
+                });
+                return Promise.reject("Post Chat is disabled from admin side.");
             }
         } catch (ex) {
             this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {
@@ -1583,20 +1592,24 @@ class OmnichannelChatSDK {
     }
 
     public async initializePostChatRenderer(): Promise<void> {
+        if (!isBrowser()) {
+            return Promise.reject("In-line rendering is only supported on web browsers");
+        }
+
         this.scenarioMarker.startScenario(TelemetryEvent.InitializePostChatRenderer, {
             RequestId: this.requestId
         });
 
         try {
-            let msfpEmbedScript = getMsfpEmbedScript();
-            let elm = document.createElement('div');
+            const msfpEmbedScript = getMsfpEmbedScript();
+            const elm = document.createElement('div');
             elm.innerHTML = msfpEmbedScript;
-            let scriptNodes = elm.getElementsByTagName('script');
-            let styleNodes = elm.getElementsByTagName('link');
+            const scriptNodes = elm.getElementsByTagName('script');
+            const styleNodes = elm.getElementsByTagName('link');
             for (let i = 0; i < scriptNodes.length; i++) {
-                let node = scriptNodes[i];
+                const node = scriptNodes[i];
                 if (node.src) {
-                    let tmpNode = document.createElement('script');
+                    const tmpNode = document.createElement('script');
                     tmpNode.type = node.type;
                     tmpNode.src = node.src;
                     tmpNode.async = false;
@@ -1605,7 +1618,7 @@ class OmnichannelChatSDK {
                     }
                 }
                 if (node.innerHTML) {
-                    let tmpNode = document.createElement('script');
+                    const tmpNode = document.createElement('script');
                     tmpNode.innerHTML = node.innerHTML;
                     tmpNode.async = false;
                     if (!window.document.head.contains(tmpNode)) {
@@ -1614,9 +1627,9 @@ class OmnichannelChatSDK {
                 }
             }
             for (let i = 0; i < styleNodes.length; i++) {
-                let node = styleNodes[i];
+                const node = styleNodes[i];
                 if (node.href) {
-                    let tmpNode = document.createElement('link');
+                    const tmpNode = document.createElement('link');
                     tmpNode.type = node.type;
                     tmpNode.rel = node.rel;
                     tmpNode.href = node.href;
@@ -1630,10 +1643,15 @@ class OmnichannelChatSDK {
                 RequestId: this.requestId,
                 ExceptionDetails: JSON.stringify(ex)
             });
+            return Promise.reject("Error occurred when initializer post chat renderer. " + JSON.stringify(ex));
         }
     }
 
     public async renderPostChatSurvey(containerId: string, postChatContext: PostChatContext): Promise<void> {
+        if (!isBrowser()) {
+            return Promise.reject("In-line rendering is only supported on web browsers");
+        }
+        
         this.scenarioMarker.startScenario(TelemetryEvent.RenderPostChatSurvey, {
             RequestId: this.requestId
         });
@@ -1644,15 +1662,16 @@ class OmnichannelChatSDK {
                     RequestId: this.requestId,
                     ExceptionDetails: "Post Chat Context is null."
                 });
-                return;
+                return Promise.reject("Post Chat Context is null.");
             }
 
-            await renderSurvey(containerId, postChatContext?.surveyInviteLink, "", "", postChatContext?.formsProLocale);
+            return await renderSurvey(containerId, postChatContext?.surveyInviteLink, "", "", postChatContext?.formsProLocale);
         } catch (ex) {
             this.scenarioMarker.failScenario(TelemetryEvent.RenderPostChatSurvey, {
                 RequestId: this.requestId,
                 ExceptionDetails: JSON.stringify(ex)
             });
+            return Promise.reject("Error occurred when rendering post chat survey. " + JSON.stringify(ex));
         }
     }
 
