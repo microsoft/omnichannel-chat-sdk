@@ -40,7 +40,7 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 | Screen Sharing | ✔ | Web Only |
 | Authenticated Chat | ✔ | ✔ |
 | Pre-chat Survey | ✔ | ✔ |
-| Post-chat Survey | ✔ | Web Only for In-line Render |
+| Post-chat Survey | ✔ | ✔ |
 | Queue Position | ✔ | ✔ |
 | Average Wait Time | ✔ | ✔ |
 | Download Transcript | ✔ | ✔ |
@@ -118,8 +118,6 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
 | OmnichannelChatSDK.createChatAdapter() | Get IC3Adapter | **Web only** |
 | OmnichannelChatSDK.getVoiceVideoCalling() | Get VoiceVideoCall SDK for Escalation to Voice & Video | **Web only** |
 | OmnichannelChatSDK.getPostChatSurveyContext() | Get post chat survey link and locale | |
-| OmnichannelChatSDK.initializePostChatRenderer() | Load necessary scripts and styles to render the FormsPro survey | **Web only** |
-| OmnichannelChatSDK.renderPostChatSurvey() | Render the FormsPro survey | **Web only** |
 
 
 ## API examples
@@ -198,31 +196,16 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
     const preChatSurvey = await getPreChatSurvey(parseToJSON); // Adaptive Cards payload data as string
 ```
 
-### Show PostChat Survey
-`Option 1: Directly use the survey link`
+### Get PostChat Survey
 ```ts
     try {
         const context = await chatSDK.getPostChatSurveyContext();
         if (context?.participantJoined) { // participantJoined will be true if an agent has joined the conversation, or a bot has joined the conversation and the bot survey flag has been turned on on the admin side.
             const linkToSend = context.surveyInviteLink + "&lang=" + context.formsProLocale;
-            // This link is accessible and will redirect to the survey in another tab. Use it as you see fit. 
+            // This link is accessible and will redirect to the survey in another tab. Use it as you see fit.
         }
     } catch (ex) {
         // If the post chat should not show by any reason (e.g. post chat is not enabled), promise will be rejected.
-    }
-```
-
-`Option 2: Render the FormsPro Survey in a specified container`
-```ts
-    await chatSDK.initializePostChatRenderer(); // This method is needed to embed FormsPro survey in the widget. It can be called anytime before actually rendering the survey for best performance of you page.
-
-    try {
-        const context = await chatSDK.getPostChatSurveyContext();
-        if (context?.participantJoined) {
-            await chatSDK?.renderPostChatSurvey('containerId', context); // The survey will be embedded in the element with Id "containerId"
-        }
-    } catch (ex) {
-        
     }
 ```
 

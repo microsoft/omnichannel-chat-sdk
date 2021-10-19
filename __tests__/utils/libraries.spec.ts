@@ -1,4 +1,4 @@
-import { getACSAdapterCDNUrl, getIC3AdapterCDNUrl, getIC3ClientCDNUrl, getMsfpEmbedScript } from "../../src/utils/libraries";
+import { getACSAdapterCDNUrl, getIC3AdapterCDNUrl, getIC3ClientCDNUrl } from "../../src/utils/libraries";
 
 describe('Libraries', () => {
     it('IC3Client should come from a production URL', () => {
@@ -17,13 +17,5 @@ describe('Libraries', () => {
         const productionUrl = "https://unpkg.com/acs_webchat-chat-adapter";
         const acsAdapterCDNUrl = getACSAdapterCDNUrl();
         expect(acsAdapterCDNUrl.includes(productionUrl)).toBe(true);
-    });
-
-    it('getMsfpEmbedScript should include definition of renderSurvey and the Embed script', () => {
-        const embedScript = "https://oc-cdn-ocprod.azureedge.net/livechatwidget/WebChatControl/lib/Embed.min.js";
-        const renderSurveyFunction = "function renderSurvey";
-        const msfpEmbedScript = getMsfpEmbedScript();
-        expect(msfpEmbedScript.includes(embedScript)).toBe(true);
-        expect(msfpEmbedScript.includes(renderSurveyFunction)).toBe(true);
     });
 });
