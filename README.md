@@ -117,8 +117,7 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
 | OmnichannelChatSDK.downloadFileAttachment() | Download file attachment | |
 | OmnichannelChatSDK.createChatAdapter() | Get IC3Adapter | **Web only** |
 | OmnichannelChatSDK.getVoiceVideoCalling() | Get VoiceVideoCall SDK for Escalation to Voice & Video | **Web only** |
-| OmnichannelChatSDK.getPostChatSurveyContext() | Get post chat survey link and locale | |
-
+| OmnichannelChatSDK.getPostChatSurveyContext() | Get post chat survey link, survey locale, and whether an agent has joined the survey | |
 
 ## API examples
 
@@ -200,12 +199,14 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
 ```ts
     try {
         const context = await chatSDK.getPostChatSurveyContext();
-        if (context?.participantJoined) { // participantJoined will be true if an agent has joined the conversation, or a bot has joined the conversation and the bot survey flag has been turned on on the admin side.
-            const linkToSend = context.surveyInviteLink + "&lang=" + context.formsProLocale;
-            // This link is accessible and will redirect to the survey in another tab. Use it as you see fit.
+        if (context.participantJoined) { // participantJoined will be true if an agent has joined the conversation, or a bot has joined the conversation and the bot survey flag has been turned on on the admin side.
+            // formsProLocale is the default language you have set on the CustomerVoice portal. You can override this url parameter with any locale that CustomerVoice supports.
+            // If "&lang=" is not set on the url, the locale will be English.
+            const linkToSend = context.surveyInviteLink + "&lang=" + context.formsProLocale; 
+            // This link is accessible and will redirect to the survey page. Use it as you see fit.
         }
     } catch (ex) {
-        // If the post chat should not show by any reason (e.g. post chat is not enabled), promise will be rejected.
+        // If the post chat should not be shown by any reason (e.g. post chat is not enabled), promise will be rejected.
     }
 ```
 
