@@ -8,10 +8,11 @@ import ChatHeader from '../ChatHeader/ChatHeader';
 import Calling from '../Calling/Calling';
 import ActionBar from '../ActionBar/ActionBar';
 import createCustomStore from './createCustomStore';
-import { createDataMaskingMiddleware } from './createDataMaskingMiddleware';
+import createDataMaskingMiddleware from './createDataMaskingMiddleware';
 import createActivityMiddleware from './createActivityMiddleware';
 import createAvatarMiddleware from './createAvatarMiddleware';
 import createActivityStatusMiddleware from './createActivityStatusMiddleware';
+import createChannelDataMiddleware from './createChannelDataMiddleware';
 import createTypingIndicatorMiddleware from './createTypingIndicatorMiddleware';
 import fetchOmnichannelConfig from '../../utils/fetchOmnichannelConfig';
 import fetchTelemetryConfig from '../../utils/fetchTelemetryConfig';
@@ -41,6 +42,7 @@ console.log(debugConfig);
 const activityMiddleware: any = createActivityMiddleware();
 const avatarMiddleware: any = createAvatarMiddleware();
 const activityStatusMiddleware: any = createActivityStatusMiddleware();
+const channelDataMiddleware: any = createChannelDataMiddleware();
 
 const styleOptions = {
   bubbleBorderRadius: 10,
@@ -151,6 +153,7 @@ function WebChat() {
     setWebChatStore(store.create());
 
     store.subscribe('DataMasking', createDataMaskingMiddleware(dataMaskingRules));
+    store.subscribe('ChannelData', channelDataMiddleware);
 
     // Check for active conversation in cache
     if (liveChatContext && Object.keys(JSON.parse(liveChatContext)).length > 0) {
