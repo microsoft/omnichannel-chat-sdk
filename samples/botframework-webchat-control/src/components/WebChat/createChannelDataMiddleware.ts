@@ -16,8 +16,8 @@ class ChannelDataMiddleware implements IWebChatMiddleware {
     }
 
     public apply(action: any): IResultAction {
-        const channelIdTag = `ChannelId-lcw`;
-        const customerMessageTag = `FromCustomer`;
+        const channelIdTag = `ChannelId-lcw`; // Tag for PVA bot to return proper response for live chat channel
+        const customerMessageTag = `FromCustomer`; // Tag to support transcript analytics feature
 
         const nextAction = action;
         if (nextAction.payload.activity.channelData.tags) {
