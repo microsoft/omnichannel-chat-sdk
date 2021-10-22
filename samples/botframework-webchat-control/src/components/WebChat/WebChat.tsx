@@ -1,3 +1,6 @@
+import * as AdaptiveCards from 'adaptivecards';
+import AdaptiveCardFieldsValidator from './AdaptiveCardFieldsValidator';
+import { CardElement, SerializationContext } from 'adaptivecards';
 import React, { useCallback, useEffect, useState, useContext } from 'react';
 import ReactWebChat from 'botframework-webchat';
 import { IRawMessage, OmnichannelChatSDK } from '@microsoft/omnichannel-chat-sdk';
@@ -19,7 +22,6 @@ import fetchTelemetryConfig from '../../utils/fetchTelemetryConfig';
 import fetchCallingConfig from '../../utils/fetchCallingConfig';
 import fetchDebugConfig from '../../utils/fetchDebugConfig';
 import transformLiveChatConfig, { ConfigurationManager } from '../../utils/transformLiveChatConfig';
-import * as AdaptiveCards from 'adaptivecards';
 import './WebChat.css';
 
 const omnichannelConfig: any = fetchOmnichannelConfig();
@@ -230,11 +232,28 @@ function WebChat() {
   }, [chatSDK]);
 
   const renderPreChatSurvey = useCallback(() => {
+    const validator = new AdaptiveCardFieldsValidator();
     const adaptiveCard = new AdaptiveCards.AdaptiveCard();
-    adaptiveCard.parse(preChatSurvey);
-    adaptiveCard.onExecuteAction = async (action: AdaptiveCards.Action) => { // Adaptive Card event handler
-        const preChatResponse = (action as any).data;
+    const context = new SerializationContext();
 
+    // Add custom validation handler on parsing every field
+    context.onParseElement = (element: CardElement, source: any, context: SerializationContext) => {
+      validator.attachFieldValidator(element, source, context);
+    }
+
+    adaptiveCard.parse(preChatSurvey, context);
+
+    adaptiveCard.onExecuteAction = async (action: AdaptiveCards.Action) => { // Adaptive Card event handler
+        const inputs = adaptiveCard.getAllInputs();
+        const canSubmitSurvey = validator.canSubmitSurvey(inputs);
+
+        console.log(`[canSubmitSurvey] ${canSubmitSurvey}`);
+
+        if (!canSubmitSurvey) {
+          return;
+        }
+
+        const preChatResponse = (action as any).data;
         setPreChatResponse(preChatResponse);
 
         const optionalParams: any = {};
