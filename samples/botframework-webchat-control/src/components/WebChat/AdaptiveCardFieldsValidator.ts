@@ -2,6 +2,7 @@ import { CardElement, Input, SerializationContext } from 'adaptivecards';
 
 const debug: boolean = true;
 const pushButtonSelector = "button.ac-pushButton";
+const errorAlertPrefix = 'error-alert';
 
 class RequiredFieldValidator {
 
@@ -25,9 +26,6 @@ class RequiredFieldValidator {
 }
 
 class AdaptiveCardFieldsValidator {
-    public constructor () {
-
-    }
 
     /**
      * Handler called on context.onParseElement() to add validators on every field.
@@ -62,9 +60,7 @@ class AdaptiveCardFieldsValidator {
      */
     public canSubmitSurvey(inputs: Input[]): boolean {
         debug && console.log('[onSubmit]');
-        const valid = inputs.every((input: Input) => {
-            return this.validateInput(input);
-        });
+        const valid = inputs.every((input: Input) => this.validateInput(input));
         return valid;
     }
 
@@ -86,18 +82,18 @@ class AdaptiveCardFieldsValidator {
     }
 
     /**
-     * Handler on changes in input.
+     * Handler to validate input
      *
      * @param input Input
-     * @returns
+     * @returns Whether input is valid or not
      */
-    private validateInput(input: any) {
+    private validateInput(input: any): boolean {
         debug && console.log(`[validateInput]`);
         debug && console.log(input);
 
         if (!input.validators.length) {
             input.isValid = () => true;
-            return;
+            return true;
         }
 
         const errors: any = [];
@@ -119,6 +115,20 @@ class AdaptiveCardFieldsValidator {
         }
     }
 
+    private createErrorElement(message: string, id: string) {
+        const divElement = document.createElement('div');
+        divElement.id = id;
+        divElement.innerHTML = `
+            <span style="font-size: 16px; color: #a80000">
+                &#9888;
+            </span>
+            <span style="font-size: 12px; color: #a80000">
+                ${message}
+            </span>
+        `;
+        return divElement;
+    }
+
     /**
      *  Renders list of errors in the DOM.
      *
@@ -130,18 +140,9 @@ class AdaptiveCardFieldsValidator {
 
         // Inject custom HTML elements with error messages
         errors.forEach((error: string) => {
-            const divElement = document.createElement('div');
-            divElement.id = `error-alert-${input.id}`;
-            divElement.innerHTML = `
-                <span style="font-size: 16px; color: #a80000">
-                    &#9888;
-                </span>
-                <span style="font-size: 12px; color: #a80000">
-                    ${error}
-                </span>
-            `;
-
-            input.renderedElement.parentNode.insertBefore(divElement, input.renderedElement.nextSibling);
+            const elementId = `${errorAlertPrefix}-${input.id}`;
+            const errorElement = this.createErrorElement(error, elementId);
+            input.renderedElement.parentNode.insertBefore(errorElement, input.renderedElement.nextSibling);
         });
     }
 
@@ -151,7 +152,7 @@ class AdaptiveCardFieldsValidator {
      * @param input Input
      */
     private removeErrors(input: any) {
-        const divElement = document.getElementById(`error-alert-${input.id}`);
+        const divElement = document.getElementById(`${errorAlertPrefix}-${input.id}`);
         divElement?.remove();
     }
 }
