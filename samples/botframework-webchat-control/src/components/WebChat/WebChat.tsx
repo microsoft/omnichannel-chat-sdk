@@ -15,6 +15,7 @@ import createDataMaskingMiddleware from './createDataMaskingMiddleware';
 import createActivityMiddleware from './createActivityMiddleware';
 import createAvatarMiddleware from './createAvatarMiddleware';
 import createActivityStatusMiddleware from './createActivityStatusMiddleware';
+import createAttachmentMiddleware from './createAttachmentMiddleware';
 import createChannelDataMiddleware from './createChannelDataMiddleware';
 import createTypingIndicatorMiddleware from './createTypingIndicatorMiddleware';
 import fetchOmnichannelConfig from '../../utils/fetchOmnichannelConfig';
@@ -44,6 +45,7 @@ console.log(debugConfig);
 const avatarMiddleware: any = createAvatarMiddleware();
 const activityStatusMiddleware: any = createActivityStatusMiddleware();
 const channelDataMiddleware: any = createChannelDataMiddleware();
+const attachmentMiddleware: any = createAttachmentMiddleware();
 
 let styleOptions = {
   bubbleBorderRadius: 10,
@@ -344,6 +346,7 @@ function WebChat() {
               avatarMiddleware={avatarMiddleware}
               activityStatusMiddleware={activityStatusMiddleware}
               typingIndicatorMiddleware={typingIndicatorMiddleware}
+              attachmentMiddleware={attachmentMiddleware}
               userID="teamsvisitor"
               directLine={chatAdapter}
               sendTypingIndicator={true}
