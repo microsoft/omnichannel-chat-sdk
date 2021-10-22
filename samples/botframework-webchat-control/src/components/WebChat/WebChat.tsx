@@ -158,7 +158,7 @@ function WebChat() {
 
     const activityMiddleware: any = createActivityMiddleware(() => {
       createWebChatStyleOptions({hideSendBox: true});
-      dispatch({type: ActionType.RERENDER_WEBCHAT, payload: true});
+      dispatch({type: ActionType.RERENDER_WEBCHAT, payload: true}); // Rerender webchat to hide SendBox on agent ending the conversation
     });
 
     setActivityMiddleware(() => activityMiddleware);
