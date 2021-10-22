@@ -218,7 +218,6 @@ function WebChat() {
     setShouldHideSendBox(false);
     localStorage.removeItem('liveChatContext');
     dispatch({type: ActionType.SET_CHAT_STARTED, payload: false});
-    dispatch({type: ActionType.RERENDER_WEBCHAT, payload: false});
   }, [chatSDK, dispatch, VoiceVideoCallingSDK]);
 
   const downloadTranscript = useCallback(async () => {
@@ -331,7 +330,7 @@ function WebChat() {
             />
           }
           {
-            ((!state.isLoading && state.hasChatStarted && chatAdapter && webChatStore && activityMiddleware && typingIndicatorMiddleware) || state.rerenderWebChat) && <ReactWebChat
+            !state.isLoading && state.hasChatStarted && chatAdapter && webChatStore && activityMiddleware && typingIndicatorMiddleware && <ReactWebChat
               activityMiddleware={activityMiddleware}
               avatarMiddleware={avatarMiddleware}
               activityStatusMiddleware={activityStatusMiddleware}
