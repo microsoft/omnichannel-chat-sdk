@@ -1,6 +1,6 @@
 import { CardElement, Input, SerializationContext } from 'adaptivecards';
 
-const debug: boolean = true;
+const debug: boolean = false;
 const pushButtonSelector = "button.ac-pushButton";
 const errorAlertPrefix = 'error-alert';
 
