@@ -4,13 +4,12 @@ enum ChannelDataType {
     THREAD = "Thread"
 }
 
-const handleThreadUpdate = (channelData: any, rerenderWebChat = () => {}) => {
+const handleThreadUpdate = (channelData: any) => {
     console.log(`%c [ActivityMiddleware][handleThreadUpdate]`, 'background: #2a9fd4; color: #fff');
     console.log(channelData);
-    rerenderWebChat();
 }
 
-const createActivityMiddleware = (rerenderWebChat = () => {}) => {
+const createActivityMiddleware = () => {
     console.log('[createActivityMiddleware]');
 
     // Middleware to customize default activity behavior
@@ -24,7 +23,7 @@ const createActivityMiddleware = (rerenderWebChat = () => {}) => {
 
                 if (card.activity.channelData && card.activity.channelData.type &&
                     card.activity.channelData.type === ChannelDataType.THREAD) {
-                    handleThreadUpdate(card.activity.channelData, rerenderWebChat);
+                    handleThreadUpdate(card.activity.channelData);
                 }
 
                 return () => false;

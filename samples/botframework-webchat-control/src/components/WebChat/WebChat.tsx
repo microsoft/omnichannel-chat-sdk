@@ -1,7 +1,7 @@
 import * as AdaptiveCards from 'adaptivecards';
 import AdaptiveCardFieldsValidator from './AdaptiveCardFieldsValidator';
 import { CardElement, SerializationContext } from 'adaptivecards';
-import React, { useCallback, useEffect, useState, useContext } from 'react';
+import React, { useCallback, useEffect, useState, useContext, useMemo } from 'react';
 import ReactWebChat from 'botframework-webchat';
 import { IRawMessage, OmnichannelChatSDK } from '@microsoft/omnichannel-chat-sdk';
 import { ActionType, Store } from '../../context';
@@ -43,11 +43,12 @@ console.log(`%c [debugConfig]`, 'background-color:#001433;color:#fff');
 console.log(debugConfig);
 
 const avatarMiddleware: any = createAvatarMiddleware();
+const activityMiddleware: any = createActivityMiddleware();
 const activityStatusMiddleware: any = createActivityStatusMiddleware();
 const channelDataMiddleware: any = createChannelDataMiddleware();
 const attachmentMiddleware: any = createAttachmentMiddleware();
 
-let styleOptions = {
+const defaultStyleOptions = {
   bubbleBorderRadius: 10,
   bubbleNubSize: 10,
   bubbleNubOffset: 15,
@@ -62,16 +63,6 @@ const patchAdaptiveCard = (adaptiveCard: any) => {
   return JSON.parse(adaptiveCard.replaceAll("&#42;", "*"));  // HTML entities '&#42;' is not unescaped for some reason
 }
 
-const createWebChatStyleOptions = (additionalStyleOptions: any = {}) => {
-  (styleOptions as any).hideUploadButton = !ConfigurationManager.canUploadAttachment;
-
-  if (additionalStyleOptions.hideSendBox) {
-    (styleOptions as any).hideSendBox = additionalStyleOptions.hideSendBox;
-  }
-
-  styleOptions = {...styleOptions};
-}
-
 function WebChat() {
   const {state, dispatch} = useContext(Store);
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
@@ -83,7 +74,7 @@ function WebChat() {
   const [chatToken, setChatToken] = useState(undefined);
   const [VoiceVideoCallingSDK, setVoiceVideoCallingSDK] = useState(undefined);
   const [typingIndicatorMiddleware, setTypingIndicatorMiddleware] = useState(undefined);
-  const [activityMiddleware, setActivityMiddleware] = useState(undefined);
+  const [shouldHideSendBox, setShouldHideSendBox] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -98,8 +89,6 @@ function WebChat() {
 
       const liveChatConfig = await chatSDK.getLiveChatConfig();
       transformLiveChatConfig(liveChatConfig);
-
-      createWebChatStyleOptions();
 
       const liveChatContext = localStorage.getItem('liveChatContext');
       if (liveChatContext && Object.keys(JSON.parse(liveChatContext)).length > 0) {
@@ -132,6 +121,12 @@ function WebChat() {
     init();
   }, []);
 
+  const styleOptions = useMemo(() => ({
+    ...defaultStyleOptions,
+    hideUploadButton: !ConfigurationManager.canUploadAttachment,
+    hideSendBox: shouldHideSendBox
+  }), [ConfigurationManager.canUploadAttachment, shouldHideSendBox]);
+
   const onNewMessage = useCallback((message: IRawMessage) => {
     console.log(`[onNewMessage] ${message.content}`);
     dispatch({type: ActionType.SET_LOADING, payload: false});
@@ -143,6 +138,7 @@ function WebChat() {
 
   const onAgentEndSession = useCallback(() => {
     console.log(`[onAgentEndSession]`);
+    setShouldHideSendBox(true);
   }, []);
 
   const startChat = useCallback(async (_, optionalParams = {}) => {
@@ -157,13 +153,6 @@ function WebChat() {
     });
 
     setTypingIndicatorMiddleware(() => typingIndicatorMiddleware);
-
-    const activityMiddleware: any = createActivityMiddleware(() => {
-      createWebChatStyleOptions({hideSendBox: true});
-      dispatch({type: ActionType.RERENDER_WEBCHAT, payload: true}); // Rerender webchat to hide SendBox on agent ending the conversation
-    });
-
-    setActivityMiddleware(() => activityMiddleware);
 
     const dataMaskingRules = await chatSDK?.getDataMaskingRules();
     const store = createCustomStore();
@@ -226,6 +215,7 @@ function WebChat() {
     setLiveChatContext(undefined);
     setPreChatSurvey(undefined);
     setPreChatResponse(undefined);
+    setShouldHideSendBox(false);
     localStorage.removeItem('liveChatContext');
     dispatch({type: ActionType.SET_CHAT_STARTED, payload: false});
     dispatch({type: ActionType.RERENDER_WEBCHAT, payload: false});

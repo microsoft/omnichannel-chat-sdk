@@ -5,8 +5,7 @@ enum ActionType {
   SET_MESSAGES,
   SET_TYPING,
   SET_AGENT_END_SESSION_EVENT,
-  SET_LOADING,
-  RERENDER_WEBCHAT,
+  SET_LOADING
 }
 
 interface IState {
@@ -14,8 +13,7 @@ interface IState {
   messages: any[],
   isTyping: boolean,
   agentEndSessionEvent: boolean,
-  isLoading: boolean,
-  rerenderWebChat: boolean
+  isLoading: boolean
 }
 
 interface StoreContext {
@@ -28,8 +26,7 @@ const initialState = {
   messages: [] as any,
   isTyping: false,
   agentEndSessionEvent: false,
-  isLoading: false,
-  rerenderWebChat: false,
+  isLoading: false
 };
 
 const Reducer = (state: any, action: any) => {
@@ -63,12 +60,6 @@ const Reducer = (state: any, action: any) => {
         ...state,
         type: action.type,
         isLoading: action.payload
-      }
-    case ActionType.RERENDER_WEBCHAT:
-      return {
-        ...state,
-        type: action.type,
-        rerenderWebChat: action.payload
       }
     default:
       return state;
