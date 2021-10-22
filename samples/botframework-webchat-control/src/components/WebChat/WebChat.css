@@ -15,9 +15,9 @@
     box-shadow: 0 0 15px 2px rgb(22, 27, 34, 0.3);
 }
 
-.webchat__basic-transcript {
+/* .webchat__basic-transcript {
     max-height: 478.4px;
-}
+} */
 
 .webchat__avatar {
     width: 32px;

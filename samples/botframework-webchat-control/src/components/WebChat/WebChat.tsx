@@ -41,12 +41,11 @@ console.log(callingConfig);
 console.log(`%c [debugConfig]`, 'background-color:#001433;color:#fff');
 console.log(debugConfig);
 
-const activityMiddleware: any = createActivityMiddleware();
 const avatarMiddleware: any = createAvatarMiddleware();
 const activityStatusMiddleware: any = createActivityStatusMiddleware();
 const channelDataMiddleware: any = createChannelDataMiddleware();
 
-const styleOptions = {
+let styleOptions = {
   bubbleBorderRadius: 10,
   bubbleNubSize: 10,
   bubbleNubOffset: 15,
@@ -61,8 +60,14 @@ const patchAdaptiveCard = (adaptiveCard: any) => {
   return JSON.parse(adaptiveCard.replaceAll("&#42;", "*"));  // HTML entities '&#42;' is not unescaped for some reason
 }
 
-const createWebChatStyleOptions = () => {
+const createWebChatStyleOptions = (additionalStyleOptions: any = {}) => {
   (styleOptions as any).hideUploadButton = !ConfigurationManager.canUploadAttachment;
+
+  if (additionalStyleOptions.hideSendBox) {
+    (styleOptions as any).hideSendBox = additionalStyleOptions.hideSendBox;
+  }
+
+  styleOptions = {...styleOptions};
 }
 
 function WebChat() {
@@ -76,6 +81,7 @@ function WebChat() {
   const [chatToken, setChatToken] = useState(undefined);
   const [VoiceVideoCallingSDK, setVoiceVideoCallingSDK] = useState(undefined);
   const [typingIndicatorMiddleware, setTypingIndicatorMiddleware] = useState(undefined);
+  const [activityMiddleware, setActivityMiddleware] = useState(undefined);
 
   useEffect(() => {
     const init = async () => {
@@ -150,6 +156,13 @@ function WebChat() {
 
     setTypingIndicatorMiddleware(() => typingIndicatorMiddleware);
 
+    const activityMiddleware: any = createActivityMiddleware(() => {
+      createWebChatStyleOptions({hideSendBox: true});
+      dispatch({type: ActionType.RERENDER_WEBCHAT, payload: true});
+    });
+
+    setActivityMiddleware(() => activityMiddleware);
+
     const dataMaskingRules = await chatSDK?.getDataMaskingRules();
     const store = createCustomStore();
     setWebChatStore(store.create());
@@ -213,6 +226,7 @@ function WebChat() {
     setPreChatResponse(undefined);
     localStorage.removeItem('liveChatContext');
     dispatch({type: ActionType.SET_CHAT_STARTED, payload: false});
+    dispatch({type: ActionType.RERENDER_WEBCHAT, payload: false});
   }, [chatSDK, dispatch, VoiceVideoCallingSDK]);
 
   const downloadTranscript = useCallback(async () => {
@@ -325,7 +339,7 @@ function WebChat() {
             />
           }
           {
-            !state.isLoading && state.hasChatStarted && chatAdapter && webChatStore && activityMiddleware && typingIndicatorMiddleware && <ReactWebChat
+            ((!state.isLoading && state.hasChatStarted && chatAdapter && webChatStore && activityMiddleware && typingIndicatorMiddleware) || state.rerenderWebChat) && <ReactWebChat
               activityMiddleware={activityMiddleware}
               avatarMiddleware={avatarMiddleware}
               activityStatusMiddleware={activityStatusMiddleware}
