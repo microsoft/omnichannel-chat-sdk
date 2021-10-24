@@ -114,3 +114,13 @@
     margin-right: 8px;
     animation-delay: .333s;
 }
+
+/* File attachments download icon */
+.webchat__fileContent__downloadIcon {
+    height: 14px;
+    width: 14px;
+}
+
+.webchat__fileContent {
+    padding: 5px 10px
+}

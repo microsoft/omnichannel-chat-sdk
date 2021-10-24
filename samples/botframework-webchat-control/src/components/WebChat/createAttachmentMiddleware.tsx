@@ -8,6 +8,18 @@ enum MimeTypes {
     UnknownFileType = "application/octet-stream"
 }
 
+const AttachmentContent = (props: any) => {
+    const style = {
+        fontSize: '14px'
+    }
+
+    return (
+        <div style={style}>
+            {props.children}
+        </div>
+    )
+};
+
 /**
  * Patch card with different attachment data.
  * @param card
@@ -64,7 +76,9 @@ const createAttachmentMiddleware = () => {
             return (
                 <div>
                     {card && next(card)}
-                    {patchedCard && next(patchedCard)}
+                    <AttachmentContent>
+                        {patchedCard && next(patchedCard)}
+                    </AttachmentContent>
                 </div>
             )
         }
@@ -76,13 +90,19 @@ const createAttachmentMiddleware = () => {
                 return (
                     <div>
                         {card && next(card)}
-                        {patchedCard && next(patchedCard)}
+                        <AttachmentContent>
+                            {patchedCard && next(patchedCard)}
+                        </AttachmentContent>
                     </div>
                 )
             }
         }
 
-        return next(card);
+        return (
+            <AttachmentContent>
+                {next(card)}
+            </AttachmentContent>
+        )
     }
 
     return attachmentMiddleware;
