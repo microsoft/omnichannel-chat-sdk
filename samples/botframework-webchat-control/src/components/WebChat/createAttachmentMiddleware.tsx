@@ -1,3 +1,5 @@
+import AttachmentContent from "../Attachment/AttachmentContent";
+import AttachmentIcon from "../Attachment/AttachmentIcon";
 import { DIRECT_LINE_INCOMING_ACTIVITY } from "./ActionTypes";
 
 const imageRegex = /(\.)(jpeg|jpg|jiff|png|gif|bmp)$/i;
@@ -7,18 +9,6 @@ const videoMediaRegex = /(\.)(avchd|avi|flv|mpe|mpeg|mpg|mpv|mp4|m4p|m4v|mov|qt|
 enum MimeTypes {
     UnknownFileType = "application/octet-stream"
 }
-
-const AttachmentContent = (props: any) => {
-    const style = {
-        fontSize: '14px'
-    }
-
-    return (
-        <div style={style}>
-            {props.children}
-        </div>
-    )
-};
 
 /**
  * Patch card with different attachment data.
@@ -77,6 +67,7 @@ const createAttachmentMiddleware = () => {
                 <div>
                     {card && next(card)}
                     <AttachmentContent>
+                        <AttachmentIcon name={attachment.name}/>
                         {patchedCard && next(patchedCard)}
                     </AttachmentContent>
                 </div>
@@ -91,6 +82,7 @@ const createAttachmentMiddleware = () => {
                     <div>
                         {card && next(card)}
                         <AttachmentContent>
+                            <AttachmentIcon name={attachment.name}/>
                             {patchedCard && next(patchedCard)}
                         </AttachmentContent>
                     </div>
@@ -100,6 +92,7 @@ const createAttachmentMiddleware = () => {
 
         return (
             <AttachmentContent>
+                <AttachmentIcon name={attachment.name}/>
                 {next(card)}
             </AttachmentContent>
         )
