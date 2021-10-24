@@ -55,7 +55,6 @@ const createAttachmentMiddleware = () => {
             attachment.contentUrl = attachment.tempContentUrl;
         }
 
-        const fileExtension = attachment.name.substring(attachment.name.lastIndexOf('.') + 1, attachment.name.length) || attachment.name;
         const imageExtension = imageRegex.test(attachment.name);
         const audioExtension = audioMediaRegex.test(attachment.name);
         const videoExtension = videoMediaRegex.test(attachment.name);
