@@ -53,6 +53,7 @@ const createAttachmentMiddleware = () => {
             attachment.contentUrl = attachment.tempContentUrl;
         }
 
+        const fileExtension = attachment.name.substring(attachment.name.lastIndexOf('.') + 1, attachment.name.length) || attachment.name;
         const imageExtension = imageRegex.test(attachment.name);
         const audioExtension = audioMediaRegex.test(attachment.name);
         const videoExtension = videoMediaRegex.test(attachment.name);
@@ -70,7 +71,6 @@ const createAttachmentMiddleware = () => {
 
         // Renders custom component on audio/video files
         if (audioExtension || videoExtension) {
-            console.log("audioExtension/videoExtension");
             if (card.activity.actionType && card.activity.actionType === DIRECT_LINE_INCOMING_ACTIVITY) {
                 const patchedCard = patchAttachment(card, { contentType: MimeTypes.UnknownFileType, thumbnailUrl: undefined });
                 return (
