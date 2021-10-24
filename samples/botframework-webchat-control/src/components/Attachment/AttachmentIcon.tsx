@@ -154,11 +154,11 @@ const getIcon = (extension: string, iconSize = 14) => {
     return icon;
 }
 
-interface propsIconProps {
+interface AttachmentIconProps {
     name: string;
 }
 
-const AttachmentIcon = (props: propsIconProps) => {
+const AttachmentIcon = (props: AttachmentIconProps) => {
     const fileExtension = props.name.substring(props.name.lastIndexOf('.') + 1, props.name.length) || props.name;
     const style = {
         padding: '0 0 0 8px'
