@@ -311,7 +311,7 @@ function WebChat() {
         }
       </div>
       {
-        state.hasChatStarted && <div className="chat-container">
+        state.hasChatStarted && <div className={shouldHideSendBox? `chat-container noSendBox`: `chat-container`}>
           <ChatHeader
             title={'Live Chat via Chat SDK'}
             onClick={endChat}
