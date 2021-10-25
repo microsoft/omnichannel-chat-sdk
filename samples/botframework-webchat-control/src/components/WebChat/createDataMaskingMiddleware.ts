@@ -69,6 +69,4 @@ const createDataMaskingMiddleware = (chatConfig: any) => {
     return new DataMaskingMiddleware(chatConfig);
 };
 
-export {
-    createDataMaskingMiddleware
-}
+export default createDataMaskingMiddleware;

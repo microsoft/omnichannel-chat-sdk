@@ -15,6 +15,10 @@
     box-shadow: 0 0 15px 2px rgb(22, 27, 34, 0.3);
 }
 
+.chat-container.noSendBox .webchat__basic-transcript {
+    max-height: 519px;
+}
+
 .webchat__basic-transcript {
     max-height: 478.4px;
 }
@@ -113,4 +117,15 @@
 .webchat__typingIndicator .bubble:nth-child(3) {
     margin-right: 8px;
     animation-delay: .333s;
+}
+
+/* File attachments download icon */
+.webchat__fileContent__downloadIcon {
+    height: 14px;
+    width: 14px;
+}
+
+.webchat__fileContent {
+    padding: 5px 10px;
+    flex-grow: 1;
 }

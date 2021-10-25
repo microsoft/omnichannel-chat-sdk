@@ -1,4 +1,7 @@
-import React, { useCallback, useEffect, useState, useContext } from 'react';
+import * as AdaptiveCards from 'adaptivecards';
+import AdaptiveCardFieldsValidator from './AdaptiveCardFieldsValidator';
+import { CardElement, SerializationContext } from 'adaptivecards';
+import React, { useCallback, useEffect, useState, useContext, useMemo } from 'react';
 import ReactWebChat from 'botframework-webchat';
 import { IRawMessage, OmnichannelChatSDK } from '@microsoft/omnichannel-chat-sdk';
 import { ActionType, Store } from '../../context';
@@ -8,17 +11,18 @@ import ChatHeader from '../ChatHeader/ChatHeader';
 import Calling from '../Calling/Calling';
 import ActionBar from '../ActionBar/ActionBar';
 import createCustomStore from './createCustomStore';
-import { createDataMaskingMiddleware } from './createDataMaskingMiddleware';
+import createDataMaskingMiddleware from './createDataMaskingMiddleware';
 import createActivityMiddleware from './createActivityMiddleware';
 import createAvatarMiddleware from './createAvatarMiddleware';
 import createActivityStatusMiddleware from './createActivityStatusMiddleware';
+import createAttachmentMiddleware from './createAttachmentMiddleware';
+import createChannelDataMiddleware from './createChannelDataMiddleware';
 import createTypingIndicatorMiddleware from './createTypingIndicatorMiddleware';
 import fetchOmnichannelConfig from '../../utils/fetchOmnichannelConfig';
 import fetchTelemetryConfig from '../../utils/fetchTelemetryConfig';
 import fetchCallingConfig from '../../utils/fetchCallingConfig';
 import fetchDebugConfig from '../../utils/fetchDebugConfig';
 import transformLiveChatConfig, { ConfigurationManager } from '../../utils/transformLiveChatConfig';
-import * as AdaptiveCards from 'adaptivecards';
 import './WebChat.css';
 
 const omnichannelConfig: any = fetchOmnichannelConfig();
@@ -38,11 +42,13 @@ console.log(callingConfig);
 console.log(`%c [debugConfig]`, 'background-color:#001433;color:#fff');
 console.log(debugConfig);
 
-const activityMiddleware: any = createActivityMiddleware();
 const avatarMiddleware: any = createAvatarMiddleware();
+const activityMiddleware: any = createActivityMiddleware();
 const activityStatusMiddleware: any = createActivityStatusMiddleware();
+const channelDataMiddleware: any = createChannelDataMiddleware();
+const attachmentMiddleware: any = createAttachmentMiddleware();
 
-const styleOptions = {
+const defaultStyleOptions = {
   bubbleBorderRadius: 10,
   bubbleNubSize: 10,
   bubbleNubOffset: 15,
@@ -57,10 +63,6 @@ const patchAdaptiveCard = (adaptiveCard: any) => {
   return JSON.parse(adaptiveCard.replaceAll("&#42;", "*"));  // HTML entities '&#42;' is not unescaped for some reason
 }
 
-const createWebChatStyleOptions = () => {
-  (styleOptions as any).hideUploadButton = !ConfigurationManager.canUploadAttachment;
-}
-
 function WebChat() {
   const {state, dispatch} = useContext(Store);
   const [chatSDK, setChatSDK] = useState<OmnichannelChatSDK>();
@@ -72,6 +74,7 @@ function WebChat() {
   const [chatToken, setChatToken] = useState(undefined);
   const [VoiceVideoCallingSDK, setVoiceVideoCallingSDK] = useState(undefined);
   const [typingIndicatorMiddleware, setTypingIndicatorMiddleware] = useState(undefined);
+  const [shouldHideSendBox, setShouldHideSendBox] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -86,8 +89,6 @@ function WebChat() {
 
       const liveChatConfig = await chatSDK.getLiveChatConfig();
       transformLiveChatConfig(liveChatConfig);
-
-      createWebChatStyleOptions();
 
       const liveChatContext = localStorage.getItem('liveChatContext');
       if (liveChatContext && Object.keys(JSON.parse(liveChatContext)).length > 0) {
@@ -120,6 +121,12 @@ function WebChat() {
     init();
   }, []);
 
+  const styleOptions = useMemo(() => ({
+    ...defaultStyleOptions,
+    hideUploadButton: !ConfigurationManager.canUploadAttachment,
+    hideSendBox: shouldHideSendBox
+  }), [ConfigurationManager.canUploadAttachment, shouldHideSendBox]);
+
   const onNewMessage = useCallback((message: IRawMessage) => {
     console.log(`[onNewMessage] ${message.content}`);
     dispatch({type: ActionType.SET_LOADING, payload: false});
@@ -131,6 +138,7 @@ function WebChat() {
 
   const onAgentEndSession = useCallback(() => {
     console.log(`[onAgentEndSession]`);
+    setShouldHideSendBox(true);
   }, []);
 
   const startChat = useCallback(async (_, optionalParams = {}) => {
@@ -151,6 +159,7 @@ function WebChat() {
     setWebChatStore(store.create());
 
     store.subscribe('DataMasking', createDataMaskingMiddleware(dataMaskingRules));
+    store.subscribe('ChannelData', channelDataMiddleware);
 
     // Check for active conversation in cache
     if (liveChatContext && Object.keys(JSON.parse(liveChatContext)).length > 0) {
@@ -206,6 +215,7 @@ function WebChat() {
     setLiveChatContext(undefined);
     setPreChatSurvey(undefined);
     setPreChatResponse(undefined);
+    setShouldHideSendBox(false);
     localStorage.removeItem('liveChatContext');
     dispatch({type: ActionType.SET_CHAT_STARTED, payload: false});
   }, [chatSDK, dispatch, VoiceVideoCallingSDK]);
@@ -227,11 +237,28 @@ function WebChat() {
   }, [chatSDK]);
 
   const renderPreChatSurvey = useCallback(() => {
+    const validator = new AdaptiveCardFieldsValidator();
     const adaptiveCard = new AdaptiveCards.AdaptiveCard();
-    adaptiveCard.parse(preChatSurvey);
-    adaptiveCard.onExecuteAction = async (action: AdaptiveCards.Action) => { // Adaptive Card event handler
-        const preChatResponse = (action as any).data;
+    const context = new SerializationContext();
 
+    // Add custom validation handler on parsing every field
+    context.onParseElement = (element: CardElement, source: any, context: SerializationContext) => {
+      validator.attachFieldValidator(element, source, context);
+    }
+
+    adaptiveCard.parse(preChatSurvey, context);
+
+    adaptiveCard.onExecuteAction = async (action: AdaptiveCards.Action) => { // Adaptive Card event handler
+        const inputs = adaptiveCard.getAllInputs();
+        const canSubmitSurvey = validator.canSubmitSurvey(inputs);
+
+        console.log(`[canSubmitSurvey] ${canSubmitSurvey}`);
+
+        if (!canSubmitSurvey) {
+          return;
+        }
+
+        const preChatResponse = (action as any).data;
         setPreChatResponse(preChatResponse);
 
         const optionalParams: any = {};
@@ -284,7 +311,7 @@ function WebChat() {
         }
       </div>
       {
-        state.hasChatStarted && <div className="chat-container">
+        state.hasChatStarted && <div className={shouldHideSendBox? `chat-container noSendBox`: `chat-container`}>
           <ChatHeader
             title={'Live Chat via Chat SDK'}
             onClick={endChat}
@@ -308,6 +335,7 @@ function WebChat() {
               avatarMiddleware={avatarMiddleware}
               activityStatusMiddleware={activityStatusMiddleware}
               typingIndicatorMiddleware={typingIndicatorMiddleware}
+              attachmentMiddleware={attachmentMiddleware}
               userID="teamsvisitor"
               directLine={chatAdapter}
               sendTypingIndicator={true}

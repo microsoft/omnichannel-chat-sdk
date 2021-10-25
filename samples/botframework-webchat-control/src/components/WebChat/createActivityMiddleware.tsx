@@ -1,3 +1,14 @@
+import DirectLineSenderRole from "./DirectLineSenderRole";
+
+enum ChannelDataType {
+    THREAD = "Thread"
+}
+
+const handleThreadUpdate = (channelData: any) => {
+    console.log(`%c [ActivityMiddleware][handleThreadUpdate]`, 'background: #2a9fd4; color: #fff');
+    console.log(channelData);
+}
+
 const createActivityMiddleware = () => {
     console.log('[createActivityMiddleware]');
 
@@ -7,6 +18,16 @@ const createActivityMiddleware = () => {
         console.log(card);
 
         if (card.activity) {
+            if (card.activity.from &&
+                card.activity.from.role === DirectLineSenderRole.Channel) {
+
+                if (card.activity.channelData && card.activity.channelData.type &&
+                    card.activity.channelData.type === ChannelDataType.THREAD) {
+                    handleThreadUpdate(card.activity.channelData);
+                }
+
+                return () => false;
+            }
 
             // System message
             if (card.activity.channelData && card.activity.channelData.tags &&

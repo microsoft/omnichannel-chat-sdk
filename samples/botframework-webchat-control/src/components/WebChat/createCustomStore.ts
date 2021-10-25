@@ -1,7 +1,9 @@
 import {createStore} from 'botframework-webchat';
 import {IMiddlewareCollection} from '../../interfaces/IMiddlewareCollection';
 import {IWebChatMiddleware} from '../../interfaces/IWebChatMiddleware';
+import { DIRECT_LINE_INCOMING_ACTIVITY } from './ActionTypes';
 
+const ActionType = "actionType";
 class CustomStore {
     private static _instance: CustomStore;
     private middlewares: IMiddlewareCollection;
@@ -28,6 +30,14 @@ class CustomStore {
             {}, // initial state
             ({ dispatch }: any) => (next: any) => (action: any) => {
                 // console.log(`[Store] ${action.type}`);
+
+                if (action.type === DIRECT_LINE_INCOMING_ACTIVITY) {
+                    const { activity } = action.payload;
+                    if (activity) {
+                        action.payload.activity[ActionType] = DIRECT_LINE_INCOMING_ACTIVITY;
+                    }
+                }
+
                 let nextAction = action;
                 if (action && action.payload) {
                     for (const name of Object.keys(this.middlewares)) {
