@@ -10,7 +10,7 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
   },
   "dependencies": {
-    "@microsoft/omnichannel-chat-sdk": "^0.3.1-main.dcd02d3",
+    "@microsoft/omnichannel-chat-sdk": "^1.0.0",
     "adaptivecards-reactnative": "^2.2.14",
     "buffer": "^6.0.3",
     "react": "16.9.0",
@@ -35,7 +35,10 @@
     "eslint": "^6.5.1",
     "jest": "^24.9.0",
     "metro-react-native-babel-preset": "^0.56.0",
+    "node-libs-react-native": "^1.2.1",
     "prettier": "^1.19.1",
+    "react-native-get-random-values": "^1.7.0",
+    "react-native-randombytes": "^3.6.1",
     "react-test-renderer": "16.9.0",
     "typescript": "^3.9.10"
   },
