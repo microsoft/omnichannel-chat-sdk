@@ -90,6 +90,16 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
     npm install react-native-randombytes --save-dev
     ```
 
+1. Install `react-native-get-random-values`
+    ```
+    npm install react-native-get-random-values --save-dev
+    ```
+
+1. Import `react-native-get-random-values` on top of your entry point file
+    ```ts
+    import 'react-native-get-random-values';
+    ```
+
 ## API Reference
 
 | Method | Description | Notes |
@@ -205,7 +215,7 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
         const context = await chatSDK.getPostChatSurveyContext();
         if (context?.participantJoined) { // participantJoined will be true if an agent has joined the conversation, or a bot has joined the conversation and the bot survey flag has been turned on on the admin side.
             const linkToSend = context.surveyInviteLink + "&lang=" + context.formsProLocale;
-            // This link is accessible and will redirect to the survey in another tab. Use it as you see fit. 
+            // This link is accessible and will redirect to the survey in another tab. Use it as you see fit.
         }
     } catch (ex) {
         // If the post chat should not show by any reason (e.g. post chat is not enabled), promise will be rejected.
@@ -222,7 +232,7 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
             await chatSDK?.renderPostChatSurvey('containerId', context); // The survey will be embedded in the element with Id "containerId"
         }
     } catch (ex) {
-        
+
     }
 ```
 
