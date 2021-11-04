@@ -10,20 +10,20 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
   },
   "dependencies": {
-    "@microsoft/omnichannel-chat-sdk": "^0.3.1-main.dcd02d3",
-    "adaptivecards-reactnative": "^2.2.2",
+    "@microsoft/omnichannel-chat-sdk": "^1.0.0",
+    "adaptivecards-reactnative": "^2.2.14",
     "buffer": "^6.0.3",
     "react": "16.9.0",
     "react-native": "0.61.5",
     "react-native-document-picker": "^4.2.0",
-    "react-native-dotenv": "^2.4.3",
+    "react-native-dotenv": "^2.6.2",
     "react-native-fs": "^2.16.6",
     "react-native-gifted-chat": "^0.16.3",
     "react-native-navigation": "^7.12.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.6.2",
-    "@babel/runtime": "^7.6.2",
+    "@babel/core": "^7.16.0",
+    "@babel/runtime": "^7.16.0",
     "@react-native-community/eslint-config": "^0.0.7",
     "@types/jest": "^24.0.24",
     "@types/react-native": "^0.61.15",
@@ -35,9 +35,12 @@
     "eslint": "^6.5.1",
     "jest": "^24.9.0",
     "metro-react-native-babel-preset": "^0.56.0",
+    "node-libs-react-native": "^1.2.1",
     "prettier": "^1.19.1",
+    "react-native-get-random-values": "^1.7.0",
+    "react-native-randombytes": "^3.6.1",
     "react-test-renderer": "16.9.0",
-    "typescript": "^3.7.3"
+    "typescript": "^3.9.10"
   },
   "jest": {
     "preset": "react-native",

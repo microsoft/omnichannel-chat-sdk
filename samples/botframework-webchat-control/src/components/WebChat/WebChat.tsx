@@ -175,7 +175,7 @@ function WebChat() {
 
       try {
         await chatSDK?.startChat(optionalParams);
-      } catch (error) {
+      } catch (error: any) {
         console.log(`Unable to start chat: ${error.message}`);
         return;
       }
@@ -270,7 +270,7 @@ function WebChat() {
 
         try {
           await chatSDK?.startChat(optionalParams);
-        } catch (error) {
+        } catch (error: any) {
           console.log(`Unable to start chat: ${error.message}`);
           return;
         }
