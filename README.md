@@ -36,13 +36,11 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 | Web Support | ✔ | ✔ |
 | React Native Support | ❌ | ✔ |
 | Escalation to Voice & Video | ✔ | ✔ | Only supported on Web |
-| Co-browse | ✔ | BYOI **\*** | Only supported on Web |
-| Screen Sharing | ✔ | BYOI **\*** | Only supported on Web |
+| Co-browse | ✔ | 3rd party add-on | Only supported on Web |
+| Screen Sharing | ✔ | 3rd party add-on | Only supported on Web |
 | Authenticated Chat | ✔ | ✔ |
 | Pre-chat Survey | ✔ | ✔ |
 | Post-chat Survey | ✔ | ❌ |
-| Queue Position | ✔ | ✔ |  No SDK method. Handled as *system message* |
-| Average Wait Time | ✔ | ✔ | No SDK method. Handled as *system message* |
 | Download Transcript | ✔ | ✔ |
 | Email Transcript | ✔ | ✔ |
 | Data Masking | ✔ | ✔ |
@@ -52,6 +50,8 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 | Persistent Chat | ✔ | ✔ |
 | Chat Reconnect | ✔ | ✔ |
 | Operating Hours | ✔ | ✔ |
+| Queue Position | ✔ | ✔ | No SDK method. Handled as *system message* |
+| Average Wait Time | ✔ | ✔ | No SDK method. Handled as *system message* |
 
 **\*** BYOI: Bring Your Own Implementation
 
