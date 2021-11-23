@@ -14,7 +14,7 @@ Please make sure you have a chat widget configured before using this package or 
 - [Installation on React Native](#installation-on-react-native)
 - [API Reference](#api-reference)
 - [API Examples](#api-examples)
-- [Sample Apps](samples/)
+- [Sample Apps](https://github.com/microsoft/omnichannel-chat-sdk-samples)
 - [Common Scenarios](#common-scenarios)
 - [Feature Comparisons](#feature-comparisons)
 - [Telemetry](#telemetry)
