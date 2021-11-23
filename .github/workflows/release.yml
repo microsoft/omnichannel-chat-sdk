@@ -67,5 +67,5 @@ jobs:
       - name: Run npm publish ${{ steps.read-package-json.outputs.name }}@${{ steps.read-package-json.outputs.version }}
         run: |
           npm config set //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
-          npm publish *.tgz --tag master --access public
+          npm publish *.tgz --tag main --access public
           npm dist-tag add ${{ steps.read-package-json.outputs.name }}@${{ steps.read-package-json.outputs.version }} latest
