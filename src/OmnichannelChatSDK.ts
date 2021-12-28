@@ -821,8 +821,18 @@ class OmnichannelChatSDK {
         message.content = content;
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
-            const sendMessageRequest = {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const sendMessageRequest: any = {
                 content: message.content,
+            }
+
+            sendMessageRequest.metadata = {
+                widgetId: this.omnichannelConfig.widgetId,
+                clientMessageId: Date.now().toString()
+            }
+
+            if (message.metadata) {
+                sendMessageRequest.metadata = {...sendMessageRequest.metadata, ...message.metadata};
             }
 
             try {
@@ -1168,6 +1178,8 @@ class OmnichannelChatSDK {
             const sendMessageRequest = {
                 content: '',
                 metadata:  {
+                    widgetId: this.omnichannelConfig.widgetId,
+                    clientMessageId: Date.now().toString(),
                     ...fileIdsProperty,
                     ...fileMetaProperty
                 }
