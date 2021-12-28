@@ -2,7 +2,6 @@ const createFormatEgressTagsMiddleware = (): CallableFunction => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const formatEgressTagsMiddleware = () => (next: any) => (activity: any) => {
         const patchedActivity = JSON.parse(JSON.stringify(activity));
-
         if (patchedActivity) {
             if (patchedActivity.channelData && patchedActivity.channelData.tags) {
                 const { tags } = patchedActivity.channelData;
