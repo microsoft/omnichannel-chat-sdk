@@ -7,7 +7,6 @@ import {SDKProvider as OCSDKProvider, uuidv4} from "@microsoft/ocsdk";
 import libraries, { getMsfpEmbedScript } from "./utils/libraries";
 import platform, { isBrowser } from "./utils/platform";
 import validateSDKConfig, {defaultChatSDKConfig} from "./validators/SDKConfigValidators";
-
 import ACSParticipantDisplayName from "./core/messaging/ACSParticipantDisplayName";
 import AMSFileManager from "./external/ACSAdapter/AMSFileManager";
 import AriaTelemetry from "./telemetry/AriaTelemetry";
@@ -1381,9 +1380,9 @@ class OmnichannelChatSDK {
         if (protocol === ChatAdapterProtocols.ACS || this.liveChatVersion === LiveChatVersion.V2) {
             return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
                 const featuresOption = {
-                    enableAdaptiveCards: false,
-                    enableThreadMemberUpdateNotification: true,
-                    enableLeaveThreadOnWindowClosed: false
+                    enableAdaptiveCards: true, // Whether to enable adaptive card payload in adapter (payload in JSON string)
+                    enableThreadMemberUpdateNotification: true, // Whether to enable chat thread member join/leave notification
+                    enableLeaveThreadOnWindowClosed: false // Whether to remove user on browser close event
                 };
 
                 const acsAdapterCDNUrl = this.resolveChatAdapterUrl(protocol || ChatAdapterProtocols.ACS);
@@ -1406,6 +1405,7 @@ class OmnichannelChatSDK {
                             1000,
                             ACSParticipantDisplayName.Customer,
                             undefined,
+                            undefined, // logger
                             featuresOption,
                         );
 
@@ -1533,7 +1533,7 @@ class OmnichannelChatSDK {
                 const optionalParams: any = { // eslint-disable-line @typescript-eslint/no-explicit-any
                     "requestId": this.requestId
                 };
-                
+
                 if (this.authenticatedUserToken) {
                     optionalParams.authenticatedUserToken = this.authenticatedUserToken;
                 }
@@ -1651,7 +1651,7 @@ class OmnichannelChatSDK {
         if (!isBrowser()) {
             return Promise.reject("In-line rendering is only supported on web browsers");
         }
-        
+
         this.scenarioMarker.startScenario(TelemetryEvent.RenderPostChatSurvey, {
             RequestId: this.requestId
         });
