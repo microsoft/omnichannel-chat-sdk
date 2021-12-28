@@ -20,6 +20,8 @@ import ChatSDKConfig from "./core/ChatSDKConfig";
 import ChatSDKMessage from "./core/messaging/ChatSDKMessage";
 import ChatTranscriptBody from "./core/ChatTranscriptBody";
 import ConversationMode from "./core/ConversationMode";
+import createFormatEgressTagsMiddleware from "./external/ACSAdapter/createFormatEgressTagsMiddleware";
+import createFormatIngressTagsMiddleware from "./external/ACSAdapter/createFormatIngressTagsMiddleware";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/FileSharingProtocolType";
@@ -1379,10 +1381,14 @@ class OmnichannelChatSDK {
 
         if (protocol === ChatAdapterProtocols.ACS || this.liveChatVersion === LiveChatVersion.V2) {
             return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
+                const egressMiddlewares = [createFormatEgressTagsMiddleware()];
+                const ingressMiddlewares = [createFormatIngressTagsMiddleware()];
                 const featuresOption = {
                     enableAdaptiveCards: true, // Whether to enable adaptive card payload in adapter (payload in JSON string)
                     enableThreadMemberUpdateNotification: true, // Whether to enable chat thread member join/leave notification
-                    enableLeaveThreadOnWindowClosed: false // Whether to remove user on browser close event
+                    enableLeaveThreadOnWindowClosed: false, // Whether to remove user on browser close event
+                    egressMiddleware: egressMiddlewares,
+                    ingressMiddleware: ingressMiddlewares
                 };
 
                 const acsAdapterCDNUrl = this.resolveChatAdapterUrl(protocol || ChatAdapterProtocols.ACS);
