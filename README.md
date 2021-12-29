@@ -100,6 +100,16 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
     import 'react-native-get-random-values';
     ```
 
+1. Install `react-native-url-polyfill`
+    ```
+        npm install react-native-url-polyfill --save-dev
+    ```
+
+1. Import `react-native-url-polyfill` on top of your entry point file
+    ```ts
+    import 'react-native-url-polyfill';
+    ```
+
 ## API Reference
 
 | Method | Description | Notes |
