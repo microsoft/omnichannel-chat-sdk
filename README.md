@@ -65,7 +65,26 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 
 The following steps will be required to run Omnichannel Chat SDK on React Native:
 
-1. Run `npm install node-libs-react-native --save-dev`
+1. Install `node-libs-react-native`
+    ```
+    npm install node-libs-react-native --save-dev
+    ```
+
+1. Install `react-native-randomBytes`
+    ```
+    npm install react-native-randombytes --save-dev
+    ```
+
+1. Install `react-native-get-random-values`
+    ```
+    npm install react-native-get-random-values --save-dev
+    ```
+
+1. Install `react-native-url-polyfill`
+    ```
+    npm install react-native-url-polyfill --save-dev
+    ```
+
 1. Update *metro.config.js* to use React Native compatible Node Core modules
     ```ts
     module.exports = {
@@ -80,24 +99,11 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
     };
     ```
 
-1. Import 'node-libs-react-native/globals' on top of your entry point file
+1. Add following *import* on top of your entry point file
     ```ts
     import 'node-libs-react-native/globals';
-    ```
-
-1. Install `react-native-randomBytes`
-    ```
-    npm install react-native-randombytes --save-dev
-    ```
-
-1. Install `react-native-get-random-values`
-    ```
-    npm install react-native-get-random-values --save-dev
-    ```
-
-1. Import `react-native-get-random-values` on top of your entry point file
-    ```ts
     import 'react-native-get-random-values';
+    import 'react-native-url-polyfill';
     ```
 
 ## API Reference
