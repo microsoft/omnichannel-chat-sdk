@@ -4,9 +4,8 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
-- Add Post Chat Survey Support
-- Add `getPostChatSurveyContext` & `initializePostChatRenderer` and `renderPostChatSurvey` API methods
-- Add `GetPostChatSurveyContext`, `RenderPostChatSurvey`, and `InitializePostChatRenderer` telemetry events
+- Add `getPostChatSurveyContext` API method
+- Add `GetPostChatSurveyContext` telemetry event
 - Add `widgetId` & `clientMessageId` as metadata on sending message
 
 ### Fix

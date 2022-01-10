@@ -4,7 +4,6 @@ import { ACSAdapterLogger, ACSClientLogger, IC3ClientLogger, OCSDKLogger, create
 import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
 import { ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import {SDKProvider as OCSDKProvider, uuidv4} from "@microsoft/ocsdk";
-import libraries, { getMsfpEmbedScript } from "./utils/libraries";
 import platform, { isBrowser } from "./utils/platform";
 import validateSDKConfig, {defaultChatSDKConfig} from "./validators/SDKConfigValidators";
 import ACSParticipantDisplayName from "./core/messaging/ACSParticipantDisplayName";
@@ -72,10 +71,9 @@ import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
 import { defaultMessageTags } from "./core/messaging/MessageTags";
 import { getLocaleStringFromId } from "./utils/locale";
 import {isCustomerMessage} from "./utils/utilities";
+import libraries from "./utils/libraries";
 import { loadScript } from "./utils/WebUtils";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
-
-declare function renderSurvey(containerName: string, surveyURL: string, firstName: string, lastName: string, locale: string): any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -1606,90 +1604,6 @@ class OmnichannelChatSDK {
             });
 
             return Promise.reject("Retrieving post chat context failed " + JSON.stringify(ex));
-        }
-    }
-
-    public async initializePostChatRenderer(): Promise<void> {
-        if (!isBrowser()) {
-            return Promise.reject("In-line rendering is only supported on web browsers");
-        }
-
-        this.scenarioMarker.startScenario(TelemetryEvent.InitializePostChatRenderer, {
-            RequestId: this.requestId
-        });
-
-        try {
-            const msfpEmbedScript = getMsfpEmbedScript();
-            const elm = document.createElement('div');
-            elm.innerHTML = msfpEmbedScript;
-            const scriptNodes = elm.getElementsByTagName('script');
-            const styleNodes = elm.getElementsByTagName('link');
-            for (let i = 0; i < scriptNodes.length; i++) {
-                const node = scriptNodes[i];
-                if (node.src) {
-                    const tmpNode = document.createElement('script');
-                    tmpNode.type = node.type;
-                    tmpNode.src = node.src;
-                    tmpNode.async = false;
-                    if (!window.document.head.contains(tmpNode)) {
-                        document.getElementsByTagName('head')[0].appendChild(tmpNode);
-                    }
-                }
-                if (node.innerHTML) {
-                    const tmpNode = document.createElement('script');
-                    tmpNode.innerHTML = node.innerHTML;
-                    tmpNode.async = false;
-                    if (!window.document.head.contains(tmpNode)) {
-                        window.document.head.appendChild(tmpNode);
-                    }
-                }
-            }
-            for (let i = 0; i < styleNodes.length; i++) {
-                const node = styleNodes[i];
-                if (node.href) {
-                    const tmpNode = document.createElement('link');
-                    tmpNode.type = node.type;
-                    tmpNode.rel = node.rel;
-                    tmpNode.href = node.href;
-                    if (!window.document.head.contains(tmpNode)) {
-                        document.getElementsByTagName('head')[0].appendChild(tmpNode);
-                    }
-                }
-            }
-        } catch (ex) {
-            this.scenarioMarker.failScenario(TelemetryEvent.InitializePostChatRenderer, {
-                RequestId: this.requestId,
-                ExceptionDetails: JSON.stringify(ex)
-            });
-            return Promise.reject("Error occurred when initializer post chat renderer. " + JSON.stringify(ex));
-        }
-    }
-
-    public async renderPostChatSurvey(containerId: string, postChatContext: PostChatContext): Promise<void> {
-        if (!isBrowser()) {
-            return Promise.reject("In-line rendering is only supported on web browsers");
-        }
-
-        this.scenarioMarker.startScenario(TelemetryEvent.RenderPostChatSurvey, {
-            RequestId: this.requestId
-        });
-
-        try {
-            if (!postChatContext) {
-                this.scenarioMarker.failScenario(TelemetryEvent.RenderPostChatSurvey, {
-                    RequestId: this.requestId,
-                    ExceptionDetails: "Post Chat Context is null."
-                });
-                return Promise.reject("Post Chat Context is null.");
-            }
-
-            return await renderSurvey(containerId, postChatContext?.surveyInviteLink, "", "", postChatContext?.formsProLocale);
-        } catch (ex) {
-            this.scenarioMarker.failScenario(TelemetryEvent.RenderPostChatSurvey, {
-                RequestId: this.requestId,
-                ExceptionDetails: JSON.stringify(ex)
-            });
-            return Promise.reject("Error occurred when rendering post chat survey. " + JSON.stringify(ex));
         }
     }
 
