@@ -6,7 +6,6 @@ import { ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/commu
 import {SDKProvider as OCSDKProvider, uuidv4} from "@microsoft/ocsdk";
 import platform, { isBrowser } from "./utils/platform";
 import validateSDKConfig, {defaultChatSDKConfig} from "./validators/SDKConfigValidators";
-
 import ACSParticipantDisplayName from "./core/messaging/ACSParticipantDisplayName";
 import AMSFileManager from "./external/ACSAdapter/AMSFileManager";
 import AriaTelemetry from "./telemetry/AriaTelemetry";
@@ -20,6 +19,8 @@ import ChatSDKConfig from "./core/ChatSDKConfig";
 import ChatSDKMessage from "./core/messaging/ChatSDKMessage";
 import ChatTranscriptBody from "./core/ChatTranscriptBody";
 import ConversationMode from "./core/ConversationMode";
+import createFormatEgressTagsMiddleware from "./external/ACSAdapter/createFormatEgressTagsMiddleware";
+import createFormatIngressTagsMiddleware from "./external/ACSAdapter/createFormatIngressTagsMiddleware";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/FileSharingProtocolType";
@@ -818,8 +819,18 @@ class OmnichannelChatSDK {
         message.content = content;
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
-            const sendMessageRequest = {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const sendMessageRequest: any = {
                 content: message.content,
+            }
+
+            sendMessageRequest.metadata = {
+                widgetId: this.omnichannelConfig.widgetId,
+                clientMessageId: Date.now().toString()
+            }
+
+            if (message.metadata) {
+                sendMessageRequest.metadata = {...sendMessageRequest.metadata, ...message.metadata};
             }
 
             try {
@@ -1165,6 +1176,8 @@ class OmnichannelChatSDK {
             const sendMessageRequest = {
                 content: '',
                 metadata:  {
+                    widgetId: this.omnichannelConfig.widgetId,
+                    clientMessageId: Date.now().toString(),
                     ...fileIdsProperty,
                     ...fileMetaProperty
                 }
@@ -1378,10 +1391,14 @@ class OmnichannelChatSDK {
 
         if (protocol === ChatAdapterProtocols.ACS || this.liveChatVersion === LiveChatVersion.V2) {
             return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
+                const egressMiddlewares = [createFormatEgressTagsMiddleware()];
+                const ingressMiddlewares = [createFormatIngressTagsMiddleware()];
                 const featuresOption = {
-                    enableAdaptiveCards: false,
-                    enableThreadMemberUpdateNotification: true,
-                    enableLeaveThreadOnWindowClosed: false
+                    enableAdaptiveCards: true, // Whether to enable adaptive card payload in adapter (payload in JSON string)
+                    enableThreadMemberUpdateNotification: true, // Whether to enable chat thread member join/leave notification
+                    enableLeaveThreadOnWindowClosed: false, // Whether to remove user on browser close event
+                    egressMiddleware: egressMiddlewares,
+                    ingressMiddleware: ingressMiddlewares
                 };
 
                 const acsAdapterCDNUrl = this.resolveChatAdapterUrl(protocol || ChatAdapterProtocols.ACS);
@@ -1404,6 +1421,7 @@ class OmnichannelChatSDK {
                             1000,
                             ACSParticipantDisplayName.Customer,
                             undefined,
+                            undefined, // logger
                             featuresOption,
                         );
 
@@ -1531,7 +1549,7 @@ class OmnichannelChatSDK {
                 const optionalParams: any = { // eslint-disable-line @typescript-eslint/no-explicit-any
                     "requestId": this.requestId
                 };
-                
+
                 if (this.authenticatedUserToken) {
                     optionalParams.authenticatedUserToken = this.authenticatedUserToken;
                 }

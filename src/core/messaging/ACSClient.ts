@@ -306,7 +306,7 @@ export class ACSConversation {
             senderDisplayName: ACSParticipantDisplayName.Customer,
             metadata: {
                 deliveryMode: DeliveryMode.Bridged,
-                tags: JSON.stringify([defaultMessageTags]),
+                tags: defaultMessageTags.join(','),
                 ...message.metadata
             }
         }

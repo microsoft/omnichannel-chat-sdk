@@ -4,12 +4,17 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
-- Add Post Chat Survey Support
 - Add `getPostChatSurveyContext` API method
-- Add `GetPostChatSurveyContext` telemetry events
+- Add `GetPostChatSurveyContext` telemetry event
+- Add `widgetId` & `clientMessageId` as metadata on sending message
+
+### Fix
+- Add `acs_webchat-chat-adapter` middlewares to format `channelData.tags`
 
 ### Changed
-- README: Added examples on usages of the post chat API.
+- README: added examples on usages of the post chat APIs.
+- Uptake [@azure/communication-chat@1.1.1](https://www.npmjs.com/package/@azure/communication-chat/v/1.1.1)
+- Uptake [acs_webchat-chat-adapter@0.0.35-beta.2](https://unpkg.com/acs_webchat-chat-adapter@0.0.35-beta.2/dist/chat-adapter.js)
 
 ## [1.0.0] - 2021-10-08
 ### Added
