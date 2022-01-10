@@ -41,8 +41,6 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 | Authenticated Chat | ✔ | ✔ |
 | Pre-chat Survey | ✔ | ✔ |
 | Post-chat Survey | ✔ | ✔ |
-| Queue Position | ✔ | ✔ |
-| Average Wait Time | ✔ | ✔ |
 | Download Transcript | ✔ | ✔ |
 | Email Transcript | ✔ | ✔ |
 | Data Masking | ✔ | ✔ |
