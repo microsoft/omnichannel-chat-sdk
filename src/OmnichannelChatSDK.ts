@@ -393,7 +393,7 @@ class OmnichannelChatSDK {
             sessionInitOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
         }
 
-        // Skip session when there's an existing converastion and it's not chat reconnect nor persistent chat
+        // Skip session when there's an existing conversation and it's not chat reconnect nor persistent chat
         if (!(optionalParams.liveChatContext && !this.isChatReconnect && !this.isPersistentChat)) {
             try {
                 await this.OCClient.sessionInit(this.requestId, sessionInitOptionalParams);
