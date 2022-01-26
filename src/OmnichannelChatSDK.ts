@@ -393,21 +393,24 @@ class OmnichannelChatSDK {
             sessionInitOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
         }
 
-        try {
-            await this.OCClient.sessionInit(this.requestId, sessionInitOptionalParams);
-        } catch (error) {
-            const exceptionDetails = {
-                response: "OCClientSessionInitFailed"
-            };
+        // Skip session when there's an existing converastion and it's not chat reconnect nor persistent chat
+        if (!(optionalParams.liveChatContext && !this.isChatReconnect && !this.isPersistentChat)) {
+            try {
+                await this.OCClient.sessionInit(this.requestId, sessionInitOptionalParams);
+            } catch (error) {
+                const exceptionDetails = {
+                    response: "OCClientSessionInitFailed"
+                };
 
-            this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string,
-                ExceptionDetails: JSON.stringify(exceptionDetails)
-            });
+                this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string,
+                    ExceptionDetails: JSON.stringify(exceptionDetails)
+                });
 
-            console.error(`OmnichannelChatSDK/startChat/sessionInit/error ${error}`);
-            return error;
+                console.error(`OmnichannelChatSDK/startChat/sessionInit/error ${error}`);
+                return error;
+            }
         }
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
