@@ -302,7 +302,7 @@ class OmnichannelChatSDK {
             }
         }
 
-        if (optionalParams.liveChatContext && !this.isPersistentChat && !this.isChatReconnect) {
+        if (optionalParams.liveChatContext && !this.reconnectId) {
             this.chatToken = optionalParams.liveChatContext.chatToken || {};
             this.requestId = optionalParams.liveChatContext.requestId || uuidv4();
 
@@ -393,8 +393,8 @@ class OmnichannelChatSDK {
             sessionInitOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
         }
 
-        // Skip session when there's an existing conversation and it's not chat reconnect nor persistent chat
-        if (!(optionalParams.liveChatContext && !this.isChatReconnect && !this.isPersistentChat)) {
+        // Skip session init when there's a valid live chat context
+        if (!optionalParams.liveChatContext) {
             try {
                 await this.OCClient.sessionInit(this.requestId, sessionInitOptionalParams);
             } catch (error) {
