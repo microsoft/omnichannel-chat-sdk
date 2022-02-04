@@ -302,7 +302,7 @@ class OmnichannelChatSDK {
             }
         }
 
-        if (optionalParams.liveChatContext && !this.isPersistentChat && !this.isChatReconnect) {
+        if (optionalParams.liveChatContext && !this.reconnectId) {
             this.chatToken = optionalParams.liveChatContext.chatToken || {};
             this.requestId = optionalParams.liveChatContext.requestId || uuidv4();
 
@@ -393,21 +393,24 @@ class OmnichannelChatSDK {
             sessionInitOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
         }
 
-        try {
-            await this.OCClient.sessionInit(this.requestId, sessionInitOptionalParams);
-        } catch (error) {
-            const exceptionDetails = {
-                response: "OCClientSessionInitFailed"
-            };
+        // Skip session init when there's a valid live chat context
+        if (!optionalParams.liveChatContext) {
+            try {
+                await this.OCClient.sessionInit(this.requestId, sessionInitOptionalParams);
+            } catch (error) {
+                const exceptionDetails = {
+                    response: "OCClientSessionInitFailed"
+                };
 
-            this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string,
-                ExceptionDetails: JSON.stringify(exceptionDetails)
-            });
+                this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string,
+                    ExceptionDetails: JSON.stringify(exceptionDetails)
+                });
 
-            console.error(`OmnichannelChatSDK/startChat/sessionInit/error ${error}`);
-            return error;
+                console.error(`OmnichannelChatSDK/startChat/sessionInit/error ${error}`);
+                return error;
+            }
         }
 
         if (this.liveChatVersion === LiveChatVersion.V2) {

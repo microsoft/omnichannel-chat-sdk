@@ -590,7 +590,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.IC3Client.joinConversation).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.startchat() with existing liveChatContext should not call OCClient.getChatToken()', async() => {
+        it('ChatSDK.startchat() with existing liveChatContext should not call OCClient.getChatToken() & OCClient.sessionInit()', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
@@ -625,7 +625,7 @@ describe('Omnichannel Chat SDK', () => {
             await chatSDK.startChat(optionaParams);
 
             expect(chatSDK.OCClient.getChatToken).toHaveBeenCalledTimes(0);
-            expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
+            expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(0);
             expect(chatSDK.IC3Client.initialize).toHaveBeenCalledTimes(1);
             expect(chatSDK.IC3Client.joinConversation).toHaveBeenCalledTimes(1);
         });
