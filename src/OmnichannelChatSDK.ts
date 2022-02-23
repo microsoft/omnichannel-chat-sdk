@@ -69,11 +69,12 @@ import createOmnichannelMessage from "./utils/createOmnichannelMessage";
 import createTelemetry from "./utils/createTelemetry";
 import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
 import { defaultMessageTags } from "./core/messaging/MessageTags";
-import { getLocaleStringFromId } from "./utils/locale";
+import { getLocaleStringFromId, defaultLocaleId } from "./utils/locale";
 import {isCustomerMessage} from "./utils/utilities";
 import libraries from "./utils/libraries";
 import { loadScript } from "./utils/WebUtils";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
+
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -86,6 +87,7 @@ class OmnichannelChatSDK {
     public omnichannelConfig: OmnichannelConfig;
     public chatSDKConfig: ChatSDKConfig;
     public isInitialized: boolean;
+    public localeId: string;
     public requestId: string;
     private chatToken: IChatToken;
     private liveChatConfig: any; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -116,6 +118,7 @@ class OmnichannelChatSDK {
         };
         this.isInitialized = false;
         this.liveChatVersion = LiveChatVersion.V1;
+        this.localeId = defaultLocaleId;
         this.requestId = uuidv4();
         this.chatToken = {};
         this.liveChatConfig = {};
@@ -351,6 +354,8 @@ class OmnichannelChatSDK {
         const sessionInitOptionalParams: ISessionInitOptionalParams = {
             initContext: {} as InitContext
         };
+
+        sessionInitOptionalParams.initContext!.locale = getLocaleStringFromId(this.localeId);
 
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
             sessionInitOptionalParams.reconnectId = this.reconnectId as string;
@@ -1532,11 +1537,8 @@ class OmnichannelChatSDK {
         let conversationId;
 
         try {
-            const chatConfig: ChatConfig = this.liveChatConfig;
-            const {LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin, ChatWidgetLanguage: chatWidgetLanguage} = chatConfig;
+            const {LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin} = this.liveChatConfig;
             const {msdyn_postconversationsurveyenable, msfp_sourcesurveyidentifier, postConversationSurveyOwnerId} = liveWSAndLiveChatEngJoin;
-            const {msdyn_localeid} = chatWidgetLanguage;
-            const localeId: string = msdyn_localeid ?? "1033";
 
             if (msdyn_postconversationsurveyenable) {
                 const liveWorkItemDetails = await this.OCClient.getLWIDetails(this.requestId);
@@ -1546,7 +1548,7 @@ class OmnichannelChatSDK {
                 const surveyInviteLinkRequest = {
                     "FormId": msfp_sourcesurveyidentifier,
                     "ConversationId": conversationId,
-                    "OCLocaleCode": getLocaleStringFromId(localeId)
+                    "OCLocaleCode": getLocaleStringFromId(this.localeId)
                 };
 
                 const optionalParams: any = { // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -1683,9 +1685,13 @@ class OmnichannelChatSDK {
                 DataMaskingInfo: dataMaskingConfig,
                 LiveChatConfigAuthSettings: authSettings,
                 LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin,
-                LiveChatVersion: liveChatVersion
+                LiveChatVersion: liveChatVersion,
+                ChatWidgetLanguage: chatWidgetLanguage
             } = liveChatConfig;
 
+            const {msdyn_localeid} = chatWidgetLanguage;
+
+            this.localeId = msdyn_localeid || defaultLocaleId;
             this.liveChatVersion = liveChatVersion || LiveChatVersion.V1;
 
             /* istanbul ignore next */
