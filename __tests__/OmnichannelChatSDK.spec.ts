@@ -10,7 +10,6 @@ import IFileMetadata from "@microsoft/omnichannel-ic3core/lib/model/IFileMetadat
 import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import LiveChatVersion from "../src/core/LiveChatVersion";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
-import { assert } from "console";
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
 import libraries from "../src/utils/libraries";
 
@@ -404,6 +403,10 @@ describe('Omnichannel Chat SDK', () => {
                 LiveWSAndLiveChatEngJoin: {
                     PreChatSurvey: samplePreChatSurvey,
                     msdyn_prechatenabled: 'true'
+                },
+                ChatWidgetLanguage: {
+                    msdyn_localeid: '1033',
+                    msdyn_languagename: 'English - United States'
                 }
             }));
 
@@ -867,7 +870,11 @@ describe('Omnichannel Chat SDK', () => {
             jest.spyOn(chatSDK.OCClient, 'getChatConfig').mockResolvedValue(Promise.resolve({
                 DataMaskingInfo: { setting: { msdyn_maskforcustomer: false } },
                 LiveWSAndLiveChatEngJoin: { PreChatSurvey: { msdyn_prechatenabled: false } },
-                LiveChatConfigAuthSettings: {}
+                LiveChatConfigAuthSettings: {},
+                ChatWidgetLanguage: {
+                    msdyn_localeid: '1033',
+                    msdyn_languagename: 'English - United States'
+                }
             }));
 
             jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
@@ -2035,6 +2042,10 @@ describe('Omnichannel Chat SDK', () => {
                 },
                 LiveWSAndLiveChatEngJoin: {
                     msdyn_conversationmode: ConversationMode.PersistentChat
+                },
+                ChatWidgetLanguage: {
+                    msdyn_localeid: '1033',
+                    msdyn_languagename: 'English - United States'
                 }
             }));
 
@@ -2202,6 +2213,10 @@ describe('Omnichannel Chat SDK', () => {
                 },
                 LiveWSAndLiveChatEngJoin: {
                     msdyn_enablechatreconnect: true
+                },
+                ChatWidgetLanguage: {
+                    msdyn_localeid: '1033',
+                    msdyn_languagename: 'English - United States'
                 }
             }));
 
