@@ -1548,7 +1548,7 @@ class OmnichannelChatSDK {
                 const surveyInviteLinkRequest = {
                     "FormId": msfp_sourcesurveyidentifier,
                     "ConversationId": conversationId,
-                    "OCLocaleCode": getLocaleStringFromId(this.localeId)
+                    "OCLocaleCode": getLocaleStringFromId(this.localeId) || getLocaleStringFromId(defaultLocaleId)
                 };
 
                 const optionalParams: any = { // eslint-disable-line @typescript-eslint/no-explicit-any
