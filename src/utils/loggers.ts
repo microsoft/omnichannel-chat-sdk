@@ -9,6 +9,7 @@ import ScenarioMarker from "../telemetry/ScenarioMarker";
 
 export class IC3ClientLogger {
     private debug = false;
+    private runtimeId = '';
     private requestId = '';
     private chatId = '';
     private telemetry: typeof AriaTelemetry | null = null;
@@ -20,6 +21,10 @@ export class IC3ClientLogger {
     /* istanbul ignore next */
     public setDebug(flag: boolean): void {
         this.debug = flag;
+    }
+
+    public setRuntimeId(runtimeId: string): void {
+        this.runtimeId = runtimeId;
     }
 
     public setRequestId(requestId: string): void {
@@ -43,6 +48,7 @@ export class IC3ClientLogger {
         this.debug && console.log(event);
 
         const baseProperties: AWTEventData["properties"] = {
+            ChatSDKRuntimeId: this.runtimeId,
             OrgId: this.omnichannelConfig.orgId,
             OrgUrl: this.omnichannelConfig.orgUrl,
             WidgetId: this.omnichannelConfig.widgetId,
@@ -87,6 +93,7 @@ export class IC3ClientLogger {
 
 export class OCSDKLogger {
     private debug = false;
+    private runtimeId = '';
     private requestId = '';
     private chatId = '';
     private telemetry: typeof AriaTelemetry | null = null;
@@ -98,6 +105,10 @@ export class OCSDKLogger {
     /* istanbul ignore next */
     public setDebug(flag: boolean): void {
         this.debug = flag;
+    }
+
+    public setRuntimeId(runtimeId: string): void {
+        this.runtimeId = runtimeId;
     }
 
     public setRequestId(requestId: string): void {
@@ -121,6 +132,7 @@ export class OCSDKLogger {
         this.debug && console.log(event);
 
         const baseProperties: AWTEventData["properties"] = {
+            ChatSDKRuntimeId: this.runtimeId,
             OrgId: this.omnichannelConfig.orgId,
             OrgUrl: this.omnichannelConfig.orgUrl,
             WidgetId: this.omnichannelConfig.widgetId,
@@ -165,6 +177,7 @@ export class OCSDKLogger {
 
 export class ACSClientLogger {
     private debug = false;
+    private runtimeId = '';
     private requestId = '';
     private chatId = '';
     private telemetry: typeof AriaTelemetry | null = null;
@@ -180,6 +193,11 @@ export class ACSClientLogger {
     public setDebug(flag: boolean): void {
         this.debug = flag;
         this.scenarioMarker?.setDebug(flag);
+    }
+
+    public setRuntimeId(runtimeId: string): void {
+        this.runtimeId = runtimeId;
+        this.scenarioMarker?.setRuntimeId(runtimeId);
     }
 
     public setRequestId(requestId: string): void {
@@ -204,6 +222,7 @@ export class ACSClientLogger {
         this.debug && console.log(event);
 
         const baseProperties: AWTEventData["properties"] = {
+            ChatSDKRuntimeId: this.runtimeId,
             OrgId: this.omnichannelConfig.orgId,
             OrgUrl: this.omnichannelConfig.orgUrl,
             WidgetId: this.omnichannelConfig.widgetId,
@@ -275,6 +294,7 @@ export class ACSClientLogger {
 
 export class ACSAdapterLogger {
     private debug = false;
+    private runtimeId = '';
     private requestId = '';
     private chatId = '';
     private telemetry: typeof AriaTelemetry | null = null;
@@ -290,6 +310,11 @@ export class ACSAdapterLogger {
     public setDebug(flag: boolean): void {
         this.debug = flag;
         this.scenarioMarker?.setDebug(flag);
+    }
+
+    public setRuntimeId(runtimeId: string): void {
+        this.runtimeId = runtimeId;
+        this.scenarioMarker?.setRuntimeId(this.runtimeId);
     }
 
     public setRequestId(requestId: string): void {
@@ -314,6 +339,7 @@ export class ACSAdapterLogger {
         this.debug && console.log(event);
 
         const baseProperties: AWTEventData["properties"] = {
+            ChatSDKRuntimeId: this.runtimeId,
             OrgId: this.omnichannelConfig.orgId,
             OrgUrl: this.omnichannelConfig.orgUrl,
             WidgetId: this.omnichannelConfig.widgetId,
