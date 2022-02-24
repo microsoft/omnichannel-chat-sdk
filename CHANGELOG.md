@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Add `GetPostChatSurveyContext` telemetry event
 - Add `widgetId` & `clientMessageId` as metadata on sending message
 - Update `ChatConfig` interface with `LiveChatVersion`, `allowedFileExtensions` & `maxUploadFileSize` properties
+- Add ability to automatically detect locale from chat config
 
 ### Fix
 - Add `acs_webchat-chat-adapter` middlewares to format `channelData.tags`
