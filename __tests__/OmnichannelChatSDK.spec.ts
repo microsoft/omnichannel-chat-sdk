@@ -2357,7 +2357,8 @@ describe('Omnichannel Chat SDK', () => {
 
             await chatSDK.initialize();
 
-            chatSDK.reconnectId = 'reconnectId';
+            const reconnectId = 'reconnectId';
+            chatSDK.reconnectId = reconnectId;
 
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
@@ -2369,6 +2370,7 @@ describe('Omnichannel Chat SDK', () => {
 
             expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(1);
             expect(chatSDK.OCClient.sessionClose.mock.calls[0][1].isReconnectChat).toBe(true);
+            expect(chatSDK.OCClient.sessionClose.mock.calls[0][0]).toBe(reconnectId);
         });
 
         it('ChatSDK.getChatReconnectContext() with authenticatedUserToken should call OCClient.getReconnectableChats() & return reconnectId if any', async () => {
