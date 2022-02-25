@@ -78,6 +78,7 @@ import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 
 class OmnichannelChatSDK {
     private debug: boolean;
+    public runtimeId: string;
     public OCSDKProvider: unknown;
     public IC3SDKProvider: unknown;
     public OCClient: any; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -111,6 +112,7 @@ class OmnichannelChatSDK {
 
     constructor(omnichannelConfig: OmnichannelConfig, chatSDKConfig: ChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
+        this.runtimeId = uuidv4();
         this.omnichannelConfig = omnichannelConfig;
         this.chatSDKConfig = {
             ...defaultChatSDKConfig,
@@ -137,6 +139,12 @@ class OmnichannelChatSDK {
         this.ocSdkLogger.useTelemetry(this.telemetry);
         this.acsClientLogger.useTelemetry(this.telemetry);
         this.acsAdapterLogger.useTelemetry(this.telemetry);
+
+        this.scenarioMarker.setRuntimeId(this.runtimeId);
+        this.ic3ClientLogger.setRuntimeId(this.runtimeId);
+        this.ocSdkLogger.setRuntimeId(this.runtimeId);
+        this.acsClientLogger.setRuntimeId(this.runtimeId);
+        this.acsAdapterLogger.setRuntimeId(this.runtimeId);
 
         validateOmnichannelConfig(omnichannelConfig);
         validateSDKConfig(chatSDKConfig);

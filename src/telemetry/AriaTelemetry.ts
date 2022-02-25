@@ -7,6 +7,7 @@ import { ic3ClientVersion, webChatACSAdapterVersion } from '../config/settings';
 import { isBrowser, isReactNative } from '../utils/platform';
 
 interface BaseContract {
+    ChatSDKRuntimeId: string;
     OrgId: string;
     OrgUrl: string;
     WidgetId: string;
@@ -39,6 +40,7 @@ interface CDNPackagesInfo {
 }
 
 interface IC3ClientContract {
+    ChatSDKRuntimeId: string;
     OrgId: string;
     OrgUrl: string;
     WidgetId: string;
@@ -56,6 +58,7 @@ interface IC3ClientContract {
 }
 
 interface OCSDKContract {
+    ChatSDKRuntimeId: string;
     OrgId: string;
     OrgUrl: string;
     WidgetId: string;
@@ -69,6 +72,7 @@ interface OCSDKContract {
 }
 
 interface ACSClientContract {
+    ChatSDKRuntimeId: string;
     OrgId: string;
     OrgUrl: string;
     WidgetId: string;
@@ -81,6 +85,7 @@ interface ACSClientContract {
 }
 
 interface ACSAdapterContract {
+    ChatSDKRuntimeId: string;
     OrgId: string;
     OrgUrl: string;
     WidgetId: string;
@@ -500,6 +505,7 @@ class AriaTelemetry {
         };
 
         return {
+            ChatSDKRuntimeId: '',
             OrgId: '',
             OrgUrl: '',
             WidgetId: '',
@@ -577,6 +583,7 @@ class AriaTelemetry {
 
     private static populateIC3ClientBaseProperties(): IC3ClientContract {
         return {
+            ChatSDKRuntimeId: '',
             OrgId: '',
             OrgUrl: '',
             WidgetId: '',
@@ -596,6 +603,7 @@ class AriaTelemetry {
 
     private static populateOCSDKBaseProperties(): OCSDKContract {
         return {
+            ChatSDKRuntimeId: '',
             OrgId: '',
             OrgUrl: '',
             WidgetId: '',
@@ -611,6 +619,7 @@ class AriaTelemetry {
 
     private static populateACSClientBaseProperties(): ACSClientContract {
         return {
+            ChatSDKRuntimeId: '',
             OrgId: '',
             OrgUrl: '',
             WidgetId: '',
@@ -625,6 +634,7 @@ class AriaTelemetry {
 
     private static populateACSAdapterBaseProperties(): ACSAdapterContract {
         return {
+            ChatSDKRuntimeId: '',
             OrgId: '',
             OrgUrl: '',
             WidgetId: '',
