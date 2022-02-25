@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 ### Fix
 - Add `acs_webchat-chat-adapter` middlewares to format `channelData.tags`
 - Skip `session init` call on existing conversation
+- Fix `chat reconnect` not ending the conversation on calling `ChatSDK.endChat()`
 
 ### Changed
 - README: added examples on usages of the post chat APIs.
