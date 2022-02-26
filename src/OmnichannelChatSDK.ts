@@ -567,7 +567,7 @@ class OmnichannelChatSDK {
 
         if (this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat) {
             const isChatReconnect = this.reconnectId !== null? true: false;
-
+            this.requestId = isChatReconnect? (this.reconnectId as string): this.requestId; // Chat Reconnect session to close
             sessionCloseOptionalParams.isReconnectChat = isChatReconnect;
         }
 
