@@ -335,8 +335,7 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
 ```ts
     const body = {
         emailAddress: 'contoso@microsoft.com',
-        attachmentMessage: 'Attachment Message',
-        locale: 'en-us'
+        attachmentMessage: 'Attachment Message'
     };
     await chatSDK.emailLiveChatTranscript(body);
 ```
