@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Update `ChatConfig` interface with `LiveChatVersion`, `allowedFileExtensions` & `maxUploadFileSize` properties
 - Add ability to automatically detect locale from chat config
 - Add `runtimeId` attribute in `OmnichannelChatSDK` & `ChatSDKRuntimeId` field in telemetry
+- Add ability to automatically pass locale from chat config on calling `ChatSDK.emailLiveChatTranscript()`
 
 ### Fix
 - Add `acs_webchat-chat-adapter` middlewares to format `channelData.tags`
