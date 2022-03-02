@@ -12,7 +12,7 @@ import LiveChatVersion from "../src/core/LiveChatVersion";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
 import libraries from "../src/utils/libraries";
-import { defaultLocaleId } from "../src/utils/locale";
+import { defaultLocaleId, getLocaleStringFromId } from "../src/utils/locale";
 
 describe('Omnichannel Chat SDK', () => {
     AWTLogManager.initialize = jest.fn();
@@ -1563,6 +1563,35 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.emailTranscript.mock.calls[0][2].EmailAddress).toBe(emailBody.emailAddress);
             expect(chatSDK.OCClient.emailTranscript.mock.calls[0][2].DefaultAttachmentMessage).toBe(emailBody.attachmentMessage);
             expect(chatSDK.OCClient.emailTranscript.mock.calls[0][2].CustomerLocale).toBe(emailBody.locale);
+        });
+
+        it('ChatSDK.emailLiveChatTranscript() should use ChatSDK.localeId if locale is not passed', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'emailTranscript').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendMessage: (message: any) => {}
+            }));
+
+            await chatSDK.startChat();
+
+            const emailBody = {
+                emailAddress: 'sample@microsoft.com',
+                attachmentMessage: 'sample'
+            };
+
+            await chatSDK.emailLiveChatTranscript(emailBody);
+
+            expect(chatSDK.OCClient.emailTranscript).toHaveBeenCalledTimes(1);
+            expect(chatSDK.OCClient.emailTranscript.mock.calls[0][2].EmailAddress).toBe(emailBody.emailAddress);
+            expect(chatSDK.OCClient.emailTranscript.mock.calls[0][2].DefaultAttachmentMessage).toBe(emailBody.attachmentMessage);
+            expect(chatSDK.OCClient.emailTranscript.mock.calls[0][2].CustomerLocale).toBe(getLocaleStringFromId(chatSDK.localeId));
         });
 
         it('ChatSDK.emailLiveChatTranscript() with authenticatedUserToken should pass it to OCClient.emailTranscript()', async () => {
