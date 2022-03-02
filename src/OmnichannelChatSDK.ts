@@ -1334,11 +1334,12 @@ class OmnichannelChatSDK {
             if (this.authenticatedUserToken) {
                 emailTranscriptOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
             }
+
             const emailRequestBody = {
                 ChatId: this.chatToken.chatId,
                 EmailAddress: body.emailAddress,
                 DefaultAttachmentMessage: body.attachmentMessage,
-                CustomerLocale: body.locale
+                CustomerLocale: body.locale || getLocaleStringFromId(this.localeId)
             };
 
             const emailResponse = this.OCClient.emailTranscript(
