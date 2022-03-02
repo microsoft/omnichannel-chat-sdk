@@ -1554,14 +1554,16 @@ describe('Omnichannel Chat SDK', () => {
             const emailBody = {
                 emailAddress: 'sample@microsoft.com',
                 attachmentMessage: 'sample',
-                CustomerLocale: 'sample'
+                locale: 'sample'
             };
 
             await chatSDK.emailLiveChatTranscript(emailBody);
 
             expect(chatSDK.OCClient.emailTranscript).toHaveBeenCalledTimes(1);
+            expect(chatSDK.OCClient.emailTranscript.mock.calls[0][2].EmailAddress).toBe(emailBody.emailAddress);
+            expect(chatSDK.OCClient.emailTranscript.mock.calls[0][2].DefaultAttachmentMessage).toBe(emailBody.attachmentMessage);
+            expect(chatSDK.OCClient.emailTranscript.mock.calls[0][2].CustomerLocale).toBe(emailBody.locale);
         });
-
 
         it('ChatSDK.emailLiveChatTranscript() with authenticatedUserToken should pass it to OCClient.emailTranscript()', async () => {
             const chatSDKConfig = {
