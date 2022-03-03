@@ -291,11 +291,7 @@ class OmnichannelChatSDK {
 
         const shouldReinitIC3Client = !platform.isNode() && !platform.isReactNative() && !this.IC3Client && this.liveChatVersion === LiveChatVersion.V1;
         if (shouldReinitIC3Client) {
-            this.IC3Client = await (this.IC3SDKProvider as any).getSDK({
-                hostType: HostType.IFrame,
-                protocolType: ProtocolType.IC3V1SDK,
-                logger: this.ic3ClientLogger as any
-            });
+            this.IC3Client = await this.getIC3Client();
         }
 
         if (this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat && optionalParams.reconnectId) {
@@ -1657,6 +1653,16 @@ class OmnichannelChatSDK {
                 });
 
                 this.scenarioMarker.startScenario(TelemetryEvent.GetIC3Client);
+
+                if (this.IC3SDKProvider) {
+                    const IC3Client = await (this.IC3SDKProvider as any).getSDK({
+                        hostType: HostType.IFrame,
+                        protocolType: ProtocolType.IC3V1SDK,
+                        logger: this.ic3ClientLogger as any
+                    });
+
+                    resolve(IC3Client);
+                }
 
                 window.addEventListener("ic3:sdk:load", async () => {
                     // Use FramedBridge from IC3Client
