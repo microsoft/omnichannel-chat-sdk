@@ -289,6 +289,15 @@ class OmnichannelChatSDK {
             RequestId: this.requestId
         });
 
+        const shouldReinitIC3Client = !platform.isNode() && !platform.isReactNative() && !this.IC3Client && this.liveChatVersion === LiveChatVersion.V1;
+        if (shouldReinitIC3Client) {
+            this.IC3Client = await (this.IC3SDKProvider as any).getSDK({
+                hostType: HostType.IFrame,
+                protocolType: ProtocolType.IC3V1SDK,
+                logger: this.ic3ClientLogger as any
+            });
+        }
+
         if (this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat && optionalParams.reconnectId) {
             this.reconnectId = optionalParams.reconnectId as string;
         }
@@ -588,6 +597,7 @@ class OmnichannelChatSDK {
             this.requestId = uuidv4();
             this.chatToken = {};
             this.reconnectId = null;
+            this.IC3Client = null;
 
             this.ic3ClientLogger?.setRequestId(this.requestId);
             this.ic3ClientLogger?.setChatId('');
@@ -1472,9 +1482,6 @@ class OmnichannelChatSDK {
 
                     const adapter = new window.Microsoft.BotFramework.WebChat.IC3Adapter(adapterConfig);
                     adapter.logger = this.ic3ClientLogger;
-
-                    // Keep iframe communication alive to reuse the same IC3Client instance
-                    window.Microsoft.BotFramework.WebChat.IC3SDKProvider.disposeSdk = () => {}; // eslint-disable-line @typescript-eslint/no-empty-function
 
                     this.scenarioMarker.completeScenario(TelemetryEvent.CreateIC3Adapter);
 
