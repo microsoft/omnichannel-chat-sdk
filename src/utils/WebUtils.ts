@@ -25,10 +25,16 @@ const loadScript = async (scriptUrl: string, callbackOnload: CallableFunction = 
   });
 };
 
+const removeElementById = (id: string) => {
+  document.getElementById(id)?.remove();
+}
+
 export default {
-  loadScript
+  loadScript,
+  removeElementById
 }
 
 export {
-  loadScript
+  loadScript,
+  removeElementById
 }
