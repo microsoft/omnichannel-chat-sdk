@@ -1661,7 +1661,7 @@ class OmnichannelChatSDK {
                         logger: this.ic3ClientLogger as any
                     });
 
-                    resolve(IC3Client);
+                    return resolve(IC3Client);
                 }
 
                 window.addEventListener("ic3:sdk:load", async () => {
