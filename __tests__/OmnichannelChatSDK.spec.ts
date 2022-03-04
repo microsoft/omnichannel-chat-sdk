@@ -1993,6 +1993,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(conversationDisconnectFn).toHaveBeenCalledTimes(1);
             expect(chatSDK.conversation).toBe(null);
             expect(chatSDK.chatToken).toMatchObject({});
+            expect(chatSDK.IC3Client).toBe(null);
         });
 
         it('ChatSDK.endChat() should fail if OCClient.sessionClose() fails', async () => {
