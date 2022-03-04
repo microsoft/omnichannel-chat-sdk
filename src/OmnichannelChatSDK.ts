@@ -72,7 +72,7 @@ import { defaultMessageTags } from "./core/messaging/MessageTags";
 import { getLocaleStringFromId, defaultLocaleId } from "./utils/locale";
 import {isCustomerMessage} from "./utils/utilities";
 import libraries from "./utils/libraries";
-import { loadScript } from "./utils/WebUtils";
+import { loadScript, removeElementById } from "./utils/WebUtils";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 
 
@@ -288,6 +288,11 @@ class OmnichannelChatSDK {
         this.scenarioMarker.startScenario(TelemetryEvent.StartChat, {
             RequestId: this.requestId
         });
+
+        const shouldReinitIC3Client = !platform.isNode() && !platform.isReactNative() && !this.IC3Client && this.liveChatVersion === LiveChatVersion.V1;
+        if (shouldReinitIC3Client) {
+            this.IC3Client = await this.getIC3Client();
+        }
 
         if (this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat && optionalParams.reconnectId) {
             this.reconnectId = optionalParams.reconnectId as string;
@@ -588,6 +593,10 @@ class OmnichannelChatSDK {
             this.requestId = uuidv4();
             this.chatToken = {};
             this.reconnectId = null;
+
+            this.IC3Client.dispose();
+            !platform.isNode() && !platform.isReactNative() && removeElementById(this.IC3Client.id);
+            this.IC3Client = null;
 
             this.ic3ClientLogger?.setRequestId(this.requestId);
             this.ic3ClientLogger?.setChatId('');
@@ -1473,9 +1482,6 @@ class OmnichannelChatSDK {
                     const adapter = new window.Microsoft.BotFramework.WebChat.IC3Adapter(adapterConfig);
                     adapter.logger = this.ic3ClientLogger;
 
-                    // Keep iframe communication alive to reuse the same IC3Client instance
-                    window.Microsoft.BotFramework.WebChat.IC3SDKProvider.disposeSdk = () => {}; // eslint-disable-line @typescript-eslint/no-empty-function
-
                     this.scenarioMarker.completeScenario(TelemetryEvent.CreateIC3Adapter);
 
                     resolve(adapter);
@@ -1650,6 +1656,16 @@ class OmnichannelChatSDK {
                 });
 
                 this.scenarioMarker.startScenario(TelemetryEvent.GetIC3Client);
+
+                if (this.IC3SDKProvider) {
+                    const IC3Client = await (this.IC3SDKProvider as any).getSDK({ // eslint-disable-line @typescript-eslint/no-explicit-any
+                        hostType: HostType.IFrame,
+                        protocolType: ProtocolType.IC3V1SDK,
+                        logger: this.ic3ClientLogger as any // eslint-disable-line @typescript-eslint/no-explicit-any
+                    });
+
+                    return resolve(IC3Client);
+                }
 
                 window.addEventListener("ic3:sdk:load", async () => {
                     // Use FramedBridge from IC3Client
