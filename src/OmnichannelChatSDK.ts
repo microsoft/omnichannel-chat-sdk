@@ -72,7 +72,7 @@ import { defaultMessageTags } from "./core/messaging/MessageTags";
 import { getLocaleStringFromId, defaultLocaleId } from "./utils/locale";
 import {isCustomerMessage} from "./utils/utilities";
 import libraries from "./utils/libraries";
-import { loadScript } from "./utils/WebUtils";
+import { loadScript, removeElementById } from "./utils/WebUtils";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 
 
@@ -593,6 +593,8 @@ class OmnichannelChatSDK {
             this.requestId = uuidv4();
             this.chatToken = {};
             this.reconnectId = null;
+
+            !platform.isNode() && !platform.isReactNative() && removeElementById(this.IC3Client.id);
             this.IC3Client = null;
 
             this.ic3ClientLogger?.setRequestId(this.requestId);
