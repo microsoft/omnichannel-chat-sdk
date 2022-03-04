@@ -25,7 +25,7 @@ const loadScript = async (scriptUrl: string, callbackOnload: CallableFunction = 
   });
 };
 
-const removeElementById = (id: string) => {
+const removeElementById = (id: string): void => {
   document.getElementById(id)?.remove();
 }
 

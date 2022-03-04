@@ -1658,10 +1658,10 @@ class OmnichannelChatSDK {
                 this.scenarioMarker.startScenario(TelemetryEvent.GetIC3Client);
 
                 if (this.IC3SDKProvider) {
-                    const IC3Client = await (this.IC3SDKProvider as any).getSDK({
+                    const IC3Client = await (this.IC3SDKProvider as any).getSDK({ // eslint-disable-line @typescript-eslint/no-explicit-any
                         hostType: HostType.IFrame,
                         protocolType: ProtocolType.IC3V1SDK,
-                        logger: this.ic3ClientLogger as any
+                        logger: this.ic3ClientLogger as any // eslint-disable-line @typescript-eslint/no-explicit-any
                     });
 
                     return resolve(IC3Client);
