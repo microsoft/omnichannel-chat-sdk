@@ -1748,41 +1748,7 @@ class OmnichannelChatSDK {
             }
 
             if (this.authSettings) {
-                this.scenarioMarker.startScenario(TelemetryEvent.GetAuthToken);
-                if (this.chatSDKConfig.getAuthToken) {
-                    try {
-                        const token = await this.chatSDKConfig.getAuthToken();
-
-                        if (token) {
-                            this.authenticatedUserToken = token;
-                            this.scenarioMarker.completeScenario(TelemetryEvent.GetAuthToken);
-                        } else {
-                            const exceptionDetails = {
-                                response: "UndefinedAuthToken"
-                            };
-
-                            this.scenarioMarker.failScenario(TelemetryEvent.GetAuthToken, {
-                                ExceptionDetails: JSON.stringify(exceptionDetails)
-                            });
-                        }
-                    } catch {
-                        const exceptionDetails = {
-                            response: "GetAuthTokenFailed"
-                        };
-
-                        this.scenarioMarker.failScenario(TelemetryEvent.GetAuthToken, {
-                            ExceptionDetails: JSON.stringify(exceptionDetails)
-                        });
-                    }
-                } else {
-                    const exceptionDetails = {
-                        response: "GetAuthTokenNotFound"
-                    };
-
-                    this.scenarioMarker.failScenario(TelemetryEvent.GetAuthToken, {
-                        ExceptionDetails: JSON.stringify(exceptionDetails)
-                    });
-                }
+                await this.setAuthTokenProvider(this.chatSDKConfig.getAuthToken);
             }
 
             if (this.preChatSurvey) {
@@ -1873,6 +1839,46 @@ class OmnichannelChatSDK {
             });
 
             console.error(`OmnichannelChatSDK/updateChatToken/error ${error}`);
+        }
+    }
+
+    private async setAuthTokenProvider(provider: ChatSDKConfig["getAuthToken"]) {
+        this.scenarioMarker.startScenario(TelemetryEvent.GetAuthToken);
+
+        this.chatSDKConfig.getAuthToken = provider;
+        if (this.chatSDKConfig.getAuthToken) {
+            try {
+                const token = await this.chatSDKConfig.getAuthToken();
+
+                if (token) {
+                    this.authenticatedUserToken = token;
+                    this.scenarioMarker.completeScenario(TelemetryEvent.GetAuthToken);
+                } else {
+                    const exceptionDetails = {
+                        response: "UndefinedAuthToken"
+                    };
+
+                    this.scenarioMarker.failScenario(TelemetryEvent.GetAuthToken, {
+                        ExceptionDetails: JSON.stringify(exceptionDetails)
+                    });
+                }
+            } catch {
+                const exceptionDetails = {
+                    response: "GetAuthTokenFailed"
+                };
+
+                this.scenarioMarker.failScenario(TelemetryEvent.GetAuthToken, {
+                    ExceptionDetails: JSON.stringify(exceptionDetails)
+                });
+            }
+        } else {
+            const exceptionDetails = {
+                response: "GetAuthTokenNotFound"
+            };
+
+            this.scenarioMarker.failScenario(TelemetryEvent.GetAuthToken, {
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
         }
     }
 }

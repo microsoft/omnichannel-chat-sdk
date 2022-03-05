@@ -410,6 +410,60 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.localeId).toBe(defaultLocaleId)
         });
 
+        it('ChatSDK.getChatConfig() with AuthSettings should call ChatSDK.setAuthTokenProvider()', async () => {
+            const chatSDKConfig = {
+                getAuthToken: async () => {
+                    return 'authenticatedUserToken'
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+
+            chatSDK.OCClient = {};
+            chatSDK.OCClient.getChatConfig = jest.fn(() => Promise.resolve({
+                DataMaskingInfo: { setting: { msdyn_maskforcustomer: false } },
+                LiveWSAndLiveChatEngJoin: { PreChatSurvey: { msdyn_prechatenabled: false } },
+                LiveChatConfigAuthSettings: {},
+                ChatWidgetLanguage: {
+                    msdyn_localeid: '1033',
+                    msdyn_languagename: 'English - United States'
+                }
+            }));
+
+            jest.spyOn(chatSDK, 'setAuthTokenProvider');
+            await chatSDK.getChatConfig();
+
+            expect(chatSDK.OCClient.getChatConfig).toHaveBeenCalledTimes(1);
+            expect(chatSDK.setAuthTokenProvider).toHaveBeenCalledTimes(1);
+        });
+
+        it('Authenticated Chat without chatSDKConfig.getAuthToken() set should fail silently with \'GetAuthTokenNotFound\'', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+
+            chatSDK.OCClient = {};
+            chatSDK.OCClient.getChatConfig = jest.fn(() => Promise.resolve({
+                DataMaskingInfo: { setting: { msdyn_maskforcustomer: false } },
+                LiveWSAndLiveChatEngJoin: { PreChatSurvey: { msdyn_prechatenabled: false } },
+                LiveChatConfigAuthSettings: {},
+                ChatWidgetLanguage: {
+                    msdyn_localeid: '1033',
+                    msdyn_languagename: 'English - United States'
+                }
+            }));
+
+            jest.spyOn(chatSDK, 'setAuthTokenProvider');
+            jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+            await chatSDK.getChatConfig();
+
+            const expectedResponse = 'GetAuthTokenNotFound';
+            const exceptionDetails = JSON.parse(chatSDK.scenarioMarker.failScenario.mock.calls[0][1].ExceptionDetails);
+
+            expect(chatSDK.OCClient.getChatConfig).toHaveBeenCalledTimes(1);
+            expect(chatSDK.setAuthTokenProvider).toHaveBeenCalledTimes(1);
+            expect(chatSDK.scenarioMarker.failScenario).toHaveBeenCalledTimes(1);
+            expect(exceptionDetails.response).toBe(expectedResponse);
+        });
+
         it('ChatSDK.getPreChatSurvey() with preChat enabled should return a pre chat survey', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             const samplePreChatSurvey = '{"type":"AdaptiveCard", "version":"1.1", "body":[]}';
