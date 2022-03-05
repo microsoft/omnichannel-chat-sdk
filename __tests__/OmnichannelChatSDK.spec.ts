@@ -437,7 +437,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.setAuthTokenProvider).toHaveBeenCalledTimes(1);
         });
 
-        it('Authenticated Chat without chatSDKConfig.getAuthToken() set should fail with \'GetAuthTokenNotFound\'', async () => {
+        it('Authenticated Chat without chatSDKConfig.getAuthToken() set should fail silently with \'GetAuthTokenNotFound\'', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
 
             chatSDK.OCClient = {};
