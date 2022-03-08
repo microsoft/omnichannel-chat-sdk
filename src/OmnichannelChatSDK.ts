@@ -1446,7 +1446,7 @@ class OmnichannelChatSDK {
                             fileManager,
                             1000,
                             ACSParticipantDisplayName.Customer,
-                            undefined,
+                            undefined, // chatClient
                             undefined, // logger
                             featuresOption,
                         );
