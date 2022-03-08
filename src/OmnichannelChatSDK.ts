@@ -1474,7 +1474,7 @@ class OmnichannelChatSDK {
                     const adapterConfig: IIC3AdapterOptions = {
                         chatToken: this.chatToken,
                         userDisplayName: 'Customer',
-                        userId: 'teamsvisitor',
+                        userId:  this.chatToken.visitorId || 'teamsvisitor',
                         sdkURL: this.resolveIC3ClientUrl(),
                         sdk: this.IC3Client
                     };
