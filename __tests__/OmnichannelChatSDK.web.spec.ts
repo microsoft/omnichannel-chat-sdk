@@ -74,8 +74,11 @@ describe('Omnichannel Chat SDK (Web)', () => {
         jest.spyOn(platform, 'isBrowser').mockReturnValue(true);
 
         const protocol = 'DirectLine';
+        const optionalParams = {
+            protocol
+        }
         try {
-            await chatSDK.createChatAdapter(protocol);
+            await chatSDK.createChatAdapter(optionalParams);
         } catch (error) {
             expect(error).toEqual(`ChatAdapter for protocol ${protocol} currently not supported`);
         }
