@@ -2,12 +2,12 @@ interface ChatAdapterOptionalParams {
     protocol?: string;
     IC3Adapter?: {
         options?: {
-            [key: string]: string
+            [key: string]: any
         }
     }
     ACSAdapter?: {
         options?: {
-            [key: string]: string
+            [key: string]: any
         }
     }
 }
