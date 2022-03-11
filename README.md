@@ -131,7 +131,7 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
 | OmnichannelChatSDK.getLiveChatTranscript() | Get transcript data (JSON) | |
 | OmnichannelChatSDK.uploadFileAttachment() | Send file attachment | |
 | OmnichannelChatSDK.downloadFileAttachment() | Download file attachment | |
-| OmnichannelChatSDK.createChatAdapter() | Get IC3Adapter | **Web only** |
+| OmnichannelChatSDK.createChatAdapter() | Get Chat Adapter | **Web only** |
 | OmnichannelChatSDK.getVoiceVideoCalling() | Get VoiceVideoCall SDK for Escalation to Voice & Video | **Web only** |
 | OmnichannelChatSDK.getPostChatSurveyContext() | Get post chat survey link, survey locale, and whether an agent has joined the survey | |
 

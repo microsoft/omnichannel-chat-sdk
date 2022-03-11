@@ -11,6 +11,7 @@ import AMSFileManager from "./external/ACSAdapter/AMSFileManager";
 import AriaTelemetry from "./telemetry/AriaTelemetry";
 import AuthSettings from "./core/AuthSettings";
 import CallingOptionsOptionSetNumber from "./core/CallingOptionsOptionSetNumber";
+import ChatAdapterOptionalParams from "./core/messaging/ChatAdapterOptionalParams";
 import ChatAdapterProtocols from "./core/messaging/ChatAdapterProtocols";
 import ChatConfig from "./core/ChatConfig";
 import ChatReconnectContext from "./core/ChatReconnectContext";
@@ -1405,11 +1406,12 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async createChatAdapter(protocol: string | null = null): Promise<unknown> {
+    public async createChatAdapter(optionalParams: ChatAdapterOptionalParams = {}): Promise<unknown> {
         if (platform.isNode() || platform.isReactNative()) {
             return Promise.reject('ChatAdapter is only supported on browser');
         }
 
+        const {protocol} = optionalParams;
         const supportedChatAdapterProtocols = [ChatAdapterProtocols.ACS, ChatAdapterProtocols.IC3];
         if (protocol && !supportedChatAdapterProtocols.includes(protocol as string)) {
             return Promise.reject(`ChatAdapter for protocol ${protocol} currently not supported`);
@@ -1417,6 +1419,7 @@ class OmnichannelChatSDK {
 
         if (protocol === ChatAdapterProtocols.ACS || this.liveChatVersion === LiveChatVersion.V2) {
             return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
+                const options = optionalParams.ACSAdapter? optionalParams.ACSAdapter.options: {};
                 const egressMiddlewares = [createFormatEgressTagsMiddleware()];
                 const ingressMiddlewares = [createFormatIngressTagsMiddleware()];
                 const featuresOption = {
@@ -1424,7 +1427,8 @@ class OmnichannelChatSDK {
                     enableThreadMemberUpdateNotification: true, // Whether to enable chat thread member join/leave notification
                     enableLeaveThreadOnWindowClosed: false, // Whether to remove user on browser close event
                     egressMiddleware: egressMiddlewares,
-                    ingressMiddleware: ingressMiddlewares
+                    ingressMiddleware: ingressMiddlewares,
+                    ...options // overrides
                 };
 
                 const acsAdapterCDNUrl = this.resolveChatAdapterUrl(protocol || ChatAdapterProtocols.ACS);
@@ -1446,7 +1450,7 @@ class OmnichannelChatSDK {
                             fileManager,
                             1000,
                             ACSParticipantDisplayName.Customer,
-                            undefined,
+                            undefined, // chatClient
                             undefined, // logger
                             featuresOption,
                         );
@@ -1461,6 +1465,7 @@ class OmnichannelChatSDK {
             });
         } else if (protocol === ChatAdapterProtocols.IC3 || this.liveChatVersion === LiveChatVersion.V1) {
             return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
+                const options = optionalParams.IC3Adapter? optionalParams.IC3Adapter.options: {};
                 const ic3AdapterCDNUrl = this.resolveChatAdapterUrl(protocol || ChatAdapterProtocols.IC3);
                 this.telemetry?.setCDNPackages({
                     IC3Adapter: ic3AdapterCDNUrl
@@ -1474,9 +1479,10 @@ class OmnichannelChatSDK {
                     const adapterConfig: IIC3AdapterOptions = {
                         chatToken: this.chatToken,
                         userDisplayName: 'Customer',
-                        userId: 'teamsvisitor',
+                        userId:  this.chatToken.visitorId || 'teamsvisitor',
                         sdkURL: this.resolveIC3ClientUrl(),
-                        sdk: this.IC3Client
+                        sdk: this.IC3Client,
+                        ...options // overrides
                     };
 
                     const adapter = new window.Microsoft.BotFramework.WebChat.IC3Adapter(adapterConfig);
