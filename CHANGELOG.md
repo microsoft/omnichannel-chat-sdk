@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Skip `session init` call on existing conversation
 - Fix `chat reconnect` not ending the conversation on calling `ChatSDK.endChat()`
 - Fix on messaging client not sending heartbeat on new conversations subsequent to the first conversation
+- Fix `ChatSDK.getConversationDetails()` not passing `authenticatedUserToken`
 
 ### Changed
 - README: added examples on usages of the post chat APIs.
