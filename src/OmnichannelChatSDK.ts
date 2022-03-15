@@ -36,6 +36,7 @@ import IFileInfo from "@microsoft/omnichannel-ic3core/lib/interfaces/IFileInfo";
 import IFileMetadata from "@microsoft/omnichannel-ic3core/lib/model/IFileMetadata";
 import IGetChatTokenOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTokenOptionalParams";
 import IGetChatTranscriptsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTranscriptsOptionalParams";
+import IGetLWIDetailsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetLWIDetailsOptionalParams";
 import IIC3AdapterOptions from "./external/IC3Adapter/IIC3AdapterOptions";
 import IInitializationInfo from "@microsoft/omnichannel-ic3core/lib/model/IInitializationInfo";
 import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
@@ -663,8 +664,22 @@ class OmnichannelChatSDK {
             ChatId: this.chatToken?.chatId as string || '',
         });
 
+        const getLWIDetailsOptionalParams: IGetLWIDetailsOptionalParams  = {};
+
+        if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable && this.reconnectId) {
+            getLWIDetailsOptionalParams.reconnectId = this.reconnectId as string;
+        }
+
+        if (this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat && this.reconnectId) {
+            getLWIDetailsOptionalParams.reconnectId = this.reconnectId as string;
+        }
+
+        if (this.authenticatedUserToken) {
+            getLWIDetailsOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
+        }
+
         try {
-            const lwiDetails = await this.OCClient.getLWIDetails(this.requestId);
+            const lwiDetails = await this.OCClient.getLWIDetails(this.requestId, getLWIDetailsOptionalParams);
             const {State: state, ConversationId: conversationId, AgentAcceptedOn: agentAcceptedOn} = lwiDetails;
             const liveWorkItemDetails: LiveWorkItemDetails = {
                 state,
