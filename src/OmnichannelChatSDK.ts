@@ -425,6 +425,7 @@ class OmnichannelChatSDK {
 
                 if ((error as any)?.isAxiosError && (error as any).response?.headers?.errorcode.toString() === OmnichannelErrorCodes.WidgetUseOutsideOperatingHour.toString()) {
                     exceptionDetails.response = OmnichannelErrorCodes[OmnichannelErrorCodes.WidgetUseOutsideOperatingHour].toString();
+                    console.error(`Widget used outside of operating hours`);
                 }
 
                 this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
