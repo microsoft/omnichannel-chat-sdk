@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Add `runtimeId` attribute in `OmnichannelChatSDK` & `ChatSDKRuntimeId` field in telemetry
 - Add ability to automatically pass locale from chat config on calling `ChatSDK.emailLiveChatTranscript()`
 - Bubble up `session init` exceptions
+- Bubble up `WidgetUseOutsideOperatingHour` exception
 
 ### Fix
 - Add `acs_webchat-chat-adapter` middlewares to format `channelData.tags`
