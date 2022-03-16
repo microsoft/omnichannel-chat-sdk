@@ -581,7 +581,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.ACSClient.joinConversation).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.startChat() should fail if OCClient.sessiontInit() fails', async () => {
+        it('ChatSDK.startChat() should fail if OCClient.sessionInit() fails', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
@@ -981,6 +981,7 @@ describe('Omnichannel Chat SDK', () => {
 
             chatSDK.OCClient = {};
             chatSDK.OCClient.getChatToken = jest.fn();
+            chatSDK.OCClient.sessionInit = jest.fn();
 
             chatSDK.IC3Client = {
                 initialize: jest.fn(),
@@ -1012,6 +1013,7 @@ describe('Omnichannel Chat SDK', () => {
 
             chatSDK.OCClient = {};
             chatSDK.OCClient.getChatToken = jest.fn();
+            chatSDK.OCClient.sessionInit = jest.fn();
 
             chatSDK.IC3Client = {
                 initialize: jest.fn(),
@@ -1034,6 +1036,7 @@ describe('Omnichannel Chat SDK', () => {
 
             chatSDK.OCClient = {};
             chatSDK.OCClient.getChatToken = jest.fn();
+            chatSDK.OCClient.sessionInit = jest.fn();
 
             chatSDK.IC3Client = {
                 initialize: jest.fn(),
@@ -2763,6 +2766,7 @@ describe('Omnichannel Chat SDK', () => {
             };
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
 
             await chatSDK.initialize();
 
@@ -2800,6 +2804,7 @@ describe('Omnichannel Chat SDK', () => {
             };
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
 
             await chatSDK.initialize();
 
@@ -2839,6 +2844,7 @@ describe('Omnichannel Chat SDK', () => {
             };
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
 
             await chatSDK.initialize();
 
@@ -2881,6 +2887,7 @@ describe('Omnichannel Chat SDK', () => {
             };
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
 
             await chatSDK.initialize();
 
@@ -2931,6 +2938,7 @@ describe('Omnichannel Chat SDK', () => {
             };
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
 
             await chatSDK.initialize();
 

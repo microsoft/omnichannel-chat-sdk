@@ -429,7 +429,7 @@ class OmnichannelChatSDK {
                 });
 
                 console.error(`OmnichannelChatSDK/startChat/sessionInit/error ${error}`);
-                return error;
+                throw error;
             }
         }
 
