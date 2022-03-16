@@ -58,6 +58,7 @@ import MessageContentType from "@microsoft/omnichannel-ic3core/lib/model/Message
 import MessageType from "@microsoft/omnichannel-ic3core/lib/model/MessageType";
 import OmnichannelChatToken from "@microsoft/omnichannel-amsclient/lib/OmnichannelChatToken";
 import OmnichannelConfig from "./core/OmnichannelConfig";
+import OmnichannelErrorCodes from "./core/OmnichannelErrorCodes";
 import OmnichannelMessage from "./core/messaging/OmnichannelMessage";
 import OnNewMessageOptionalParams from "./core/messaging/OnNewMessageOptionalParams";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
@@ -422,6 +423,10 @@ class OmnichannelChatSDK {
                     response: "OCClientSessionInitFailed"
                 };
 
+                if ((error as any)?.isAxiosError && (error as any).response?.headers?.errorcode.toString() === OmnichannelErrorCodes.WidgetUseOutsideOperatingHour.toString()) {
+                    exceptionDetails.response = OmnichannelErrorCodes[OmnichannelErrorCodes.WidgetUseOutsideOperatingHour].toString();
+                }
+
                 this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string,
@@ -429,7 +434,7 @@ class OmnichannelChatSDK {
                 });
 
                 console.error(`OmnichannelChatSDK/startChat/sessionInit/error ${error}`);
-                throw error;
+                throw new Error(exceptionDetails.response);
             }
         }
 
