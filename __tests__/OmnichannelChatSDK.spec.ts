@@ -581,7 +581,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.ACSClient.joinConversation).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.startChat() should fail if OCClient.sessiontInit() fails', async () => {
+        it('ChatSDK.startChat() should fail if OCClient.sessionInit() fails', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
