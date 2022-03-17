@@ -14,6 +14,7 @@ import CallingOptionsOptionSetNumber from "./core/CallingOptionsOptionSetNumber"
 import ChatAdapterOptionalParams from "./core/messaging/ChatAdapterOptionalParams";
 import ChatAdapterProtocols from "./core/messaging/ChatAdapterProtocols";
 import ChatConfig from "./core/ChatConfig";
+import ChatSDKExceptionDetails from "./core/ChatSDKExceptionDetails";
 import ChatReconnectContext from "./core/ChatReconnectContext";
 import ChatReconnectOptionalParams from "./core/ChatReconnectOptionalParams";
 import ChatSDKConfig from "./core/ChatSDKConfig";
@@ -58,6 +59,7 @@ import MessageContentType from "@microsoft/omnichannel-ic3core/lib/model/Message
 import MessageType from "@microsoft/omnichannel-ic3core/lib/model/MessageType";
 import OmnichannelChatToken from "@microsoft/omnichannel-amsclient/lib/OmnichannelChatToken";
 import OmnichannelConfig from "./core/OmnichannelConfig";
+import OmnichannelErrorCodes from "./core/OmnichannelErrorCodes";
 import OmnichannelMessage from "./core/messaging/OmnichannelMessage";
 import OnNewMessageOptionalParams from "./core/messaging/OnNewMessageOptionalParams";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
@@ -418,9 +420,16 @@ class OmnichannelChatSDK {
             try {
                 await this.OCClient.sessionInit(this.requestId, sessionInitOptionalParams);
             } catch (error) {
-                const exceptionDetails = {
+                const exceptionDetails: ChatSDKExceptionDetails = {
                     response: "OCClientSessionInitFailed"
                 };
+
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                if ((error as any)?.isAxiosError && (error as any).response?.headers?.errorcode.toString() === OmnichannelErrorCodes.WidgetUseOutsideOperatingHour.toString()) {
+                    exceptionDetails.response = OmnichannelErrorCodes[OmnichannelErrorCodes.WidgetUseOutsideOperatingHour].toString();
+                    exceptionDetails.message = 'Widget used outside of operating hours';
+                    console.error(exceptionDetails.message);
+                }
 
                 this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
                     RequestId: this.requestId,
@@ -428,8 +437,7 @@ class OmnichannelChatSDK {
                     ExceptionDetails: JSON.stringify(exceptionDetails)
                 });
 
-                console.error(`OmnichannelChatSDK/startChat/sessionInit/error ${error}`);
-                throw error;
+                throw new Error(exceptionDetails.response);
             }
         }
 

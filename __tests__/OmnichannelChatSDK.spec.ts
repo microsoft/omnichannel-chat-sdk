@@ -9,6 +9,7 @@ import IFileInfo from "@microsoft/omnichannel-ic3core/lib/interfaces/IFileInfo";
 import IFileMetadata from "@microsoft/omnichannel-ic3core/lib/model/IFileMetadata";
 import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import LiveChatVersion from "../src/core/LiveChatVersion";
+import OmnichannelErrorCodes from "../src/core/OmnichannelErrorCodes";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
 import libraries from "../src/utils/libraries";
@@ -581,7 +582,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.ACSClient.joinConversation).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.startChat() should fail if OCClient.sessionInit() fails', async () => {
+        it('ChatSDK.startChat() should throw an error if OCClient.sessionInit() fails', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
@@ -597,12 +598,44 @@ describe('Omnichannel Chat SDK', () => {
             jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve());
 
-            jest.spyOn(console, 'error');
+            try {
+                await chatSDK.startChat();
+            } catch (error) {
+                expect(error).toBeDefined();
+            }
+
+            expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
+            expect(chatSDK.IC3Client.initialize).toHaveBeenCalledTimes(0);
+            expect(chatSDK.IC3Client.joinConversation).toHaveBeenCalledTimes(0);
+        });
+
+        it('ChatSDK.startChat() should throw a \'WidgetUseOutsideOperatingHour\' error if OCClient.sessionInit() fails with \'705\' error code', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}'
+            }));
+
+            const axiosErrorObject: any = {};
+            axiosErrorObject.isAxiosError = true;
+            axiosErrorObject.response = {};
+            axiosErrorObject.response.headers = {};
+            axiosErrorObject.response.headers.errorcode = OmnichannelErrorCodes.WidgetUseOutsideOperatingHour.toString();
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockRejectedValue(axiosErrorObject);
+            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve());
 
             try {
                 await chatSDK.startChat();
             } catch (error) {
-                expect(console.error).toHaveBeenCalled();
+                expect(error).toBeDefined();
+                expect(error.message).toBe(OmnichannelErrorCodes[OmnichannelErrorCodes.WidgetUseOutsideOperatingHour].toString());
             }
 
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
@@ -740,7 +773,6 @@ describe('Omnichannel Chat SDK', () => {
                 expect(error.message).toEqual('InvalidConversation');
             }
         });
-
 
         it('ChatSDK.startChat() with liveChatContext of a closed conversation should throw an error', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
