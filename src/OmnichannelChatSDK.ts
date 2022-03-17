@@ -424,6 +424,7 @@ class OmnichannelChatSDK {
                     response: "OCClientSessionInitFailed"
                 };
 
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 if ((error as any)?.isAxiosError && (error as any).response?.headers?.errorcode.toString() === OmnichannelErrorCodes.WidgetUseOutsideOperatingHour.toString()) {
                     exceptionDetails.response = OmnichannelErrorCodes[OmnichannelErrorCodes.WidgetUseOutsideOperatingHour].toString();
                     exceptionDetails.message = 'Widget used outside of operating hours';
