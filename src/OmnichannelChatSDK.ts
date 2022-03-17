@@ -14,6 +14,7 @@ import CallingOptionsOptionSetNumber from "./core/CallingOptionsOptionSetNumber"
 import ChatAdapterOptionalParams from "./core/messaging/ChatAdapterOptionalParams";
 import ChatAdapterProtocols from "./core/messaging/ChatAdapterProtocols";
 import ChatConfig from "./core/ChatConfig";
+import ChatSDKExceptionDetails from "./core/ChatSDKExceptionDetails";
 import ChatReconnectContext from "./core/ChatReconnectContext";
 import ChatReconnectOptionalParams from "./core/ChatReconnectOptionalParams";
 import ChatSDKConfig from "./core/ChatSDKConfig";
@@ -419,13 +420,14 @@ class OmnichannelChatSDK {
             try {
                 await this.OCClient.sessionInit(this.requestId, sessionInitOptionalParams);
             } catch (error) {
-                const exceptionDetails = {
+                const exceptionDetails: ChatSDKExceptionDetails = {
                     response: "OCClientSessionInitFailed"
                 };
 
                 if ((error as any)?.isAxiosError && (error as any).response?.headers?.errorcode.toString() === OmnichannelErrorCodes.WidgetUseOutsideOperatingHour.toString()) {
                     exceptionDetails.response = OmnichannelErrorCodes[OmnichannelErrorCodes.WidgetUseOutsideOperatingHour].toString();
-                    console.error(`Widget used outside of operating hours`);
+                    exceptionDetails.message = 'Widget used outside of operating hours';
+                    console.error(exceptionDetails.message);
                 }
 
                 this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
