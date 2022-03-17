@@ -581,7 +581,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.ACSClient.joinConversation).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.startChat() should fail if OCClient.sessionInit() fails', async () => {
+        it('ChatSDK.startChat() should throw an error if OCClient.sessionInit() fails', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
@@ -597,12 +597,10 @@ describe('Omnichannel Chat SDK', () => {
             jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve());
 
-            jest.spyOn(console, 'error');
-
             try {
                 await chatSDK.startChat();
             } catch (error) {
-                expect(console.error).toHaveBeenCalled();
+                expect(error).toBeDefined();
             }
 
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
@@ -740,7 +738,6 @@ describe('Omnichannel Chat SDK', () => {
                 expect(error.message).toEqual('InvalidConversation');
             }
         });
-
 
         it('ChatSDK.startChat() with liveChatContext of a closed conversation should throw an error', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);

@@ -434,7 +434,6 @@ class OmnichannelChatSDK {
                     ExceptionDetails: JSON.stringify(exceptionDetails)
                 });
 
-                console.error(`OmnichannelChatSDK/startChat/sessionInit/error ${error}`);
                 throw new Error(exceptionDetails.response);
             }
         }
