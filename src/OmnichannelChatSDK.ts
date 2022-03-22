@@ -606,8 +606,8 @@ class OmnichannelChatSDK {
 
             if (this.IC3Client) {
                 this.IC3Client.dispose();
-                this.IC3Client = null;
                 !platform.isNode() && !platform.isReactNative() && removeElementById(this.IC3Client.id);
+                this.IC3Client = null;
             }
 
             this.ic3ClientLogger?.setRequestId(this.requestId);
