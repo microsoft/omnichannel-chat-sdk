@@ -1,4 +1,5 @@
 import { channelIdTag, customerMessageTag } from "../../../src/core/messaging/MessageTags";
+import { DeliveryMode } from "../../../src/core/messaging/OmnichannelMessage";
 import createChannelDataEgressMiddleware from "../../../src/external/ACSAdapter/createChannelDataEgressMiddleware";
 
 describe('createChannelDataEgressMiddleware', () => {
@@ -67,7 +68,25 @@ describe('createChannelDataEgressMiddleware', () => {
         expect(next).toHaveBeenCalledWith(activity);
     });
 
-    it('createChannelDataEgressMiddleware MUST have widgetId', () => {
+    it('createChannelDataEgressMiddleware should have deliveryMode as metadata if not set', () => {
+        const channelData = {
+            widgetId: 'widgetId'
+        };
+        const next = jest.fn();
+        const activity = {
+            channelData: {} as any // eslint-disable-line @typescript-eslint/no-explicit-any
+        };
+
+        createChannelDataEgressMiddleware(channelData)()(next)(activity);
+
+        expect(activity.channelData).toBeDefined();
+        expect(activity.channelData.metadata).toBeDefined();
+        expect(activity.channelData.metadata.deliveryMode).toBeDefined();
+        expect(activity.channelData.metadata.deliveryMode).toBe(DeliveryMode.Bridged);
+        expect(next).toHaveBeenCalledWith(activity);
+    });
+
+    it('createChannelDataEgressMiddleware MUST have widgetId as metadata', () => {
         const channelData = {
             widgetId: 'widgetId'
         };
