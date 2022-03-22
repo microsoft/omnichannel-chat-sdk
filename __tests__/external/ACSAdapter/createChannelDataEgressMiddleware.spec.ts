@@ -1,3 +1,4 @@
+import { channelIdTag, customerMessageTag } from "../../../src/core/messaging/MessageTags";
 import createChannelDataEgressMiddleware from "../../../src/external/ACSAdapter/createChannelDataEgressMiddleware";
 
 describe('createChannelDataEgressMiddleware', () => {
@@ -14,8 +15,6 @@ describe('createChannelDataEgressMiddleware', () => {
     });
 
     it('createChannelDataEgressMiddleware should add basic tags if not set', () => {
-        const channelIdTag = `ChannelId-lcw`;
-        const customerMessageTag = `FromCustomer`;
         const channelData = {
             widgetId: 'widgetId'
         };
@@ -28,6 +27,42 @@ describe('createChannelDataEgressMiddleware', () => {
 
         expect(activity.channelData).toBeDefined();
         expect(activity.channelData.tags.includes(channelIdTag)).toBe(true);
+        expect(activity.channelData.tags.includes(customerMessageTag)).toBe(true);
+        expect(next).toHaveBeenCalledWith(activity);
+    });
+
+    it('createChannelDataEgressMiddleware should add \'channelIdTag\' if not set', () => {
+        const channelData = {
+            widgetId: 'widgetId'
+        };
+        const next = jest.fn();
+        const activity = {
+            channelData: {
+                tags: [customerMessageTag]
+            } as any // eslint-disable-line @typescript-eslint/no-explicit-any
+        };
+
+        createChannelDataEgressMiddleware(channelData)()(next)(activity);
+
+        expect(activity.channelData).toBeDefined();
+        expect(activity.channelData.tags.includes(channelIdTag)).toBe(true);
+        expect(next).toHaveBeenCalledWith(activity);
+    });
+
+    it('createChannelDataEgressMiddleware should add \'customerMessageTag\' if not set', () => {
+        const channelData = {
+            widgetId: 'widgetId'
+        };
+        const next = jest.fn();
+        const activity = {
+            channelData: {
+                tags: [channelIdTag]
+            } as any // eslint-disable-line @typescript-eslint/no-explicit-any
+        };
+
+        createChannelDataEgressMiddleware(channelData)()(next)(activity);
+
+        expect(activity.channelData).toBeDefined();
         expect(activity.channelData.tags.includes(customerMessageTag)).toBe(true);
         expect(next).toHaveBeenCalledWith(activity);
     });
