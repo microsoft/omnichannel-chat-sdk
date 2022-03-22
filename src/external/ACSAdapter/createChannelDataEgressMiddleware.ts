@@ -24,8 +24,12 @@ const createChannelDataEgressMiddleware = (channelData: ChannelData): CallableFu
                 activity.channelData.tags.push(customerMessageTag);
             }
 
-            activity.channelData.metadata = {
-                deliveryMode: DeliveryMode.Bridged
+            if (!activity.channelData.metadata) {
+                activity.channelData.metadata = {};
+            }
+
+            if (!activity.channelData.metadata.deliveryMode) {
+                activity.channelData.metadata.deliveryMode = DeliveryMode.Bridged;
             }
 
             if (channelData.widgetId) {
