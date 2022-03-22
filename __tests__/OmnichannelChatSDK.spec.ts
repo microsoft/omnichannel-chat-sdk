@@ -2201,6 +2201,37 @@ describe('Omnichannel Chat SDK', () => {
             chatSDK.OCClient.sessionClose = jest.fn();
             chatSDK.IC3Client.initialize = jest.fn();
             chatSDK.IC3Client.joinConversation = jest.fn();
+            chatSDK.IC3Client.dispose = jest.fn();
+
+            await chatSDK.startChat();
+
+            chatSDK.conversation = {
+                disconnect: jest.fn()
+            };
+
+            const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
+            const ic3ClientDiposeFn = jest.spyOn(chatSDK.IC3Client, 'dispose');
+            await chatSDK.endChat();
+
+            expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(1);
+            expect(conversationDisconnectFn).toHaveBeenCalledTimes(1);
+            expect(chatSDK.conversation).toBe(null);
+            expect(chatSDK.chatToken).toMatchObject({});
+            expect(ic3ClientDiposeFn).toHaveBeenCalledTimes(1);
+            expect(chatSDK.IC3Client).toBe(null);
+        });
+
+
+        it('[LiveChatV2] ChatSDK.endChat() should end conversation', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V2;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient.sessionInit = jest.fn();
+            chatSDK.OCClient.sessionClose = jest.fn();
 
             await chatSDK.startChat();
 
@@ -2215,7 +2246,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(conversationDisconnectFn).toHaveBeenCalledTimes(1);
             expect(chatSDK.conversation).toBe(null);
             expect(chatSDK.chatToken).toMatchObject({});
-            expect(chatSDK.IC3Client).toBe(null);
+            expect(chatSDK.IC3Client).toBe(undefined);
         });
 
         it('ChatSDK.endChat() should fail if OCClient.sessionClose() fails', async () => {
