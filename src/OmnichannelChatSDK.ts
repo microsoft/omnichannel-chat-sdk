@@ -1448,8 +1448,8 @@ class OmnichannelChatSDK {
                 // Tags formatting middlewares are required to be the last in the pipeline to ensure tags are converted to the right format
                 const defaultEgressMiddlewares = [createChannelDataEgressMiddleware({widgetId: this.omnichannelConfig.widgetId}), createFormatEgressTagsMiddleware()];
                 const defaultIngressMiddlewares = [createFormatIngressTagsMiddleware()];
-                const egressMiddleware = options?.egressMiddlewares? [...options.egressMiddlewares, ...defaultEgressMiddlewares]: [...defaultEgressMiddlewares];
-                const ingressMiddleware = options?.ingressMiddlewares? [...options.ingressMiddlewares, ...defaultIngressMiddlewares]: [...defaultIngressMiddlewares];
+                const egressMiddleware = options?.egressMiddleware? [...options.egressMiddleware, ...defaultEgressMiddlewares]: [...defaultEgressMiddlewares];
+                const ingressMiddleware = options?.ingressMiddleware? [...options.egressMiddleware, ...defaultIngressMiddlewares]: [...defaultIngressMiddlewares];
                 const featuresOption = {
                     enableAdaptiveCards: true, // Whether to enable adaptive card payload in adapter (payload in JSON string)
                     enableThreadMemberUpdateNotification: true, // Whether to enable chat thread member join/leave notification
