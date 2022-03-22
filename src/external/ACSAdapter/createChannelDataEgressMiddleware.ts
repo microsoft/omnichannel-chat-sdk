@@ -11,16 +11,16 @@ const createChannelDataEgressMiddleware = (channelData: ChannelData): CallableFu
         const applicable = activity && activity.channelData;
 
         if (applicable) {
-            if (activity.channelData.tags) {
-                if (!activity.channelData.tags.includes(channelIdTag)) {
-                    activity.channelData.tags.push(channelIdTag);
-                }
 
-                if (!activity.channelData.tags.includes(customerMessageTag)) {
-                    activity.channelData.tags.push(customerMessageTag);
-                }
-            } else {
-                activity.channelData.tags = [channelIdTag];
+            if (!activity.channelData.tags) {
+                activity.channelData.tags = [];
+            }
+
+            if (!activity.channelData.tags.includes(channelIdTag)) {
+                activity.channelData.tags.push(channelIdTag);
+            }
+
+            if (!activity.channelData.tags.includes(customerMessageTag)) {
                 activity.channelData.tags.push(customerMessageTag);
             }
 
