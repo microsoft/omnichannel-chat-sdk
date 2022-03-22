@@ -21,6 +21,7 @@ import ChatSDKConfig from "./core/ChatSDKConfig";
 import ChatSDKMessage from "./core/messaging/ChatSDKMessage";
 import ChatTranscriptBody from "./core/ChatTranscriptBody";
 import ConversationMode from "./core/ConversationMode";
+import createChannelDataEgressMiddleware from "./external/ACSAdapter/createChannelDataEgressMiddleware";
 import createFormatEgressTagsMiddleware from "./external/ACSAdapter/createFormatEgressTagsMiddleware";
 import createFormatIngressTagsMiddleware from "./external/ACSAdapter/createFormatIngressTagsMiddleware";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
@@ -1445,15 +1446,19 @@ class OmnichannelChatSDK {
         if (protocol === ChatAdapterProtocols.ACS || this.liveChatVersion === LiveChatVersion.V2) {
             return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
                 const options = optionalParams.ACSAdapter? optionalParams.ACSAdapter.options: {};
-                const egressMiddlewares = [createFormatEgressTagsMiddleware()];
-                const ingressMiddlewares = [createFormatIngressTagsMiddleware()];
+
+                // Tags formatting middlewares are required to be the last in the pipeline to ensure tags are converted to the right format
+                const defaultEgressMiddlewares = [createChannelDataEgressMiddleware({widgetId: this.omnichannelConfig.widgetId}), createFormatEgressTagsMiddleware()];
+                const defaultIngressMiddlewares = [createFormatIngressTagsMiddleware()];
+                const egressMiddleware = options?.egressMiddleware? [...options.egressMiddleware, ...defaultEgressMiddlewares]: [...defaultEgressMiddlewares];
+                const ingressMiddleware = options?.ingressMiddleware? [...options.egressMiddleware, ...defaultIngressMiddlewares]: [...defaultIngressMiddlewares];
                 const featuresOption = {
                     enableAdaptiveCards: true, // Whether to enable adaptive card payload in adapter (payload in JSON string)
                     enableThreadMemberUpdateNotification: true, // Whether to enable chat thread member join/leave notification
                     enableLeaveThreadOnWindowClosed: false, // Whether to remove user on browser close event
-                    egressMiddleware: egressMiddlewares,
-                    ingressMiddleware: ingressMiddlewares,
-                    ...options // overrides
+                    ...options, // overrides
+                    ingressMiddleware,
+                    egressMiddleware
                 };
 
                 const acsAdapterCDNUrl = this.resolveChatAdapterUrl(protocol || ChatAdapterProtocols.ACS);
