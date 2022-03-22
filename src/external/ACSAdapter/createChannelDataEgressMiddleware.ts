@@ -11,7 +11,6 @@ const createChannelDataEgressMiddleware = (channelData: ChannelData): CallableFu
         const applicable = activity && activity.channelData;
 
         if (applicable) {
-
             if (!activity.channelData.tags) {
                 activity.channelData.tags = [];
             }
