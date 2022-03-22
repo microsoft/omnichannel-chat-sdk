@@ -604,9 +604,11 @@ class OmnichannelChatSDK {
             this.chatToken = {};
             this.reconnectId = null;
 
-            this.IC3Client.dispose();
-            !platform.isNode() && !platform.isReactNative() && removeElementById(this.IC3Client.id);
-            this.IC3Client = null;
+            if (this.IC3Client) {
+                this.IC3Client.dispose();
+                !platform.isNode() && !platform.isReactNative() && removeElementById(this.IC3Client.id);
+                this.IC3Client = null;
+            }
 
             this.ic3ClientLogger?.setRequestId(this.requestId);
             this.ic3ClientLogger?.setChatId('');

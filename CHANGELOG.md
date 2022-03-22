@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Fix `chat reconnect` not ending the conversation on calling `ChatSDK.endChat()`
 - Fix on messaging client not sending heartbeat on new conversations subsequent to the first conversation
 - Fix `ChatSDK.getConversationDetails()` not passing `authenticatedUserToken`
+- Fix `IC3Client.dispose()` called when `IC3Client` is `undefined`
 
 ### Changed
 - README: added examples on usages of the post chat APIs.
