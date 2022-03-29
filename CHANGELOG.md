@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Add ability to automatically pass locale from chat config on calling `ChatSDK.emailLiveChatTranscript()`
 - Bubble up `WidgetUseOutsideOperatingHour` exception
 - Add `acs_webchat-chat-adapter` middleware to add default `channelData.tags` & `channelData.metadata`
+- Update `ChatConfig` interface with `msdyn_enablemarkdown` property
 
 ### Fix
 - Add `acs_webchat-chat-adapter` middlewares to format `channelData.tags`

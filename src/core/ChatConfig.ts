@@ -6,4 +6,5 @@ export default interface ChatConfig {
     LiveWSAndLiveChatEngJoin: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     allowedFileExtensions: string;
     maxUploadFileSize: string;
+    msdyn_enablemarkdown?: string;
 }
