@@ -27,6 +27,7 @@ All notable changes to this project will be documented in this file.
 - README: added examples on usages of the post chat APIs.
 - Uptake [@azure/communication-chat@1.1.1](https://www.npmjs.com/package/@azure/communication-chat/v/1.1.1)
 - Uptake [acs_webchat-chat-adapter@0.0.35-beta.2](https://unpkg.com/acs_webchat-chat-adapter@0.0.35-beta.2/dist/chat-adapter.js)
+- Update `locale` property in `ChatTranscriptBody` interface to be optional
 
 ## [1.0.0] - 2021-10-08
 ### Added
