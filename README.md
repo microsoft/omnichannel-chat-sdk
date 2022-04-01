@@ -218,7 +218,7 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
         if (context.participantJoined) { // participantJoined will be true if an agent has joined the conversation, or a bot has joined the conversation and the bot survey flag has been turned on on the admin side.
             // formsProLocale is the default language you have set on the CustomerVoice portal. You can override this url parameter with any locale that CustomerVoice supports.
             // If "&lang=" is not set on the url, the locale will be English.
-            const linkToSend = context.surveyInviteLink + "&lang=" + context.formsProLocale; 
+            const linkToSend = context.surveyInviteLink + "&lang=" + context.formsProLocale;
             // This link is accessible and will redirect to the survey page. Use it as you see fit.
         }
     } catch (ex) {
@@ -596,82 +596,93 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
         console.log("VoiceVideoCalling loaded");
     } catch (e) {
         console.log(`Failed to load VoiceVideoCalling: ${e}`);
+
+        if (e.message === 'UnsupportedPlatform') {
+            // Voice Video Calling feature is not supported on this platform
+        }
+
+        if (e.message === 'FeatureDisabled') {
+            // Voice Video Calling feature is disabled on admin side
+        }
     }
 
     await chatSDK.startChat();
 
     const chatToken: any = await chatSDK.getChatToken();
 
-    try {
-        await VoiceVideoCallingSDK.initialize({
-            chatToken,
-            selfVideoHTMLElementId: 'selfVideo', // HTML element id where video stream of the agent will be rendered
-            remoteVideoHTMLElementId: 'remoteVideo', // HTML element id where video stream of the customer will be rendered
-            OCClient: chatSDK.OCClient
+    // Initialize only if VoiceVideoCallingSDK is defined
+    if (VoiceVideoCallingSDK) {
+        try {
+            await VoiceVideoCallingSDK.initialize({
+                chatToken,
+                selfVideoHTMLElementId: 'selfVideo', // HTML element id where video stream of the agent will be rendered
+                remoteVideoHTMLElementId: 'remoteVideo', // HTML element id where video stream of the customer will be rendered
+                OCClient: chatSDK.OCClient
+            });
+        } catch (e) {
+            console.error("Failed to initialize VoiceVideoCalling!");
+        }
+
+        // Triggered when there's an incoming call
+        VoiceVideoCallingSDK.onCallAdded(() => {
+            ...
         });
-    } catch (e) {
-        console.error("Failed to initialize VoiceVideoCalling!");
+
+        // Triggered when local video stream is available (e.g.: Local video added succesfully in selfVideoHTMLElement)
+        VoiceVideoCallingSDK.onLocalVideoStreamAdded(() => {
+            ...
+        });
+
+        // Triggered when local video stream is unavailable (e.g.: Customer turning off local video)
+        VoiceVideoCallingSDK.onLocalVideoStreamRemoved(() => {
+            ...
+        });
+
+        // Triggered when remote video stream is available (e.g.: Remote video added succesfully in remoteVideoHTMLElement)
+        VoiceVideoCallingSDK.onRemoteVideoStreamAdded(() => {
+            ...
+        });
+
+        // Triggered when remote video stream is unavailable (e.g.: Agent turning off remote video)
+        VoiceVideoCallingSDK.onRemoteVideoStreamRemoved(() => {
+            ...
+        });
+
+        // Triggered when current call has ended or disconnected regardless the party
+        VoiceVideoCalling.onCallDisconnected(() => {
+            ...
+        });
+
+        // Check if microphone is muted
+        const isMicrophoneMuted = VoiceVideoCallingSDK.isMicrophoneMuted();
+
+        // Check if remote video is available
+        const isRemoteVideoEnabled = VoiceVideoCallingSDK.isRemoteVideoEnabled();
+
+        // Check if local video is available
+        const isLocalVideoEnabled = VoiceVideoCallingSDK.isLocalVideoEnabled();
+
+        // Accepts incoming call
+        const acceptCallConfig = {
+            withVideo: true // Accept call with/without video stream
+        };
+        await VoiceVideoCallingSDK.acceptCall(acceptCallConfig);
+
+        // Rejects incoming call
+        await VoiceVideoCallingSDK.rejectCall();
+
+        // Ends/Stops current call
+        await VoiceVideoCallingSDK.stopCall();
+
+        // Mute/Unmute current call
+        await VoiceVideoCallingSDK.toggleMute()
+
+        // Display/Hide local video of current call
+        await VoiceVideoCallingSDK.toggleLocalVideo()
+
+        // Clean up VoiceVideoCallingSDK (e.g.: Usually called when customer ends chat session)
+        VoiceVideoCallingSDK.close();
     }
-
-    // Triggered when there's an incoming call
-    VoiceVideoCallingSDK.onCallAdded(() => {
-        ...
-    });
-
-    // Triggered when local video stream is available (e.g.: Local video added succesfully in selfVideoHTMLElement)
-    VoiceVideoCallingSDK.onLocalVideoStreamAdded(() => {
-        ...
-    });
-
-    // Triggered when local video stream is unavailable (e.g.: Customer turning off local video)
-    VoiceVideoCallingSDK.onLocalVideoStreamRemoved(() => {
-        ...
-    });
-
-    // Triggered when remote video stream is available (e.g.: Remote video added succesfully in remoteVideoHTMLElement)
-    VoiceVideoCallingSDK.onRemoteVideoStreamAdded(() => {
-        ...
-    });
-
-    // Triggered when remote video stream is unavailable (e.g.: Agent turning off remote video)
-    VoiceVideoCallingSDK.onRemoteVideoStreamRemoved(() => {
-        ...
-    });
-
-    // Triggered when current call has ended or disconnected regardless the party
-    VoiceVideoCalling.onCallDisconnected(() => {
-        ...
-    });
-
-    // Check if microphone is muted
-    const isMicrophoneMuted = VoiceVideoCallingSDK.isMicrophoneMuted();
-
-    // Check if remote video is available
-    const isRemoteVideoEnabled = VoiceVideoCallingSDK.isRemoteVideoEnabled();
-
-    // Check if local video is available
-    const isLocalVideoEnabled = VoiceVideoCallingSDK.isLocalVideoEnabled();
-
-    // Accepts incoming call
-    const acceptCallConfig = {
-        withVideo: true // Accept call with/without video stream
-    };
-    await VoiceVideoCallingSDK.acceptCall(acceptCallConfig);
-
-    // Rejects incoming call
-    await VoiceVideoCallingSDK.rejectCall();
-
-    // Ends/Stops current call
-    await VoiceVideoCallingSDK.stopCall();
-
-    // Mute/Unmute current call
-    await VoiceVideoCallingSDK.toggleMute()
-
-    // Display/Hide local video of current call
-    await VoiceVideoCallingSDK.toggleLocalVideo()
-
-    // Clean up VoiceVideoCallingSDK (e.g.: Usually called when customer ends chat session)
-    VoiceVideoCallingSDK.close();
 ```
 
 ## Feature Comparisons
