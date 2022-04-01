@@ -1586,14 +1586,15 @@ class OmnichannelChatSDK {
                     resolve(VoiceVideoCalling);
                 }, async () => {
                     const exceptionDetails = {
-                        response: "VoiceVideoCallingLoadFailed"
+                        response: "VoiceVideoCallingLoadFailed",
+                        message: "Failed to load VoiceVideoCalling"
                     };
 
                     this.scenarioMarker.failScenario(TelemetryEvent.GetVoiceVideoCalling, {
                         ExceptionDetails: JSON.stringify(exceptionDetails)
                     });
 
-                    reject('Failed to load VoiceVideoCalling');
+                    throw new Error(exceptionDetails.response);
                 });
             });
         }
