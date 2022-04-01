@@ -1532,12 +1532,32 @@ class OmnichannelChatSDK {
     }
 
     public async getVoiceVideoCalling(params: any = {}): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+        this.scenarioMarker.startScenario(TelemetryEvent.GetVoiceVideoCalling);
+
         if (platform.isNode() || platform.isReactNative()) {
-            return Promise.reject('VoiceVideoCalling is only supported on browser');
+            const exceptionDetails: ChatSDKExceptionDetails = {
+                response: "UnsupportedPlatform",
+                message: "VoiceVideoCalling is only supported on browser"
+            };
+
+            this.scenarioMarker.failScenario(TelemetryEvent.GetVoiceVideoCalling, {
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
+            throw new Error(exceptionDetails.response);
         }
 
         if (this.callingOption.toString() === CallingOptionsOptionSetNumber.NoCalling.toString()) {
-            return Promise.reject('Voice and video call is not enabled');
+            const exceptionDetails: ChatSDKExceptionDetails = {
+                response: "FeatureDisabled",
+                message: "Voice and video call is not enabled"
+            };
+
+            this.scenarioMarker.failScenario(TelemetryEvent.GetVoiceVideoCalling, {
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
+            throw new Error(exceptionDetails.response);
         }
 
         const chatConfig = await this.getChatConfig();
@@ -1549,8 +1569,6 @@ class OmnichannelChatSDK {
         const result = msdyn_widgetsnippet.match(widgetSnippetSourceRegex);
         if (result && result.length) {
             return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
-                this.scenarioMarker.startScenario(TelemetryEvent.GetVoiceVideoCalling);
-
                 const LiveChatWidgetLibCDNUrl = `${result[1]}/livechatwidget/WebChatControl/lib/CallingBundle.js`;
 
                 this.telemetry?.setCDNPackages({
