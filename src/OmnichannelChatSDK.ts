@@ -1568,7 +1568,7 @@ class OmnichannelChatSDK {
         const widgetSnippetSourceRegex = new RegExp(`src="(https:\\/\\/[\\w-.]+)[\\w-.\\/]+"`);
         const result = msdyn_widgetsnippet.match(widgetSnippetSourceRegex);
         if (result && result.length) {
-            return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
+            return new Promise (async (resolve) => { // eslint-disable-line no-async-promise-executor
                 const LiveChatWidgetLibCDNUrl = `${result[1]}/livechatwidget/WebChatControl/lib/CallingBundle.js`;
 
                 this.telemetry?.setCDNPackages({
