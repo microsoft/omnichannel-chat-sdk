@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { ACSAdapterLogger, ACSClientLogger, IC3ClientLogger, OCSDKLogger, createACSAdapterLogger, createACSClientLogger, createIC3ClientLogger, createOCSDKLogger } from "./utils/loggers";
+import { ACSAdapterLogger, ACSClientLogger, CallingSDKLogger, IC3ClientLogger, OCSDKLogger, createACSAdapterLogger, createACSClientLogger, createCallingSDKLogger, createIC3ClientLogger, createOCSDKLogger } from "./utils/loggers";
 import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
 import { ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import {SDKProvider as OCSDKProvider, uuidv4} from "@microsoft/ocsdk";
@@ -110,6 +110,7 @@ class OmnichannelChatSDK {
     private ocSdkLogger: OCSDKLogger | null = null;
     private acsClientLogger: ACSClientLogger | null = null;
     private acsAdapterLogger: ACSAdapterLogger | null = null;
+    private callingSdkLogger: CallingSDKLogger | null = null;
     private isPersistentChat = false;
     private isChatReconnect = false;
     private reconnectId: null | string = null;
@@ -138,18 +139,21 @@ class OmnichannelChatSDK {
         this.ocSdkLogger = createOCSDKLogger(this.omnichannelConfig);
         this.acsClientLogger = createACSClientLogger(this.omnichannelConfig);
         this.acsAdapterLogger = createACSAdapterLogger(this.omnichannelConfig);
+        this.callingSdkLogger = createCallingSDKLogger(this.omnichannelConfig);
 
         this.scenarioMarker.useTelemetry(this.telemetry);
         this.ic3ClientLogger.useTelemetry(this.telemetry);
         this.ocSdkLogger.useTelemetry(this.telemetry);
         this.acsClientLogger.useTelemetry(this.telemetry);
         this.acsAdapterLogger.useTelemetry(this.telemetry);
+        this.callingSdkLogger.useTelemetry(this.telemetry);
 
         this.scenarioMarker.setRuntimeId(this.runtimeId);
         this.ic3ClientLogger.setRuntimeId(this.runtimeId);
         this.ocSdkLogger.setRuntimeId(this.runtimeId);
         this.acsClientLogger.setRuntimeId(this.runtimeId);
         this.acsAdapterLogger.setRuntimeId(this.runtimeId);
+        this.callingSdkLogger.setRuntimeId(this.runtimeId);
 
         validateOmnichannelConfig(omnichannelConfig);
         validateSDKConfig(chatSDKConfig);
@@ -164,6 +168,7 @@ class OmnichannelChatSDK {
         this.ocSdkLogger?.setRequestId(this.requestId);
         this.acsClientLogger?.setRequestId(this.requestId);
         this.acsAdapterLogger?.setRequestId(this.requestId);
+        this.callingSdkLogger?.setRequestId(this.requestId);
     }
 
     /* istanbul ignore next */
@@ -176,6 +181,7 @@ class OmnichannelChatSDK {
         this.ocSdkLogger?.setDebug(flag);
         this.acsClientLogger?.setDebug(flag);
         this.acsAdapterLogger?.setDebug(flag);
+        this.callingSdkLogger?.setDebug(flag);
     }
 
     public async initialize(): Promise<ChatConfig> {
@@ -368,6 +374,7 @@ class OmnichannelChatSDK {
         this.ocSdkLogger?.setChatId(this.chatToken.chatId || '');
         this.acsClientLogger?.setChatId(this.chatToken.chatId || '');
         this.acsAdapterLogger?.setChatId(this.chatToken.chatId || '');
+        this.callingSdkLogger?.setChatId(this.chatToken.chatId || '');
 
         const sessionInitOptionalParams: ISessionInitOptionalParams = {
             initContext: {} as InitContext
@@ -622,6 +629,9 @@ class OmnichannelChatSDK {
 
             this.acsAdapterLogger?.setRequestId(this.requestId);
             this.acsAdapterLogger?.setChatId('');
+
+            this.callingSdkLogger?.setRequestId(this.requestId);
+            this.callingSdkLogger?.setChatId('');
         } catch (error) {
             const exceptionDetails = {
                 response: "OCClientSessionCloseFailed"
@@ -1575,9 +1585,13 @@ class OmnichannelChatSDK {
                     VoiceVideoCalling: LiveChatWidgetLibCDNUrl
                 });
 
+                const defaultParams = {
+                    logger: this.callingSdkLogger
+                };
+
                 await loadScript(LiveChatWidgetLibCDNUrl, async () => {
                     this.debug && console.debug(`${LiveChatWidgetLibCDNUrl} loaded!`);
-                    const VoiceVideoCalling = await createVoiceVideoCalling(params);
+                    const VoiceVideoCalling = await createVoiceVideoCalling({...params, ...defaultParams});
 
                     this.scenarioMarker.completeScenario(TelemetryEvent.GetVoiceVideoCalling);
 

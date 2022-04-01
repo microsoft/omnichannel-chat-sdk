@@ -351,4 +351,44 @@ describe('AriaTelemetry', () => {
         expect((AriaTelemetry as any)._disable).toBe(false);
         expect((AriaTelemetry as any).logger.logEvent.mock.calls[0][0].name).toBe(ScenarioType.ACSADAPTER);
     });
+
+    it('AriaTelemetry.info() for CALLINGSDK should send CALLINGSDK telemetry data', () => {
+        jest.spyOn((AriaTelemetry as any).logger, 'logEvent');
+        AriaTelemetry.info({}, ScenarioType.CALLINGSDK);
+
+        expect((AriaTelemetry as any)._disable).toBe(false);
+        expect((AriaTelemetry as any).logger.logEvent.mock.calls[0][0].name).toBe(ScenarioType.CALLINGSDK);
+    });
+
+    it('AriaTelemetry.debug() for CALLINGSDK should send CALLINGSDK telemetry data', () => {
+        jest.spyOn((AriaTelemetry as any).logger, 'logEvent');
+        AriaTelemetry.debug({}, ScenarioType.CALLINGSDK);
+
+        expect((AriaTelemetry as any)._disable).toBe(false);
+        expect((AriaTelemetry as any).logger.logEvent.mock.calls[0][0].name).toBe(ScenarioType.CALLINGSDK);
+    });
+
+    it('AriaTelemetry.warn() for CALLINGSDK should send CALLINGSDK telemetry data', () => {
+        jest.spyOn((AriaTelemetry as any).logger, 'logEvent');
+        AriaTelemetry.warn({}, ScenarioType.CALLINGSDK);
+
+        expect((AriaTelemetry as any)._disable).toBe(false);
+        expect((AriaTelemetry as any).logger.logEvent.mock.calls[0][0].name).toBe(ScenarioType.CALLINGSDK);
+    });
+
+    it('AriaTelemetry.error() for CALLINGSDK should send CALLINGSDK telemetry data', () => {
+        jest.spyOn((AriaTelemetry as any).logger, 'logEvent');
+        AriaTelemetry.error({}, ScenarioType.CALLINGSDK);
+
+        expect((AriaTelemetry as any)._disable).toBe(false);
+        expect((AriaTelemetry as any).logger.logEvent.mock.calls[0][0].name).toBe(ScenarioType.CALLINGSDK);
+    });
+
+    it('AriaTelemetry.log() for CALLINGSDK should send CALLINGSDK telemetry data', () => {
+        jest.spyOn((AriaTelemetry as any).logger, 'logEvent');
+        AriaTelemetry.log({}, ScenarioType.CALLINGSDK);
+
+        expect((AriaTelemetry as any)._disable).toBe(false);
+        expect((AriaTelemetry as any).logger.logEvent.mock.calls[0][0].name).toBe(ScenarioType.CALLINGSDK);
+    });
 });
