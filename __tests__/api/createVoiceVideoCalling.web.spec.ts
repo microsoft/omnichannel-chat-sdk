@@ -52,7 +52,7 @@ describe('createVoiceVideoCalling', () => {
             };
             await createVoiceVideoCalling({logger});
             expect(proxy.load).toHaveBeenCalledTimes(1);
-            expect(proxy.load.mock.calls[0][0]).toMatchObject(logger);
+            expect(proxy.load.mock.calls[0][0].logger).toMatchObject(logger);
         });
 
         it('VoiceVideoCallingProxy.isMicrophoneMuted() should have ChatId defined', async() => {
