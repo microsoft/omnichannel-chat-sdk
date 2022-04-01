@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Bubble up `WidgetUseOutsideOperatingHour` exception
 - Add `acs_webchat-chat-adapter` middleware to add default `channelData.tags` & `channelData.metadata`
 - Update `ChatConfig` interface with `msdyn_enablemarkdown` property
+- Throw exception on `ChatSDK.getVoiceVideoCalling()` if feature is disabled or platform is not supported
 
 ### Fix
 - Add `acs_webchat-chat-adapter` middlewares to format `channelData.tags`
