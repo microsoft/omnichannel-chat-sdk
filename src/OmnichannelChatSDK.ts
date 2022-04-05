@@ -705,13 +705,19 @@ class OmnichannelChatSDK {
 
             const liveWorkItemDetails: LiveWorkItemDetails = {
                 state,
-                conversationId,
-                canRenderPostChat,
-                participantType
+                conversationId
             };
 
             if (agentAcceptedOn) {
                 liveWorkItemDetails.agentAcceptedOn = agentAcceptedOn;
+            }
+
+            if (canRenderPostChat) {
+                liveWorkItemDetails.canRenderPostChat = canRenderPostChat;
+            }
+
+            if (participantType) {
+                liveWorkItemDetails.participantType = participantType;
             }
 
             this.scenarioMarker.completeScenario(TelemetryEvent.GetConversationDetails, {
@@ -1629,11 +1635,11 @@ class OmnichannelChatSDK {
             const {msdyn_postconversationsurveyenable, msfp_sourcesurveyidentifier, msfp_botsourcesurveyidentifier, postConversationSurveyOwnerId, postConversationBotSurveyOwnerId} = liveWSAndLiveChatEngJoin;
 
             if (msdyn_postconversationsurveyenable === "true") {
-                const liveWorkItemDetails = await this.OCClient.getLWIDetails(this.requestId);
-                const participantJoined = liveWorkItemDetails?.CanRenderPostChat === "True";
-                const participantType = liveWorkItemDetails?.ParticipantType;
+                const liveWorkItemDetails = await this.getConversationDetails();
+                const participantJoined = liveWorkItemDetails?.canRenderPostChat === "True";
+                const participantType = liveWorkItemDetails?.participantType;
 
-                conversationId = liveWorkItemDetails?.ConversationId;
+                conversationId = liveWorkItemDetails?.conversationId;
                 const surveyInviteLinkRequest = {
                     "FormId": participantType === "Bot" ? msfp_botsourcesurveyidentifier : msfp_sourcesurveyidentifier,
                     "ConversationId": conversationId,
