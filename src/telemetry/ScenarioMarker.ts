@@ -7,6 +7,7 @@ import {startEvent, failEvent, completeEvent} from './EventMarker';
 
 class ScenarioMarker {
     private debug: boolean;
+    private runtimeId = '';
     private telemetryEvents: Map<string, StopWatch>;
     private telemetry: typeof AriaTelemetry | null = null;
     private scenarioType: ScenarioType;
@@ -27,6 +28,10 @@ class ScenarioMarker {
         this.scenarioType = scenarioType;
     }
 
+    public setRuntimeId(runtimeId: string): void {
+        this.runtimeId = runtimeId;
+    }
+
     public useTelemetry(telemetry: typeof AriaTelemetry): void {
         this.debug && console.log(`[ScenarioMarker][useTelemetry]`);
         this.telemetry = telemetry;
@@ -42,6 +47,7 @@ class ScenarioMarker {
         }
 
         const properties = {
+            ChatSDKRuntimeId: this.runtimeId,
             Event: startEvent(event),
             OrgId: this.omnichannelConfig.orgId,
             OrgUrl: this.omnichannelConfig.orgUrl,
@@ -64,6 +70,7 @@ class ScenarioMarker {
         this.telemetryEvents.delete(event);
 
         const properties = {
+            ChatSDKRuntimeId: this.runtimeId,
             Event: failEvent(event),
             OrgId: this.omnichannelConfig.orgId,
             OrgUrl: this.omnichannelConfig.orgUrl,
@@ -87,6 +94,7 @@ class ScenarioMarker {
         this.telemetryEvents.delete(event);
 
         const properties = {
+            ChatSDKRuntimeId: this.runtimeId,
             Event: completeEvent(event),
             OrgId: this.omnichannelConfig.orgId,
             OrgUrl: this.omnichannelConfig.orgUrl,

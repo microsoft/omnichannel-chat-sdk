@@ -7,16 +7,30 @@ All notable changes to this project will be documented in this file.
 - Add `getPostChatSurveyContext` API method
 - Add `GetPostChatSurveyContext` telemetry event
 - Add `widgetId` & `clientMessageId` as metadata on sending message
+- Update `ChatConfig` interface with `LiveChatVersion`, `allowedFileExtensions` & `maxUploadFileSize` properties
+- Add ability to automatically detect locale from chat config
+- Add `runtimeId` attribute in `OmnichannelChatSDK` & `ChatSDKRuntimeId` field in telemetry
+- Add ability to automatically pass locale from chat config on calling `ChatSDK.emailLiveChatTranscript()`
+- Bubble up `WidgetUseOutsideOperatingHour` exception
+- Add `acs_webchat-chat-adapter` middleware to add default `channelData.tags` & `channelData.metadata`
+- Update `ChatConfig` interface with `msdyn_enablemarkdown` property
+- Throw exception on `ChatSDK.getVoiceVideoCalling()` if feature is disabled or platform is not supported
 - Add `participantType` & `canRenderPostChat` as response of getConversationDetails() API
 - Add support for separate bot post chat survey feature
 
 ### Fix
 - Add `acs_webchat-chat-adapter` middlewares to format `channelData.tags`
+- Skip `session init` call on existing conversation
+- Fix `chat reconnect` not ending the conversation on calling `ChatSDK.endChat()`
+- Fix on messaging client not sending heartbeat on new conversations subsequent to the first conversation
+- Fix `ChatSDK.getConversationDetails()` not passing `authenticatedUserToken`
+- Fix `IC3Client.dispose()` called when `IC3Client` is `undefined`
 
 ### Changed
 - README: added examples on usages of the post chat APIs.
 - Uptake [@azure/communication-chat@1.1.1](https://www.npmjs.com/package/@azure/communication-chat/v/1.1.1)
 - Uptake [acs_webchat-chat-adapter@0.0.35-beta.2](https://unpkg.com/acs_webchat-chat-adapter@0.0.35-beta.2/dist/chat-adapter.js)
+- Update `locale` property in `ChatTranscriptBody` interface to be optional
 
 ## [1.0.0] - 2021-10-08
 ### Added

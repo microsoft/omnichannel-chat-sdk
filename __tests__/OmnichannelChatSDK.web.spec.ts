@@ -74,8 +74,11 @@ describe('Omnichannel Chat SDK (Web)', () => {
         jest.spyOn(platform, 'isBrowser').mockReturnValue(true);
 
         const protocol = 'DirectLine';
+        const optionalParams = {
+            protocol
+        }
         try {
-            await chatSDK.createChatAdapter(protocol);
+            await chatSDK.createChatAdapter(optionalParams);
         } catch (error) {
             expect(error).toEqual(`ChatAdapter for protocol ${protocol} currently not supported`);
         }
@@ -100,7 +103,7 @@ describe('Omnichannel Chat SDK (Web)', () => {
         try {
             await chatSDK.getVoiceVideoCalling();
         } catch (error) {
-            expect(error).toEqual('Voice and video call is not enabled');
+            expect(error.message).toEqual('FeatureDisabled');
         }
     });
 });

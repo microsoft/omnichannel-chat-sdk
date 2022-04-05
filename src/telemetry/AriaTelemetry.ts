@@ -7,6 +7,7 @@ import { ic3ClientVersion, webChatACSAdapterVersion } from '../config/settings';
 import { isBrowser, isReactNative } from '../utils/platform';
 
 interface BaseContract {
+    ChatSDKRuntimeId: string;
     OrgId: string;
     OrgUrl: string;
     WidgetId: string;
@@ -39,6 +40,7 @@ interface CDNPackagesInfo {
 }
 
 interface IC3ClientContract {
+    ChatSDKRuntimeId: string;
     OrgId: string;
     OrgUrl: string;
     WidgetId: string;
@@ -56,6 +58,7 @@ interface IC3ClientContract {
 }
 
 interface OCSDKContract {
+    ChatSDKRuntimeId: string;
     OrgId: string;
     OrgUrl: string;
     WidgetId: string;
@@ -69,6 +72,7 @@ interface OCSDKContract {
 }
 
 interface ACSClientContract {
+    ChatSDKRuntimeId: string;
     OrgId: string;
     OrgUrl: string;
     WidgetId: string;
@@ -81,6 +85,7 @@ interface ACSClientContract {
 }
 
 interface ACSAdapterContract {
+    ChatSDKRuntimeId: string;
     OrgId: string;
     OrgUrl: string;
     WidgetId: string;
@@ -90,6 +95,20 @@ interface ACSAdapterContract {
     ExceptionDetails?: string;
     ElapsedTimeInMilliseconds?: string;
     ACSAdapterVersion: string;
+}
+
+interface CallingSDKContract {
+    ChatSDKRuntimeId: string;
+    OrgId: string;
+    OrgUrl: string;
+    WidgetId: string;
+    RequestId?: string;
+    ChatId?: string;
+    CallId?: string;
+    Event?: string;
+    Description?: string;
+    ExceptionDetails?: string;
+    ElapsedTimeInMilliseconds?: string;
 }
 
 enum Renderer {
@@ -187,6 +206,18 @@ class AriaTelemetry {
             }
         }
 
+        if (scenarioType == ScenarioType.CALLINGSDK) {
+            event = {
+                name: ScenarioType.CALLINGSDK,
+                properties: {
+                    ...AriaTelemetry.populateCallingSDKBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.INFO
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
         /* istanbul ignore next */
         this._debug && console.log(`[AriaTelemetry][info] ${scenarioType}`);
         /* istanbul ignore next */
@@ -251,6 +282,18 @@ class AriaTelemetry {
                 name: ScenarioType.ACSADAPTER,
                 properties: {
                     ...AriaTelemetry.populateACSAdapterBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.DEBUG
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
+        if (scenarioType == ScenarioType.CALLINGSDK) {
+            event = {
+                name: ScenarioType.CALLINGSDK,
+                properties: {
+                    ...AriaTelemetry.populateCallingSDKBaseProperties(),
                     ...properties,
                     LogLevel: LogLevel.DEBUG
                 },
@@ -329,6 +372,18 @@ class AriaTelemetry {
             }
         }
 
+        if (scenarioType == ScenarioType.CALLINGSDK) {
+            event = {
+                name: ScenarioType.CALLINGSDK,
+                properties: {
+                    ...AriaTelemetry.populateCallingSDKBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.WARN
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
         /* istanbul ignore next */
         this._debug && console.log(`[AriaTelemetry][warn] ${scenarioType}`);
         /* istanbul ignore next */
@@ -393,6 +448,18 @@ class AriaTelemetry {
                 name: ScenarioType.ACSADAPTER,
                 properties: {
                     ...AriaTelemetry.populateACSAdapterBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.ERROR
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
+        if (scenarioType == ScenarioType.CALLINGSDK) {
+            event = {
+                name: ScenarioType.CALLINGSDK,
+                properties: {
+                    ...AriaTelemetry.populateCallingSDKBaseProperties(),
                     ...properties,
                     LogLevel: LogLevel.ERROR
                 },
@@ -471,6 +538,18 @@ class AriaTelemetry {
             }
         }
 
+        if (scenarioType == ScenarioType.CALLINGSDK) {
+            event = {
+                name: ScenarioType.CALLINGSDK,
+                properties: {
+                    ...AriaTelemetry.populateCallingSDKBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.LOG
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
         /* istanbul ignore next */
         this._debug && console.log(`[AriaTelemetry][log]`);
         /* istanbul ignore next */
@@ -500,6 +579,7 @@ class AriaTelemetry {
         };
 
         return {
+            ChatSDKRuntimeId: '',
             OrgId: '',
             OrgUrl: '',
             WidgetId: '',
@@ -577,6 +657,7 @@ class AriaTelemetry {
 
     private static populateIC3ClientBaseProperties(): IC3ClientContract {
         return {
+            ChatSDKRuntimeId: '',
             OrgId: '',
             OrgUrl: '',
             WidgetId: '',
@@ -596,6 +677,7 @@ class AriaTelemetry {
 
     private static populateOCSDKBaseProperties(): OCSDKContract {
         return {
+            ChatSDKRuntimeId: '',
             OrgId: '',
             OrgUrl: '',
             WidgetId: '',
@@ -611,6 +693,7 @@ class AriaTelemetry {
 
     private static populateACSClientBaseProperties(): ACSClientContract {
         return {
+            ChatSDKRuntimeId: '',
             OrgId: '',
             OrgUrl: '',
             WidgetId: '',
@@ -625,6 +708,7 @@ class AriaTelemetry {
 
     private static populateACSAdapterBaseProperties(): ACSAdapterContract {
         return {
+            ChatSDKRuntimeId: '',
             OrgId: '',
             OrgUrl: '',
             WidgetId: '',
@@ -634,6 +718,22 @@ class AriaTelemetry {
             ExceptionDetails: '',
             ElapsedTimeInMilliseconds: '',
             ACSAdapterVersion: webChatACSAdapterVersion
+        }
+    }
+
+    private static populateCallingSDKBaseProperties(): CallingSDKContract {
+        return {
+            ChatSDKRuntimeId: '',
+            OrgId: '',
+            OrgUrl: '',
+            WidgetId: '',
+            RequestId: '',
+            ChatId: '',
+            CallId: '',
+            Event: '',
+            Description: '',
+            ExceptionDetails: '',
+            ElapsedTimeInMilliseconds: ''
         }
     }
 }

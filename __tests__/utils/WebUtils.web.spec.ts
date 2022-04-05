@@ -26,4 +26,16 @@ describe('WebUtils', () => {
         WebUtils.loadScript(sampleUrl);
         expect(document.createElement).toHaveBeenCalledTimes(0);
     });
+
+    it('WebUtils.removeElementById() should call document.getElementById().remove()', () => {
+        const element: any = {
+            remove: jest.fn()
+        }
+
+        jest.spyOn(document, 'getElementById').mockReturnValue(element);
+
+        WebUtils.removeElementById('id');
+        expect(document.getElementById).toHaveBeenCalledTimes(1);
+        expect(element.remove).toHaveBeenCalledTimes(1)
+    });
 });
