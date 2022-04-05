@@ -6,6 +6,7 @@ import { ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/commu
 import {SDKProvider as OCSDKProvider, uuidv4} from "@microsoft/ocsdk";
 import platform, { isBrowser } from "./utils/platform";
 import validateSDKConfig, {defaultChatSDKConfig} from "./validators/SDKConfigValidators";
+
 import ACSParticipantDisplayName from "./core/messaging/ACSParticipantDisplayName";
 import AMSFileManager from "./external/ACSAdapter/AMSFileManager";
 import AriaTelemetry from "./telemetry/AriaTelemetry";
@@ -19,8 +20,6 @@ import ChatSDKConfig from "./core/ChatSDKConfig";
 import ChatSDKMessage from "./core/messaging/ChatSDKMessage";
 import ChatTranscriptBody from "./core/ChatTranscriptBody";
 import ConversationMode from "./core/ConversationMode";
-import createFormatEgressTagsMiddleware from "./external/ACSAdapter/createFormatEgressTagsMiddleware";
-import createFormatIngressTagsMiddleware from "./external/ACSAdapter/createFormatIngressTagsMiddleware";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/FileSharingProtocolType";
@@ -65,6 +64,8 @@ import ScenarioMarker from "./telemetry/ScenarioMarker";
 import StartChatOptionalParams from "./core/StartChatOptionalParams";
 import TelemetryEvent from "./telemetry/TelemetryEvent";
 import createAMSClient from "@microsoft/omnichannel-amsclient";
+import createFormatEgressTagsMiddleware from "./external/ACSAdapter/createFormatEgressTagsMiddleware";
+import createFormatIngressTagsMiddleware from "./external/ACSAdapter/createFormatIngressTagsMiddleware";
 import createOmnichannelMessage from "./utils/createOmnichannelMessage";
 import createTelemetry from "./utils/createTelemetry";
 import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
@@ -639,10 +640,12 @@ class OmnichannelChatSDK {
 
         try {
             const lwiDetails = await this.OCClient.getLWIDetails(this.requestId);
-            const {State: state, ConversationId: conversationId, AgentAcceptedOn: agentAcceptedOn} = lwiDetails;
+            const {State: state, ConversationId: conversationId, AgentAcceptedOn: agentAcceptedOn, CanRenderPostChat: canRenderPostChat, ParticipantType: participantType} = lwiDetails;
             const liveWorkItemDetails: LiveWorkItemDetails = {
                 state,
-                conversationId
+                conversationId,
+                canRenderPostChat,
+                participantType
             };
 
             if (agentAcceptedOn) {
@@ -1531,17 +1534,18 @@ class OmnichannelChatSDK {
         try {
             const chatConfig: ChatConfig = this.liveChatConfig;
             const {LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin, ChatWidgetLanguage: chatWidgetLanguage} = chatConfig;
-            const {msdyn_postconversationsurveyenable, msfp_sourcesurveyidentifier, postConversationSurveyOwnerId} = liveWSAndLiveChatEngJoin;
+            const {msdyn_postconversationsurveyenable, msfp_sourcesurveyidentifier, msfp_botsourcesurveyidentifier, postConversationSurveyOwnerId, postConversationBotSurveyOwnerId} = liveWSAndLiveChatEngJoin;
             const {msdyn_localeid} = chatWidgetLanguage;
             const localeId: string = msdyn_localeid ?? "1033";
 
-            if (msdyn_postconversationsurveyenable) {
+            if (msdyn_postconversationsurveyenable === "true") {
                 const liveWorkItemDetails = await this.OCClient.getLWIDetails(this.requestId);
-                const participantJoined: boolean = liveWorkItemDetails?.CanRenderPostChat && liveWorkItemDetails?.CanRenderPostChat === "True";
+                const participantJoined = liveWorkItemDetails?.CanRenderPostChat === "True";
+                const participantType = liveWorkItemDetails?.ParticipantType;
 
                 conversationId = liveWorkItemDetails?.ConversationId;
                 const surveyInviteLinkRequest = {
-                    "FormId": msfp_sourcesurveyidentifier,
+                    "FormId": participantType === "Bot" ? msfp_botsourcesurveyidentifier : msfp_sourcesurveyidentifier,
                     "ConversationId": conversationId,
                     "OCLocaleCode": getLocaleStringFromId(localeId)
                 };
@@ -1554,7 +1558,8 @@ class OmnichannelChatSDK {
                     optionalParams.authenticatedUserToken = this.authenticatedUserToken;
                 }
 
-                const surveyInviteLinkResponse = await this.OCClient.getSurveyInviteLink(postConversationSurveyOwnerId, surveyInviteLinkRequest);
+                const ownerId = participantType === "Bot" ? postConversationBotSurveyOwnerId : postConversationSurveyOwnerId;
+                const surveyInviteLinkResponse = await this.OCClient.getSurveyInviteLink(ownerId, surveyInviteLinkRequest, optionalParams);
 
                 let surveyInviteLink, formsProLocale;
                 if (surveyInviteLinkResponse != null) {
@@ -1576,6 +1581,7 @@ class OmnichannelChatSDK {
 
                     const postChatContext: PostChatContext = {
                         participantJoined,
+                        participantType,
                         surveyInviteLink,
                         formsProLocale
                     }
@@ -1598,7 +1604,7 @@ class OmnichannelChatSDK {
             }
         } catch (ex) {
             this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {
-                ConversationId: conversationId,
+                ConversationId: conversationId ?? "",
                 RequestId: this.requestId,
                 ExceptionDetails: JSON.stringify(ex)
             });

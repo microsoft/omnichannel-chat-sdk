@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 - Add `getPostChatSurveyContext` API method
 - Add `GetPostChatSurveyContext` telemetry event
 - Add `widgetId` & `clientMessageId` as metadata on sending message
+- Add `participantType` & `canRenderPostChat` as response of getConversationDetails() API
+- Add support for separate bot post chat survey feature
 
 ### Fix
 - Add `acs_webchat-chat-adapter` middlewares to format `channelData.tags`
