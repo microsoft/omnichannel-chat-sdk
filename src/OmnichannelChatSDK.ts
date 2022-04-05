@@ -4,8 +4,11 @@ import { ACSAdapterLogger, ACSClientLogger, CallingSDKLogger, IC3ClientLogger, O
 import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
 import { ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import {SDKProvider as OCSDKProvider, uuidv4} from "@microsoft/ocsdk";
+import { defaultLocaleId, getLocaleStringFromId } from "./utils/locale";
+import { loadScript, removeElementById } from "./utils/WebUtils";
 import platform, { isBrowser } from "./utils/platform";
 import validateSDKConfig, {defaultChatSDKConfig} from "./validators/SDKConfigValidators";
+
 import ACSParticipantDisplayName from "./core/messaging/ACSParticipantDisplayName";
 import AMSFileManager from "./external/ACSAdapter/AMSFileManager";
 import AriaTelemetry from "./telemetry/AriaTelemetry";
@@ -14,16 +17,13 @@ import CallingOptionsOptionSetNumber from "./core/CallingOptionsOptionSetNumber"
 import ChatAdapterOptionalParams from "./core/messaging/ChatAdapterOptionalParams";
 import ChatAdapterProtocols from "./core/messaging/ChatAdapterProtocols";
 import ChatConfig from "./core/ChatConfig";
-import ChatSDKExceptionDetails from "./core/ChatSDKExceptionDetails";
 import ChatReconnectContext from "./core/ChatReconnectContext";
 import ChatReconnectOptionalParams from "./core/ChatReconnectOptionalParams";
 import ChatSDKConfig from "./core/ChatSDKConfig";
+import ChatSDKExceptionDetails from "./core/ChatSDKExceptionDetails";
 import ChatSDKMessage from "./core/messaging/ChatSDKMessage";
 import ChatTranscriptBody from "./core/ChatTranscriptBody";
 import ConversationMode from "./core/ConversationMode";
-import createChannelDataEgressMiddleware from "./external/ACSAdapter/createChannelDataEgressMiddleware";
-import createFormatEgressTagsMiddleware from "./external/ACSAdapter/createFormatEgressTagsMiddleware";
-import createFormatIngressTagsMiddleware from "./external/ACSAdapter/createFormatIngressTagsMiddleware";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/FileSharingProtocolType";
@@ -70,16 +70,16 @@ import ScenarioMarker from "./telemetry/ScenarioMarker";
 import StartChatOptionalParams from "./core/StartChatOptionalParams";
 import TelemetryEvent from "./telemetry/TelemetryEvent";
 import createAMSClient from "@microsoft/omnichannel-amsclient";
+import createChannelDataEgressMiddleware from "./external/ACSAdapter/createChannelDataEgressMiddleware";
+import createFormatEgressTagsMiddleware from "./external/ACSAdapter/createFormatEgressTagsMiddleware";
+import createFormatIngressTagsMiddleware from "./external/ACSAdapter/createFormatIngressTagsMiddleware";
 import createOmnichannelMessage from "./utils/createOmnichannelMessage";
 import createTelemetry from "./utils/createTelemetry";
 import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
 import { defaultMessageTags } from "./core/messaging/MessageTags";
-import { getLocaleStringFromId, defaultLocaleId } from "./utils/locale";
 import {isCustomerMessage} from "./utils/utilities";
 import libraries from "./utils/libraries";
-import { loadScript, removeElementById } from "./utils/WebUtils";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
-
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -1625,10 +1625,8 @@ class OmnichannelChatSDK {
 
         try {
             const chatConfig: ChatConfig = this.liveChatConfig;
-            const {LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin, ChatWidgetLanguage: chatWidgetLanguage} = chatConfig;
+            const {LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin} = chatConfig;
             const {msdyn_postconversationsurveyenable, msfp_sourcesurveyidentifier, msfp_botsourcesurveyidentifier, postConversationSurveyOwnerId, postConversationBotSurveyOwnerId} = liveWSAndLiveChatEngJoin;
-            const {msdyn_localeid} = chatWidgetLanguage;
-            const localeId: string = msdyn_localeid ?? "1033";
 
             if (msdyn_postconversationsurveyenable === "true") {
                 const liveWorkItemDetails = await this.OCClient.getLWIDetails(this.requestId);
@@ -1639,7 +1637,7 @@ class OmnichannelChatSDK {
                 const surveyInviteLinkRequest = {
                     "FormId": participantType === "Bot" ? msfp_botsourcesurveyidentifier : msfp_sourcesurveyidentifier,
                     "ConversationId": conversationId,
-                    "OCLocaleCode": getLocaleStringFromId(this.localeId) || getLocaleStringFromId(defaultLocaleId)
+                    "OCLocaleCode": getLocaleStringFromId(this.localeId)
                 };
 
                 const optionalParams: any = { // eslint-disable-line @typescript-eslint/no-explicit-any
