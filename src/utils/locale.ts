@@ -59,4 +59,4 @@ export const getLocaleIdFromString = (value: string): string => {
 }
 
 export const defaultLocaleId = "1033";
-export const defaultLocaleString = getLocaleStringFromId(defaultLocaleId);
+export const defaultLocaleString = "en-us";
