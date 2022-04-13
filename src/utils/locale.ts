@@ -49,13 +49,14 @@ const localeList: any = { // eslint-disable-line @typescript-eslint/no-explicit-
 export const getLocaleStringFromId = (id: string): string => {
   const localeId = Object.keys(localeList).find(key => key === id);
 
-  return localeId ? localeList[localeId] : "";
+  return localeId ? localeList[localeId] : defaultLocaleString;
 }
 
 export const getLocaleIdFromString = (value: string): string => {
   const localeId = Object.keys(localeList).find(key => localeList[key] === value);
 
-  return localeId ?? "";
+  return localeId ?? defaultLocaleId;
 }
 
-export const defaultLocaleId = getLocaleIdFromString("en-us");
+export const defaultLocaleId = "1033";
+export const defaultLocaleString = "en-us";
