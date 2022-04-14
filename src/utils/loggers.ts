@@ -333,7 +333,7 @@ export class ACSAdapterLogger {
         this.scenarioMarker?.useTelemetry(this.telemetry);
     }
 
-    public logClientSdkTelemetryEvent(logLevel: LogLevel, event: any): void {  // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+    public logEvent(logLevel: LogLevel, event: any): void {  // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
         /* istanbul ignore next */
         this.debug && console.log(`[ACSAdapterLogger][logClientSdkTelemetryEvent][${logLevel}]`);
         /* istanbul ignore next */
