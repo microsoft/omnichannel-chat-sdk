@@ -1496,7 +1496,6 @@ class OmnichannelChatSDK {
                             this.chatToken.chatId as string,
                             this.chatToken.acsEndpoint as string,
                             fileManager,
-                            1000,
                             ACSParticipantDisplayName.Customer,
                             undefined, // chatClient
                             this.acsAdapterLogger, // logger
