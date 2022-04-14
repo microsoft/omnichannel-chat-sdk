@@ -100,7 +100,9 @@ export class VoiceVideoCallingProxy {
         /* istanbul ignore next */
         this.debug && console.debug(`[VoiceVideoCallingProxy][initialize] _isLoaded: ${this.proxyInstance._isLoaded}`);
         if (!this.proxyInstance._isLoaded) {
-            await this.proxyInstance.load(this.logger || {});
+            await this.proxyInstance.load({
+                logger: this.logger || undefined
+            });
         }
 
         try {
@@ -394,7 +396,9 @@ export class VoiceVideoCallingProxy {
 
 const createVoiceVideoCalling = async (params: any = {}): Promise<VoiceVideoCallingProxy> => { // eslint-disable-line @typescript-eslint/no-explicit-any
     const proxy = VoiceVideoCallingProxy.getInstance();
-    await proxy.load(params.logger);
+    await proxy.load({
+        logger: params.logger || undefined
+    });
     return Promise.resolve(proxy);
 }
 

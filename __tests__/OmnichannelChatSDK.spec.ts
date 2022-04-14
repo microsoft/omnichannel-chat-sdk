@@ -1,5 +1,7 @@
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 
+import { defaultLocaleId, getLocaleStringFromId } from "../src/utils/locale";
+
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
 import AriaTelemetry from "../src/telemetry/AriaTelemetry";
 import ChatAdapterProtocols from "../src/core/messaging/ChatAdapterProtocols";
@@ -13,7 +15,6 @@ import OmnichannelErrorCodes from "../src/core/OmnichannelErrorCodes";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
 import libraries from "../src/utils/libraries";
-import { defaultLocaleId, getLocaleStringFromId } from "../src/utils/locale";
 
 describe('Omnichannel Chat SDK', () => {
     AWTLogManager.initialize = jest.fn();
@@ -2822,7 +2823,7 @@ describe('Omnichannel Chat SDK', () => {
 
             const dummyConfig = {
                 LiveWSAndLiveChatEngJoin: {
-                    msdyn_postconversationsurveyenable: false,
+                    msdyn_postconversationsurveyenable: "false",
                     msfp_sourcesurveyidentifier: "",
                     postConversationSurveyOwnerId: ""
                 }
@@ -2834,14 +2835,17 @@ describe('Omnichannel Chat SDK', () => {
             await chatSDK.initialize();
 
             chatSDK.liveChatConfig = dummyConfig;
-            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue({CanRenderPostChat: true});
+            jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue({
+                state: "Active",
+                conversationId: "convId"
+            });
             jest.spyOn(console, 'error');
 
             try {
                 const postChatContext = await chatSDK.getPostChatSurveyContext();
                 throw("Should throw error.");
             } catch (ex) {
-                expect(chatSDK.OCClient.getLWIDetails).not.toHaveBeenCalled();
+                expect(chatSDK.getConversationDetails).not.toHaveBeenCalled();
             }
         });
 
@@ -2857,7 +2861,7 @@ describe('Omnichannel Chat SDK', () => {
 
             const dummyConfig = {
                 LiveWSAndLiveChatEngJoin: {
-                    msdyn_postconversationsurveyenable: true,
+                    msdyn_postconversationsurveyenable: "true",
                     msfp_sourcesurveyidentifier: "",
                     postConversationSurveyOwnerId: ""
                 },
@@ -2872,7 +2876,11 @@ describe('Omnichannel Chat SDK', () => {
             await chatSDK.initialize();
 
             chatSDK.liveChatConfig = dummyConfig;
-            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue({});
+            jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue({
+                state: "Active",
+                conversationId: "convId",
+                canRenderPostChat: "True"
+            });
             jest.spyOn(chatSDK.OCClient, 'getSurveyInviteLink').mockResolvedValue(null);
             jest.spyOn(console, 'error');
 
@@ -2880,7 +2888,7 @@ describe('Omnichannel Chat SDK', () => {
                 const postChatContext = await chatSDK.getPostChatSurveyContext();
                 throw("Should throw error.");
             } catch (ex) {
-                expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
+                expect(chatSDK.getConversationDetails).toHaveBeenCalledTimes(1);
                 expect(chatSDK.OCClient.getSurveyInviteLink).toHaveBeenCalledTimes(1);
             }
         });
@@ -2897,7 +2905,7 @@ describe('Omnichannel Chat SDK', () => {
 
             const dummyConfig = {
                 LiveWSAndLiveChatEngJoin: {
-                    msdyn_postconversationsurveyenable: true,
+                    msdyn_postconversationsurveyenable: "true",
                     msfp_sourcesurveyidentifier: "",
                     postConversationSurveyOwnerId: ""
                 },
@@ -2912,7 +2920,11 @@ describe('Omnichannel Chat SDK', () => {
             await chatSDK.initialize();
 
             chatSDK.liveChatConfig = dummyConfig;
-            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue({});
+            jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue({
+                state: "Active",
+                conversationId: "convId",
+                canRenderPostChat: "True"
+            });
             jest.spyOn(chatSDK.OCClient, 'getSurveyInviteLink').mockResolvedValue({
                 inviteList: [],
                 formsProLocaleCode: "en-us"
@@ -2923,7 +2935,7 @@ describe('Omnichannel Chat SDK', () => {
                 const postChatContext = await chatSDK.getPostChatSurveyContext();
                 throw("Should throw error.");
             } catch (ex) {
-                expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
+                expect(chatSDK.getConversationDetails).toHaveBeenCalledTimes(1);
                 expect(chatSDK.OCClient.getSurveyInviteLink).toHaveBeenCalledTimes(1);
             }
         });
@@ -2940,7 +2952,7 @@ describe('Omnichannel Chat SDK', () => {
 
             const dummyConfig = {
                 LiveWSAndLiveChatEngJoin: {
-                    msdyn_postconversationsurveyenable: true,
+                    msdyn_postconversationsurveyenable: "true",
                     msfp_sourcesurveyidentifier: "",
                     postConversationSurveyOwnerId: ""
                 },
@@ -2955,9 +2967,10 @@ describe('Omnichannel Chat SDK', () => {
             await chatSDK.initialize();
 
             chatSDK.liveChatConfig = dummyConfig;
-            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue({
-                CanRenderPostChat: "True",
-                ConversationId: "dummy"
+            jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue({
+                state: "Active",
+                conversationId: "convId",
+                canRenderPostChat: "True"
             });
             jest.spyOn(chatSDK.OCClient, 'getSurveyInviteLink').mockResolvedValue({
                 inviteList: [
@@ -2971,7 +2984,7 @@ describe('Omnichannel Chat SDK', () => {
 
             try {
                 const postChatContext = await chatSDK.getPostChatSurveyContext();
-                expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
+                expect(chatSDK.getConversationDetails).toHaveBeenCalledTimes(1);
                 expect(chatSDK.OCClient.getSurveyInviteLink).toHaveBeenCalledTimes(1);
                 expect(postChatContext.participantJoined).toBe(true);
             } catch (ex) {
@@ -2991,7 +3004,7 @@ describe('Omnichannel Chat SDK', () => {
 
             const dummyConfig = {
                 LiveWSAndLiveChatEngJoin: {
-                    msdyn_postconversationsurveyenable: true,
+                    msdyn_postconversationsurveyenable: "true",
                     msfp_sourcesurveyidentifier: "",
                     postConversationSurveyOwnerId: ""
                 },
@@ -3006,8 +3019,9 @@ describe('Omnichannel Chat SDK', () => {
             await chatSDK.initialize();
 
             chatSDK.liveChatConfig = dummyConfig;
-            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue({
-                ConversationId: "dummy"
+            jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue({
+                state: "Active",
+                conversationId: "convId"
             });
             jest.spyOn(chatSDK.OCClient, 'getSurveyInviteLink').mockResolvedValue({
                 inviteList: [
@@ -3021,9 +3035,70 @@ describe('Omnichannel Chat SDK', () => {
 
             try {
                 const postChatContext = await chatSDK.getPostChatSurveyContext();
-                expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
+                expect(chatSDK.getConversationDetails).toHaveBeenCalledTimes(1);
                 expect(chatSDK.OCClient.getSurveyInviteLink).toHaveBeenCalledTimes(1);
                 expect(postChatContext.participantJoined).toBeFalsy();
+            } catch (ex) {
+                throw("Should not throw error. " + ex);
+            }
+        });
+
+        it('ChatSDK.getPostChatSurveyContext() should resolve if bot survey is being used', async () => {
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                },
+                chatReconnect: {
+                    disable: false,
+                }
+            };
+
+            const dummyConfig = {
+                LiveWSAndLiveChatEngJoin: {
+                    msdyn_postconversationsurveyenable: "true",
+                    msfp_sourcesurveyidentifier: "",
+                    msfp_botsourcesurveyidentifier: "1",
+                    postConversationSurveyOwnerId: "",
+                    postConversationBotSurveyOwnerId: "2"
+                },
+                ChatWidgetLanguage: {
+                    msdyn_localeid: "1033"
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
+            
+            await chatSDK.initialize();
+
+            chatSDK.liveChatConfig = dummyConfig;
+            jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue({
+                state: "Active",
+                conversationId: "convId",
+                canRenderPostChat: "True",
+                participantType: "Bot"
+            });
+            jest.spyOn(chatSDK.OCClient, 'getSurveyInviteLink').mockResolvedValue({
+                inviteList: [
+                    {
+                        invitationLink: "dummy"
+                    }
+                ],
+                formsProLocaleCode: "en-us"
+            });
+            jest.spyOn(console, 'error');
+
+            try {
+                const postChatContext = await chatSDK.getPostChatSurveyContext();
+                expect(chatSDK.getConversationDetails).toHaveBeenCalledTimes(1);
+                expect(chatSDK.OCClient.getSurveyInviteLink).toHaveBeenCalledWith("2", {
+                    "FormId": "1",
+                    "ConversationId": "convId",
+                    "OCLocaleCode": "en-us"
+                },
+                expect.any(Object));
+                expect(postChatContext.participantJoined).toBeTruthy();
+                expect(postChatContext.participantType).toBe("Bot");
             } catch (ex) {
                 throw("Should not throw error. " + ex);
             }

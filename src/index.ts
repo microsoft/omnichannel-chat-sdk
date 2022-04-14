@@ -1,14 +1,16 @@
-import {SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
-import {SDKProvider as IC3SDKProvider} from '@microsoft/omnichannel-ic3core';
-import OmnichannelChatSDK from "./OmnichannelChatSDK";
+import {SDKProvider as OCSDKProvider, uuidv4} from "@microsoft/ocsdk";
+import { defaultLocaleId, defaultLocaleString, getLocaleIdFromString, getLocaleStringFromId } from "./utils/locale";
+import { isCustomerMessage, isSystemMessage } from "./utils/utilities";
+
 import ChatSDKMessage from "./core/messaging/ChatSDKMessage";
+import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
+import {SDKProvider as IC3SDKProvider} from '@microsoft/omnichannel-ic3core';
+import IFileInfo from "@microsoft/omnichannel-ic3core/lib/interfaces/IFileInfo";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
 import MessageContentType from "@microsoft/omnichannel-ic3core/lib/model/MessageContentType";
-import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import MessageType from "@microsoft/omnichannel-ic3core/lib/model/MessageType";
+import OmnichannelChatSDK from "./OmnichannelChatSDK";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
-import IFileInfo from "@microsoft/omnichannel-ic3core/lib/interfaces/IFileInfo";
-import { isSystemMessage, isCustomerMessage } from "./utils/utilities";
 
 export {
     OmnichannelChatSDK,
@@ -23,7 +25,11 @@ export {
     PersonType,
     IFileInfo,
     isSystemMessage,
-    isCustomerMessage
+    isCustomerMessage,
+    getLocaleStringFromId,
+    getLocaleIdFromString,
+    defaultLocaleId,
+    defaultLocaleString
 }
 
 export default {

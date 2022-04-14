@@ -103,7 +103,7 @@ describe('Omnichannel Chat SDK (Web)', () => {
         try {
             await chatSDK.getVoiceVideoCalling();
         } catch (error) {
-            expect(error).toEqual('Voice and video call is not enabled');
+            expect(error.message).toEqual('FeatureDisabled');
         }
     });
 });

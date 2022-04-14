@@ -97,6 +97,20 @@ interface ACSAdapterContract {
     ACSAdapterVersion: string;
 }
 
+interface CallingSDKContract {
+    ChatSDKRuntimeId: string;
+    OrgId: string;
+    OrgUrl: string;
+    WidgetId: string;
+    RequestId?: string;
+    ChatId?: string;
+    CallId?: string;
+    Event?: string;
+    Description?: string;
+    ExceptionDetails?: string;
+    ElapsedTimeInMilliseconds?: string;
+}
+
 enum Renderer {
     ReactNative = 'ReactNative'
 }
@@ -192,6 +206,18 @@ class AriaTelemetry {
             }
         }
 
+        if (scenarioType == ScenarioType.CALLINGSDK) {
+            event = {
+                name: ScenarioType.CALLINGSDK,
+                properties: {
+                    ...AriaTelemetry.populateCallingSDKBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.INFO
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
         /* istanbul ignore next */
         this._debug && console.log(`[AriaTelemetry][info] ${scenarioType}`);
         /* istanbul ignore next */
@@ -256,6 +282,18 @@ class AriaTelemetry {
                 name: ScenarioType.ACSADAPTER,
                 properties: {
                     ...AriaTelemetry.populateACSAdapterBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.DEBUG
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
+        if (scenarioType == ScenarioType.CALLINGSDK) {
+            event = {
+                name: ScenarioType.CALLINGSDK,
+                properties: {
+                    ...AriaTelemetry.populateCallingSDKBaseProperties(),
                     ...properties,
                     LogLevel: LogLevel.DEBUG
                 },
@@ -334,6 +372,18 @@ class AriaTelemetry {
             }
         }
 
+        if (scenarioType == ScenarioType.CALLINGSDK) {
+            event = {
+                name: ScenarioType.CALLINGSDK,
+                properties: {
+                    ...AriaTelemetry.populateCallingSDKBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.WARN
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
         /* istanbul ignore next */
         this._debug && console.log(`[AriaTelemetry][warn] ${scenarioType}`);
         /* istanbul ignore next */
@@ -405,6 +455,18 @@ class AriaTelemetry {
             }
         }
 
+        if (scenarioType == ScenarioType.CALLINGSDK) {
+            event = {
+                name: ScenarioType.CALLINGSDK,
+                properties: {
+                    ...AriaTelemetry.populateCallingSDKBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.ERROR
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
         /* istanbul ignore next */
         this._debug && console.log(`[AriaTelemetry][error] ${scenarioType}`);
         /* istanbul ignore next */
@@ -469,6 +531,18 @@ class AriaTelemetry {
                 name: ScenarioType.ACSADAPTER,
                 properties: {
                     ...AriaTelemetry.populateACSAdapterBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.LOG
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
+        if (scenarioType == ScenarioType.CALLINGSDK) {
+            event = {
+                name: ScenarioType.CALLINGSDK,
+                properties: {
+                    ...AriaTelemetry.populateCallingSDKBaseProperties(),
                     ...properties,
                     LogLevel: LogLevel.LOG
                 },
@@ -644,6 +718,22 @@ class AriaTelemetry {
             ExceptionDetails: '',
             ElapsedTimeInMilliseconds: '',
             ACSAdapterVersion: webChatACSAdapterVersion
+        }
+    }
+
+    private static populateCallingSDKBaseProperties(): CallingSDKContract {
+        return {
+            ChatSDKRuntimeId: '',
+            OrgId: '',
+            OrgUrl: '',
+            WidgetId: '',
+            RequestId: '',
+            ChatId: '',
+            CallId: '',
+            Event: '',
+            Description: '',
+            ExceptionDetails: '',
+            ElapsedTimeInMilliseconds: ''
         }
     }
 }

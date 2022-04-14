@@ -74,7 +74,7 @@ describe('Omnichannel Chat SDK (Node)', () => {
         try {
             await chatSDK.getVoiceVideoCalling();
         } catch (error) {
-            expect(error).toEqual('VoiceVideoCalling is only supported on browser');
+            expect(error.message).toEqual('UnsupportedPlatform');
         }
     });
 
