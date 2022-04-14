@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Throw exception on `ChatSDK.getVoiceVideoCalling()` if feature is disabled or platform is not supported
 - Add `participantType` & `canRenderPostChat` as response of getConversationDetails() API
 - Add support for separate bot post chat survey feature
+- Pass `logger` to `acs_webchat-chat-adapter`
 
 ### Fix
 - Add `acs_webchat-chat-adapter` middlewares to format `channelData.tags`
@@ -31,6 +32,7 @@ All notable changes to this project will be documented in this file.
 - Uptake [@azure/communication-chat@1.1.1](https://www.npmjs.com/package/@azure/communication-chat/v/1.1.1)
 - Uptake [acs_webchat-chat-adapter@0.0.35-beta.2](https://unpkg.com/acs_webchat-chat-adapter@0.0.35-beta.2/dist/chat-adapter.js)
 - Update `locale` property in `ChatTranscriptBody` interface to be optional
+- Uptake [acs_webchat-chat-adapter@0.0.35-beta.4](https://unpkg.com/acs_webchat-chat-adapter@0.0.35-beta.4/dist/chat-adapter.js)
 
 ## [1.0.0] - 2021-10-08
 ### Added
