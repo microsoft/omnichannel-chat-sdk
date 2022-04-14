@@ -8,7 +8,6 @@ import { defaultLocaleId, getLocaleStringFromId } from "./utils/locale";
 import { loadScript, removeElementById } from "./utils/WebUtils";
 import platform, { isBrowser } from "./utils/platform";
 import validateSDKConfig, {defaultChatSDKConfig} from "./validators/SDKConfigValidators";
-
 import ACSParticipantDisplayName from "./core/messaging/ACSParticipantDisplayName";
 import AMSFileManager from "./external/ACSAdapter/AMSFileManager";
 import AriaTelemetry from "./telemetry/AriaTelemetry";
@@ -1497,10 +1496,9 @@ class OmnichannelChatSDK {
                             this.chatToken.chatId as string,
                             this.chatToken.acsEndpoint as string,
                             fileManager,
-                            1000,
                             ACSParticipantDisplayName.Customer,
                             undefined, // chatClient
-                            undefined, // logger
+                            this.acsAdapterLogger, // logger
                             featuresOption,
                         );
 

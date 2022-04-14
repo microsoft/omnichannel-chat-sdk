@@ -254,7 +254,7 @@ describe('loggers', () => {
             info: jest.fn()
         }
 
-        it('ACSAdapterLogger.logClientSdkTelemetryEvent() with LogLevel DEBUG should call telemetry.debug()', () => {
+        it('ACSAdapterLogger.logEvent() with LogLevel DEBUG should call telemetry.debug()', () => {
             const logger = new ACSAdapterLogger(omnichannelConfig);
 
             const eventData = {
@@ -262,12 +262,12 @@ describe('loggers', () => {
             };
 
             logger.useTelemetry(telemetry as any);
-            logger.logClientSdkTelemetryEvent(LogLevel.DEBUG, eventData as any);
+            logger.logEvent(LogLevel.DEBUG, eventData as any);
 
             expect(telemetry.debug).toBeCalledTimes(1);
         });
 
-        it('ACSAdapterLogger.logClientSdkTelemetryEvent() with LogLevel WARN should call telemetry.warn()', () => {
+        it('ACSAdapterLogger.logEvent() with LogLevel WARN should call telemetry.warn()', () => {
             const logger = new ACSAdapterLogger(omnichannelConfig);
 
             const eventData = {
@@ -275,12 +275,12 @@ describe('loggers', () => {
             };
 
             logger.useTelemetry(telemetry as any);
-            logger.logClientSdkTelemetryEvent(LogLevel.WARN, eventData as any);
+            logger.logEvent(LogLevel.WARN, eventData as any);
 
             expect(telemetry.warn).toBeCalledTimes(1);
         });
 
-        it('ACSAdapterLogger.logClientSdkTelemetryEvent() with LogLevel ERROR should call telemetry.error()', () => {
+        it('ACSAdapterLogger.logEvent() with LogLevel ERROR should call telemetry.error()', () => {
             const logger = new ACSAdapterLogger(omnichannelConfig);
 
             const eventData = {
@@ -288,12 +288,12 @@ describe('loggers', () => {
             };
 
             logger.useTelemetry(telemetry as any);
-            logger.logClientSdkTelemetryEvent(LogLevel.ERROR, eventData as any);
+            logger.logEvent(LogLevel.ERROR, eventData as any);
 
             expect(telemetry.error).toBeCalledTimes(1);
         });
 
-        it('ACSAdapterLogger.logClientSdkTelemetryEvent() with LogLevel INFO should call telemetry.info()', () => {
+        it('ACSAdapterLogger.logEvent() with LogLevel INFO should call telemetry.info()', () => {
             const logger = new ACSAdapterLogger(omnichannelConfig);
 
             const eventData = {
@@ -301,7 +301,7 @@ describe('loggers', () => {
             };
 
             logger.useTelemetry(telemetry as any);
-            logger.logClientSdkTelemetryEvent(LogLevel.INFO, eventData as any);
+            logger.logEvent(LogLevel.INFO, eventData as any);
 
             expect(telemetry.info).toBeCalledTimes(1);
         });
