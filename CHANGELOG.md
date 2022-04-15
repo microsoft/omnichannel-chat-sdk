@@ -3,6 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.1.0] - 2022-04-15
 ### Added
 - Add `getPostChatSurveyContext` API method
 - Add `GetPostChatSurveyContext` telemetry event
