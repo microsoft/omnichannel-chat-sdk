@@ -1,11 +1,12 @@
 # Development Guide
 
+### How To
+**[Using Bot Framework Web Chat](#using-bot-framework-web-chat)**
+1. [Render Adaptive Cards using Attachment Middleware](#render-adaptive-cards-using-attachment-middleware)
+
 ## Using Bot Framework Web Chat
 
-### How To
-1. [Render Adaptive Cards](#render-adaptive-cards)
-
-#### Render Adaptive Cards
+#### Render Adaptive Cards using Attachment Middleware
 
 ```js
 const supportedAdaptiveCardContentTypes = [
