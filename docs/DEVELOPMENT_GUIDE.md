@@ -108,7 +108,7 @@ ChatSDK.onNewMessage((message: any) => {
         const adaptiveCard = new AdaptiveCards.AdaptiveCard();
         adaptiveCard.parse(jsonData);
 
-        adaptiveCard.onExecuteAction = async (action: Action) => { // Adaptive Card event handler
+        adaptiveCard.onExecuteAction = async (action) => { // Adaptive Card event handler
             // ...
         }
 
