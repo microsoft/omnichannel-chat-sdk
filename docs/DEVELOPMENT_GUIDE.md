@@ -1,13 +1,13 @@
 # Development Guide
 
 ## How To
-**[Using Bot Framework Web Chat](#using-bot-framework-web-chat)**
+**[Using Bot Framework Web Chat Control](#using-bot-framework-web-chat-control)**
 1. [Render Adaptive Cards using Attachment Middleware](#render-adaptive-cards-using-attachment-middleware)
 
-**[Using Omnichannel Chat SDK](#using-omnichannel-chat-sdk)**
+**[Using Custom Chat Control](#using-custom-chat-control)**
 1. [Render Adaptive Cards](#render-adaptive-cards)
 
-## Using Bot Framework Web Chat
+## Using Bot Framework Web Chat Control
 
 ### Render Adaptive Cards using Attachment Middleware
 
@@ -61,7 +61,7 @@ return <ReactWebChat
 />
 ```
 
-## Using Omnichannel Chat SDK
+## Using Custom Chat Control
 
 ### Render Adaptive Cards
 
