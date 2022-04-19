@@ -5,7 +5,7 @@
 ### How To's
 1. [Render Adaptive Cards](#render-adaptive-cards)
 
-#### How to Render Adaptive Cards
+#### Render Adaptive Cards
 
 ```js
 const supportedAdaptiveCardContentTypes = [
