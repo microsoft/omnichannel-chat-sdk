@@ -2,7 +2,7 @@
 
 ## Using Bot Framework Web Chat
 
-### How To's
+### How To
 1. [Render Adaptive Cards](#render-adaptive-cards)
 
 #### Render Adaptive Cards
