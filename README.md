@@ -1,6 +1,7 @@
 # Omnichannel Chat SDK
 
 [![npm version](https://badge.fury.io/js/%40microsoft%2Fomnichannel-chat-sdk.svg)](https://badge.fury.io/js/%40microsoft%2Fomnichannel-chat-sdk)
+[![install size](https://packagephobia.com/badge?p=@microsoft/omnichannel-chat-sdk)](https://packagephobia.com/result?p=@microsoft/omnichannel-chat-sdk)
 ![Release CI](https://github.com/microsoft/omnichannel-chat-sdk/workflows/Release%20CI/badge.svg)
 ![npm](https://img.shields.io/npm/dm/@microsoft/omnichannel-chat-sdk)
 
@@ -18,6 +19,7 @@ Please make sure you have a chat widget configured before using this package or 
 - [Common Scenarios](#common-scenarios)
 - [Feature Comparisons](#feature-comparisons)
 - [Telemetry](#telemetry)
+- [Development Guide](docs/DEVELOPMENT_GUIDE.md)
 - [Troubleshooting Guide](docs/TROUBLESHOOTING_GUIDE.md)
 
 ## Live Chat Widget vs. Chat SDK
