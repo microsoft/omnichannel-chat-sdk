@@ -549,8 +549,7 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
 ```
 
 ### Use [BotFramework-WebChat](https://github.com/microsoft/BotFramework-WebChat)
-
-**NOTE**: Currently supported on web only
+> :warning: Currently supported on web only
 ```ts
     import OmnichannelChatSDK from '@microsoft/omnichannel-chat-sdk';
     import ReactWebChat from 'botframework-webchat';
@@ -583,7 +582,7 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
 ```
 
 ### Escalation to Voice & Video
-**NOTE**: Currently supported on web only
+> :warning: Currently supported on web only
 ```ts
     import OmnichannelChatSDK from '@microsoft/omnichannel-chat-sdk';
 
