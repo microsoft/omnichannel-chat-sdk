@@ -3,6 +3,7 @@
 ## How To
 **[Using Bot Framework Web Chat Control](#using-bot-framework-web-chat-control)**
 1. [Render Adaptive Cards using Attachment Middleware](#render-adaptive-cards-using-attachment-middleware)
+1. [Send Default Channel Message Tags using Store Middleware](#send-default-channel-message-tags-using-store-middleware)
 
 **[Using Custom Chat Control](#using-custom-chat-control)**
 1. [Render Adaptive Cards](#render-adaptive-cards)
@@ -13,13 +14,13 @@
 
 ```js
 const supportedAdaptiveCardContentTypes = [
-  "application/vnd.microsoft.card.adaptive",
-  "application/vnd.microsoft.card.audio",
-  "application/vnd.microsoft.card.hero",
-  "application/vnd.microsoft.card.receipt",
-  "application/vnd.microsoft.card.thumbnail",
-  "application/vnd.microsoft.card.signin",
-  "application/vnd.microsoft.card.oauth",
+    "application/vnd.microsoft.card.adaptive",
+    "application/vnd.microsoft.card.audio",
+    "application/vnd.microsoft.card.hero",
+    "application/vnd.microsoft.card.receipt",
+    "application/vnd.microsoft.card.thumbnail",
+    "application/vnd.microsoft.card.signin",
+    "application/vnd.microsoft.card.oauth",
 ];
 
 const adaptiveCardKeyValuePairs = `"type": "AdaptiveCard"`;
@@ -59,6 +60,47 @@ return <ReactWebChat
     {...props}
     attachmentMiddleware={attachmentMiddleware}
 />
+```
+
+### Send Default Channel Message Tags using Store Middleware
+
+```js
+import {createStore} from 'botframework-webchat';
+
+const channelIdTag = `ChannelId-lcw`;
+const customerMessageTag = `FromCustomer`;
+
+const sendDefaultMessagingTagsMiddleware = () => (next) => (action) => {
+    const condition = action.type === "DIRECT_LINE/POST_ACTIVITY_PENDING"
+    && action.payload
+    && action.payload.activity
+    && action.payload.activity.channelData;
+
+    if (condition) {
+        // Add `tags` property if not set
+        if (!action.payload.activity.channelData.tags) {
+            action.payload.activity.channelData.tags = [];
+        }
+
+        // Add `ChannelId-lcw` tag if not set
+        if (!action.payload.activity.channelData.tags.includes(channelIdTag)) {
+            action.payload.activity.channelData.tags.push(channelIdTag);
+        }
+
+        // Add `FromCustomer` tag if not set
+        if (!action.payload.activity.channelData.tags.includes(customerMessageTag)) {
+            action.payload.activity.channelData.tags.push(customerMessageTag);
+        } 
+    }
+
+    return next(action);
+};
+
+const store = createStore(
+  {}, // initial state
+  sendDefaultMessagingTagsMiddleware
+);
+
 ```
 
 ## Using Custom Chat Control
