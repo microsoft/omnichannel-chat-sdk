@@ -91,7 +91,7 @@ const sendDefaultMessagingTagsMiddleware = () => (next) => (action) => {
         // Add `FromCustomer` tag if not set
         if (!action.payload.activity.channelData.tags.includes(customerMessageTag)) {
             action.payload.activity.channelData.tags.push(customerMessageTag);
-        } 
+        }
     }
 
     return next(action);
@@ -101,6 +101,13 @@ const store = createStore(
   {}, // initial state
   sendDefaultMessagingTagsMiddleware
 );
+
+// ...
+
+return <ReactWebChat
+    {...props}
+    store={store}
+/>
 ```
 
 ### Data Masking using Store Middleware
@@ -148,6 +155,13 @@ const store = createStore(
   {}, // initial state
   dataMaskingMiddleware
 );
+
+// ...
+
+return <ReactWebChat
+    {...props}
+    store={store}
+/>
 ```
 
 ## Using Custom Chat Control
