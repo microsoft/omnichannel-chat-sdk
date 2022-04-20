@@ -5,6 +5,7 @@
 1. [Render Adaptive Cards using Attachment Middleware](#render-adaptive-cards-using-attachment-middleware)
 1. [Send Default Channel Message Tags using Store Middleware](#send-default-channel-message-tags-using-store-middleware)
 1. [Data Masking using Store Middleware](#data-masking-using-store-middleware)
+4. [Send Typing using Web Chat Props](#send-typing-using-web-chat-props)
 
 **[Using Custom Chat Control](#using-custom-chat-control)**
 1. [Render Adaptive Cards](#render-adaptive-cards)
@@ -161,6 +162,18 @@ const store = createStore(
 return <ReactWebChat
     {...props}
     store={store}
+/>
+```
+
+
+### Send Typing using Web Chat Props
+
+```js
+// ...
+
+return <ReactWebChat
+    {...props}
+    sendTypingIndicator={true}
 />
 ```
 
