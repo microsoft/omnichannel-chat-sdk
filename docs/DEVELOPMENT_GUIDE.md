@@ -4,6 +4,7 @@
 **[Using Bot Framework Web Chat Control](#using-bot-framework-web-chat-control)**
 1. [Render Adaptive Cards using Attachment Middleware](#render-adaptive-cards-using-attachment-middleware)
 1. [Send Default Channel Message Tags using Store Middleware](#send-default-channel-message-tags-using-store-middleware)
+1. [Data Masking using Store Middleware](#data-masking-using-store-middleware)
 
 **[Using Custom Chat Control](#using-custom-chat-control)**
 1. [Render Adaptive Cards](#render-adaptive-cards)
@@ -100,7 +101,53 @@ const store = createStore(
   {}, // initial state
   sendDefaultMessagingTagsMiddleware
 );
+```
 
+### Data Masking using Store Middleware
+
+```js
+import {createStore} from 'botframework-webchat';
+
+// Fetch masking rules
+const maskingRules = chatSDK.getDataMaskingRules();
+
+const maskingCharacter = '#';
+const applyMasking = (text, maskingCharacter) => {
+    // Skip masking on invalid text or masking rules
+    if (!text || !maskingRules || !Object.keys(maskingRules).length) {
+        return text;
+    }
+
+    for (const maskingRule of Object.values(maskingRules)) {
+        const regex = new RegExp(maskingRule, 'g');
+        // Masks data
+        let result;
+        while (result = regex.exec(text)) {
+            const replaceStr = result[0].replace(/./g, maskingCharacter);
+            text = text.replace(result[0], replaceStr);
+        }
+    }
+
+    return text; // Returns masked data
+}
+
+const dataMaskingMiddleware = () => (next) => (action) => {
+    const condition = action.type === "WEB_CHAT/SEND_MESSAGE"
+    && action.payload
+    && action.payload.text
+    && Object.keys(maskingRules).length > 0;
+
+    if (condition) {
+        action.payload.text = applyMasking(action.payload.text, maskingCharacter);
+    }
+
+    return next(action);
+}
+
+const store = createStore(
+  {}, // initial state
+  dataMaskingMiddleware
+);
 ```
 
 ## Using Custom Chat Control
