@@ -522,7 +522,7 @@ messages.reverse().forEach((message: any) => renderMessage(message)); // Logic t
 
 ### Authenticated Chat
 
-> See https://docs.microsoft.com/en-us/dynamics365/omnichannel/administrator/create-chat-auth-settings on how to set up an authenticated chat widget
+> See https://docs.microsoft.com/en-us/dynamics365/customer-service/create-chat-auth-settings?tabs=customerserviceadmincenter#create-a-chat-authentication-setting-record on how to set up an authenticated chat
 
 ```ts
 const chatSDKConfig = {
@@ -544,6 +544,8 @@ await chatSDK.initialize();
 ```
 
 ### Persistent Chat
+
+> See https://docs.microsoft.com/en-us/dynamics365/customer-service/persistent-chat on how to set up persistent chat
 
 ```ts
 const chatSDKConfig = {
@@ -568,6 +570,8 @@ await chatSDK.initialize();
 // from this point, this acts like a persistent chat
 ```
 ### Chat Reconnect with Authenticated User
+
+> See https://docs.microsoft.com/en-us/dynamics365/customer-service/configure-reconnect-chat?tabs=customerserviceadmincenter#enable-reconnection-to-a-previous-chat-session on how to set up chat reconnect
 
 ```ts
 const chatSDKConfig = {
@@ -606,6 +610,8 @@ chatSDK.startChat();
 ```
 
 ### Chat Reconnect with Unauthenticated User
+
+> See https://docs.microsoft.com/en-us/dynamics365/customer-service/configure-reconnect-chat?tabs=customerserviceadmincenter#enable-reconnection-to-a-previous-chat-session on how to set up chat reconnect
 
 ```ts
 const chatSDKConfig = {
@@ -648,6 +654,8 @@ if (chatReconnectContext.reconnectId) {
 ```
 
 ### Operating Hours
+
+> See https://docs.microsoft.com/en-us/dynamics365/customer-service/create-operating-hours?tabs=customerserviceadmincenter on how to set up operating hours
 
 ```ts
 const chatConfig = await chatSDK.getLiveChatConfig();
@@ -704,6 +712,9 @@ const store = createStore(
 
 ### Escalation to Voice & Video
 > :warning: Currently supported on web only
+
+> See https://docs.microsoft.com/en-us/dynamics365/customer-service/call-options-visual-engagement on how to set up calling options
+
 ```ts
 import OmnichannelChatSDK from '@microsoft/omnichannel-chat-sdk';
 
