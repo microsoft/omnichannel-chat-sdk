@@ -648,14 +648,12 @@ try {
 ### Using [BotFramework-WebChat](https://github.com/microsoft/BotFramework-WebChat)
 > :warning: Currently supported on web only
 
-> ❗ Sending default channel message tags is required. See [here](/docs//DEVELOPMENT_GUIDE.md#send-default-channel-message-tags-using-store-middleware)
-
 Minimum Requirement Checklist
 1. [ ] Initialize ChatSDK 
 1. [ ] Start new conversation
 1. [ ] Create Chat Adapter 
 1. [ ] Create WebChat store with default middlewares
-    1. [ ] Send Default Channel Message Tags using Store Middleware (Refer [here](/docs//DEVELOPMENT_GUIDE.md#send-default-channel-message-tags-using-store-middleware))
+    1. [ ] Send Default Channel Message Tags using Store Middleware (See [here](/docs//DEVELOPMENT_GUIDE.md#send-default-channel-message-tags-using-store-middleware)) ❗ Required
 1. [ ] Render WebChat
 
 ```ts
