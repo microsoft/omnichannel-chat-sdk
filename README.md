@@ -13,8 +13,31 @@ Please make sure you have a chat widget configured before using this package or 
 - [Live Chat Widget vs. Chat SDK](#live-chat-widget-vs-chat-sdk)
 - [Installation](#installation)
 - [Installation on React Native](#installation-on-react-native)
-- [API Reference](#api-reference)
-- [API Examples](#api-examples)
+- [SDK Methods](#sdk-methods)
+    - [Initialization](#initialization)
+    - [Start Chat](#start-chat)
+    - [End Chat](#end-chat)
+    - [Get Pre-Chat Survey](#get-pre-chat-survey)
+    - [Get Live Chat Config](#get-live-chat-config)
+    - [Get Current Live Chat Context](#get-current-live-chat-context)
+    - [Get Data Masking Rules](#get-data-masking-rules)
+    - [Get Chat Reconnect Context](#get-chat-reconnect-context)
+    - [Get Conversation Details](#get-conversation-details)
+    - [Get Chat Token](#get-chat-token)
+    - [Get Calling Token](#get-calling-token)
+    - [Get Messages](#get-messages)
+    - [Send Messages](#send-messages)
+    - [On New Message](#on-new-message)
+    - [On Typing Eevent](#on-typing-event)
+    - [On Agent End Session](#on-agent-end-session)
+    - [Send Typing Event](#send-typing-event)
+    - [Email Live Chat Transcript](#email-live-chat-transcript)
+    - [Get Live Chat Transcript](#get-live-chat-transcript)
+    - [Upload File Attachment](#upload-file-attachment)
+    - [Download File Attachment](#download-file-attachment)
+    - [Create Chat Adapter](#create-chat-adapter)
+    - [Get Voice & Video Calling](#get-voice--video-calling)
+    - [Get Post Chat Survey Context](#get-post-chat-survey-context)
 - [Sample Apps](https://github.com/microsoft/omnichannel-chat-sdk-samples)
 - [Common Scenarios](#common-scenarios)
 - [Feature Comparisons](#feature-comparisons)
@@ -60,7 +83,7 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 ## Installation
 
 ```
-    npm install @microsoft/omnichannel-chat-sdk --save
+npm install @microsoft/omnichannel-chat-sdk --save
 ```
 
 ## Installation on React Native
@@ -108,238 +131,304 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
     import 'react-native-url-polyfill';
     ```
 
-## API Reference
-
-| Method | Description | Notes |
-| ------ | ----------- | ----- |
-| OmnichannelChatSDK.initialize() | Initializes ChatSDK internal data | |
-| OmnichannelChatSDK.startChat() | Starts OC chat, handles prechat response | |
-| OmnichannelChatSDK.endChat() | Ends OC chat | |
-| OmnichannelChatSDK.getPreChatSurvey() | Adaptive card data of PreChat survey | |
-| OmnichannelChatSDK.getLiveChatConfig() | Get live chat config | |
-| OmnichannelChatSDK.getDataMaskingRules() | Get active data masking rules | |
-| OmnichannelChatSDK.getCurrentLiveChatContext() | Get current live chat context information to reconnect to the same chat | |
-| OmnichannelChatSDK.getChatReconnectContext() | Get current reconnectable chat context information to reconnect to a previous existing chat session | |
-| OmnichannelChatSDK.getConversationDetails() | Get details of the current conversation such as its state & when the agent joined the conversation | |
-| OmnichannelChatSDK.getChatToken() | Get chat token | |
-| OmnichannelChatSDK.getCallingToken() | Get calling token | |
-| OmnichannelChatSDK.getMessages() | Get all messages | |
-| OmnichannelChatSDK.sendMessage() | Send message | |
-| OmnichannelChatSDK.onNewMessage() | Handles system message, client/agent messages, adaptive cards, attachments to download | |
-| OmnichannelChatSDK.onTypingEvent() | Handles agent typing event | |
-| OmnichannelChatSDK.onAgentEndSession() | Handler when agent ends session | |
-| OmnichannelChatSDK.sendTypingEvent() | Sends customer typing event | |
-| OmnichannelChatSDK.emailLiveChatTranscript() | Email transcript | |
-| OmnichannelChatSDK.getLiveChatTranscript() | Get transcript data (JSON) | |
-| OmnichannelChatSDK.uploadFileAttachment() | Send file attachment | |
-| OmnichannelChatSDK.downloadFileAttachment() | Download file attachment | |
-| OmnichannelChatSDK.createChatAdapter() | Get Chat Adapter | **Web only** |
-| OmnichannelChatSDK.getVoiceVideoCalling() | Get VoiceVideoCall SDK for Escalation to Voice & Video | **Web only** |
-| OmnichannelChatSDK.getPostChatSurveyContext() | Get post chat survey link, survey locale, and whether an agent has joined the survey | |
-
-## API examples
-
-### Import
-```ts
-    import OmnichannelChatSDK from '@microsoft/omnichannel-chat-sdk';
-```
+## SDK Methods 
 
 ### Initialization
+
+It handles the initialization of ChatSDK internal data.
+
 ```ts
-    const omnichannelConfig = {
-        orgUrl: "",
-        orgId: "",
-        widgetId: ""
-    };
+import OmnichannelChatSDK from '@microsoft/omnichannel-chat-sdk';
 
-    const chatSDKConfig = { // Optional
-        dataMasking: {
-            disable: false,
-            maskingCharacter: '#'
-        }
-    };
+const omnichannelConfig = {
+    orgUrl: "",
+    orgId: "",
+    widgetId: ""
+};
 
-    const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
-    await chatSDK.initialize();
-```
-
-### Get Current Live Chat Context
-```ts
-    const liveChatContext = await chatSDK.getCurrentLiveChatContext();
-```
-
-### Get Current Chat Reconnect Context
-```ts
-    const optionalParams = {
-        reconnectId: '', // reconnect Id
-    };
-
-    const chatReconnectContext = await chatSDK.getChatReconnectContext(optionalParams);
-```
-
-### Get Conversation Details
-```ts
-    const conversationDetails = await chatSDK.getConversationDetails();
-```
-
-### Get Chat Token
-```ts
-    const chatToken = await chatSDK.getChatToken();
-```
-
-### Get Calling Token
-```ts
-    const callingToken = await chatSDK.getCallingToken();
-```
-
-### Get Live Chat Config
-```ts
-    const liveChatConfig = await chatSDK.getLiveChatConfig();
-```
-
-### Get Data Masking Rules
-```ts
-    const dataMaskingRules = await chatSDK.getDataMaskingRules();
-```
-
-### Get PreChat Survey
-`Option 1`
-```ts
-    const preChatSurvey = await getPreChatSurvey(); // Adaptive Cards JSON payload data
-```
-`Option 2`
-```ts
-    const parseToJSON = false;
-    const preChatSurvey = await getPreChatSurvey(parseToJSON); // Adaptive Cards payload data as string
-```
-
-### Get PostChat Survey
-```ts
-    try {
-        const context = await chatSDK.getPostChatSurveyContext();
-        if (context.participantJoined) { // participantJoined will be true if an agent has joined the conversation, or a bot has joined the conversation and the bot survey flag has been turned on on the admin side.
-            // formsProLocale is the default language you have set on the CustomerVoice portal. You can override this url parameter with any locale that CustomerVoice supports.
-            // If "&lang=" is not set on the url, the locale will be English.
-            const linkToSend = context.surveyInviteLink + "&lang=" + context.formsProLocale;
-            // This link is accessible and will redirect to the survey page. Use it as you see fit.
-        }
-    } catch (ex) {
-        // If the post chat should not be shown by any reason (e.g. post chat is not enabled), promise will be rejected.
+const chatSDKConfig = { // Optional
+    dataMasking: {
+        disable: false,
+        maskingCharacter: '#'
     }
+};
+
+const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+await chatSDK.initialize();
 ```
 
-### Start Chat
-```ts
-    const customContext = {
-        'contextKey1': {'value': 'contextValue1', 'isDisplayable': true},
-        'contextKey2': {'value': 12.34, 'isDisplayable': false},
-        'contextKey3': {'value': true}
-    };
+### Start Chat 
 
-    const optionalParams = {
-        preChatResponse: '', // PreChatSurvey response
-        liveChatContext: {}, // EXISTING chat context data
-        customContext // Custom Context
-    };
-    await chatSDK.startChat(optionalParams);
+It starts an Omnichannel conversation.
+
+```ts
+const customContext = {
+    'contextKey1': {'value': 'contextValue1', 'isDisplayable': true},
+    'contextKey2': {'value': 12.34, 'isDisplayable': false},
+    'contextKey3': {'value': true}
+};
+
+const optionalParams = {
+    preChatResponse: '', // PreChatSurvey response
+    liveChatContext: {}, // EXISTING chat context data
+    customContext // Custom Context
+};
+
+await chatSDK.startChat(optionalParams);
 ```
 
 ### End Chat
+
+It ends the current Omnichannel conversation.
+
 ```ts
-    await chatSDK.endChat();
+await chatSDK.endChat();
 ```
 
-### On New Message Handler
-```ts
-    const optionalParams = {
-        rehydrate: true, // Rehydrate all previous messages of existing conversation (false by default)
-    }
+### Get Pre-Chat Survey
 
-    chatSDK.onNewMessage((message) => {
-      console.log(`[NewMessage] ${message.content}`); // IC3 protocol message data
-      console.log(message);
-    }, optionalParams);
+It gets the Pre-Chat Survey from Live Chat Config. Pre-Chat Survey is in Adaptive Card format.
+
+`Option 1`
+```ts
+const preChatSurvey = await getPreChatSurvey(); // Adaptive Cards JSON payload data
+```
+`Option 2`
+```ts
+const parseToJSON = false;
+const preChatSurvey = await getPreChatSurvey(parseToJSON); // Adaptive Cards payload data as string
 ```
 
-### On Agent End Session
+### Get Live Chat Config 
+
+It fetches the Live Chat Config. 
+
 ```ts
-    chatSDK.onAgentEndSession(() => {
-      console.log("Session ended!");
-    });
+const liveChatConfig = await chatSDK.getLiveChatConfig();
 ```
 
-### On Typing Event
+### Get Current Live Chat Context
+
+It gets the current live chat context information to be used to reconnect to the same conversation.
+
 ```ts
-    chatSDK.onTypingEvent(() => {
-      console.log("Agent is typing...");
-    })
+const liveChatContext = await chatSDK.getCurrentLiveChatContext();
+```
+
+### Get Data Masking Rules
+
+It gets the active data masking rules from Live Chat Config.
+
+```ts
+const dataMaskingRules = await chatSDK.getDataMaskingRules();
+```
+
+### Get Chat Reconnect Context
+
+It gets the current reconnectable chat context information to connect to a previous existing chat session. 
+
+`Reconnection options` is required. See [documentation](https://docs.microsoft.com/en-us/dynamics365/customer-service/configure-reconnect-chat?tabs=customerserviceadmincenter#enable-reconnection-to-a-previous-chat-session)
+
+```ts
+const optionalParams = {
+    reconnectId: '', // reconnect Id
+};
+
+const chatReconnectContext = await chatSDK.getChatReconnectContext(optionalParams);
+```
+
+### Get Conversation Details
+
+It gets the details of the current conversation such as its state & when the agent joined the conversation.
+
+```ts
+const conversationDetails = await chatSDK.getConversationDetails();
+```
+
+### Get chat Token 
+
+It gets the chat token used to initiates a chat with Omnichannel messaging client.
+
+```ts
+const chatToken = await chatSDK.getChatToken();
+```
+
+### Get Calling Token
+
+It gets the calling token used to initiates a Voice & Video Call.
+
+```ts
+const callingToken = await chatSDK.getCallingToken();
 ```
 
 ### Get Messages
+
+It gets all the messages of the current conversation.
+
 ```ts
-    const messages = await chatSDK.getMessages();
+const messages = await chatSDK.getMessages();
 ```
 
-### Send Message
+### Send Messages
+
+It sends a message to Omnichannel.
+
 ```ts
-    import {DeliveryMode, MessageContentType, MessageType, PersonType} from '@microsoft/omnichannel-chat-sdk';
+import {DeliveryMode, MessageContentType, MessageType, PersonType} from '@microsoft/omnichannel-chat-sdk';
 
-    ...
+...
 
-    const displayName = "Contoso"
-    const message = "Sample message from customer";
-    const messageToSend = {
-      content: message
-    };
+const displayName = "Contoso"
+const message = "Sample message from customer";
+const messageToSend = {
+    content: message
+};
 
-    await chatSDK.sendMessage(messageToSend);
+await chatSDK.sendMessage(messageToSend);
 ```
 
-### Send Typing
+### On New Message
+
+It subscribes to new incoming messages of the current conversation such as system messages, client messages, agent messages, adaptive cards and attachments.
+
 ```ts
-    await chatSDK.sendTypingEvent();
+const optionalParams = {
+    rehydrate: true, // Rehydrate all previous messages of existing conversation (false by default)
+}
+
+chatSDK.onNewMessage((message) => {
+    console.log(`[NewMessage] ${message.content}`);
+    console.log(message);
+}, optionalParams);
+```
+### On Typing Event
+
+It subscribes to agent typing event.
+
+```ts
+chatSDK.onTypingEvent(() => {
+    console.log("Agent is typing...");
+})
 ```
 
-### Upload Attachment
+### On Agent End Session
+
+It subscribes to agent ending the session of the conversation.
+
 ```ts
-    const fileInfo = {
-        name: '',
-        type: '',
-        size: '',
-        data: ''
-    };
-    await chatSDK.uploadFileAttachment(fileInfo);
+chatSDK.onAgentEndSession(() => {
+    console.log("Session ended!");
+});
 ```
 
-### Download Attachment
-```ts
-    const blobResponse = await chatsdk.downloadFileAttachment(message.fileMetadata);
+### Send Typing Event 
 
-    ...
-
-    // React Native implementation
-    const fileReaderInstance = new FileReader();
-    fileReaderInstance.readAsDataURL(blobResponse);
-    fileReaderInstance.onload = () => {
-        const base64data = fileReaderInstance.result;
-        return <Image source={{uri: base64data}}/>
-    }
-```
-
-### Get Live Chat Transcript
+It sends a customer typing event.
 
 ```ts
-    await chatSDK.getLiveChatTranscript();
+await chatSDK.sendTypingEvent();
 ```
 
 ### Email Live Chat Transcript
 
+It sends an email of the live chat transcript.
+
 ```ts
-    const body = {
-        emailAddress: 'contoso@microsoft.com',
-        attachmentMessage: 'Attachment Message'
-    };
-    await chatSDK.emailLiveChatTranscript(body);
+const body = {
+    emailAddress: 'contoso@microsoft.com',
+    attachmentMessage: 'Attachment Message'
+};
+await chatSDK.emailLiveChatTranscript(body);
+```
+
+### Get Live Chat Transcript
+
+It fetches the current conversation transcript data in JSON.
+
+```ts
+await chatSDK.getLiveChatTranscript();
+```
+
+### Upload File Attachment
+
+It sends a file attachment to the current conversation.
+
+```ts
+const fileInfo = {
+    name: '',
+    type: '',
+    size: '',
+    data: ''
+};
+await chatSDK.uploadFileAttachment(fileInfo);
+```
+
+### Download File Attachment
+
+It downloads the file attachment of the incoming message as a Blob response. 
+
+```ts
+const blobResponse = await chatsdk.downloadFileAttachment(message.fileMetadata);
+
+...
+
+// React Native implementation
+const fileReaderInstance = new FileReader();
+fileReaderInstance.readAsDataURL(blobResponse);
+fileReaderInstance.onload = () => {
+    const base64data = fileReaderInstance.result;
+    return <Image source={{uri: base64data}}/>
+}
+```
+
+### Create Chat Adapter
+
+> :warning: Currently supported on web only
+
+It creates a chat adapter.
+
+```ts
+const chatAdapter = await chatSDK.createChatAdapter();
+```
+
+### Get Voice & Video Calling
+
+> :warning: Currently supported on web only
+
+It fetches the SDK for Escalation to Voice & Video.
+
+```ts
+try {
+    const VoiceVideoCallingSDK = await chatSDK.getVoiceVideoCalling();
+    console.log("VoiceVideoCalling loaded");
+} catch (e) {
+    console.log(`Failed to load VoiceVideoCalling: ${e}`);
+
+    if (e.message === 'UnsupportedPlatform') {
+        // Voice Video Calling feature is not supported on this platform
+    }
+
+    if (e.message === 'FeatureDisabled') {
+        // Voice Video Calling feature is disabled on admin side
+    }
+}
+```
+### Get Post Chat Survey Context
+
+It gets post chat survey link, survey locale, and whether an agent has joined the survey 
+
+```ts
+try {
+    const context = await chatSDK.getPostChatSurveyContext();
+    if (context.participantJoined) { // participantJoined will be true if an agent has joined the conversation, or a bot has joined the conversation and the bot survey flag has been turned on on the admin side.
+        // formsProLocale is the default language you have set on the CustomerVoice portal. You can override this url parameter with any locale that CustomerVoice supports.
+        // If "&lang=" is not set on the url, the locale will be English.
+        const linkToSend = context.surveyInviteLink + "&lang=" + context.formsProLocale;
+        // This link is accessible and will redirect to the survey page. Use it as you see fit.
+    }
+} catch (ex) {
+    // If the post chat should not be shown by any reason (e.g. post chat is not enabled), promise will be rejected.
+}
 ```
 
 ## Common Scenarios
