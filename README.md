@@ -546,120 +546,120 @@ await chatSDK.initialize();
 ### Persistent Chat
 
 ```ts
-    const chatSDKConfig = {
-        persistentChat: {
-            disable: false,
-            tokenUpdateTime: 21600000
-        },
-        getAuthToken: async () => {
-            const response = await fetch("http://contosohelp.com/token");
-            if (response.ok) {
-                return await response.text();
-            }
-            else {
-                return null
-            }
+const chatSDKConfig = {
+    persistentChat: {
+        disable: false,
+        tokenUpdateTime: 21600000
+    },
+    getAuthToken: async () => {
+        const response = await fetch("http://contosohelp.com/token");
+        if (response.ok) {
+            return await response.text();
+        }
+        else {
+            return null
         }
     }
+}
 
-    const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
-    await chatSDK.initialize();
+const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+await chatSDK.initialize();
 
-    // from this point, this acts like a persistent chat
+// from this point, this acts like a persistent chat
 ```
 ### Chat Reconnect with Authenticated User
 
 ```ts
-    const chatSDKConfig = {
-        chatReconnect: {
-            disable: false,
-        },
-        getAuthToken: async () => {
-            const response = await fetch("http://contosohelp.com/token");
-            if (response.ok) {
-                return await response.text();
-            }
-            else {
-                return null
-            }
+const chatSDKConfig = {
+    chatReconnect: {
+        disable: false,
+    },
+    getAuthToken: async () => {
+        const response = await fetch("http://contosohelp.com/token");
+        if (response.ok) {
+            return await response.text();
+        }
+        else {
+            return null
         }
     }
+}
 
-    const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
-    await chatSDK.initialize();
+const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+await chatSDK.initialize();
 
-    ...
+...
 
-    const chatReconnectContext = await chatSDK.getChatReconnectContext();
+const chatReconnectContext = await chatSDK.getChatReconnectContext();
 
-    if (chatReconnectContext.reconnectId) {
-       // Add UX with options to reconnect to previous existing chat or start new chat
-    }
+if (chatReconnectContext.reconnectId) {
+    // Add UX with options to reconnect to previous existing chat or start new chat
+}
 
-    // Reconnect chat option
-    const optionalParams = {};
-    optionalParams.reconnectId = chatReconnectContext.reconnectId;
-    chatSDK.startChat(optionalParams);
+// Reconnect chat option
+const optionalParams = {};
+optionalParams.reconnectId = chatReconnectContext.reconnectId;
+chatSDK.startChat(optionalParams);
 
-    // Start new chat option
-    chatSDK.startChat();
+// Start new chat option
+chatSDK.startChat();
 ```
 
 ### Chat Reconnect with Unauthenticated User
 
 ```ts
-    const chatSDKConfig = {
-        chatReconnect: {
-            disable: false,
-        },
-    }
+const chatSDKConfig = {
+    chatReconnect: {
+        disable: false,
+    },
+}
 
-    const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
-    await chatSDK.initialize();
+const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+await chatSDK.initialize();
 
-    ....
+....
 
-    const optionalParams: any = {};
+const optionalParams: any = {};
 
-    // Retrieve reconnect id from the URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const reconnectId = urlParams.get('oc.reconnectid');
+// Retrieve reconnect id from the URL
+const urlParams = new URLSearchParams(window.location.search);
+const reconnectId = urlParams.get('oc.reconnectid');
 
-    const params = {
-        reconnectId
-    };
+const params = {
+    reconnectId
+};
 
-    // Validate reconnect id
-    const chatReconnectContext = await chatSDK.getChatReconnectContext(params);
+// Validate reconnect id
+const chatReconnectContext = await chatSDK.getChatReconnectContext(params);
 
-    // If the reconnect id is invalid or expired, redirect URL if there is any URL set in the configuration
-    if (chatReconnectContext.redirectURL) {
-        window.location.replace(chatReconnectContext.redirectURL);
-    }
+// If the reconnect id is invalid or expired, redirect URL if there is any URL set in the configuration
+if (chatReconnectContext.redirectURL) {
+    window.location.replace(chatReconnectContext.redirectURL);
+}
 
-    // Valid reconnect id, reconnect to previous chat
-    if (chatReconnectContext.reconnectId) {
-        await chatSDK.startChat({
-            reconnectId: chatReconnectContext.reconnectId
-        });
-    } else {  // Reconnect id from URL is not valid, start new chat session
-        await chatSDK.startChat();
-    }
+// Valid reconnect id, reconnect to previous chat
+if (chatReconnectContext.reconnectId) {
+    await chatSDK.startChat({
+        reconnectId: chatReconnectContext.reconnectId
+    });
+} else {  // Reconnect id from URL is not valid, start new chat session
+    await chatSDK.startChat();
+}
 ```
 
 ### Operating Hours
 
 ```ts
-    const chatConfig = await chatSDK.getLiveChatConfig();
-    const {LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin} = liveChatConfig;
-    const {OutOfOperatingHours: outOfOperatingHours} = liveWSAndLiveChatEngJoin;
+const chatConfig = await chatSDK.getLiveChatConfig();
+const {LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin} = liveChatConfig;
+const {OutOfOperatingHours: outOfOperatingHours} = liveWSAndLiveChatEngJoin;
 
-    if (outOfOperatingHours === "True") {
-        // Handles UX on Out of Operating Hours
-    } else {
-        await chatSDK.startChat();
-        // Renders Custom Chat Widget
-    }
+if (outOfOperatingHours === "True") {
+    // Handles UX on Out of Operating Hours
+} else {
+    await chatSDK.startChat();
+    // Renders Custom Chat Widget
+}
 ```
 
 ### Using [BotFramework-WebChat](https://github.com/microsoft/BotFramework-WebChat)
@@ -705,106 +705,106 @@ const store = createStore(
 ### Escalation to Voice & Video
 > :warning: Currently supported on web only
 ```ts
-    import OmnichannelChatSDK from '@microsoft/omnichannel-chat-sdk';
+import OmnichannelChatSDK from '@microsoft/omnichannel-chat-sdk';
 
-    ...
+...
 
-    const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
-    await chatSDK.initialize();
+const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+await chatSDK.initialize();
 
-    let VoiceVideoCallingSDK;
+let VoiceVideoCallingSDK;
+try {
+    VoiceVideoCallingSDK = await chatSDK.getVoiceVideoCalling();
+    console.log("VoiceVideoCalling loaded");
+} catch (e) {
+    console.log(`Failed to load VoiceVideoCalling: ${e}`);
+
+    if (e.message === 'UnsupportedPlatform') {
+        // Voice Video Calling feature is not supported on this platform
+    }
+
+    if (e.message === 'FeatureDisabled') {
+        // Voice Video Calling feature is disabled on admin side
+    }
+}
+
+await chatSDK.startChat();
+
+const chatToken: any = await chatSDK.getChatToken();
+
+// Initialize only if VoiceVideoCallingSDK is defined
+if (VoiceVideoCallingSDK) {
     try {
-        VoiceVideoCallingSDK = await chatSDK.getVoiceVideoCalling();
-        console.log("VoiceVideoCalling loaded");
+        await VoiceVideoCallingSDK.initialize({
+            chatToken,
+            selfVideoHTMLElementId: 'selfVideo', // HTML element id where video stream of the agent will be rendered
+            remoteVideoHTMLElementId: 'remoteVideo', // HTML element id where video stream of the customer will be rendered
+            OCClient: chatSDK.OCClient
+        });
     } catch (e) {
-        console.log(`Failed to load VoiceVideoCalling: ${e}`);
-
-        if (e.message === 'UnsupportedPlatform') {
-            // Voice Video Calling feature is not supported on this platform
-        }
-
-        if (e.message === 'FeatureDisabled') {
-            // Voice Video Calling feature is disabled on admin side
-        }
+        console.error("Failed to initialize VoiceVideoCalling!");
     }
 
-    await chatSDK.startChat();
+    // Triggered when there's an incoming call
+    VoiceVideoCallingSDK.onCallAdded(() => {
+        ...
+    });
 
-    const chatToken: any = await chatSDK.getChatToken();
+    // Triggered when local video stream is available (e.g.: Local video added succesfully in selfVideoHTMLElement)
+    VoiceVideoCallingSDK.onLocalVideoStreamAdded(() => {
+        ...
+    });
 
-    // Initialize only if VoiceVideoCallingSDK is defined
-    if (VoiceVideoCallingSDK) {
-        try {
-            await VoiceVideoCallingSDK.initialize({
-                chatToken,
-                selfVideoHTMLElementId: 'selfVideo', // HTML element id where video stream of the agent will be rendered
-                remoteVideoHTMLElementId: 'remoteVideo', // HTML element id where video stream of the customer will be rendered
-                OCClient: chatSDK.OCClient
-            });
-        } catch (e) {
-            console.error("Failed to initialize VoiceVideoCalling!");
-        }
+    // Triggered when local video stream is unavailable (e.g.: Customer turning off local video)
+    VoiceVideoCallingSDK.onLocalVideoStreamRemoved(() => {
+        ...
+    });
 
-        // Triggered when there's an incoming call
-        VoiceVideoCallingSDK.onCallAdded(() => {
-            ...
-        });
+    // Triggered when remote video stream is available (e.g.: Remote video added succesfully in remoteVideoHTMLElement)
+    VoiceVideoCallingSDK.onRemoteVideoStreamAdded(() => {
+        ...
+    });
 
-        // Triggered when local video stream is available (e.g.: Local video added succesfully in selfVideoHTMLElement)
-        VoiceVideoCallingSDK.onLocalVideoStreamAdded(() => {
-            ...
-        });
+    // Triggered when remote video stream is unavailable (e.g.: Agent turning off remote video)
+    VoiceVideoCallingSDK.onRemoteVideoStreamRemoved(() => {
+        ...
+    });
 
-        // Triggered when local video stream is unavailable (e.g.: Customer turning off local video)
-        VoiceVideoCallingSDK.onLocalVideoStreamRemoved(() => {
-            ...
-        });
+    // Triggered when current call has ended or disconnected regardless the party
+    VoiceVideoCalling.onCallDisconnected(() => {
+        ...
+    });
 
-        // Triggered when remote video stream is available (e.g.: Remote video added succesfully in remoteVideoHTMLElement)
-        VoiceVideoCallingSDK.onRemoteVideoStreamAdded(() => {
-            ...
-        });
+    // Check if microphone is muted
+    const isMicrophoneMuted = VoiceVideoCallingSDK.isMicrophoneMuted();
 
-        // Triggered when remote video stream is unavailable (e.g.: Agent turning off remote video)
-        VoiceVideoCallingSDK.onRemoteVideoStreamRemoved(() => {
-            ...
-        });
+    // Check if remote video is available
+    const isRemoteVideoEnabled = VoiceVideoCallingSDK.isRemoteVideoEnabled();
 
-        // Triggered when current call has ended or disconnected regardless the party
-        VoiceVideoCalling.onCallDisconnected(() => {
-            ...
-        });
+    // Check if local video is available
+    const isLocalVideoEnabled = VoiceVideoCallingSDK.isLocalVideoEnabled();
 
-        // Check if microphone is muted
-        const isMicrophoneMuted = VoiceVideoCallingSDK.isMicrophoneMuted();
+    // Accepts incoming call
+    const acceptCallConfig = {
+        withVideo: true // Accept call with/without video stream
+    };
+    await VoiceVideoCallingSDK.acceptCall(acceptCallConfig);
 
-        // Check if remote video is available
-        const isRemoteVideoEnabled = VoiceVideoCallingSDK.isRemoteVideoEnabled();
+    // Rejects incoming call
+    await VoiceVideoCallingSDK.rejectCall();
 
-        // Check if local video is available
-        const isLocalVideoEnabled = VoiceVideoCallingSDK.isLocalVideoEnabled();
+    // Ends/Stops current call
+    await VoiceVideoCallingSDK.stopCall();
 
-        // Accepts incoming call
-        const acceptCallConfig = {
-            withVideo: true // Accept call with/without video stream
-        };
-        await VoiceVideoCallingSDK.acceptCall(acceptCallConfig);
+    // Mute/Unmute current call
+    await VoiceVideoCallingSDK.toggleMute()
 
-        // Rejects incoming call
-        await VoiceVideoCallingSDK.rejectCall();
+    // Display/Hide local video of current call
+    await VoiceVideoCallingSDK.toggleLocalVideo()
 
-        // Ends/Stops current call
-        await VoiceVideoCallingSDK.stopCall();
-
-        // Mute/Unmute current call
-        await VoiceVideoCallingSDK.toggleMute()
-
-        // Display/Hide local video of current call
-        await VoiceVideoCallingSDK.toggleLocalVideo()
-
-        // Clean up VoiceVideoCallingSDK (e.g.: Usually called when customer ends chat session)
-        VoiceVideoCallingSDK.close();
-    }
+    // Clean up VoiceVideoCallingSDK (e.g.: Usually called when customer ends chat session)
+    VoiceVideoCallingSDK.close();
+}
 ```
 
 ## Feature Comparisons
@@ -849,20 +849,20 @@ Some of the data being collected are the following:
 If your organization is concerned about the data collected by the Chat SDK, you have the option to turn off automatic data collection by adding a flag in the `ChatSDKConfig`.
 
 ```ts
-    const omnichannelConfig = {
-        orgUrl: "",
-        orgId: "",
-        widgetId: ""
-    };
+const omnichannelConfig = {
+    orgUrl: "",
+    orgId: "",
+    widgetId: ""
+};
 
-    const chatSDKConfig = {
-        telemetry: {
-            disable: true // Disable telemetry
-        }
-    };
+const chatSDKConfig = {
+    telemetry: {
+        disable: true // Disable telemetry
+    }
+};
 
-    const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
-    await chatSDK.initialize();
+const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+await chatSDK.initialize();
 ```
 
 # Contributing
