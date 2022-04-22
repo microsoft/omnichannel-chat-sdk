@@ -648,6 +648,8 @@ try {
 ### Using [BotFramework-WebChat](https://github.com/microsoft/BotFramework-WebChat)
 > :warning: Currently supported on web only
 
+> ❗ Sending default channel message tags is required. See [here](/docs//DEVELOPMENT_GUIDE.md#send-default-channel-message-tags-using-store-middleware)
+
 ```ts
     import OmnichannelChatSDK from '@microsoft/omnichannel-chat-sdk';
     import ReactWebChat from 'botframework-webchat';
