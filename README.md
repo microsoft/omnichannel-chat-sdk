@@ -651,34 +651,32 @@ try {
 > ❗ Sending default channel message tags is required. See [here](/docs//DEVELOPMENT_GUIDE.md#send-default-channel-message-tags-using-store-middleware)
 
 ```ts
-    import OmnichannelChatSDK from '@microsoft/omnichannel-chat-sdk';
-    import ReactWebChat from 'botframework-webchat';
+import OmnichannelChatSDK from '@microsoft/omnichannel-chat-sdk';
+import ReactWebChat, {createStore} from 'botframework-webchat';
 
-    ...
+// 1. ChatSDK Initialization
+const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig);
+await chatSDK.initialize();
 
-    const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
-    await chatSDK.initialize();
+// 2. Start new conversation
+await chatSDK.startChat();
 
-    const optionalParams = {
-        preChatResponse: '' // PreChatSurvey response
-    };
+// 3. Create chat adapter
+const chatAdapter = await chatSDK.createChatAdapter();
 
-    await chatSDK.startChat(optionalParams);
-    const chatAdapter = await chatSDK.createChatAdapter();
+// 4. Create WebChat store with middlewares
+const store = createStore(
+    {}, // initial state
+    sendDefaultMessagingTagsMiddleware // ❗ Required
+);
 
-    // Subscribes to incoming message
-    chatSDK.onNewMessage((message) => {
-      console.log(`[NewMessage] ${message.content}`); // IC3 protocol message data
-      console.log(message);
-    });
-
-    ...
-
-    <ReactWebChat
-        userID="teamsvisitor"
-        directLine={chatAdapter}
-        sendTypingIndicator={true}
-    />
+// 5. Render WebChat
+<ReactWebChat
+    store={store}
+    userID="teamsvisitor"
+    directLine={chatAdapter}
+    sendTypingIndicator={true}
+/>
 ```
 
 ### Escalation to Voice & Video
