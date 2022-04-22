@@ -434,6 +434,8 @@ const context = await chatSDK.getPostChatSurveyContext();
 
 ### Pre-Chat Survey
 
+> See https://docs.microsoft.com/en-us/dynamics365/customer-service/configure-pre-chat-survey?tabs=customerserviceadmincenter on how to set up pre-conversation surveys
+
 ```ts
     import * as AdaptiveCards, { Action } from "adaptivecards";
 
@@ -466,6 +468,8 @@ const context = await chatSDK.getPostChatSurveyContext();
 ```
 
 ### Post-Chat Survey
+
+> See https://docs.microsoft.com/en-us/dynamics365/customer-service/configure-post-conversation-survey?tabs=customerserviceadmincenter on how to set up post-conversation surveys
 
 > ❗ `chatSDK.getPostChatSurveyContext()` needs to be called before `chatSDK.endChat()` is called
 
