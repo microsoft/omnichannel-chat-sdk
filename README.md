@@ -495,53 +495,52 @@ await chatSDK.endChat();
 ### Reconnect to existing Chat
 
 ```ts
-    await chatSDK.startChat(); // Starts NEW chat
+await chatSDK.startChat(); // Starts NEW chat
 
-    const liveChatContext = await chatSDK.getCurrentLiveChatContext(); // Gets chat context
+const liveChatContext = await chatSDK.getCurrentLiveChatContext(); // Gets chat context
 
-    cache.saveChatContext(liveChatContext); // Custom logic to save chat context to cache
+cache.saveChatContext(liveChatContext); // Custom logic to save chat context to cache
 
-    ...
+...
 
-    // Page/component reloads, ALL previous states are GONE
+// Page/component reloads, ALL previous states are GONE
 
-    ...
+...
 
-    const liveChatContext = cache.loadChatContext() // Custom logic to load chat context from cache
+const liveChatContext = cache.loadChatContext() // Custom logic to load chat context from cache
 
-    const optionalParams = {};
-    optionalParams.liveChatContext = liveChatContext;
+const optionalParams = {};
+optionalParams.liveChatContext = liveChatContext;
 
-    await chatSDK.startChat(optionalParams); // Reconnects to EXISTING chat
+await chatSDK.startChat(optionalParams); // Reconnects to EXISTING chat
 
-    ...
+...
 
-    const messages = await chatSDK.getMessages(); // Gets all messages from EXISTING chat
-    messages.reverse().forEach((message: any) => renderMessage(message)); // Logic to render all messages to UI
+const messages = await chatSDK.getMessages(); // Gets all messages from EXISTING chat
+messages.reverse().forEach((message: any) => renderMessage(message)); // Logic to render all messages to UI
 ```
 
 ### Authenticated Chat
 
-```ts
-    // add if using against an authenticated chat endpoint
-    // see https://docs.microsoft.com/en-us/dynamics365/omnichannel/administrator/create-chat-auth-settings on how to set up an authenticated chat widget
+> See https://docs.microsoft.com/en-us/dynamics365/omnichannel/administrator/create-chat-auth-settings on how to set up an authenticated chat widget
 
-    const chatSDKConfig = {
-        getAuthToken: async () => {
-            const response = await fetch("http://contosohelp.com/token");
-            if (response.ok) {
-                return await response.text();
-            }
-            else {
-                return null
-            }
+```ts
+const chatSDKConfig = {
+    getAuthToken: async () => {
+        const response = await fetch("http://contosohelp.com/token");
+        if (response.ok) {
+            return await response.text();
+        }
+        else {
+            return null
         }
     }
+}
 
-    const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
-    await chatSDK.initialize();
+const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+await chatSDK.initialize();
 
-    // from this point, this acts like a regular chat widget
+// from this point, this acts like a regular chat widget
 ```
 
 ### Persistent Chat
