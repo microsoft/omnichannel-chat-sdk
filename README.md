@@ -38,8 +38,16 @@ Please make sure you have a chat widget configured before using this package or 
     - [Create Chat Adapter](#create-chat-adapter)
     - [Get Voice & Video Calling](#get-voice--video-calling)
     - [Get Post Chat Survey Context](#get-post-chat-survey-context)
-- [Sample Apps](https://github.com/microsoft/omnichannel-chat-sdk-samples)
 - [Common Scenarios](#common-scenarios)
+    - [Using BotFramework-WebChat](#using-botframework-webchat)
+    - [Pre-Chat Survey](#pre-chat-survey)
+    - [Reconnect to existing Chat](#reconnect-to-existing-chat)
+    - [Authenticated Chat](#authenticated-chat)
+    - [Persistent Chat](#persistent-chat)
+    - [Chat Reconnect with Authenticated User](#chat-reconnect-with-authenticated-user)
+    - [Chat Reconnect with Unauthenticated User](#chat-reconnect-with-unauthenticated-user)
+    - [Operating Hours](#operating-hours)
+- [Sample Apps](https://github.com/microsoft/omnichannel-chat-sdk-samples)
 - [Feature Comparisons](#feature-comparisons)
 - [Telemetry](#telemetry)
 - [Development Guide](docs/DEVELOPMENT_GUIDE.md)
@@ -385,7 +393,7 @@ fileReaderInstance.onload = () => {
 
 > :warning: Currently supported on web only
 
-It creates a chat adapter.
+It creates a chat adapter to use with [BotFramework-WebChat](https://github.com/microsoft/BotFramework-WebChat).
 
 ```ts
 const chatAdapter = await chatSDK.createChatAdapter();
@@ -433,7 +441,7 @@ try {
 
 ## Common Scenarios
 
-### PreChatSurvey
+### Pre-Chat Survey
 
 ```ts
     import * as AdaptiveCards, { Action } from "adaptivecards";
@@ -637,8 +645,9 @@ try {
     }
 ```
 
-### Use [BotFramework-WebChat](https://github.com/microsoft/BotFramework-WebChat)
+### Using [BotFramework-WebChat](https://github.com/microsoft/BotFramework-WebChat)
 > :warning: Currently supported on web only
+
 ```ts
     import OmnichannelChatSDK from '@microsoft/omnichannel-chat-sdk';
     import ReactWebChat from 'botframework-webchat';
