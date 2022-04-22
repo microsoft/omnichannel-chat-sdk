@@ -28,7 +28,7 @@ Please make sure you have a chat widget configured before using this package or 
     - [Get Messages](#get-messages)
     - [Send Messages](#send-messages)
     - [On New Message](#on-new-message)
-    - [On Typing Eevent](#on-typing-event)
+    - [On Typing Event](#on-typing-event)
     - [On Agent End Session](#on-agent-end-session)
     - [Send Typing Event](#send-typing-event)
     - [Email Live Chat Transcript](#email-live-chat-transcript)
@@ -41,6 +41,7 @@ Please make sure you have a chat widget configured before using this package or 
 - [Common Scenarios](#common-scenarios)
     - [Using BotFramework-WebChat](#using-botframework-webchat)
     - [Pre-Chat Survey](#pre-chat-survey)
+    - [Post-Chat Survey](#post-chat-survey)
     - [Reconnect to existing Chat](#reconnect-to-existing-chat)
     - [Authenticated Chat](#authenticated-chat)
     - [Persistent Chat](#persistent-chat)
@@ -139,7 +140,7 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
     import 'react-native-url-polyfill';
     ```
 
-## SDK Methods 
+## SDK Methods
 
 ### Initialization
 
@@ -165,7 +166,7 @@ const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, cha
 await chatSDK.initialize();
 ```
 
-### Start Chat 
+### Start Chat
 
 It starts an Omnichannel conversation.
 
@@ -207,9 +208,9 @@ const parseToJSON = false;
 const preChatSurvey = await getPreChatSurvey(parseToJSON); // Adaptive Cards payload data as string
 ```
 
-### Get Live Chat Config 
+### Get Live Chat Config
 
-It fetches the Live Chat Config. 
+It fetches the Live Chat Config.
 
 ```ts
 const liveChatConfig = await chatSDK.getLiveChatConfig();
@@ -233,7 +234,7 @@ const dataMaskingRules = await chatSDK.getDataMaskingRules();
 
 ### Get Chat Reconnect Context
 
-It gets the current reconnectable chat context information to connect to a previous existing chat session. 
+It gets the current reconnectable chat context information to connect to a previous existing chat session.
 
 `Reconnection options` is required. See [documentation](https://docs.microsoft.com/en-us/dynamics365/customer-service/configure-reconnect-chat?tabs=customerserviceadmincenter#enable-reconnection-to-a-previous-chat-session)
 
@@ -253,7 +254,7 @@ It gets the details of the current conversation such as its state & when the age
 const conversationDetails = await chatSDK.getConversationDetails();
 ```
 
-### Get chat Token 
+### Get chat Token
 
 It gets the chat token used to initiates a chat with Omnichannel messaging client.
 
@@ -329,7 +330,7 @@ chatSDK.onAgentEndSession(() => {
 });
 ```
 
-### Send Typing Event 
+### Send Typing Event
 
 It sends a customer typing event.
 
@@ -373,7 +374,7 @@ await chatSDK.uploadFileAttachment(fileInfo);
 
 ### Download File Attachment
 
-It downloads the file attachment of the incoming message as a Blob response. 
+It downloads the file attachment of the incoming message as a Blob response.
 
 ```ts
 const blobResponse = await chatsdk.downloadFileAttachment(message.fileMetadata);
@@ -423,20 +424,10 @@ try {
 ```
 ### Get Post Chat Survey Context
 
-It gets post chat survey link, survey locale, and whether an agent has joined the survey 
+It gets post chat survey link, survey locale, and whether an agent has joined the survey.
 
 ```ts
-try {
-    const context = await chatSDK.getPostChatSurveyContext();
-    if (context.participantJoined) { // participantJoined will be true if an agent has joined the conversation, or a bot has joined the conversation and the bot survey flag has been turned on on the admin side.
-        // formsProLocale is the default language you have set on the CustomerVoice portal. You can override this url parameter with any locale that CustomerVoice supports.
-        // If "&lang=" is not set on the url, the locale will be English.
-        const linkToSend = context.surveyInviteLink + "&lang=" + context.formsProLocale;
-        // This link is accessible and will redirect to the survey page. Use it as you see fit.
-    }
-} catch (ex) {
-    // If the post chat should not be shown by any reason (e.g. post chat is not enabled), promise will be rejected.
-}
+const context = await chatSDK.getPostChatSurveyContext();
 ```
 
 ## Common Scenarios
@@ -472,6 +463,33 @@ try {
         }} />
     }
 
+```
+
+### Post-Chat Survey
+
+> ❗ `chatSDK.getPostChatSurveyContext()` needs to be called before `chatSDK.endChat()` is called
+
+```ts
+// 1. Start chat
+await chatSDK.startChat();
+
+// 2. Save post chat survey context before ending chat
+try {
+    const context = await chatSDK.getPostChatSurveyContext();
+    if (context.participantJoined) { // participantJoined will be true if an agent has joined the conversation, or a bot has joined the conversation and the bot survey flag has been turned on on the admin side.
+        // formsProLocale is the default language you have set on the CustomerVoice portal. You can override this url parameter with any locale that CustomerVoice supports.
+        // If "&lang=" is not set on the url, the locale will be English.
+        const linkToSend = context.surveyInviteLink + "&lang=" + context.formsProLocale;
+        // This link is accessible and will redirect to the survey page. Use it as you see fit.
+    }
+} catch (ex) {
+    // If the post chat should not be shown by any reason (e.g. post chat is not enabled), promise will be rejected.
+}
+
+// 3. End chat
+await chatSDK.endChat();
+
+// 4. Display Post Chat
 ```
 
 ### Reconnect to existing Chat
@@ -649,9 +667,9 @@ try {
 > :warning: Currently supported on web only
 
 Minimum Requirement Checklist
-1. [ ] Initialize ChatSDK 
+1. [ ] Initialize ChatSDK
 1. [ ] Start new conversation
-1. [ ] Create Chat Adapter 
+1. [ ] Create Chat Adapter
 1. [ ] Create WebChat store with default middlewares
     1. [ ] Send Default Channel Message Tags using Store Middleware (See [here](/docs//DEVELOPMENT_GUIDE.md#send-default-channel-message-tags-using-store-middleware)) ❗ Required
 1. [ ] Render WebChat
