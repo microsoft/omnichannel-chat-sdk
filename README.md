@@ -40,6 +40,7 @@ Please make sure you have a chat widget configured before using this package or 
     - [Get Post Chat Survey Context](#get-post-chat-survey-context)
 - [Common Scenarios](#common-scenarios)
     - [Using BotFramework-WebChat](#using-botframework-webchat)
+    - [Escalation to Voice & Video](#escalation-to-voice--video)
     - [Pre-Chat Survey](#pre-chat-survey)
     - [Post-Chat Survey](#post-chat-survey)
     - [Reconnect to existing Chat](#reconnect-to-existing-chat)
