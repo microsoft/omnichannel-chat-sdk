@@ -1,13 +1,17 @@
-# Omnichannel Chat SDK
+# Omnichannel Chat SDK 💬
 
 [![npm version](https://badge.fury.io/js/%40microsoft%2Fomnichannel-chat-sdk.svg)](https://badge.fury.io/js/%40microsoft%2Fomnichannel-chat-sdk)
 [![install size](https://packagephobia.com/badge?p=@microsoft/omnichannel-chat-sdk)](https://packagephobia.com/result?p=@microsoft/omnichannel-chat-sdk)
 ![Release CI](https://github.com/microsoft/omnichannel-chat-sdk/workflows/Release%20CI/badge.svg)
 ![npm](https://img.shields.io/npm/dm/@microsoft/omnichannel-chat-sdk)
 
+> ❗ Chat SDK **v1.1.0** is the minimum version to support the **new** messaging platform. More [here](https://docs.microsoft.com/en-us/dynamics365/customer-service/migrate-acs)
+
+> 📢 Try out our new React component library [omnichannel-chat-widget](https://github.com/microsoft/omnichannel-chat-widget) with Chat SDK
+
 Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel Services.
 
-Please make sure you have a chat widget configured before using this package or you can follow this [link](https://docs.microsoft.com/en-us/dynamics365/customer-service/configure-live-chat)
+Please make sure you have a chat widget configured before using this package or you can follow this [link](https://docs.microsoft.com/en-us/dynamics365/customer-service/add-chat-widget)
 
 ## Table of Contents
 - [Live Chat Widget vs. Chat SDK](#live-chat-widget-vs-chat-sdk)
@@ -40,6 +44,7 @@ Please make sure you have a chat widget configured before using this package or 
     - [Get Post Chat Survey Context](#get-post-chat-survey-context)
 - [Common Scenarios](#common-scenarios)
     - [Using BotFramework-WebChat](#using-botframework-webchat)
+    - [Escalation to Voice & Video](#escalation-to-voice--video)
     - [Pre-Chat Survey](#pre-chat-survey)
     - [Post-Chat Survey](#post-chat-survey)
     - [Reconnect to existing Chat](#reconnect-to-existing-chat)
