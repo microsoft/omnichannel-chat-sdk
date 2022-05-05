@@ -1,4 +1,4 @@
-# Omnichannel Chat SDK 💭
+# Omnichannel Chat SDK 💬
 
 [![npm version](https://badge.fury.io/js/%40microsoft%2Fomnichannel-chat-sdk.svg)](https://badge.fury.io/js/%40microsoft%2Fomnichannel-chat-sdk)
 [![install size](https://packagephobia.com/badge?p=@microsoft/omnichannel-chat-sdk)](https://packagephobia.com/result?p=@microsoft/omnichannel-chat-sdk)
