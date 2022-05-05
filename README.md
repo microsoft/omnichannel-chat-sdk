@@ -7,7 +7,7 @@
 
 Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel Services.
 
-Please make sure you have a chat widget configured before using this package or you can follow this [link](https://docs.microsoft.com/en-us/dynamics365/customer-service/configure-live-chat)
+Please make sure you have a chat widget configured before using this package or you can follow this [link](https://docs.microsoft.com/en-us/dynamics365/customer-service/add-chat-widget?tabs=customerserviceadmincenter)
 
 ## Table of Contents
 - [Live Chat Widget vs. Chat SDK](#live-chat-widget-vs-chat-sdk)
