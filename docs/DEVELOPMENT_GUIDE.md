@@ -6,6 +6,7 @@
 1. [Send Default Channel Message Tags using Store Middleware](#send-default-channel-message-tags-using-store-middleware)
 1. [Data Masking using Store Middleware](#data-masking-using-store-middleware)
 1. [Send Typing using Web Chat Props](#send-typing-using-web-chat-props)
+1. [Set Upload File Button Visibility](#set-upload-file-button-visibility)
 1. [Upload File Validation Middleware using Store Middleware](#upload-file-validation-middleware-using-store-middleware)
 
 **[Using Custom Chat Control](#using-custom-chat-control)**
@@ -176,6 +177,27 @@ return <ReactWebChat
 return <ReactWebChat
     {...props}
     sendTypingIndicator={true}
+/>
+```
+
+### Set Upload File Button Visibility
+
+```js
+const liveChatConfig = await chatSDK.getLiveChatConfig();
+const {LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin} = liveChatConfig;
+const {msdyn_enablefileattachmentsforcustomers} = liveWSAndLiveChatEngJoin;
+
+const canUploadAttachment = msdyn_enablefileattachmentsforcustomers === "true" || false;
+
+const styleOptions = {
+    hideUploadButton: !canUploadAttachment
+};
+
+// ...
+
+return <ReactWebChat
+    {...props}
+    styleOptions={styleOptions}
 />
 ```
 
