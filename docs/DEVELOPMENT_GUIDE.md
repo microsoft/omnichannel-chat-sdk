@@ -19,6 +19,8 @@
 ### Render Adaptive Cards using Attachment Middleware
 
 ```js
+import ReactWebChat from 'botframework-webchat';
+
 const supportedAdaptiveCardContentTypes = [
     "application/vnd.microsoft.card.adaptive",
     "application/vnd.microsoft.card.audio",
@@ -71,7 +73,7 @@ return <ReactWebChat
 ### Send Default Channel Message Tags using Store Middleware
 
 ```js
-import {createStore} from 'botframework-webchat';
+import ReactWebChat, {createStore} from 'botframework-webchat';
 
 const channelIdTag = `ChannelId-lcw`;
 const customerMessageTag = `FromCustomer`;
@@ -118,7 +120,7 @@ return <ReactWebChat
 ### Data Masking using Store Middleware
 
 ```js
-import {createStore} from 'botframework-webchat';
+import ReactWebChat, {createStore} from 'botframework-webchat';
 
 // Fetch masking rules
 const maskingRules = chatSDK.getDataMaskingRules();
@@ -173,6 +175,8 @@ return <ReactWebChat
 ### Send Typing using Web Chat Props
 
 ```js
+import ReactWebChat from 'botframework-webchat';
+
 // ...
 
 return <ReactWebChat
@@ -184,6 +188,8 @@ return <ReactWebChat
 ### Set Upload File Button Visibility
 
 ```js
+import ReactWebChat from 'botframework-webchat';
+
 const liveChatConfig = await chatSDK.getLiveChatConfig();
 const {LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin} = liveChatConfig;
 const {msdyn_enablefileattachmentsforcustomers} = liveWSAndLiveChatEngJoin;
@@ -205,7 +211,7 @@ return <ReactWebChat
 ### Upload File Validation Middleware using Store Middleware
 
 ```js
-import {createStore} from 'botframework-webchat';
+import ReactWebChat, {createStore} from 'botframework-webchat';
 
 const liveChatConfig = await chatSDK.getLiveChatConfig();
 const {allowedFileExtensions, maxUploadFileSize, LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin} = liveChatConfig; // maxUploadFileSize in MB
@@ -340,7 +346,7 @@ return <ReactWebChat
 ### Render Multiple Files Upload Middleware using Store Middleware
 
 ```js
-import {createStore} from 'botframework-webchat';
+import ReactWebChat, {createStore} from 'botframework-webchat';
 
 const createSendFileAction = (files) => ({
     type: "WEB_CHAT/SEND_FILES",
