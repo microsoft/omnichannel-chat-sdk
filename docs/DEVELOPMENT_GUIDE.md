@@ -470,24 +470,26 @@ const isValidAttachmentFileExtension = (supportedFileExtensions, fileExtension) 
 
 const fileSelector = document.createElement('input');
 fileSelector.setAttribute('type', 'file');
+fileSelector.setAttribute('multiple', 'true'); // Allow multiple file inputs (optional)
 fileSelector.click();
 
 fileSelector.onchange = async (event) => {
-    const file = event.target.files[0];
-    const fileExtension = extractFileExtension(file.name);
-    const supportedFileExtensions = allowedFileExtensions.toLowerCase().split(',');
-    const isFileEmpty = parseInt(file.size) === 0;
-    const validFileSize = isValidAttachmentFileSize(maxUploadFileSize, file.size);
-    const validFileExtension = isValidAttachmentFileExtension(supportedFileExtensions, fileExtension);
+    [...event.target.files].forEach((file) => {
+        const fileExtension = extractFileExtension(file.name);
+        const supportedFileExtensions = allowedFileExtensions.toLowerCase().split(',');
+        const isFileEmpty = parseInt(file.size) === 0;
+        const validFileSize = isValidAttachmentFileSize(maxUploadFileSize, file.size);
+        const validFileExtension = isValidAttachmentFileExtension(supportedFileExtensions, fileExtension);
 
-    if (!isFileEmpty && validFileSize && validFileExtension) {
-        chatSDK?.uploadFileAttachment(file);
-    }
+        if (!isFileEmpty && validFileSize && validFileExtension) {
+            chatSDK?.uploadFileAttachment(file);
+        }
 
-    const fileReader = new FileReader();
-    fileReader.readAsDataURL(file);
-    fileReader.onloadend = () => {
-        // Display Attachment
-    }
+        const fileReader = new FileReader();
+        fileReader.readAsDataURL(file);
+        fileReader.onloadend = () => {
+            // Display Attachment
+        }
+    });
 }
 ```
