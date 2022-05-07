@@ -10,6 +10,7 @@
 
 **[Using Custom Chat Control](#using-custom-chat-control)**
 1. [Render Adaptive Cards](#render-adaptive-cards)
+1. [Upload File Validation](#upload-file-validation)
 
 ## Using Bot Framework Web Chat Control
 
@@ -359,4 +360,51 @@ ChatSDK.onNewMessage((message: any) => {
         // Logic to add renderedCard in the DOM
     }
 });
+```
+
+### Upload File Validation
+
+```js
+const liveChatConfig = await chatSDK.getLiveChatConfig();
+const {allowedFileExtensions, maxUploadFileSize} = liveChatConfig; // maxUploadFileSize in MB
+
+const isValidAttachmentFileSize = (fileSizeLimit, attachmentSize) => {
+    return parseInt(fileSizeLimit) * 1024 * 1024 > parseInt(attachmentSize);
+}
+
+const extractFileExtension = (fileName) => {
+    const index = fileName.toLowerCase().lastIndexOf('.');
+    if (index < 0) {
+        return '';
+    }
+
+    return fileName.substring(index);
+}
+
+const isValidAttachmentFileExtension = (supportedFileExtensions, fileExtension) => {
+    return supportedFileExtensions.includes(fileExtension);
+}
+
+const fileSelector = document.createElement('input');
+fileSelector.setAttribute('type', 'file');
+fileSelector.click();
+
+fileSelector.onchange = async (event) => {
+    const file = event.target.files[0];
+    const fileExtension = extractFileExtension(file.name);
+    const supportedFileExtensions = allowedFileExtensions.toLowerCase().split(',');
+    const isFileEmpty = parseInt(file.size) === 0;
+    const validFileSize = isValidAttachmentFileSize(maxUploadFileSize, file.size);
+    const validFileExtension = isValidAttachmentFileExtension(supportedFileExtensions, fileExtension);
+
+    if (!isFileEmpty && validFileSize && validFileExtension) {
+        chatSDK?.uploadFileAttachment(file);
+    }
+
+    const fileReader = new FileReader();
+    fileReader.readAsDataURL(file);
+    fileReader.onloadend = () => {
+        // Display Attachment
+    }
+}
 ```
