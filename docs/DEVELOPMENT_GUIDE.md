@@ -207,7 +207,10 @@ return <ReactWebChat
 import {createStore} from 'botframework-webchat';
 
 const liveChatConfig = await chatSDK.getLiveChatConfig();
-const {allowedFileExtensions, maxUploadFileSize} = liveChatConfig; // maxUploadFileSize in MB
+const {allowedFileExtensions, maxUploadFileSize, LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin} = liveChatConfig; // maxUploadFileSize in MB
+const {msdyn_enablefileattachmentsforcustomers} = liveWSAndLiveChatEngJoin;
+
+const canUploadAttachment = msdyn_enablefileattachmentsforcustomers === "true" || false;
 
 const dispatchAttachmentErrorNotification = (dispatch, message) => {
     dispatch({
@@ -253,6 +256,13 @@ const uploadFileValidationMiddleware = ({ dispatch }) => (next) => (action) => {
 
     if (condition) {
         const {payload: {activity: {attachments, channelData: {attachmentSizes}}}} = action;
+
+        // Attachment upload capability disabled on admin config
+        if (!canUploadAttachment) {
+            action.payload.activity.attachments = [];
+            action.payload.activity.channelData.attachmentSizes = [];
+            return next(action);
+        }
 
         attachments.forEach((attachment: any, i: number) => {
             const fileExtension = extractFileExtension(attachment.name);
