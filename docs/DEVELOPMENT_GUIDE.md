@@ -5,7 +5,8 @@
 1. [Render Adaptive Cards using Attachment Middleware](#render-adaptive-cards-using-attachment-middleware)
 1. [Send Default Channel Message Tags using Store Middleware](#send-default-channel-message-tags-using-store-middleware)
 1. [Data Masking using Store Middleware](#data-masking-using-store-middleware)
-4. [Send Typing using Web Chat Props](#send-typing-using-web-chat-props)
+1. [Send Typing using Web Chat Props](#send-typing-using-web-chat-props)
+1. [Upload File Validation Middleware using Store Middleware](#upload-file-validation-middleware-using-store-middleware)
 
 **[Using Custom Chat Control](#using-custom-chat-control)**
 1. [Render Adaptive Cards](#render-adaptive-cards)
@@ -174,6 +175,131 @@ return <ReactWebChat
 return <ReactWebChat
     {...props}
     sendTypingIndicator={true}
+/>
+```
+
+### Upload File Validation Middleware using Store Middleware
+
+```js
+import {createStore} from 'botframework-webchat';
+
+const liveChatConfig = await chatSDK.getLiveChatConfig();
+const {allowedFileExtensions, maxUploadFileSize} = liveChatConfig; // maxUploadFileSize in MB
+
+const dispatchAttachmentErrorNotification = (dispatch, message) => {
+    dispatch({
+        type: "WEB_CHAT/SET_NOTIFICATION",
+        payload: {
+            id: 'attachment',
+            level: 'error',
+            message
+        }
+    });
+}
+
+const removeAttachment = (attachments, attachmentSizes, index) => {
+    attachments.splice(index, 1);
+    attachmentSizes.splice(index, 1);
+}
+
+const isValidAttachmentFileSize = (fileSizeLimit, attachmentSize) => {
+    return parseInt(fileSizeLimit) * 1024 * 1024 > parseInt(attachmentSize);
+}
+
+const extractFileExtension = (fileName) => {
+    const index = fileName.toLowerCase().lastIndexOf('.');
+    if (index < 0) {
+        return '';
+    }
+
+    return fileName.substring(index);
+}
+
+const isValidAttachmentFileExtension = (supportedFileExtensions, fileExtension) => {
+    return supportedFileExtensions.includes(fileExtension);
+}
+
+const uploadFileValidationMiddleware = ({ dispatch }) => (next) => (action) => {
+    const condition = action.type === "DIRECT_LINE/POST_ACTIVITY"
+    && action.payload
+    && action.payload.activity
+    && action.payload.activity.attachments
+    && action.payload.activity.channelData
+    && action.payload.activity.channelData.attachmentSizes
+    && action.payload.activity.attachments.length === action.payload.activity.channelData.attachmentSizes.length;
+
+    if (condition) {
+        const {payload: {activity: {attachments, channelData: {attachmentSizes}}}} = action;
+
+        attachments.forEach((attachment: any, i: number) => {
+            const fileExtension = extractFileExtension(attachment.name);
+            const supportedFileExtensions = allowedFileExtensions.toLowerCase().split(',');
+            const isFileEmpty = parseInt(attachmentSizes[i]) === 0;
+            const validFileSize = isValidAttachmentFileSize(maxUploadFileSize, attachmentSizes[i]);
+            const validFileExtension = isValidAttachmentFileExtension(supportedFileExtensions, fileExtension);
+
+            if (!attachment.name) {
+                const message = `There was an error uploading the file, please try again.`;
+                dispatchAttachmentErrorNotification(dispatch, message);
+                removeAttachment(attachments, attachmentSizes, i);
+                return next(action);
+            }
+
+            if (!validFileSize && !validFileExtension) {
+                if (!fileExtension) {
+                    const message = `File exceeds the allowed limit of  ${maxUploadFileSize} MB and please upload the file with an appropriate file extension.`;
+                    dispatchAttachmentErrorNotification(dispatch, message);
+                } else {
+                    const message = `File exceeds the allowed limit of ${maxUploadFileSize} MB and ${fileExtension} files are not supported.`;
+                    dispatchAttachmentErrorNotification(dispatch, message);
+                }
+
+                removeAttachment(attachments, attachmentSizes, i);
+                return next(action);
+            }
+
+            if (isFileEmpty) {
+                const message = `This file can't be attached because it's empty. Please try again with a different file.`;
+                dispatchAttachmentErrorNotification(dispatch, message);
+                removeAttachment(attachments, attachmentSizes, i);
+                return next(action);
+            }
+
+            if (!validFileSize) {
+                const message = `File exceeds the allowed limit of ${maxUploadFileSize} MB`;
+                dispatchAttachmentErrorNotification(dispatch, message);
+                removeAttachment(attachments, attachmentSizes, i);
+                return next(action);
+            }
+
+            if (!validFileExtension) {
+                if (!fileExtension) {
+                    const message = `File upload error. Please upload the file with an appropriate file extension.`;
+                    dispatchAttachmentErrorNotification(dispatch, message);
+                } else {
+                    const message = `${fileExtension} files are not supported.`;
+                    dispatchAttachmentErrorNotification(dispatch, message);
+                }
+
+                removeAttachment(attachments, attachmentSizes, i);
+                return next(action);
+            }
+        });
+    }
+
+    return next(action);
+}
+
+const store = createStore(
+  {}, // initial state
+  uploadFileValidationMiddleware
+);
+
+// ...
+
+return <ReactWebChat
+    {...props}
+    store={store}
 />
 ```
 
