@@ -8,6 +8,7 @@
 1. [Send Typing using Web Chat Props](#send-typing-using-web-chat-props)
 1. [Set Upload File Button Visibility](#set-upload-file-button-visibility)
 1. [Upload File Validation Middleware using Store Middleware](#upload-file-validation-middleware-using-store-middleware)
+1. [Render Multiple Files Upload Middleware using Store Middleware](#render-multiple-files-upload-middleware-using-store-middleware)
 
 **[Using Custom Chat Control](#using-custom-chat-control)**
 1. [Render Adaptive Cards](#render-adaptive-cards)
@@ -326,6 +327,56 @@ const uploadFileValidationMiddleware = ({ dispatch }) => (next) => (action) => {
 const store = createStore(
   {}, // initial state
   uploadFileValidationMiddleware
+);
+
+// ...
+
+return <ReactWebChat
+    {...props}
+    store={store}
+/>
+```
+
+### Render Multiple Files Upload Middleware using Store Middleware
+
+```js
+import {createStore} from 'botframework-webchat';
+
+const createSendFileAction = (files) => ({
+    type: "WEB_CHAT/SEND_FILES",
+    payload: {
+        files
+    }
+});
+
+const renderMultipleFilesUploadMiddleware = ({ dispatch }) => (next) => (action) => {
+    const condition = action.type === "WEB_CHAT/SEND_FILES"
+    && action.payload
+    && action.payload.files
+    && action.payload.files.length > 0
+
+    if (condition) {
+        const {payload: {files}} = action;
+
+        if (files.length === 1) {
+            return next(action);
+        }
+
+        // Dispatch 'WEB_CHAT/SEND_FILES' action on every file to render all attachments
+        const dispatchAction = createSendFileAction(files.slice(0, files.length - 1));
+        const nextAction = createSendFileAction([files[files.length - 1]]);
+
+        dispatch(dispatchAction);
+
+        return next(nextAction);
+    }
+
+    return next(action);
+}
+
+const store = createStore(
+  {}, // initial state
+  renderMultipleFilesUploadMiddleware
 );
 
 // ...
