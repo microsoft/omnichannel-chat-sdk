@@ -2,6 +2,13 @@
 
 This guide is intended to help users to get guidance and help on troubleshooting before reporting it's an issue.
 
+## How To
+- [Determine if it's an Omnichannel Chat SDK concern](#determine-if-its-an-omnichannel-chat-sdk-concern)
+- [Debugging your application](#debugging-your-application)
+- [Determine the version of ChatSDK installed](#determine-the-version-of-chatsdk-installed)
+  - [Using command-line](#using-command-line)
+  - [In console panel of Web Developer Tools](#in-console-panel-of-web-developer-tools)
+
 ## Determine if it's an Omnichannel Chat SDK concern
 
 1. Check if chat works with our out-of-the-box (OOB) chat widget.
@@ -45,19 +52,19 @@ This guide is intended to help users to get guidance and help on troubleshooting
 
 If the issue is not reproducible in OOB chat widget or any of the sample apps, it could be possible that's an `implementation` issue.
 
-## How to debug your application
+## Debugging your application
 
 1. Enable `debug` mode in your app
 
     You can enable `debug` mode with the SDK to investigate as follow:
 
     ```js
-        const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
-        chatSDK.setDebug(true);
+    const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+    chatSDK.setDebug(true);
 
-        ...
+    // ...
 
-        await chatSDK.initialize();
+    await chatSDK.initialize();
     ```
 
 1. Investigate via developer `console`
@@ -70,3 +77,29 @@ If the issue is not reproducible in OOB chat widget or any of the sample apps, i
 
 1. Investigate via `network activity`
     1. You can check in the `network activity` if there's any failures
+
+
+## Determine the version of ChatSDK installed
+
+### Using command-line
+
+1. Run `npm list @microsoft/omnichannel-chat-sdk` on the command-line
+
+### In console panel of Web Developer Tools
+
+1. Enable `debug` mode
+
+    ```js
+    const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+    chatSDK.setDebug(true);
+
+    // ...
+
+    await chatSDK.initialize();
+    ```
+
+1. In the developer `console`, filter logs by `occhatsdk_events`
+
+1. Expand the `properties` property, then look for `ChatSDKVersion`
+
+

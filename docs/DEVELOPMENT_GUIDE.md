@@ -5,16 +5,22 @@
 1. [Render Adaptive Cards using Attachment Middleware](#render-adaptive-cards-using-attachment-middleware)
 1. [Send Default Channel Message Tags using Store Middleware](#send-default-channel-message-tags-using-store-middleware)
 1. [Data Masking using Store Middleware](#data-masking-using-store-middleware)
-4. [Send Typing using Web Chat Props](#send-typing-using-web-chat-props)
+1. [Send Typing using Web Chat Props](#send-typing-using-web-chat-props)
+1. [Set Upload File Button Visibility](#set-upload-file-button-visibility)
+1. [Upload File Validation Middleware using Store Middleware](#upload-file-validation-middleware-using-store-middleware)
+1. [Render Multiple Files Upload Middleware using Store Middleware](#render-multiple-files-upload-middleware-using-store-middleware)
 
 **[Using Custom Chat Control](#using-custom-chat-control)**
 1. [Render Adaptive Cards](#render-adaptive-cards)
+1. [Upload File Validation](#upload-file-validation)
 
 ## Using Bot Framework Web Chat Control
 
 ### Render Adaptive Cards using Attachment Middleware
 
 ```js
+import ReactWebChat from 'botframework-webchat';
+
 const supportedAdaptiveCardContentTypes = [
     "application/vnd.microsoft.card.adaptive",
     "application/vnd.microsoft.card.audio",
@@ -67,7 +73,7 @@ return <ReactWebChat
 ### Send Default Channel Message Tags using Store Middleware
 
 ```js
-import {createStore} from 'botframework-webchat';
+import ReactWebChat, {createStore} from 'botframework-webchat';
 
 const channelIdTag = `ChannelId-lcw`;
 const customerMessageTag = `FromCustomer`;
@@ -114,7 +120,7 @@ return <ReactWebChat
 ### Data Masking using Store Middleware
 
 ```js
-import {createStore} from 'botframework-webchat';
+import ReactWebChat, {createStore} from 'botframework-webchat';
 
 // Fetch masking rules
 const maskingRules = chatSDK.getDataMaskingRules();
@@ -169,11 +175,221 @@ return <ReactWebChat
 ### Send Typing using Web Chat Props
 
 ```js
+import ReactWebChat from 'botframework-webchat';
+
 // ...
 
 return <ReactWebChat
     {...props}
     sendTypingIndicator={true}
+/>
+```
+
+### Set Upload File Button Visibility
+
+```js
+import ReactWebChat from 'botframework-webchat';
+
+const liveChatConfig = await chatSDK.getLiveChatConfig();
+const {LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin} = liveChatConfig;
+const {msdyn_enablefileattachmentsforcustomers} = liveWSAndLiveChatEngJoin;
+
+const canUploadAttachment = msdyn_enablefileattachmentsforcustomers === "true" || false;
+
+const styleOptions = {
+    hideUploadButton: !canUploadAttachment
+};
+
+// ...
+
+return <ReactWebChat
+    {...props}
+    styleOptions={styleOptions}
+/>
+```
+
+### Upload File Validation Middleware using Store Middleware
+
+```js
+import ReactWebChat, {createStore} from 'botframework-webchat';
+
+const liveChatConfig = await chatSDK.getLiveChatConfig();
+const {allowedFileExtensions, maxUploadFileSize, LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin} = liveChatConfig; // maxUploadFileSize in MB
+const {msdyn_enablefileattachmentsforcustomers} = liveWSAndLiveChatEngJoin;
+
+const canUploadAttachment = msdyn_enablefileattachmentsforcustomers === "true" || false;
+
+const dispatchAttachmentErrorNotification = (dispatch, message) => {
+    dispatch({
+        type: "WEB_CHAT/SET_NOTIFICATION",
+        payload: {
+            id: 'attachment',
+            level: 'error',
+            message
+        }
+    });
+}
+
+const removeAttachment = (attachments, attachmentSizes, index) => {
+    attachments.splice(index, 1);
+    attachmentSizes.splice(index, 1);
+}
+
+const isValidAttachmentFileSize = (fileSizeLimit, attachmentSize) => {
+    return parseInt(fileSizeLimit) * 1024 * 1024 > parseInt(attachmentSize);
+}
+
+const extractFileExtension = (fileName) => {
+    const index = fileName.toLowerCase().lastIndexOf('.');
+    if (index < 0) {
+        return '';
+    }
+
+    return fileName.substring(index);
+}
+
+const isValidAttachmentFileExtension = (supportedFileExtensions, fileExtension) => {
+    return supportedFileExtensions.includes(fileExtension);
+}
+
+const uploadFileValidationMiddleware = ({ dispatch }) => (next) => (action) => {
+    const condition = action.type === "DIRECT_LINE/POST_ACTIVITY"
+    && action.payload
+    && action.payload.activity
+    && action.payload.activity.attachments
+    && action.payload.activity.channelData
+    && action.payload.activity.channelData.attachmentSizes
+    && action.payload.activity.attachments.length === action.payload.activity.channelData.attachmentSizes.length;
+
+    if (condition) {
+        const {payload: {activity: {attachments, channelData: {attachmentSizes}}}} = action;
+
+        // Attachment upload capability disabled on admin config
+        if (!canUploadAttachment) {
+            action.payload.activity.attachments = [];
+            action.payload.activity.channelData.attachmentSizes = [];
+            return next(action);
+        }
+
+        attachments.forEach((attachment: any, i: number) => {
+            const fileExtension = extractFileExtension(attachment.name);
+            const supportedFileExtensions = allowedFileExtensions.toLowerCase().split(',');
+            const isFileEmpty = parseInt(attachmentSizes[i]) === 0;
+            const validFileSize = isValidAttachmentFileSize(maxUploadFileSize, attachmentSizes[i]);
+            const validFileExtension = isValidAttachmentFileExtension(supportedFileExtensions, fileExtension);
+
+            if (!attachment.name) {
+                const message = `There was an error uploading the file, please try again.`;
+                dispatchAttachmentErrorNotification(dispatch, message);
+                removeAttachment(attachments, attachmentSizes, i);
+                return next(action);
+            }
+
+            if (!validFileSize && !validFileExtension) {
+                if (!fileExtension) {
+                    const message = `File exceeds the allowed limit of  ${maxUploadFileSize} MB and please upload the file with an appropriate file extension.`;
+                    dispatchAttachmentErrorNotification(dispatch, message);
+                } else {
+                    const message = `File exceeds the allowed limit of ${maxUploadFileSize} MB and ${fileExtension} files are not supported.`;
+                    dispatchAttachmentErrorNotification(dispatch, message);
+                }
+
+                removeAttachment(attachments, attachmentSizes, i);
+                return next(action);
+            }
+
+            if (isFileEmpty) {
+                const message = `This file can't be attached because it's empty. Please try again with a different file.`;
+                dispatchAttachmentErrorNotification(dispatch, message);
+                removeAttachment(attachments, attachmentSizes, i);
+                return next(action);
+            }
+
+            if (!validFileSize) {
+                const message = `File exceeds the allowed limit of ${maxUploadFileSize} MB`;
+                dispatchAttachmentErrorNotification(dispatch, message);
+                removeAttachment(attachments, attachmentSizes, i);
+                return next(action);
+            }
+
+            if (!validFileExtension) {
+                if (!fileExtension) {
+                    const message = `File upload error. Please upload the file with an appropriate file extension.`;
+                    dispatchAttachmentErrorNotification(dispatch, message);
+                } else {
+                    const message = `${fileExtension} files are not supported.`;
+                    dispatchAttachmentErrorNotification(dispatch, message);
+                }
+
+                removeAttachment(attachments, attachmentSizes, i);
+                return next(action);
+            }
+        });
+    }
+
+    return next(action);
+}
+
+const store = createStore(
+  {}, // initial state
+  uploadFileValidationMiddleware
+);
+
+// ...
+
+return <ReactWebChat
+    {...props}
+    store={store}
+/>
+```
+
+### Render Multiple Files Upload Middleware using Store Middleware
+
+```js
+import ReactWebChat, {createStore} from 'botframework-webchat';
+
+const createSendFileAction = (files) => ({
+    type: "WEB_CHAT/SEND_FILES",
+    payload: {
+        files
+    }
+});
+
+const renderMultipleFilesUploadMiddleware = ({ dispatch }) => (next) => (action) => {
+    const condition = action.type === "WEB_CHAT/SEND_FILES"
+    && action.payload
+    && action.payload.files
+    && action.payload.files.length > 0
+
+    if (condition) {
+        const {payload: {files}} = action;
+
+        if (files.length === 1) {
+            return next(action);
+        }
+
+        // Dispatch 'WEB_CHAT/SEND_FILES' action on every file to render all attachments
+        const dispatchAction = createSendFileAction(files.slice(0, files.length - 1));
+        const nextAction = createSendFileAction([files[files.length - 1]]);
+
+        dispatch(dispatchAction);
+
+        return next(nextAction);
+    }
+
+    return next(action);
+}
+
+const store = createStore(
+  {}, // initial state
+  renderMultipleFilesUploadMiddleware
+);
+
+// ...
+
+return <ReactWebChat
+    {...props}
+    store={store}
 />
 ```
 
@@ -233,4 +449,53 @@ ChatSDK.onNewMessage((message: any) => {
         // Logic to add renderedCard in the DOM
     }
 });
+```
+
+### Upload File Validation
+
+```js
+const liveChatConfig = await chatSDK.getLiveChatConfig();
+const {allowedFileExtensions, maxUploadFileSize} = liveChatConfig; // maxUploadFileSize in MB
+
+const isValidAttachmentFileSize = (fileSizeLimit, attachmentSize) => {
+    return parseInt(fileSizeLimit) * 1024 * 1024 > parseInt(attachmentSize);
+}
+
+const extractFileExtension = (fileName) => {
+    const index = fileName.toLowerCase().lastIndexOf('.');
+    if (index < 0) {
+        return '';
+    }
+
+    return fileName.substring(index);
+}
+
+const isValidAttachmentFileExtension = (supportedFileExtensions, fileExtension) => {
+    return supportedFileExtensions.includes(fileExtension);
+}
+
+const fileSelector = document.createElement('input');
+fileSelector.setAttribute('type', 'file');
+fileSelector.setAttribute('multiple', 'true'); // Allow multiple file inputs (optional)
+fileSelector.click();
+
+fileSelector.onchange = async (event) => {
+    [...event.target.files].forEach((file) => {
+        const fileExtension = extractFileExtension(file.name);
+        const supportedFileExtensions = allowedFileExtensions.toLowerCase().split(',');
+        const isFileEmpty = parseInt(file.size) === 0;
+        const validFileSize = isValidAttachmentFileSize(maxUploadFileSize, file.size);
+        const validFileExtension = isValidAttachmentFileExtension(supportedFileExtensions, fileExtension);
+
+        if (!isFileEmpty && validFileSize && validFileExtension) {
+            chatSDK?.uploadFileAttachment(file);
+        }
+
+        const fileReader = new FileReader();
+        fileReader.readAsDataURL(file);
+        fileReader.onloadend = () => {
+            // Display Attachment
+        }
+    });
+}
 ```
