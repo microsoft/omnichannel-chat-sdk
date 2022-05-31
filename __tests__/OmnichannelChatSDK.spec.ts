@@ -730,11 +730,11 @@ describe('Omnichannel Chat SDK', () => {
                 requestId: 'requestId'
             }
 
-            const optionaParams = {
+            const optionalParams = {
                 liveChatContext
             }
 
-            await chatSDK.startChat(optionaParams);
+            await chatSDK.startChat(optionalParams);
 
             expect(chatSDK.OCClient.getChatToken).toHaveBeenCalledTimes(0);
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(0);
@@ -764,12 +764,12 @@ describe('Omnichannel Chat SDK', () => {
                 requestId: 'requestId'
             }
 
-            const optionaParams = {
+            const optionalParams = {
                 liveChatContext
             }
 
             try {
-                await chatSDK.startChat(optionaParams);
+                await chatSDK.startChat(optionalParams);
             } catch (error) {
                 expect(error.message).toEqual('InvalidConversation');
             }
@@ -800,12 +800,12 @@ describe('Omnichannel Chat SDK', () => {
                 requestId: 'requestId'
             }
 
-            const optionaParams = {
+            const optionalParams = {
                 liveChatContext
             }
 
             try {
-                await chatSDK.startChat(optionaParams);
+                await chatSDK.startChat(optionalParams);
             } catch (error) {
                 expect(error.message).toEqual('ClosedConversation');
             }
@@ -836,7 +836,7 @@ describe('Omnichannel Chat SDK', () => {
                 joinConversation: jest.fn()
             }
 
-            const optionaParams = {
+            const optionalParams = {
                 preChatResponse: 'preChatResponse'
             }
 
@@ -848,11 +848,11 @@ describe('Omnichannel Chat SDK', () => {
 
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
 
-            await chatSDK.startChat(optionaParams);
+            await chatSDK.startChat(optionalParams);
 
             const sessionInitOptionalParams = {
                 initContext: {
-                    preChatResponse: optionaParams.preChatResponse
+                    preChatResponse: optionalParams.preChatResponse
                 }
             }
 
@@ -870,7 +870,7 @@ describe('Omnichannel Chat SDK', () => {
                 joinConversation: jest.fn()
             }
 
-            const optionaParams = {
+            const optionalParams = {
                 preChatResponse: 'preChatResponse',
                 customContext: {},
                 browser: 'browser',
@@ -887,15 +887,15 @@ describe('Omnichannel Chat SDK', () => {
 
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
 
-            await chatSDK.startChat(optionaParams);
+            await chatSDK.startChat(optionalParams);
 
             const sessionInitOptionalParams = {
                 initContext: {
-                    preChatResponse: optionaParams.preChatResponse,
-                    browser: optionaParams.browser,
-                    os: optionaParams.os,
-                    locale: optionaParams.locale,
-                    device: optionaParams.device
+                    preChatResponse: optionalParams.preChatResponse,
+                    browser: optionalParams.browser,
+                    os: optionalParams.os,
+                    locale: optionalParams.locale,
+                    device: optionalParams.device
                 }
             }
 
@@ -913,7 +913,7 @@ describe('Omnichannel Chat SDK', () => {
                 joinConversation: jest.fn()
             }
 
-            const optionaParams = {
+            const optionalParams = {
                 preChatResponse: 'preChatResponse',
                 customContext: {},
                 browser: 'browser',
@@ -938,16 +938,16 @@ describe('Omnichannel Chat SDK', () => {
 
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
 
-            await chatSDK.startChat(optionaParams);
+            await chatSDK.startChat(optionalParams);
 
             const sessionInitOptionalParams = {
                 initContext: {
-                    preChatResponse: optionaParams.initContext.preChatResponse,
-                    customContext: optionaParams.initContext.customContext,
-                    browser: optionaParams.initContext.browser,
-                    os: optionaParams.initContext.os,
-                    locale: optionaParams.initContext.locale,
-                    device: optionaParams.initContext.device
+                    preChatResponse: optionalParams.initContext.preChatResponse,
+                    customContext: optionalParams.initContext.customContext,
+                    browser: optionalParams.initContext.browser,
+                    os: optionalParams.initContext.os,
+                    locale: optionalParams.initContext.locale,
+                    device: optionalParams.initContext.device
                 }
             }
 
@@ -971,7 +971,7 @@ describe('Omnichannel Chat SDK', () => {
                 joinConversation: jest.fn()
             }
 
-            const optionaParams = {
+            const optionalParams = {
                 authenticatedUserToken: 'authenticatedUserToken'
             }
 
@@ -999,7 +999,7 @@ describe('Omnichannel Chat SDK', () => {
             await chatSDK.startChat({});
 
             const sessionInitOptionalParams = {
-                authenticatedUserToken: optionaParams.authenticatedUserToken,
+                authenticatedUserToken: optionalParams.authenticatedUserToken,
                 initContext: {}
             }
 
@@ -1179,7 +1179,7 @@ describe('Omnichannel Chat SDK', () => {
             chatSDK.IC3Client.initialize = jest.fn();
             chatSDK.IC3Client.joinConversation = jest.fn();
 
-            const optionaParams = {
+            const optionalParams = {
                 authenticatedUserToken: 'authenticatedUserToken'
             }
 
@@ -1203,12 +1203,12 @@ describe('Omnichannel Chat SDK', () => {
             });
 
             await chatSDK.startChat();
-            chatSDK.authenticatedUserToken = optionaParams.authenticatedUserToken;
+            chatSDK.authenticatedUserToken = optionalParams.authenticatedUserToken;
 
             await chatSDK.getConversationDetails();
 
             expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
-            expect(chatSDK.OCClient.getLWIDetails.mock.calls[0][1]).toMatchObject(optionaParams);
+            expect(chatSDK.OCClient.getLWIDetails.mock.calls[0][1]).toMatchObject(optionalParams);
         });
 
         it('ChatSDK.getConversationDetails() should pass reconnectId to OCClient.getLWIDetails() if any on Chat Reconnect', async () => {
@@ -1832,7 +1832,7 @@ describe('Omnichannel Chat SDK', () => {
             chatSDK.IC3Client.initialize = jest.fn();
             chatSDK.IC3Client.joinConversation = jest.fn();
 
-            const optionaParams = {
+            const optionalParams = {
                 authenticatedUserToken: 'authenticatedUserToken'
             }
 
@@ -1852,7 +1852,7 @@ describe('Omnichannel Chat SDK', () => {
             jest.spyOn(chatSDK.OCClient, 'emailTranscript').mockResolvedValue(Promise.resolve());
 
             await chatSDK.startChat();
-            chatSDK.authenticatedUserToken = optionaParams.authenticatedUserToken;
+            chatSDK.authenticatedUserToken = optionalParams.authenticatedUserToken;
 
             const emailBody = {
                 emailAddress: 'sample@microsoft.com',
@@ -1861,7 +1861,7 @@ describe('Omnichannel Chat SDK', () => {
             };
 
             const emailTranscriptOptionalParams = {
-                authenticatedUserToken: optionaParams.authenticatedUserToken
+                authenticatedUserToken: optionalParams.authenticatedUserToken
             }
 
             await chatSDK.emailLiveChatTranscript(emailBody);
@@ -1905,7 +1905,7 @@ describe('Omnichannel Chat SDK', () => {
             chatSDK.IC3Client.initialize = jest.fn();
             chatSDK.IC3Client.joinConversation = jest.fn();
 
-            const optionaParams = {
+            const optionalParams = {
                 authenticatedUserToken: 'authenticatedUserToken'
             }
 
@@ -1925,12 +1925,12 @@ describe('Omnichannel Chat SDK', () => {
             jest.spyOn(chatSDK.OCClient, 'getChatTranscripts').mockResolvedValue(Promise.resolve());
 
             await chatSDK.startChat();
-            chatSDK.authenticatedUserToken = optionaParams.authenticatedUserToken;
+            chatSDK.authenticatedUserToken = optionalParams.authenticatedUserToken;
 
             await chatSDK.startChat();
 
             const getChatTranscriptOptionalParams = {
-                authenticatedUserToken: optionaParams.authenticatedUserToken
+                authenticatedUserToken: optionalParams.authenticatedUserToken
             }
 
             await chatSDK.getLiveChatTranscript();
@@ -2292,7 +2292,7 @@ describe('Omnichannel Chat SDK', () => {
             chatSDK.IC3Client.initialize = jest.fn();
             chatSDK.IC3Client.joinConversation = jest.fn();
 
-            const optionaParams = {
+            const optionalParams = {
                 authenticatedUserToken: 'authenticatedUserToken'
             }
 
@@ -2313,13 +2313,13 @@ describe('Omnichannel Chat SDK', () => {
 
             await chatSDK.startChat();
 
-            chatSDK.authenticatedUserToken = optionaParams.authenticatedUserToken;
+            chatSDK.authenticatedUserToken = optionalParams.authenticatedUserToken;
             chatSDK.conversation = {
                 disconnect: jest.fn()
             };
 
             const sessionCloseOptionalParams = {
-                authenticatedUserToken: optionaParams.authenticatedUserToken
+                authenticatedUserToken: optionalParams.authenticatedUserToken
             }
 
             await chatSDK.endChat();
