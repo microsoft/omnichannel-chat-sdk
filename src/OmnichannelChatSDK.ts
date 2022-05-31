@@ -413,6 +413,27 @@ class OmnichannelChatSDK {
             sessionInitOptionalParams.initContext!.preChatResponse = optionalParams.preChatResponse;
         }
 
+        if (optionalParams.sendDefaultContext) {
+            if (platform.isNode() || platform.isReactNative()) {
+                const exceptionDetails: ChatSDKExceptionDetails = {
+                    response: "UnsupportedPlatform",
+                    message: "sendDefaultContext is only supported on browser"
+                };
+
+                console.error(exceptionDetails.message);
+
+                this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string,
+                    ExceptionDetails: JSON.stringify(exceptionDetails)
+                });
+
+                throw new Error(exceptionDetails.response);
+            }
+
+            sessionInitOptionalParams.getContext = true;
+        }
+
         // Override initContext completely
         if (optionalParams.initContext) {
             sessionInitOptionalParams.initContext = optionalParams.initContext;
