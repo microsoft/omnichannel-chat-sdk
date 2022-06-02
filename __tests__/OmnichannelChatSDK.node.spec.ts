@@ -46,11 +46,16 @@ describe('Omnichannel Chat SDK (Node)', () => {
         jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
 
         const errorMessage = 'UnsupportedPlatform';
+        let failure = false;
+
         try {
             await chatSDK.startChat(optionalParams);
         } catch (error) {
+            failure = true;
             expect(error.message).toBe(errorMessage);
         }
+
+        expect(failure).toBe(true);
     });
 
     it('ChatSDK.createChatAdapter() should not work on React Native platform', async () => {
