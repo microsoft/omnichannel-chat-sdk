@@ -22,7 +22,7 @@ describe('Omnichannel Chat SDK (Node)', () => {
         jest.clearAllMocks();
     });
 
-    it('ChatSDK.startChat() with sendDefaultContext should not work on non-browser platform', async () => {
+    it('ChatSDK.startChat() with sendDefaultInitContext should not work on non-browser platform', async () => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
 
@@ -34,7 +34,7 @@ describe('Omnichannel Chat SDK (Node)', () => {
         }
 
         const optionalParams = {
-            sendDefaultContext: true
+            sendDefaultInitContext: true
         }
 
         jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({

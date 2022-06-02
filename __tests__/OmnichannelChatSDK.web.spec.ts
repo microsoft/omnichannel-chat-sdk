@@ -31,7 +31,7 @@ describe('Omnichannel Chat SDK (Web)', () => {
         jest.spyOn(platform, 'isBrowser').mockReturnValue(false);
     });
 
-    it('ChatSDK.startChat() with sendDefaultContext should pass getContext to OCClient.sessionInit()', async () => {
+    it('ChatSDK.startChat() with sendDefaultInitContext should pass getContext to OCClient.sessionInit()', async () => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
 
@@ -43,7 +43,7 @@ describe('Omnichannel Chat SDK (Web)', () => {
         }
 
         const optionalParams = {
-            sendDefaultContext: true
+            sendDefaultInitContext: true
         }
 
         jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
@@ -61,7 +61,7 @@ describe('Omnichannel Chat SDK (Web)', () => {
         await chatSDK.startChat(optionalParams);
 
         const sessionInitOptionalParams = {
-            getContext: optionalParams.sendDefaultContext
+            getContext: optionalParams.sendDefaultInitContext
         }
 
         expect(chatSDK.OCClient.sessionInit.mock.calls[0][1]).toMatchObject(sessionInitOptionalParams);
