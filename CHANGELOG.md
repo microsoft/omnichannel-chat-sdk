@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Add `sendDefaultInitContext` optional parameter to `ChatSDK.startChat()` to automatically populate `browser`, `device`, `originurl` & `os` as default init context on web
 
+### Changed
+- Uptake [@microsoft/ocsdk@0.3.1](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.3.1)
+
 ## [1.1.0] - 2022-04-15
 ### Added
 - Add `getPostChatSurveyContext` API method
