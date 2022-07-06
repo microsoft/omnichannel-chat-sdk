@@ -185,7 +185,8 @@ const customContext = {
 const optionalParams = {
     preChatResponse: '', // PreChatSurvey response
     liveChatContext: {}, // EXISTING chat context data
-    customContext // Custom Context
+    customContext, // Custom Context
+    sendDefaultInitContext: true // Send default init context ⚠️ Web only
 };
 
 await chatSDK.startChat(optionalParams);

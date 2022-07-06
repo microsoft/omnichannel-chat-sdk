@@ -22,6 +22,42 @@ describe('Omnichannel Chat SDK (Node)', () => {
         jest.clearAllMocks();
     });
 
+    it('ChatSDK.startChat() with sendDefaultInitContext should not work on non-browser platform', async () => {
+        const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+        chatSDK.getChatConfig = jest.fn();
+
+        await chatSDK.initialize();
+
+        chatSDK.IC3Client = {
+            initialize: jest.fn(),
+            joinConversation: jest.fn()
+        }
+
+        const optionalParams = {
+            sendDefaultInitContext: true
+        }
+
+        jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+            ChatId: '',
+            Token: '',
+            RegionGtms: '{}'
+        }));
+
+        jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+
+        const errorMessage = 'UnsupportedPlatform';
+        let failure = false;
+
+        try {
+            await chatSDK.startChat(optionalParams);
+        } catch (error) {
+            failure = true;
+            expect(error.message).toBe(errorMessage);
+        }
+
+        expect(failure).toBe(true);
+    });
+
     it('ChatSDK.createChatAdapter() should not work on React Native platform', async () => {
         (global as any).navigator = {};
         (global.navigator as any).product = 'ReactNative';
