@@ -487,7 +487,7 @@ describe('Omnichannel Chat SDK', () => {
                 }
             }));
 
-            await chatSDK.getLiveChatConfig(false);
+            await chatSDK.getLiveChatConfig({useRuntimeCache: false});
             const preChatSurvey = await chatSDK.getPreChatSurvey(false);
             expect(preChatSurvey).toBe(samplePreChatSurvey);
         });
@@ -509,7 +509,7 @@ describe('Omnichannel Chat SDK', () => {
                 }
             }));
 
-            await chatSDK.getLiveChatConfig(false);
+            await chatSDK.getLiveChatConfig({useRuntimeCache: false});
             const preChatSurvey = await chatSDK.getPreChatSurvey(false);
             expect(preChatSurvey).toBe(null);
         });
@@ -3068,7 +3068,7 @@ describe('Omnichannel Chat SDK', () => {
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
-            
+
             await chatSDK.initialize();
 
             chatSDK.liveChatConfig = dummyConfig;
