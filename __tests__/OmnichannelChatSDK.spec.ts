@@ -376,6 +376,22 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.AMSClient).toBeDefined();
         });
 
+        it('ChatSDK.initialize() with sendCacheHeaders should be passed to ChatSDK.getChatConfig()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            const getLiveChatConfigOptionalParams = {
+                sendCacheHeaders: true
+            };
+
+            await chatSDK.initialize({getLiveChatConfigOptionalParams});
+
+            jest.spyOn(chatSDK.OCClient, 'getChatConfig')
+
+            expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(1);
+            expect(chatSDK.getChatConfig.mock.calls[0][0].sendCacheHeaders).toEqual(getLiveChatConfigOptionalParams.sendCacheHeaders);
+        });
+
         it('ChatSDK.initialize() call multiple times should instantiate OCSDK & IC3Core/IC3Client only once', async () => {
             jest.resetAllMocks();
 
