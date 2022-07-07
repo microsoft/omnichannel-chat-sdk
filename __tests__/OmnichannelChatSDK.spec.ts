@@ -376,6 +376,38 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.AMSClient).toBeDefined();
         });
 
+        it('ChatSDK.initialize() with sendCacheHeaders set to \'true\' should be passed to ChatSDK.getChatConfig()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            const getLiveChatConfigOptionalParams = {
+                sendCacheHeaders: true
+            };
+
+            await chatSDK.initialize({getLiveChatConfigOptionalParams});
+
+            jest.spyOn(chatSDK.OCClient, 'getChatConfig')
+
+            expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(1);
+            expect(chatSDK.getChatConfig.mock.calls[0][0].sendCacheHeaders).toEqual(getLiveChatConfigOptionalParams.sendCacheHeaders);
+        });
+
+        it('ChatSDK.initialize() with sendCacheHeaders set to \'false\' should be passed to ChatSDK.getChatConfig()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            const getLiveChatConfigOptionalParams = {
+                sendCacheHeaders: false
+            };
+
+            await chatSDK.initialize({getLiveChatConfigOptionalParams});
+
+            jest.spyOn(chatSDK.OCClient, 'getChatConfig')
+
+            expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(1);
+            expect(chatSDK.getChatConfig.mock.calls[0][0].sendCacheHeaders).toEqual(getLiveChatConfigOptionalParams.sendCacheHeaders);
+        });
+
         it('ChatSDK.initialize() call multiple times should instantiate OCSDK & IC3Core/IC3Client only once', async () => {
             jest.resetAllMocks();
 
@@ -410,6 +442,32 @@ describe('Omnichannel Chat SDK', () => {
             }));
 
             expect(chatSDK.localeId).toBe(defaultLocaleId)
+        });
+
+        it('ChatSDK.getChatConfig() with sendCacheHeaders set to \'true\' should be passed to OCClient.getChatConfig()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.OCClient = {};
+            chatSDK.OCClient.getChatConfig = jest.fn();
+
+            const optionalParams = {
+                sendCacheHeaders: true
+            };
+
+            await chatSDK.getChatConfig(optionalParams);
+            expect(chatSDK.OCClient.getChatConfig.mock.calls[0][1]).toEqual(optionalParams.sendCacheHeaders);
+        });
+
+        it('ChatSDK.getChatConfig() with sendCacheHeaders set to \'false\' should be passed to OCClient.getChatConfig()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.OCClient = {};
+            chatSDK.OCClient.getChatConfig = jest.fn();
+
+            const optionalParams = {
+                sendCacheHeaders: false
+            };
+
+            await chatSDK.getChatConfig(optionalParams);
+            expect(chatSDK.OCClient.getChatConfig.mock.calls[0][1]).toEqual(optionalParams.sendCacheHeaders);
         });
 
         it('ChatSDK.getChatConfig() with AuthSettings should call ChatSDK.setAuthTokenProvider()', async () => {
@@ -487,7 +545,7 @@ describe('Omnichannel Chat SDK', () => {
                 }
             }));
 
-            await chatSDK.getLiveChatConfig(false);
+            await chatSDK.getLiveChatConfig({useRuntimeCache: false});
             const preChatSurvey = await chatSDK.getPreChatSurvey(false);
             expect(preChatSurvey).toBe(samplePreChatSurvey);
         });
@@ -509,7 +567,7 @@ describe('Omnichannel Chat SDK', () => {
                 }
             }));
 
-            await chatSDK.getLiveChatConfig(false);
+            await chatSDK.getLiveChatConfig({useRuntimeCache: false});
             const preChatSurvey = await chatSDK.getPreChatSurvey(false);
             expect(preChatSurvey).toBe(null);
         });
@@ -823,6 +881,49 @@ describe('Omnichannel Chat SDK', () => {
 
             expect(liveChatConfig.id).toBe(chatSDK.liveChatConfig.id);
             expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(0);
+        });
+
+        it('ChatSDK.getLiveChatConfig() with useRuntimeCache set to \'true\' should take precedence and return the cache value', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            chatSDK.liveChatConfig = {
+                id: 0
+            }
+
+            const optionalParams = {
+                useRuntimeCache: true,
+                sendCacheHeaders: true
+            };
+
+            const liveChatConfig = await chatSDK.getLiveChatConfig(optionalParams);
+            expect(liveChatConfig.id).toBe(chatSDK.liveChatConfig.id);
+            expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(0);
+        });
+
+        it('ChatSDK.getLiveChatConfig() with useRuntimeCache set to \'false\' should call ChatSDK.getChaConfig()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            const optionalParams = {
+                useRuntimeCache: false,
+                sendCacheHeaders: true
+            };
+
+            await chatSDK.getLiveChatConfig(optionalParams);
+            expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(1);
+        });
+
+        it('ChatSDK.getLiveChatConfig() with no useRuntimeCache should call ChatSDK.getChaConfig()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            const optionalParams = {
+                sendCacheHeaders: true
+            };
+
+            await chatSDK.getLiveChatConfig(optionalParams);
+            expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(1);
         });
 
         it('ChatSDK.startChat() with preChatResponse should pass it to OCClient.sessionInit() call\'s optional parameters', async() => {
@@ -3068,7 +3169,7 @@ describe('Omnichannel Chat SDK', () => {
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
-            
+
             await chatSDK.initialize();
 
             chatSDK.liveChatConfig = dummyConfig;

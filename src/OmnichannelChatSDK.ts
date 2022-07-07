@@ -28,6 +28,7 @@ import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/FileSharingProtocolType";
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
 import FramedlessClient from "@microsoft/omnichannel-amsclient/lib/FramedlessClient";
+import GetLiveChatConfigOptionalParams from "./core/GetLiveChatConfigOptionalParams";
 import HostType from "@microsoft/omnichannel-ic3core/lib/interfaces/HostType";
 import {SDKProvider as IC3SDKProvider} from '@microsoft/omnichannel-ic3core';
 import IChatToken from "./external/IC3Adapter/IChatToken";
@@ -41,6 +42,7 @@ import IGetLWIDetailsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetLW
 import IIC3AdapterOptions from "./external/IC3Adapter/IIC3AdapterOptions";
 import IInitializationInfo from "@microsoft/omnichannel-ic3core/lib/model/IInitializationInfo";
 import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
+import InitializeOptionalParams from "./core/InitializeOptionalParams";
 import IOmnichannelConfiguration from "@microsoft/ocsdk/lib/Interfaces/IOmnichannelConfiguration";
 import IPerson from "@microsoft/omnichannel-ic3core/lib/model/IPerson";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
@@ -183,7 +185,7 @@ class OmnichannelChatSDK {
         this.callingSdkLogger?.setDebug(flag);
     }
 
-    public async initialize(): Promise<ChatConfig> {
+    public async initialize(optionalParams: InitializeOptionalParams = {}): Promise<ChatConfig> {
         this.scenarioMarker.startScenario(TelemetryEvent.InitializeChatSDK);
 
         if (this.isInitialized) {
@@ -195,7 +197,9 @@ class OmnichannelChatSDK {
             this.OCSDKProvider = OCSDKProvider;
             this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, {} as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
 
-            await this.getChatConfig();
+            const {getLiveChatConfigOptionalParams} = optionalParams;
+
+            await this.getChatConfig(getLiveChatConfigOptionalParams || {});
 
             if (this.liveChatVersion === LiveChatVersion.V2) {
                 this.ACSClient = new ACSClient(this.acsClientLogger);
@@ -773,12 +777,12 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async getLiveChatConfig(cached = true): Promise<ChatConfig> {
-        if (cached) {
+    public async getLiveChatConfig(optionalParams?: GetLiveChatConfigOptionalParams): Promise<ChatConfig> {
+        if (!optionalParams || optionalParams.useRuntimeCache === true) {
             return this.liveChatConfig;
         }
 
-        return this.getChatConfig();
+        return this.getChatConfig({sendCacheHeaders: optionalParams?.sendCacheHeaders || false});
     }
 
     public async getChatToken(cached = true): Promise<IChatToken> {
@@ -1804,9 +1808,11 @@ class OmnichannelChatSDK {
         }
     }
 
-    private async getChatConfig(): Promise<ChatConfig> {
+    private async getChatConfig(optionalParams: GetLiveChatConfigOptionalParams = {}): Promise<ChatConfig> {
+        const {sendCacheHeaders} = optionalParams;
         try {
-            const liveChatConfig = await this.OCClient.getChatConfig();
+            const bypassCache = sendCacheHeaders === true;
+            const liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache);
             const {
                 DataMaskingInfo: dataMaskingConfig,
                 LiveChatConfigAuthSettings: authSettings,
