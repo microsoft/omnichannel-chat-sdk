@@ -168,7 +168,14 @@ const chatSDKConfig = { // Optional
 };
 
 const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
-await chatSDK.initialize();
+
+const optionalParams = {
+    getLiveChatConfigOptionalParams: {
+        sendCacheHeaders: false // Whether to send Cache-Control HTTP header to GetChatConfig call
+    }
+};
+
+await chatSDK.initialize(optionalParams);
 ```
 
 ### Start Chat
