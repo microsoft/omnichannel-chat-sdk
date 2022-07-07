@@ -1811,7 +1811,7 @@ class OmnichannelChatSDK {
     private async getChatConfig(optionalParams: GetLiveChatConfigOptionalParams = {}): Promise<ChatConfig> {
         const {sendCacheHeaders} = optionalParams;
         try {
-            const bypassCache = sendCacheHeaders === true? true: false;
+            const bypassCache = sendCacheHeaders === true;
             const liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache);
             const {
                 DataMaskingInfo: dataMaskingConfig,
