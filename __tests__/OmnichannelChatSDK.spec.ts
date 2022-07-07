@@ -428,6 +428,32 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.localeId).toBe(defaultLocaleId)
         });
 
+        it('ChatSDK.getChatConfig() with sendCacheHeaders set to \'true\' should be passed to OCClient.getChatConfig()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.OCClient = {};
+            chatSDK.OCClient.getChatConfig = jest.fn();
+
+            const optionalParams = {
+                sendCacheHeaders: true
+            };
+
+            await chatSDK.getChatConfig(optionalParams);
+            expect(chatSDK.OCClient.getChatConfig.mock.calls[0][1]).toEqual(optionalParams.sendCacheHeaders);
+        });
+
+        it('ChatSDK.getChatConfig() with sendCacheHeaders set to \'false\' should be passed to OCClient.getChatConfig()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.OCClient = {};
+            chatSDK.OCClient.getChatConfig = jest.fn();
+
+            const optionalParams = {
+                sendCacheHeaders: false
+            };
+
+            await chatSDK.getChatConfig(optionalParams);
+            expect(chatSDK.OCClient.getChatConfig.mock.calls[0][1]).toEqual(optionalParams.sendCacheHeaders);
+        });
+
         it('ChatSDK.getChatConfig() with AuthSettings should call ChatSDK.setAuthTokenProvider()', async () => {
             const chatSDKConfig = {
                 getAuthToken: async () => {
