@@ -841,6 +841,49 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(0);
         });
 
+        it('ChatSDK.getLiveChatConfig() with useRuntimeCache set to \'true\' should take precedence and return the cache value', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            chatSDK.liveChatConfig = {
+                id: 0
+            }
+
+            const optionalParams = {
+                useRuntimeCache: true,
+                sendCacheHeaders: true
+            };
+
+            const liveChatConfig = await chatSDK.getLiveChatConfig(optionalParams);
+            expect(liveChatConfig.id).toBe(chatSDK.liveChatConfig.id);
+            expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(0);
+        });
+
+        it('ChatSDK.getLiveChatConfig() with useRuntimeCache set to \'false\' should call ChatSDK.getChaConfig()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            const optionalParams = {
+                useRuntimeCache: false,
+                sendCacheHeaders: true
+            };
+
+            await chatSDK.getLiveChatConfig(optionalParams);
+            expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(1);
+        });
+
+        it('ChatSDK.getLiveChatConfig() with no useRuntimeCache should call ChatSDK.getChaConfig()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            const optionalParams = {
+                sendCacheHeaders: true
+            };
+
+            await chatSDK.getLiveChatConfig(optionalParams);
+            expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(1);
+        });
+
         it('ChatSDK.startChat() with preChatResponse should pass it to OCClient.sessionInit() call\'s optional parameters', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
