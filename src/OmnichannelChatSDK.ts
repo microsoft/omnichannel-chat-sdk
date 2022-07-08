@@ -1646,6 +1646,26 @@ class OmnichannelChatSDK {
         }
     }
 
+    public async getAgentAvailability(): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+        this.scenarioMarker.startScenario(TelemetryEvent.GetAgentAvailability, {
+            RequestId: this.requestId
+        });
+
+        if (this.authSettings) {
+            const exceptionDetails = {
+                response: "GetAgentAvailabilityFailed",
+                message: "getAgentAvailability is only authenticated chat"
+            }
+
+            this.scenarioMarker.failScenario(TelemetryEvent.GetAgentAvailability, {
+                RequestId: this.requestId,
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
+            throw new Error(exceptionDetails.response);
+        }
+    }
+
     public async getPostChatSurveyContext(): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
         this.scenarioMarker.startScenario(TelemetryEvent.GetPostChatSurveyContext, {
             RequestId: this.requestId
