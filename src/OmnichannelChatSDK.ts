@@ -1678,6 +1678,21 @@ class OmnichannelChatSDK {
 
             throw new Error(exceptionDetails.response);
         }
+
+        if (this.conversation) {
+            const exceptionDetails = {
+                response: "InvalidOperation",
+                message: "Chat has already been started"
+            }
+
+            this.scenarioMarker.failScenario(TelemetryEvent.GetAgentAvailability, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string,
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
+            throw new Error(exceptionDetails.response);
+        }
     }
 
     public async getPostChatSurveyContext(): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
