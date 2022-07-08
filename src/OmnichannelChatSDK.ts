@@ -1654,7 +1654,21 @@ class OmnichannelChatSDK {
         if (this.authSettings) {
             const exceptionDetails = {
                 response: "GetAgentAvailabilityFailed",
-                message: "getAgentAvailability is only authenticated chat"
+                message: "getAgentAvailability is only supported on authenticated chat"
+            }
+
+            this.scenarioMarker.failScenario(TelemetryEvent.GetAgentAvailability, {
+                RequestId: this.requestId,
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
+            throw new Error(exceptionDetails.response);
+        }
+
+        if (!this.authenticatedUserToken) {
+            const exceptionDetails = {
+                response: "UndefinedAuthToken",
+                message: "Missing AuthToken"
             }
 
             this.scenarioMarker.failScenario(TelemetryEvent.GetAgentAvailability, {
