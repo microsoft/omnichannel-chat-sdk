@@ -47,8 +47,12 @@ describe('AMSFileManager', () => {
 
     it('AMSFileManager.getFileIds() should return a JSON data', async () => {
         const amsClient: any = {};
+        const logger: any = {};
+        logger.startScenario = jest.fn();
+        logger.completeScenario = jest.fn();
+        logger.failScenario = jest.fn();
 
-        const fileManager = new AMSFileManager(amsClient);
+        const fileManager = new AMSFileManager(amsClient, logger);
 
         const amsReferences = [{id: 'id'}];
         const metadata = {
@@ -57,19 +61,24 @@ describe('AMSFileManager', () => {
 
         const response = fileManager.getFileIds(metadata);
         expect(response).toStrictEqual(amsReferences);
+        expect(logger.startScenario).toBeCalledTimes(1);
     });
 
-    it('AMSFileManager.getFileIds() should return a nothing if invalid', async () => {
+    it('AMSFileManager.getFileIds() should return nothing if invalid', async () => {
         const amsClient: any = {};
+        const logger: any = {};
+        logger.startScenario = jest.fn();
+        logger.completeScenario = jest.fn();
+        logger.failScenario = jest.fn();
 
-        const fileManager = new AMSFileManager(amsClient);
+        const fileManager = new AMSFileManager(amsClient, logger);
 
         const metadata = {};
 
         const response = fileManager.getFileIds(metadata);
         expect(response).toBeFalsy();
+        expect(logger.startScenario).toBeCalledTimes(0);
     });
-
 
     it('AMSFileManager.createFileIdProperty() should return a JSON data', async () => {
         const amsClient: any = {};
@@ -99,7 +108,7 @@ describe('AMSFileManager', () => {
         expect(response).toStrictEqual(amsMetadata);
     });
 
-    it('AMSFileManager.getFileMetadata() should return a nothing if invalid', async () => {
+    it('AMSFileManager.getFileMetadata() should return nothing if invalid', async () => {
         const amsClient: any = {};
 
         const fileManager = new AMSFileManager(amsClient);
@@ -115,9 +124,9 @@ describe('AMSFileManager', () => {
 
         const fileManager = new AMSFileManager(amsClient);
 
-        const metadata: any = {
-            data: 'data'
-        };
+        const metadata: any = [
+            {contentType: 'contentType', fileName: 'fileName'}
+        ]
 
         const response: any = fileManager.createFileMetadataProperty(metadata);
         expect(response.amsMetadata).toBe(JSON.stringify(metadata));

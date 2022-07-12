@@ -60,6 +60,10 @@ class AMSFileManager {
     }
 
     public getFileIds(metadata?: Record<string, string>): string[] | undefined {
+        if (!metadata || !metadata.amsReferences) {
+            return;
+        }
+
         this.logger?.startScenario(AMSFileManagerEvent.GetFileIds);
 
         try {
@@ -81,6 +85,10 @@ class AMSFileManager {
     }
 
     public createFileIdProperty(fileIds: string[]): Record<string, string> | undefined {
+        if (!fileIds) {
+            return;
+        }
+
         this.logger?.startScenario(AMSFileManagerEvent.CreateFileIdProperty);
 
         try {
@@ -104,6 +112,10 @@ class AMSFileManager {
     }
 
     public getFileMetadata(metadata?: Record<string, string>): FileMetadata[] | undefined {
+        if (!metadata || !metadata.amsMetadata) {
+            return;
+        }
+
         this.logger?.startScenario(AMSFileManagerEvent.GetFileMetadata);
 
         try {
@@ -125,6 +137,10 @@ class AMSFileManager {
     }
 
     public createFileMetadataProperty(metadata: FileMetadata[]): Record<string, string> | undefined {
+        if (!metadata) {
+            return;
+        }
+
         this.logger?.startScenario(AMSFileManagerEvent.CreateFileMetadataProperty);
 
         try {

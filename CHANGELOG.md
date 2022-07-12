@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file.
 - Add `sendDefaultInitContext` optional parameter to `ChatSDK.startChat()` to automatically populate `browser`, `device`, `originurl` & `os` as default init context on web
 - Add `sendCacheHeaders` as optional paramater to `ChatSDK.initialize()` and `ChatSDK.getLiveChatConfig()`
 
+### Fixed
+- Prevent `AMSFileManager.getFileIds()` & `AMSFileManager.getFileMetadata()` to be triggered on all activities with null checks
+
 ### Changed
 - Uptake [@microsoft/ocsdk@0.3.1](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.3.1)
 
@@ -26,7 +29,7 @@ All notable changes to this project will be documented in this file.
 - Add support for separate bot post chat survey feature
 - Pass `logger` to `acs_webchat-chat-adapter`
 
-### Fix
+### Fixed
 - Add `acs_webchat-chat-adapter` middlewares to format `channelData.tags`
 - Skip `session init` call on existing conversation
 - Fix `chat reconnect` not ending the conversation on calling `ChatSDK.endChat()`
