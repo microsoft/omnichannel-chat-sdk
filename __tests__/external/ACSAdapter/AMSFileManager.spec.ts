@@ -124,9 +124,9 @@ describe('AMSFileManager', () => {
 
         const fileManager = new AMSFileManager(amsClient);
 
-        const metadata: any = {
-            data: 'data'
-        };
+        const metadata: any = [
+            {contentType: 'contentType', fileName: 'fileName'}
+        ]
 
         const response: any = fileManager.createFileMetadataProperty(metadata);
         expect(response.amsMetadata).toBe(JSON.stringify(metadata));
