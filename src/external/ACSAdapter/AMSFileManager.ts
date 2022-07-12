@@ -85,6 +85,10 @@ class AMSFileManager {
     }
 
     public createFileIdProperty(fileIds: string[]): Record<string, string> | undefined {
+        if (!fileIds) {
+            return;
+        }
+
         this.logger?.startScenario(AMSFileManagerEvent.CreateFileIdProperty);
 
         try {
@@ -133,6 +137,10 @@ class AMSFileManager {
     }
 
     public createFileMetadataProperty(metadata: FileMetadata[]): Record<string, string> | undefined {
+        if (!metadata) {
+            return;
+        }
+
         this.logger?.startScenario(AMSFileManagerEvent.CreateFileMetadataProperty);
 
         try {
