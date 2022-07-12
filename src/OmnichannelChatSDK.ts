@@ -1653,7 +1653,7 @@ class OmnichannelChatSDK {
 
         if (this.authSettings) {
             const exceptionDetails = {
-                response: "GetAgentAvailabilityFailed",
+                response: "Unsupported",
                 message: "getAgentAvailability is only supported on authenticated chat"
             }
 
@@ -1683,6 +1683,29 @@ class OmnichannelChatSDK {
             const exceptionDetails = {
                 response: "InvalidOperation",
                 message: "Chat has already been started"
+            }
+
+            this.scenarioMarker.failScenario(TelemetryEvent.GetAgentAvailability, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string,
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
+            throw new Error(exceptionDetails.response);
+        }
+
+        const getAgentAvailabilityOptionalParams: any = {}; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+        if (this.authenticatedUserToken) {
+            getAgentAvailabilityOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
+        }
+
+        try {
+            const response = this.OCClient.getAgentAvailability(this.requestId, getAgentAvailabilityOptionalParams);
+            return response;
+        } catch {
+            const exceptionDetails = {
+                response: "GetAgentAvailabilityFailed"
             }
 
             this.scenarioMarker.failScenario(TelemetryEvent.GetAgentAvailability, {
