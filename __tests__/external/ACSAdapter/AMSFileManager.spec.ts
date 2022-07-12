@@ -108,7 +108,7 @@ describe('AMSFileManager', () => {
         expect(response).toStrictEqual(amsMetadata);
     });
 
-    it('AMSFileManager.getFileMetadata() should return a nothing if invalid', async () => {
+    it('AMSFileManager.getFileMetadata() should return nothing if invalid', async () => {
         const amsClient: any = {};
 
         const fileManager = new AMSFileManager(amsClient);
