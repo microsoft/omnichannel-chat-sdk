@@ -60,6 +60,10 @@ class AMSFileManager {
     }
 
     public getFileIds(metadata?: Record<string, string>): string[] | undefined {
+        if (!metadata || !metadata.amsReferences) {
+            return;
+        }
+
         this.logger?.startScenario(AMSFileManagerEvent.GetFileIds);
 
         try {
@@ -104,6 +108,10 @@ class AMSFileManager {
     }
 
     public getFileMetadata(metadata?: Record<string, string>): FileMetadata[] | undefined {
+        if (!metadata || !metadata.amsMetadata) {
+            return;
+        }
+
         this.logger?.startScenario(AMSFileManagerEvent.GetFileMetadata);
 
         try {
