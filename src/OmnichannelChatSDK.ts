@@ -479,7 +479,7 @@ class OmnichannelChatSDK {
                 id: this.chatToken.visitorId || 'teamsvisitor',
                 threadId: this.chatToken.chatId,
                 environmentUrl: this.chatToken.acsEndpoint as string,
-                pollingInterval: 1000
+                pollingInterval: 30000
             };
 
             try {
@@ -1521,6 +1521,7 @@ class OmnichannelChatSDK {
                             this.chatToken.chatId as string,
                             this.chatToken.acsEndpoint as string,
                             fileManager,
+                            30000,
                             ACSParticipantDisplayName.Customer,
                             undefined, // chatClient
                             this.acsAdapterLogger, // logger
