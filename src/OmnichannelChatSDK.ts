@@ -1929,7 +1929,9 @@ class OmnichannelChatSDK {
                 visitor: true
             }
 
-            await this.IC3Client.initialize(sessionInfo);
+            if (this.liveChatVersion === LiveChatVersion.V1) {
+                await this.IC3Client.initialize(sessionInfo);
+            }
 
             this.scenarioMarker.completeScenario(TelemetryEvent.UpdateChatToken, {
                 RequestId: this.requestId,
