@@ -84,6 +84,12 @@ class AMSFileManager {
         }
     }
 
+    /**
+     * Creates property for the reference of the attachments to be sent to ACS as metadata after successful upload.
+     *
+     * @param fileIds List of fileIds
+     * @returns
+     */
     public createFileIdProperty(fileIds: string[]): Record<string, string> | undefined {
         if (!fileIds) {
             return;
@@ -136,6 +142,13 @@ class AMSFileManager {
         }
     }
 
+    /**
+     *
+     * Creates property for the metadata of the attachments to be sent to ACS as metadata after successful upload.
+     *
+     * @param metadata List of file metadata
+     * @returns
+     */
     public createFileMetadataProperty(metadata: FileMetadata[]): Record<string, string> | undefined {
         if (!metadata) {
             return;
