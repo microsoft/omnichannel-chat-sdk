@@ -99,7 +99,8 @@ class AMSFileManager {
 
         try {
             const result = {
-                amsReferences: JSON.stringify(fileIds)
+                amsReferences: JSON.stringify(fileIds),
+                amsreferences: JSON.stringify(fileIds)
             } as Record<string, string>;
             this.logger?.completeScenario(AMSFileManagerEvent.CreateFileIdProperty);
             return result;
