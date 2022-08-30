@@ -73,11 +73,46 @@ describe('AMSFileManager', () => {
 
         const fileManager = new AMSFileManager(amsClient, logger);
 
+        const metadata = undefined;
+
+        const response = fileManager.getFileIds(metadata);
+        expect(response).toBeFalsy();
+        expect(logger.startScenario).toBeCalledTimes(0);
+    });
+
+    it('AMSFileManager.getFileIds() should return nothing if \'amsReferences\' or \'amsreferences\' properties were not present', async () => {
+        const amsClient: any = {};
+        const logger: any = {};
+        logger.startScenario = jest.fn();
+        logger.completeScenario = jest.fn();
+        logger.failScenario = jest.fn();
+
+        const fileManager = new AMSFileManager(amsClient, logger);
+
         const metadata = {};
 
         const response = fileManager.getFileIds(metadata);
         expect(response).toBeFalsy();
         expect(logger.startScenario).toBeCalledTimes(0);
+    });
+
+    it('AMSFileManager.getFileIds() should take precendence of \'amsreferences\'', async () => {
+        const amsClient: any = {};
+        const logger: any = {};
+        logger.startScenario = jest.fn();
+        logger.completeScenario = jest.fn();
+        logger.failScenario = jest.fn();
+
+        const fileManager = new AMSFileManager(amsClient, logger);
+
+        const metadata = {
+            amsReferences: `["amsReferences"]`,
+            amsreferences: `["amsreferences"]`,
+        };
+
+        const response: any = fileManager.getFileIds(metadata);
+        console.log(response);
+        expect(response[0]).toBe(JSON.parse(metadata.amsreferences)[0]);
     });
 
     it('AMSFileManager.createFileIdProperty() should return a JSON data', async () => {
