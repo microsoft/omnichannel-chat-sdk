@@ -369,6 +369,39 @@ class OmnichannelChatSDK {
             }
         }
 
+        if (this.authSettings) {
+            if (!this.authenticatedUserToken) {
+                await this.setAuthTokenProvider(this.chatSDKConfig.getAuthToken);
+            }
+
+            if (optionalParams.liveChatContext) {
+                this.chatToken = optionalParams.liveChatContext.chatToken || {};
+                this.requestId = optionalParams.liveChatContext.requestId || uuidv4();
+
+                try {
+                    await this.OCClient.validateAuthChatRecord(this.requestId, {
+                        authenticatedUserToken: this.authenticatedUserToken,
+                        chatId: this.chatToken.chatId
+                    });
+                } catch {
+                    const exceptionDetails = {
+                        response: "OCClientValidateAuthChatRecordFailed",
+                        message: "InvalidAuthChatRecord"
+                    };
+
+                    console.error(exceptionDetails.message);
+
+                    this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken.chatId as string,
+                        ExceptionDetails: JSON.stringify(exceptionDetails)
+                    });
+
+                    throw Error(exceptionDetails.response);
+                }
+            }
+        }
+
         if (this.chatToken && Object.keys(this.chatToken).length === 0) {
             await this.getChatToken(false);
         }
@@ -445,6 +478,11 @@ class OmnichannelChatSDK {
 
         if (this.authenticatedUserToken) {
             sessionInitOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
+        }
+
+        if (this.chatToken.chatId) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (sessionInitOptionalParams as any).initContext.chatId = this.chatToken.chatId;
         }
 
         // Skip session init when there's a valid live chat context
