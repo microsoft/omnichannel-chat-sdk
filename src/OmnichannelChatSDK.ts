@@ -332,7 +332,7 @@ class OmnichannelChatSDK {
             }
         }
 
-        if (optionalParams.liveChatContext && !this.reconnectId) {
+        if (optionalParams.liveChatContext && Object.keys(optionalParams.liveChatContext).length > 0 && !this.reconnectId) {
             this.chatToken = optionalParams.liveChatContext.chatToken || {};
             this.requestId = optionalParams.liveChatContext.requestId || uuidv4();
 
@@ -374,7 +374,7 @@ class OmnichannelChatSDK {
                 await this.setAuthTokenProvider(this.chatSDKConfig.getAuthToken);
             }
 
-            if (optionalParams.liveChatContext) {
+            if (optionalParams.liveChatContext && Object.keys(optionalParams.liveChatContext).length > 0) {
                 this.chatToken = optionalParams.liveChatContext.chatToken || {};
                 this.requestId = optionalParams.liveChatContext.requestId || uuidv4();
 
@@ -388,8 +388,6 @@ class OmnichannelChatSDK {
                         response: "OCClientValidateAuthChatRecordFailed",
                         message: "InvalidAuthChatRecord"
                     };
-
-                    console.error(exceptionDetails.message);
 
                     this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
                         RequestId: this.requestId,
