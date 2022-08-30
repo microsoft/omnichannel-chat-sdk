@@ -60,14 +60,26 @@ class AMSFileManager {
     }
 
     public getFileIds(metadata?: Record<string, string>): string[] | undefined {
-        if (!metadata || !metadata.amsReferences) {
+        if (!metadata) {
+            return;
+        }
+
+        if (!metadata.amsReferences && !metadata.amsreferences) {
             return;
         }
 
         this.logger?.startScenario(AMSFileManagerEvent.GetFileIds);
 
         try {
-            const result = JSON.parse(metadata?.amsReferences as string) as string[];
+            let result = undefined;
+            if (metadata?.amsReferences) {
+                result = JSON.parse(metadata?.amsReferences as string) as string[];
+            }
+
+            if (metadata?.amsreferences) {
+                result = JSON.parse(metadata?.amsreferences as string) as string[];
+            }
+
             this.logger?.completeScenario(AMSFileManagerEvent.GetFileIds);
             return result;
         } catch (error) {
