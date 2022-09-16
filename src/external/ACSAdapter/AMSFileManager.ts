@@ -45,8 +45,7 @@ enum AMSFileManagerEvent {
     GetFileIds = 'GetFileIds',
     CreateFileIdProperty = 'CreateFileIdProperty',
     GetFileMetadata = 'GetFileMetadata',
-    CreateFileMetadataProperty = 'CreateFileMetadataProperty',
-    CreateBotAttachment = 'CreateBotAttachment'
+    CreateFileMetadataProperty = 'CreateFileMetadataProperty'
 }
 
 class AMSFileManager {
@@ -200,39 +199,18 @@ class AMSFileManager {
         }
     }
 
+    /**
+     * Creates content to be sent to ACS after successful upload.
+     *
+     * @param metadata List of file metadata
+     * @returns
+     */
     public createBotAttachment(metadata: Record<string, string>): BotAttachment | null {
         if (!metadata || Object.keys(metadata).length === 0) {
             return null;
         }
 
-        this.logger?.startScenario(AMSFileManagerEvent.CreateBotAttachment);
-
-        const fileMetadataList = this.getFileMetadata(metadata);
-        const fileIds = this.getFileIds(metadata);
-
-        let fileId;
-        let fileMetadata;
-
-        if (fileIds && fileIds.length > 0) {
-            fileId = fileIds[0];
-        }
-
-        if (fileMetadataList && fileMetadataList.length > 0) {
-            fileMetadata = fileMetadataList[0];
-        }
-
-        if (fileId) {
-            const attachment: BotAttachment = {
-                contentType: fileMetadata?.contentType as string,
-                name: fileMetadata?.fileName as string,
-                content: { uniqueId: fileId }
-            };
-
-            this.logger?.completeScenario(AMSFileManagerEvent.CreateBotAttachment);
-            return attachment;
-        }
-
-        this.logger?.completeScenario(AMSFileManagerEvent.CreateBotAttachment);
+        // Sending empty content
         return null;
     }
 
