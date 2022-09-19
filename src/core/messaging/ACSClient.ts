@@ -438,6 +438,10 @@ class ACSClient {
         await conversation.initialize(sessionInfo);
         return conversation;
     }
+
+    public getChatClient() : ChatClient | null {
+        return this.chatClient;
+    }
 }
 
 export default ACSClient;

@@ -1559,7 +1559,7 @@ class OmnichannelChatSDK {
                             fileManager,
                             30000,
                             ACSParticipantDisplayName.Customer,
-                            undefined, // chatClient
+                            this.ACSClient?.getChatClient(),
                             this.acsAdapterLogger, // logger
                             featuresOption,
                         );
