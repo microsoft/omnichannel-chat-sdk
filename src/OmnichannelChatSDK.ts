@@ -205,6 +205,7 @@ class OmnichannelChatSDK {
                 this.ACSClient = new ACSClient(this.acsClientLogger);
                 this.AMSClient = await createAMSClient({
                     framedMode: isBrowser(),
+                    multiClient: true,
                     debug: false,
                     logger: undefined
                 });
