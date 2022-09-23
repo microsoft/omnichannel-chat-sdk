@@ -35,18 +35,30 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
             type: PersonType.Bot
         } as IPerson;
 
-        if (metadata && metadata.amsMetadata && metadata.amsReferences) {
+        if (metadata) {
             try {
-                const references = JSON.parse(metadata.amsReferences);
-                const data = JSON.parse(metadata.amsMetadata);
-                const {fileName} = data[0];
-
                 omnichannelMessage.fileMetadata = {} as IFileMetadata; // Backward compatibility
+
+                if (metadata.amsMetadata) {
+                    const data = JSON.parse(metadata.amsMetadata);
+                    const {fileName} = data[0];
+                    omnichannelMessage.fileMetadata.name = fileName;
+                    omnichannelMessage.fileMetadata.type = fileName.split('.').pop();
+                }
+
+                if (metadata.amsReferences) {
+                    const references = JSON.parse(metadata.amsReferences);
+                    omnichannelMessage.fileMetadata.id = references[0];
+                }
+
+                // "amsreferences" takes precedence
+                if (metadata.amsreferences) {
+                    const references = JSON.parse(metadata.amsreferences);
+                    omnichannelMessage.fileMetadata.id = references[0];
+                }
+
                 omnichannelMessage.fileMetadata.fileSharingProtocolType = 0;
-                omnichannelMessage.fileMetadata.id = references[0];
-                omnichannelMessage.fileMetadata.name = fileName;
                 omnichannelMessage.fileMetadata.size = 0;
-                omnichannelMessage.fileMetadata.type = fileName.split('.').pop();
                 omnichannelMessage.fileMetadata.url = '';
             } catch {
                 // Suppress errors to keep chat flowing

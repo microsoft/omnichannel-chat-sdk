@@ -64,7 +64,42 @@ describe('AMSFileManager', () => {
         expect(logger.startScenario).toBeCalledTimes(1);
     });
 
+    it('AMSFileManager.getFileIds() should return a JSON data when \'amsreferences\' is part of the metadata', async () => {
+        const amsClient: any = {};
+        const logger: any = {};
+        logger.startScenario = jest.fn();
+        logger.completeScenario = jest.fn();
+        logger.failScenario = jest.fn();
+
+        const fileManager = new AMSFileManager(amsClient, logger);
+
+        const amsReferences = [{id: 'id'}];
+        const metadata = {
+            amsreferences: JSON.stringify(amsReferences)
+        };
+
+        const response = fileManager.getFileIds(metadata);
+        expect(response).toStrictEqual(amsReferences);
+        expect(logger.startScenario).toBeCalledTimes(1);
+    });
+
     it('AMSFileManager.getFileIds() should return nothing if invalid', async () => {
+        const amsClient: any = {};
+        const logger: any = {};
+        logger.startScenario = jest.fn();
+        logger.completeScenario = jest.fn();
+        logger.failScenario = jest.fn();
+
+        const fileManager = new AMSFileManager(amsClient, logger);
+
+        const metadata = undefined;
+
+        const response = fileManager.getFileIds(metadata);
+        expect(response).toBeFalsy();
+        expect(logger.startScenario).toBeCalledTimes(0);
+    });
+
+    it('AMSFileManager.getFileIds() should return nothing if \'amsReferences\' or \'amsreferences\' properties were not present', async () => {
         const amsClient: any = {};
         const logger: any = {};
         logger.startScenario = jest.fn();
@@ -80,6 +115,24 @@ describe('AMSFileManager', () => {
         expect(logger.startScenario).toBeCalledTimes(0);
     });
 
+    it('AMSFileManager.getFileIds() should take precendence of \'amsreferences\'', async () => {
+        const amsClient: any = {};
+        const logger: any = {};
+        logger.startScenario = jest.fn();
+        logger.completeScenario = jest.fn();
+        logger.failScenario = jest.fn();
+
+        const fileManager = new AMSFileManager(amsClient, logger);
+
+        const metadata = {
+            amsReferences: `["amsReferences"]`,
+            amsreferences: `["amsreferences"]`,
+        };
+
+        const response: any = fileManager.getFileIds(metadata);
+        expect(response[0]).toBe(JSON.parse(metadata.amsreferences)[0]);
+    });
+
     it('AMSFileManager.createFileIdProperty() should return a JSON data', async () => {
         const amsClient: any = {};
 
@@ -89,6 +142,7 @@ describe('AMSFileManager', () => {
 
         const response: any = fileManager.createFileIdProperty(fileIds);
         expect(response.amsReferences).toBe(JSON.stringify(fileIds));
+        expect(response.amsreferences).toBe(JSON.stringify(fileIds));
     });
 
     it('AMSFileManager.getFileMetadata() should return a JSON data', async () => {
@@ -179,5 +233,33 @@ describe('AMSFileManager', () => {
         expect((fileManager as any).amsClient.getViewStatus).toHaveBeenCalledTimes(1);
         expect((fileManager as any).amsClient.getView).toHaveBeenCalledTimes(1);
         expect(response).not.toBeFalsy();
+    });
+
+    it('AMSFileManager.createBotAttachment() should return null by default', async () => {
+        const amsClient: any = {};
+
+        const fileManager = new AMSFileManager(amsClient);
+
+        const amsReferences = [{id: 'id'}];
+        const amsMetadata  = {
+            data: 'data'
+        };
+
+        const metadata = {
+            amsReferences: JSON.stringify(amsReferences),
+            amsMetadata: JSON.stringify(amsMetadata)
+
+        };
+
+        const response = fileManager.createBotAttachment(metadata);
+        expect(response).toBe(null);
+    });
+
+    it('AMSFileManager.createBotAttachment() should return null if metadata is null', async () => {
+        const amsClient: any = {};
+
+        const fileManager = new AMSFileManager(amsClient);
+        const response = fileManager.createBotAttachment(null as any);
+        expect(response).toBe(null);
     });
 });

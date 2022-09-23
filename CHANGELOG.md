@@ -11,11 +11,13 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Prevent `AMSFileManager.getFileIds()` & `AMSFileManager.getFileMetadata()` to be triggered on all activities with null checks
 - Add `LiveChatVersion` check on `ChatSDK.updateChatToken()`
+- Use `amsreferences` property instead of `amsReferences` by default
 
 ### Changed
 - Uptake [@microsoft/ocsdk@0.3.1](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.3.1)
 - Uptake [acs_webchat-chat-adapter@0.0.35-beta.8](https://unpkg.com/acs_webchat-chat-adapter@0.0.35-beta.8/dist/chat-adapter.js)
 - Uptake [acs_webchat-chat-adapter@0.0.35-beta.9](https://unpkg.com/acs_webchat-chat-adapter@0.0.35-beta.9/dist/chat-adapter.js)
+- Uptake [acs_webchat-chat-adapter@0.0.35-beta.12](https://unpkg.com/acs_webchat-chat-adapter@0.0.35-beta.12/dist/chat-adapter.js)
 
 ## [1.1.0] - 2022-04-15
 ### Added

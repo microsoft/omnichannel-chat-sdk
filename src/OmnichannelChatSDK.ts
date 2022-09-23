@@ -1294,7 +1294,8 @@ class OmnichannelChatSDK {
             const uploadDocumentResponse: any = await this.AMSClient?.uploadDocument(documentId, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
 
             const fileIdsProperty = {
-                amsReferences: JSON.stringify([documentId])
+                amsReferences: JSON.stringify([documentId]),
+                amsreferences: JSON.stringify([documentId])
             };
 
             const fileMetaProperty = {

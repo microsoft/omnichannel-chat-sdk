@@ -29,6 +29,16 @@ interface PermissionsOptions {
     permission: FilePermission;
 }
 
+interface AmsReferenceContent {
+    uniqueId: string;
+}
+
+interface BotAttachment {
+    name: string;
+    contentType: string;
+    content: AmsReferenceContent;
+}
+
 enum AMSFileManagerEvent {
     AMSUpload = 'AMSUpload',
     AMSDownload = 'AMSDownload',
@@ -60,14 +70,26 @@ class AMSFileManager {
     }
 
     public getFileIds(metadata?: Record<string, string>): string[] | undefined {
-        if (!metadata || !metadata.amsReferences) {
+        if (!metadata) {
+            return;
+        }
+
+        if (!metadata.amsReferences && !metadata.amsreferences) {
             return;
         }
 
         this.logger?.startScenario(AMSFileManagerEvent.GetFileIds);
 
         try {
-            const result = JSON.parse(metadata?.amsReferences as string) as string[];
+            let result = undefined;
+            if (metadata?.amsReferences) {
+                result = JSON.parse(metadata?.amsReferences as string) as string[];
+            }
+
+            if (metadata?.amsreferences) {
+                result = JSON.parse(metadata?.amsreferences as string) as string[];
+            }
+
             this.logger?.completeScenario(AMSFileManagerEvent.GetFileIds);
             return result;
         } catch (error) {
@@ -84,6 +106,12 @@ class AMSFileManager {
         }
     }
 
+    /**
+     * Creates property for the reference of the attachments to be sent to ACS as metadata after successful upload.
+     *
+     * @param fileIds List of fileIds
+     * @returns
+     */
     public createFileIdProperty(fileIds: string[]): Record<string, string> | undefined {
         if (!fileIds) {
             return;
@@ -93,7 +121,8 @@ class AMSFileManager {
 
         try {
             const result = {
-                amsReferences: JSON.stringify(fileIds)
+                amsReferences: JSON.stringify(fileIds),
+                amsreferences: JSON.stringify(fileIds)
             } as Record<string, string>;
             this.logger?.completeScenario(AMSFileManagerEvent.CreateFileIdProperty);
             return result;
@@ -136,6 +165,13 @@ class AMSFileManager {
         }
     }
 
+    /**
+     *
+     * Creates property for the metadata of the attachments to be sent to ACS as metadata after successful upload.
+     *
+     * @param metadata List of file metadata
+     * @returns
+     */
     public createFileMetadataProperty(metadata: FileMetadata[]): Record<string, string> | undefined {
         if (!metadata) {
             return;
@@ -161,6 +197,21 @@ class AMSFileManager {
 
             return undefined;
         }
+    }
+
+    /**
+     * Creates content to be sent to ACS after successful upload.
+     *
+     * @param metadata List of file metadata
+     * @returns
+     */
+    public createBotAttachment(metadata: Record<string, string>): BotAttachment | null {
+        if (!metadata || Object.keys(metadata).length === 0) {
+            return null;
+        }
+
+        // Sending empty content
+        return null;
     }
 
     private async uploadFileToAMS(fileToUpload: IFileUploadRequest): Promise<IUploadedFile | undefined> {
