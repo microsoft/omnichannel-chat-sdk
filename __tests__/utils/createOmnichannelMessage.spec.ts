@@ -83,4 +83,39 @@ describe('createOmnichannelMessage', () => {
             url: ''
         });
     });
+
+    it('createOmnichannelMessage with LiveChatV2 message should take precedence of \'amsreferences\'', () => {
+        const amsReferences = ['amsReferences'];
+        const amsreferences = ['amsreferences'];
+        const amsMetadata = [{fileName: 'fileName.ext', size: 0, contentType: 'type'}]
+        const sampleMessage = {
+            id: 'id',
+            content: '',
+            metadata: {
+                tags: 'tags',
+                amsMetadata: JSON.stringify(amsMetadata),
+                amsReferences: JSON.stringify(amsReferences),
+                amsreferences: JSON.stringify(amsreferences)
+            },
+            sender: {
+                communicationUserId: 'id',
+                kind: "communicationUser"
+            },
+            senderDisplayName: 'senderDisplayName',
+            createdOn: 'createdOn'
+        };
+
+        const omnichannelMessage = createOmnichannelMessage(sampleMessage as any, {
+            liveChatVersion: LiveChatVersion.V2
+        });
+
+        expect(omnichannelMessage.fileMetadata).toEqual({
+            fileSharingProtocolType: 0,
+            id: amsreferences[0],
+            name: amsMetadata[0].fileName,
+            size: 0,
+            type: 'ext',
+            url: ''
+        });
+    });
 });
