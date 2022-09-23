@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Uptake [acs_webchat-chat-adapter@0.0.35-beta.8](https://unpkg.com/acs_webchat-chat-adapter@0.0.35-beta.8/dist/chat-adapter.js)
 - Uptake [acs_webchat-chat-adapter@0.0.35-beta.9](https://unpkg.com/acs_webchat-chat-adapter@0.0.35-beta.9/dist/chat-adapter.js)
 - Uptake [acs_webchat-chat-adapter@0.0.35-beta.12](https://unpkg.com/acs_webchat-chat-adapter@0.0.35-beta.12/dist/chat-adapter.js)
+- Uptake [@microsoft/omnichannel-amsclient@0.1.2](https://www.npmjs.com/package/@microsoft/omnichannel-amsclient/v/0.1.2)
 
 ## [1.1.0] - 2022-04-15
 ### Added
