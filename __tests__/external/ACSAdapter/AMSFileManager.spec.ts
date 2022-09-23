@@ -234,4 +234,32 @@ describe('AMSFileManager', () => {
         expect((fileManager as any).amsClient.getView).toHaveBeenCalledTimes(1);
         expect(response).not.toBeFalsy();
     });
+
+    it('AMSFileManager.createBotAttachment() should return null by default', async () => {
+        const amsClient: any = {};
+
+        const fileManager = new AMSFileManager(amsClient);
+
+        const amsReferences = [{id: 'id'}];
+        const amsMetadata  = {
+            data: 'data'
+        };
+
+        const metadata = {
+            amsReferences: JSON.stringify(amsReferences),
+            amsMetadata: JSON.stringify(amsMetadata)
+
+        };
+
+        const response = fileManager.createBotAttachment(metadata);
+        expect(response).toBe(null);
+    });
+
+    it('AMSFileManager.createBotAttachment() should return null if metadata is null', async () => {
+        const amsClient: any = {};
+
+        const fileManager = new AMSFileManager(amsClient);
+        const response = fileManager.createBotAttachment(null as any);
+        expect(response).toBe(null);
+    });
 });
