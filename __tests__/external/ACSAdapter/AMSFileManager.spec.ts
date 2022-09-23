@@ -142,6 +142,7 @@ describe('AMSFileManager', () => {
 
         const response: any = fileManager.createFileIdProperty(fileIds);
         expect(response.amsReferences).toBe(JSON.stringify(fileIds));
+        expect(response.amsreferences).toBe(JSON.stringify(fileIds));
     });
 
     it('AMSFileManager.getFileMetadata() should return a JSON data', async () => {
