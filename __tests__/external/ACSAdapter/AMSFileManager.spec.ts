@@ -64,6 +64,25 @@ describe('AMSFileManager', () => {
         expect(logger.startScenario).toBeCalledTimes(1);
     });
 
+    it('AMSFileManager.getFileIds() should return a JSON data when \'amsreferences\' is part of the metadata', async () => {
+        const amsClient: any = {};
+        const logger: any = {};
+        logger.startScenario = jest.fn();
+        logger.completeScenario = jest.fn();
+        logger.failScenario = jest.fn();
+
+        const fileManager = new AMSFileManager(amsClient, logger);
+
+        const amsReferences = [{id: 'id'}];
+        const metadata = {
+            amsreferences: JSON.stringify(amsReferences)
+        };
+
+        const response = fileManager.getFileIds(metadata);
+        expect(response).toStrictEqual(amsReferences);
+        expect(logger.startScenario).toBeCalledTimes(1);
+    });
+
     it('AMSFileManager.getFileIds() should return nothing if invalid', async () => {
         const amsClient: any = {};
         const logger: any = {};
@@ -111,7 +130,6 @@ describe('AMSFileManager', () => {
         };
 
         const response: any = fileManager.getFileIds(metadata);
-        console.log(response);
         expect(response[0]).toBe(JSON.parse(metadata.amsreferences)[0]);
     });
 
