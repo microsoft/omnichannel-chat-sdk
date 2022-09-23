@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Add `sendCacheHeaders` as optional paramater to `ChatSDK.initialize()` and `ChatSDK.getLiveChatConfig()`
 - Add `validateAuthChatRecord` call on `ChatSDK.startChat()` with `liveChatContext` for all authenticated chat scenarios
 - Pass `ChatClient` during `ACSAdapter` initialization
+- Pass `multiClient` to `AMSClient` on initialization to support `ChatSDK` multi-client
 
 ### Fixed
 - Prevent `AMSFileManager.getFileIds()` & `AMSFileManager.getFileMetadata()` to be triggered on all activities with null checks
