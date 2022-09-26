@@ -205,6 +205,7 @@ class OmnichannelChatSDK {
                 this.ACSClient = new ACSClient(this.acsClientLogger);
                 this.AMSClient = await createAMSClient({
                     framedMode: isBrowser(),
+                    multiClient: true,
                     debug: false,
                     logger: undefined
                 });
@@ -332,7 +333,7 @@ class OmnichannelChatSDK {
             }
         }
 
-        if (optionalParams.liveChatContext && !this.reconnectId) {
+        if (optionalParams.liveChatContext && Object.keys(optionalParams.liveChatContext).length > 0 && !this.reconnectId) {
             this.chatToken = optionalParams.liveChatContext.chatToken || {};
             this.requestId = optionalParams.liveChatContext.requestId || uuidv4();
 
@@ -366,6 +367,37 @@ class OmnichannelChatSDK {
 
                 console.error(`Unable to join conversation that's in '${conversationDetails.state}' state`);
                 throw Error(exceptionDetails.response);
+            }
+        }
+
+        if (this.authSettings) {
+            if (!this.authenticatedUserToken) {
+                await this.setAuthTokenProvider(this.chatSDKConfig.getAuthToken);
+            }
+
+            if (optionalParams.liveChatContext && Object.keys(optionalParams.liveChatContext).length > 0) {
+                this.chatToken = optionalParams.liveChatContext.chatToken || {};
+                this.requestId = optionalParams.liveChatContext.requestId || uuidv4();
+
+                try {
+                    await this.OCClient.validateAuthChatRecord(this.requestId, {
+                        authenticatedUserToken: this.authenticatedUserToken,
+                        chatId: this.chatToken.chatId
+                    });
+                } catch {
+                    const exceptionDetails = {
+                        response: "OCClientValidateAuthChatRecordFailed",
+                        message: "InvalidAuthChatRecord"
+                    };
+
+                    this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken.chatId as string,
+                        ExceptionDetails: JSON.stringify(exceptionDetails)
+                    });
+
+                    throw Error(exceptionDetails.response);
+                }
             }
         }
 
@@ -447,6 +479,11 @@ class OmnichannelChatSDK {
             sessionInitOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
         }
 
+        if (this.chatToken.chatId) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (sessionInitOptionalParams as any).initContext.chatId = this.chatToken.chatId;
+        }
+
         // Skip session init when there's a valid live chat context
         if (!optionalParams.liveChatContext) {
             try {
@@ -479,7 +516,7 @@ class OmnichannelChatSDK {
                 id: this.chatToken.visitorId || 'teamsvisitor',
                 threadId: this.chatToken.chatId,
                 environmentUrl: this.chatToken.acsEndpoint as string,
-                pollingInterval: 1000
+                pollingInterval: 30000
             };
 
             try {
@@ -1258,7 +1295,8 @@ class OmnichannelChatSDK {
             const uploadDocumentResponse: any = await this.AMSClient?.uploadDocument(documentId, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
 
             const fileIdsProperty = {
-                amsReferences: JSON.stringify([documentId])
+                amsReferences: JSON.stringify([documentId]),
+                amsreferences: JSON.stringify([documentId])
             };
 
             const fileMetaProperty = {
@@ -1521,8 +1559,9 @@ class OmnichannelChatSDK {
                             this.chatToken.chatId as string,
                             this.chatToken.acsEndpoint as string,
                             fileManager,
+                            30000,
                             ACSParticipantDisplayName.Customer,
-                            undefined, // chatClient
+                            this.ACSClient?.getChatClient(),
                             this.acsAdapterLogger, // logger
                             featuresOption,
                         );
@@ -2000,7 +2039,9 @@ class OmnichannelChatSDK {
                 visitor: true
             }
 
-            await this.IC3Client.initialize(sessionInfo);
+            if (this.liveChatVersion === LiveChatVersion.V1) {
+                await this.IC3Client.initialize(sessionInfo);
+            }
 
             this.scenarioMarker.completeScenario(TelemetryEvent.UpdateChatToken, {
                 RequestId: this.requestId,

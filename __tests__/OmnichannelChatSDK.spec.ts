@@ -524,6 +524,45 @@ describe('Omnichannel Chat SDK', () => {
             expect(exceptionDetails.response).toBe(expectedResponse);
         });
 
+        it('Authenticated Chat with liveChatContext should call OCClient.validateAuthChatRecord()', async () => {
+            const chatSDKConfig = {
+                getAuthToken: async () => {
+                    return 'authenticatedUserToken'
+                }
+            };
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.authSettings = {};
+
+            chatSDK.liveChatVersion = LiveChatVersion.V2;
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}',
+                AttachmentConfiguration: {
+                    AttachmentServiceEndpoint: 'AttachmentServiceEndpoint'
+                }
+            }));
+
+            jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue(Promise.resolve({state: 'state'}));
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'validateAuthChatRecord').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.AMSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve());
+
+            const optionalParams = {
+                liveChatContext: { requestId: 'requestId', chatToken: {chatId: 'chatId'}}
+            }
+
+            await chatSDK.startChat(optionalParams);
+
+            expect(chatSDK.OCClient.validateAuthChatRecord).toHaveBeenCalledTimes(1);
+        });
+
         it('ChatSDK.getPreChatSurvey() with preChat enabled should return a pre chat survey', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             const samplePreChatSurvey = '{"type":"AdaptiveCard", "version":"1.1", "body":[]}';
