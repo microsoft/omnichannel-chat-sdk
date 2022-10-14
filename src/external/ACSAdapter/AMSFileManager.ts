@@ -286,7 +286,7 @@ class AMSFileManager {
         if (uploadedFile.fileId && uploadedFile.metadata && uploadedFile.metadata.fileName) {
             const fileMetadata = {
                 id: uploadedFile.fileId,
-                type: uploadedFile.metadata.contentType.split("/").pop() as string
+                type: uploadedFile.metadata.contentType
             };
 
             let response: any;  // eslint-disable-line @typescript-eslint/no-explicit-any

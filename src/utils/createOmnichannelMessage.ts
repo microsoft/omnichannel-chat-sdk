@@ -41,9 +41,9 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
 
                 if (metadata.amsMetadata) {
                     const data = JSON.parse(metadata.amsMetadata);
-                    const {fileName} = data[0];
+                    const {fileName, contentType} = data[0];
                     omnichannelMessage.fileMetadata.name = fileName;
-                    omnichannelMessage.fileMetadata.type = fileName.split('.').pop();
+                    omnichannelMessage.fileMetadata.type = contentType;
                 }
 
                 if (metadata.amsReferences) {

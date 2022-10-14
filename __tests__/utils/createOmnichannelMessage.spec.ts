@@ -46,7 +46,7 @@ describe('createOmnichannelMessage', () => {
             id: amsReferences[0],
             name: amsMetadata[0].fileName,
             size: 0,
-            type: 'ext',
+            type: amsMetadata[0].contentType,
             url: ''
         });
     });
@@ -79,7 +79,7 @@ describe('createOmnichannelMessage', () => {
             id: amsReferences[0],
             name: amsMetadata[0].fileName,
             size: 0,
-            type: 'ext',
+            type: amsMetadata[0].contentType,
             url: ''
         });
     });
@@ -114,7 +114,7 @@ describe('createOmnichannelMessage', () => {
             id: amsreferences[0],
             name: amsMetadata[0].fileName,
             size: 0,
-            type: 'ext',
+            type: amsMetadata[0].contentType,
             url: ''
         });
     });
