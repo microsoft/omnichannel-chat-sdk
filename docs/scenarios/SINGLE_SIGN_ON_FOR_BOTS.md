@@ -112,7 +112,7 @@ class BotAuthSubscriber {
 
         }
 
-        return activity; // Returns sign in card by default
+        return activity; // Returns sign-in card by default
     }
 
     async next(activity) {
@@ -174,7 +174,7 @@ const getAuthToken = async () => {
 const authToken = await getAuthToken();
 
 const chatSDKConfig = {
-    getAuthToken: async () => authToken
+    getAuthToken: async () => authToken // Using Authenticated Chat
 };
 
 const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
