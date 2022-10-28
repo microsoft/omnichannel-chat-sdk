@@ -160,6 +160,7 @@ const createChatAdapterShim = (chatAdapter, subscribers = []) => {
 };
 
 // ...
+
 const getAuthToken = async () => {
     const response = await fetch("http://contosohelp.com/token");
     if (response.ok) {
