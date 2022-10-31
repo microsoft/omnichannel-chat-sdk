@@ -1,5 +1,10 @@
 # Single Sign-On For Bots
 
+> ❗If you're using Azure Bot Service, please ensure that you've met the following prerequisites:
+> ### Using .NET
+> - Microsoft.Bot.Builder.Dialogs **v4.17.2** at minimum
+> - Microsoft.Bot.Builder.Integration.AspNet.Core **v4.17.2** at minimum
+
 ## Using Bot Framework Web Chat Control
 
 ```js
