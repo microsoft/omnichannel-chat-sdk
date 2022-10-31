@@ -53,6 +53,7 @@ Please make sure you have a chat widget configured before using this package or 
     - [Chat Reconnect with Authenticated User](#chat-reconnect-with-authenticated-user)
     - [Chat Reconnect with Unauthenticated User](#chat-reconnect-with-unauthenticated-user)
     - [Operating Hours](#operating-hours)
+    - [Single Sign-on for Bots](/docs/scenarios/SINGLE_SIGN_ON_FOR_BOTS.md)
 - [Sample Apps](https://github.com/microsoft/omnichannel-chat-sdk-samples)
 - [Feature Comparisons](#feature-comparisons)
 - [Telemetry](#telemetry)
