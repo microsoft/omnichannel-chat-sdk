@@ -110,7 +110,7 @@ class BotAuthSubscriber {
             }
 
             // User already signed in
-            if (botAuthResponse.status === 404) {
+            if (botAuthResponse.status === 404 || botAuthResponse.status === 202) {
                 return;
             }
         } catch {
