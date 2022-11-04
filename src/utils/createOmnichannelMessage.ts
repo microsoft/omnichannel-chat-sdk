@@ -35,30 +35,21 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
             type: PersonType.Bot
         } as IPerson;
 
-        if (metadata) {
+        if (metadata && metadata.amsMetadata && metadata.amsReferences || metadata.amsreferences) {
             try {
-                omnichannelMessage.fileMetadata = {} as IFileMetadata; // Backward compatibility
-
-                if (metadata.amsMetadata) {
-                    const data = JSON.parse(metadata.amsMetadata);
-                    const {fileName, contentType} = data[0];
-                    omnichannelMessage.fileMetadata.name = fileName;
-                    omnichannelMessage.fileMetadata.type = contentType;
-                }
-
-                if (metadata.amsReferences) {
-                    const references = JSON.parse(metadata.amsReferences);
-                    omnichannelMessage.fileMetadata.id = references[0];
-                }
+                const data = JSON.parse(metadata.amsMetadata);
 
                 // "amsreferences" takes precedence
-                if (metadata.amsreferences) {
-                    const references = JSON.parse(metadata.amsreferences);
-                    omnichannelMessage.fileMetadata.id = references[0];
-                }
+                const references = JSON.parse(metadata.amsreferences || metadata.amsReferences);
+                const {fileName, contentType} = data[0];
 
+                // fileMetadata should be defined only when there's an attachment
+                omnichannelMessage.fileMetadata = {} as IFileMetadata; // Backward compatibility
                 omnichannelMessage.fileMetadata.fileSharingProtocolType = 0;
+                omnichannelMessage.fileMetadata.id = references[0];
+                omnichannelMessage.fileMetadata.name = fileName;
                 omnichannelMessage.fileMetadata.size = 0;
+                omnichannelMessage.fileMetadata.type = contentType;
                 omnichannelMessage.fileMetadata.url = '';
             } catch {
                 // Suppress errors to keep chat flowing

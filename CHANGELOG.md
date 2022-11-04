@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Add `LiveChatVersion` check on `ChatSDK.updateChatToken()`
 - Use `amsreferences` property instead of `amsReferences` by default
 - Fix attachment download to use MIME types instead of file extensions
+- Remove `fileMetadata` property on messages not containing any attachment
 
 ### Changed
 - Uptake [@microsoft/ocsdk@0.3.1](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.3.1)

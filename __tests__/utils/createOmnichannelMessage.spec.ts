@@ -51,6 +51,41 @@ describe('createOmnichannelMessage', () => {
         });
     });
 
+    it('createOmnichannelMessage with LiveChatV2 message without attachment should not have fileMetadata defined', () => {
+        const sampleMessage = {
+            id: 'id',
+            content: 'content',
+            metadata: {
+                tags: 'tags',
+            },
+            sender: {
+                communicationUserId: 'id',
+                kind: "communicationUser"
+            },
+            senderDisplayName: 'senderDisplayName',
+            createdOn: 'createdOn'
+        };
+
+        const omnichannelMessage = createOmnichannelMessage(sampleMessage as any, {
+            liveChatVersion: LiveChatVersion.V2
+        });
+
+        expect(omnichannelMessage.id).toBeDefined();
+        expect(omnichannelMessage.messageid).toBe(undefined);
+        expect(omnichannelMessage.clientmessageid).toBe(undefined);
+        expect(omnichannelMessage.deliveryMode).toBe(undefined);
+        expect(omnichannelMessage.content).toBe(sampleMessage.content);
+        expect(omnichannelMessage.tags).toEqual(sampleMessage.metadata.tags.split(','));
+        expect(omnichannelMessage.timestamp).toBe(sampleMessage.createdOn);
+        expect(omnichannelMessage.messageType).toBe(MessageType.UserMessage);
+        expect(omnichannelMessage.sender).toEqual({
+            id: sampleMessage.sender.communicationUserId,
+            displayName: sampleMessage.senderDisplayName,
+            type: PersonType.Bot
+        });
+        expect(omnichannelMessage.fileMetadata).not.toBeDefined();
+    });
+
     it('createOmnichannelMessage with LiveChatV2 message containing \'amsreferences\' should return the correct fileMetadata', () => {
         const amsReferences = ['id'];
         const amsMetadata = [{fileName: 'fileName.ext', size: 0, contentType: 'type'}]
