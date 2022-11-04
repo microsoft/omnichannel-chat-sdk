@@ -51,7 +51,7 @@ describe('createOmnichannelMessage', () => {
         });
     });
 
-    it('createOmnichannelMessage with LiveChatV2 message without attachment should not have fileMetadata', () => {
+    it('createOmnichannelMessage with LiveChatV2 message without attachment should not have fileMetadata defined', () => {
         const sampleMessage = {
             id: 'id',
             content: 'content',
