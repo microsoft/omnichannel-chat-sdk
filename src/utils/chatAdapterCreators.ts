@@ -7,34 +7,30 @@ import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
 import urlResolvers from "./urlResolvers";
 
-const createDirectLine = (optionalParams: ChatAdapterOptionalParams = {}, chatSDKConfig: ChatSDKConfig, liveChatVersion: LiveChatVersion, protocol: string, telemetry: typeof AriaTelemetry, scenarioMarker: ScenarioMarker): Promise<unknown> => {
-    return new Promise (async (resolve) => { // eslint-disable-line no-async-promise-executor
-        const options = optionalParams.DirectLine? optionalParams.DirectLine.options: {};
+const createDirectLine = async (optionalParams: ChatAdapterOptionalParams = {}, chatSDKConfig: ChatSDKConfig, liveChatVersion: LiveChatVersion, protocol: string, telemetry: typeof AriaTelemetry, scenarioMarker: ScenarioMarker): Promise<unknown> => {
+    const options = optionalParams.DirectLine? optionalParams.DirectLine.options: {};
+    const directLineCDNUrl = urlResolvers.resolveChatAdapterUrl(chatSDKConfig, liveChatVersion, protocol);
 
-        const directLineCDNUrl = urlResolvers.resolveChatAdapterUrl(chatSDKConfig, liveChatVersion, protocol);
-
-        telemetry?.setCDNPackages({
-            DirectLine: directLineCDNUrl
-        });
-
-        scenarioMarker.startScenario(TelemetryEvent.CreateDirectLine);
-
-        await loadScript(directLineCDNUrl, () => {
-            try {
-                const {DirectLine} = window as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-                const adapter = new DirectLine.DirectLine({...options});
-
-                scenarioMarker.completeScenario(TelemetryEvent.CreateDirectLine);
-
-                resolve(adapter);
-            } catch {
-                throw new Error('Failed to load DirectLine');
-            }
-        }, () => {
-            scenarioMarker.failScenario(TelemetryEvent.CreateDirectLine);
-            throw new Error('Failed to load DirectLine');
-        });
+    telemetry?.setCDNPackages({
+        DirectLine: directLineCDNUrl
     });
+
+    scenarioMarker.startScenario(TelemetryEvent.CreateDirectLine);
+
+    try {
+        await loadScript(directLineCDNUrl);
+    } catch {
+        throw new Error('Failed to load DirectLine');
+    }
+
+    try {
+        const {DirectLine} = window as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+        const adapter = new DirectLine.DirectLine({...options});
+        scenarioMarker.completeScenario(TelemetryEvent.CreateDirectLine);
+        return adapter;
+    } catch {
+        throw new Error('Failed to create DirectLine');
+    }
 };
 
 export default {
