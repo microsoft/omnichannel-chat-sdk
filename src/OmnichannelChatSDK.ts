@@ -1447,7 +1447,6 @@ class OmnichannelChatSDK {
         });
 
         try {
-
             if (this.authenticatedUserToken) {
                 emailTranscriptOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
             }
@@ -1555,7 +1554,7 @@ class OmnichannelChatSDK {
                 });
             });
         } else if (protocol === ChatAdapterProtocols.ACS || this.liveChatVersion === LiveChatVersion.V2) {
-            return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
+            return new Promise (async (resolve) => { // eslint-disable-line no-async-promise-executor
                 const options = optionalParams.ACSAdapter? optionalParams.ACSAdapter.options: {};
 
                 // Tags formatting middlewares are required to be the last in the pipeline to ensure tags are converted to the right format
