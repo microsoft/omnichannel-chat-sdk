@@ -206,9 +206,10 @@ describe('Omnichannel Chat SDK', () => {
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
 
-            const protocol = ChatAdapterProtocols.DirectLine;
+            const protocol = "UnsupportedProtocol";
             try {
                 chatSDK.resolveChatAdapterUrl(protocol);
+                fail();
             } catch (error) {
                 expect(error.toString()).toContain(`ChatAdapter for protocol ${protocol} currently not supported`);
             }
