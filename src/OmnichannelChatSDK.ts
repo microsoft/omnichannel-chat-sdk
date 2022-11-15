@@ -1547,6 +1547,8 @@ class OmnichannelChatSDK {
                     ACSAdapter: acsAdapterCDNUrl
                 });
 
+                this.scenarioMarker.startScenario(TelemetryEvent.CreateACSAdapter);
+
                 await loadScript(acsAdapterCDNUrl, () => {
                     /* istanbul ignore next */
                     this.debug && console.debug('ACSAdapter loaded!');
@@ -1566,12 +1568,15 @@ class OmnichannelChatSDK {
                             featuresOption,
                         );
 
+                        this.scenarioMarker.completeScenario(TelemetryEvent.CreateACSAdapter);
+
                         resolve(adapter);
                     } catch {
                         throw new Error('Failed to load ACSAdapter');
                     }
                 }, () => {
-                    reject('Failed to load ACSADapter');
+                    this.scenarioMarker.failScenario(TelemetryEvent.CreateACSAdapter);
+                    reject('Failed to load ACSAdapter');
                 });
             });
         } else if (protocol === ChatAdapterProtocols.IC3 || this.liveChatVersion === LiveChatVersion.V1) {
