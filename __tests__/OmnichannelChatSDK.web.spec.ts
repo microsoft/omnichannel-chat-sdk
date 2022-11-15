@@ -109,7 +109,7 @@ describe('Omnichannel Chat SDK (Web)', () => {
         jest.spyOn(platform, 'isReactNative').mockReturnValue(false);
         jest.spyOn(platform, 'isBrowser').mockReturnValue(true);
 
-        const protocol = 'DirectLine';
+        const protocol = 'UnsupportedProtocol';
         const optionalParams = {
             protocol
         }

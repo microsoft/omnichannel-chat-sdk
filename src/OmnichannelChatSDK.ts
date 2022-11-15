@@ -1519,12 +1519,42 @@ class OmnichannelChatSDK {
         }
 
         const {protocol} = optionalParams;
-        const supportedChatAdapterProtocols = [ChatAdapterProtocols.ACS, ChatAdapterProtocols.IC3];
+        const supportedChatAdapterProtocols = [ChatAdapterProtocols.ACS, ChatAdapterProtocols.IC3, ChatAdapterProtocols.DirectLine];
         if (protocol && !supportedChatAdapterProtocols.includes(protocol as string)) {
             return Promise.reject(`ChatAdapter for protocol ${protocol} currently not supported`);
         }
 
-        if (protocol === ChatAdapterProtocols.ACS || this.liveChatVersion === LiveChatVersion.V2) {
+        if (protocol === ChatAdapterProtocols.DirectLine) {
+            return new Promise (async (resolve) => { // eslint-disable-line no-async-promise-executor
+                const options = optionalParams.DirectLine? optionalParams.DirectLine.options: {};
+
+                const directLineCDNUrl = this.resolveChatAdapterUrl(protocol || ChatAdapterProtocols.DirectLine);
+
+                this.telemetry?.setCDNPackages({
+                    DirectLine: directLineCDNUrl
+                });
+
+                this.scenarioMarker.startScenario(TelemetryEvent.CreateDirectLine);
+
+                await loadScript(directLineCDNUrl, () => {
+                    /* istanbul ignore next */
+                    this.debug && console.debug('DirectLine loaded!');
+                    try {
+                        const {DirectLine} = window as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+                        const adapter = new DirectLine.DirectLine({...options});
+
+                        this.scenarioMarker.completeScenario(TelemetryEvent.CreateDirectLine);
+
+                        resolve(adapter);
+                    } catch {
+                        throw new Error('Failed to load DirectLine');
+                    }
+                }, () => {
+                    this.scenarioMarker.failScenario(TelemetryEvent.CreateDirectLine);
+                    throw new Error('Failed to load DirectLine');
+                });
+            });
+        } else if (protocol === ChatAdapterProtocols.ACS || this.liveChatVersion === LiveChatVersion.V2) {
             return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
                 const options = optionalParams.ACSAdapter? optionalParams.ACSAdapter.options: {};
 
