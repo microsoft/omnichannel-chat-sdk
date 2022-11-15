@@ -1606,7 +1606,7 @@ class OmnichannelChatSDK {
                     }
                 }, () => {
                     this.scenarioMarker.failScenario(TelemetryEvent.CreateACSAdapter);
-                    reject('Failed to load ACSAdapter');
+                    throw new Error('Failed to load ACSAdapter');
                 });
             });
         } else if (protocol === ChatAdapterProtocols.IC3 || this.liveChatVersion === LiveChatVersion.V1) {
@@ -1639,7 +1639,7 @@ class OmnichannelChatSDK {
                     resolve(adapter);
                 }, () => {
                     this.scenarioMarker.failScenario(TelemetryEvent.CreateIC3Adapter);
-                    reject('Failed to load IC3Adapter');
+                    throw new Error('Failed to load IC3Adapter');
                 });
             });
         }
