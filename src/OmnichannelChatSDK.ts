@@ -79,7 +79,6 @@ import createTelemetry from "./utils/createTelemetry";
 import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
 import { defaultMessageTags } from "./core/messaging/MessageTags";
 import {isCustomerMessage} from "./utils/utilities";
-import libraries from "./utils/libraries";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 
@@ -1922,34 +1921,7 @@ class OmnichannelChatSDK {
     }
 
     private resolveChatAdapterUrl(protocol: string): string {
-        const supportedChatAdapterProtocols = [ChatAdapterProtocols.ACS, ChatAdapterProtocols.IC3];
-        if (protocol && !supportedChatAdapterProtocols.includes(protocol as string)) {
-            throw new Error(`ChatAdapter for protocol ${protocol} currently not supported`);
-        }
-
-        if (protocol === ChatAdapterProtocols.ACS || this.liveChatVersion === LiveChatVersion.V2) {
-            if (this.chatSDKConfig.chatAdapterConfig && 'webChatACSAdapterCDNUrl' in this.chatSDKConfig.chatAdapterConfig) {
-                return this.chatSDKConfig.chatAdapterConfig.webChatACSAdapterCDNUrl as string;
-            }
-
-            if (this.chatSDKConfig.chatAdapterConfig && 'webChatACSAdapterVersion' in this.chatSDKConfig.chatAdapterConfig) {
-                return libraries.getACSAdapterCDNUrl(this.chatSDKConfig.chatAdapterConfig.webChatACSAdapterVersion);
-            }
-
-            return libraries.getACSAdapterCDNUrl();
-        } else if (protocol === ChatAdapterProtocols.IC3 || this.liveChatVersion === LiveChatVersion.V1) {
-            if (this.chatSDKConfig.chatAdapterConfig && 'webChatIC3AdapterCDNUrl' in this.chatSDKConfig.chatAdapterConfig) {
-                return this.chatSDKConfig.chatAdapterConfig.webChatIC3AdapterCDNUrl as string;
-            }
-
-            if (this.chatSDKConfig.chatAdapterConfig && 'webChatIC3AdapterVersion' in this.chatSDKConfig.chatAdapterConfig) {
-                return libraries.getIC3AdapterCDNUrl(this.chatSDKConfig.chatAdapterConfig.webChatIC3AdapterVersion);
-            }
-
-            return libraries.getIC3AdapterCDNUrl();
-        }
-
-        return '';
+        return urlResolvers.resolveChatAdapterUrl(this.chatSDKConfig, this.liveChatVersion, protocol);
     }
 
     private async updateChatToken(newToken: string, newRegionGTMS: IRegionGtms): Promise<void> {
