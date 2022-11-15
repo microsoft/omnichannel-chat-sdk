@@ -19,6 +19,7 @@ import ChatConfig from "./core/ChatConfig";
 import ChatReconnectContext from "./core/ChatReconnectContext";
 import ChatReconnectOptionalParams from "./core/ChatReconnectOptionalParams";
 import ChatSDKConfig from "./core/ChatSDKConfig";
+import ChatSDKErrors from "./core/ChatSDKErrors";
 import ChatSDKExceptionDetails from "./core/ChatSDKExceptionDetails";
 import ChatSDKMessage from "./core/messaging/ChatSDKMessage";
 import ChatTranscriptBody from "./core/ChatTranscriptBody";
@@ -452,7 +453,7 @@ class OmnichannelChatSDK {
         if (optionalParams.sendDefaultInitContext) {
             if (platform.isNode() || platform.isReactNative()) {
                 const exceptionDetails: ChatSDKExceptionDetails = {
-                    response: "UnsupportedPlatform",
+                    response: ChatSDKErrors.UnsupportedPlatform,
                     message: "sendDefaultInitContext is only supported on browser"
                 };
 
