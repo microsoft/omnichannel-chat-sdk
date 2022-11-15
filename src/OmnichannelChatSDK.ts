@@ -82,6 +82,7 @@ import { defaultMessageTags } from "./core/messaging/MessageTags";
 import {isCustomerMessage} from "./utils/utilities";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
+import { createDirectLine } from "./utils/chatAdapterCreators";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -1525,35 +1526,7 @@ class OmnichannelChatSDK {
         }
 
         if (protocol === ChatAdapterProtocols.DirectLine) {
-            return new Promise (async (resolve) => { // eslint-disable-line no-async-promise-executor
-                const options = optionalParams.DirectLine? optionalParams.DirectLine.options: {};
-
-                const directLineCDNUrl = this.resolveChatAdapterUrl(protocol || ChatAdapterProtocols.DirectLine);
-
-                this.telemetry?.setCDNPackages({
-                    DirectLine: directLineCDNUrl
-                });
-
-                this.scenarioMarker.startScenario(TelemetryEvent.CreateDirectLine);
-
-                await loadScript(directLineCDNUrl, () => {
-                    /* istanbul ignore next */
-                    this.debug && console.debug('DirectLine loaded!');
-                    try {
-                        const {DirectLine} = window as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-                        const adapter = new DirectLine.DirectLine({...options});
-
-                        this.scenarioMarker.completeScenario(TelemetryEvent.CreateDirectLine);
-
-                        resolve(adapter);
-                    } catch {
-                        throw new Error('Failed to load DirectLine');
-                    }
-                }, () => {
-                    this.scenarioMarker.failScenario(TelemetryEvent.CreateDirectLine);
-                    throw new Error('Failed to load DirectLine');
-                });
-            });
+            return createDirectLine(optionalParams, this.chatSDKConfig, this.liveChatVersion, ChatAdapterProtocols.DirectLine, this.telemetry as typeof AriaTelemetry, this.scenarioMarker);
         } else if (protocol === ChatAdapterProtocols.ACS || this.liveChatVersion === LiveChatVersion.V2) {
             return new Promise (async (resolve) => { // eslint-disable-line no-async-promise-executor
                 const options = optionalParams.ACSAdapter? optionalParams.ACSAdapter.options: {};
