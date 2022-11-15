@@ -15,6 +15,7 @@ import AuthSettings from "./core/AuthSettings";
 import CallingOptionsOptionSetNumber from "./core/CallingOptionsOptionSetNumber";
 import ChatAdapterOptionalParams from "./core/messaging/ChatAdapterOptionalParams";
 import ChatAdapterProtocols from "./core/messaging/ChatAdapterProtocols";
+import { ChatClient } from "@azure/communication-chat";
 import ChatConfig from "./core/ChatConfig";
 import ChatReconnectContext from "./core/ChatReconnectContext";
 import ChatReconnectOptionalParams from "./core/ChatReconnectOptionalParams";
@@ -23,6 +24,7 @@ import ChatSDKErrors from "./core/ChatSDKErrors";
 import ChatSDKExceptionDetails from "./core/ChatSDKExceptionDetails";
 import ChatSDKMessage from "./core/messaging/ChatSDKMessage";
 import ChatTranscriptBody from "./core/ChatTranscriptBody";
+import { createACSAdapter, createDirectLine } from "./utils/chatAdapterCreators";
 import ConversationMode from "./core/ConversationMode";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
@@ -72,9 +74,6 @@ import ScenarioMarker from "./telemetry/ScenarioMarker";
 import StartChatOptionalParams from "./core/StartChatOptionalParams";
 import TelemetryEvent from "./telemetry/TelemetryEvent";
 import createAMSClient from "@microsoft/omnichannel-amsclient";
-import createChannelDataEgressMiddleware from "./external/ACSAdapter/createChannelDataEgressMiddleware";
-import createFormatEgressTagsMiddleware from "./external/ACSAdapter/createFormatEgressTagsMiddleware";
-import createFormatIngressTagsMiddleware from "./external/ACSAdapter/createFormatIngressTagsMiddleware";
 import createOmnichannelMessage from "./utils/createOmnichannelMessage";
 import createTelemetry from "./utils/createTelemetry";
 import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
@@ -82,7 +81,6 @@ import { defaultMessageTags } from "./core/messaging/MessageTags";
 import {isCustomerMessage} from "./utils/utilities";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
-import { createDirectLine } from "./utils/chatAdapterCreators";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -1528,60 +1526,8 @@ class OmnichannelChatSDK {
         if (protocol === ChatAdapterProtocols.DirectLine) {
             return createDirectLine(optionalParams, this.chatSDKConfig, this.liveChatVersion, ChatAdapterProtocols.DirectLine, this.telemetry as typeof AriaTelemetry, this.scenarioMarker);
         } else if (protocol === ChatAdapterProtocols.ACS || this.liveChatVersion === LiveChatVersion.V2) {
-            return new Promise (async (resolve) => { // eslint-disable-line no-async-promise-executor
-                const options = optionalParams.ACSAdapter? optionalParams.ACSAdapter.options: {};
-
-                // Tags formatting middlewares are required to be the last in the pipeline to ensure tags are converted to the right format
-                const defaultEgressMiddlewares = [createChannelDataEgressMiddleware({widgetId: this.omnichannelConfig.widgetId}), createFormatEgressTagsMiddleware()];
-                const defaultIngressMiddlewares = [createFormatIngressTagsMiddleware()];
-                const egressMiddleware = options?.egressMiddleware? [...options.egressMiddleware, ...defaultEgressMiddlewares]: [...defaultEgressMiddlewares];
-                const ingressMiddleware = options?.ingressMiddleware? [...options.egressMiddleware, ...defaultIngressMiddlewares]: [...defaultIngressMiddlewares];
-                const featuresOption = {
-                    enableAdaptiveCards: true, // Whether to enable adaptive card payload in adapter (payload in JSON string)
-                    enableThreadMemberUpdateNotification: true, // Whether to enable chat thread member join/leave notification
-                    enableLeaveThreadOnWindowClosed: false, // Whether to remove user on browser close event
-                    ...options, // overrides
-                    ingressMiddleware,
-                    egressMiddleware
-                };
-
-                const acsAdapterCDNUrl = this.resolveChatAdapterUrl(protocol || ChatAdapterProtocols.ACS);
-                this.telemetry?.setCDNPackages({
-                    ACSAdapter: acsAdapterCDNUrl
-                });
-
-                this.scenarioMarker.startScenario(TelemetryEvent.CreateACSAdapter);
-
-                await loadScript(acsAdapterCDNUrl, () => {
-                    /* istanbul ignore next */
-                    this.debug && console.debug('ACSAdapter loaded!');
-                    try {
-                        const { ChatAdapter } = window as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-                        const fileManager = new AMSFileManager(this.AMSClient as FramedClient, this.acsAdapterLogger);
-                        const adapter = ChatAdapter.createACSAdapter(
-                            this.chatToken.token as string,
-                            this.chatToken.visitorId || 'teamsvisitor',
-                            this.chatToken.chatId as string,
-                            this.chatToken.acsEndpoint as string,
-                            fileManager,
-                            30000,
-                            ACSParticipantDisplayName.Customer,
-                            this.ACSClient?.getChatClient(),
-                            this.acsAdapterLogger, // logger
-                            featuresOption,
-                        );
-
-                        this.scenarioMarker.completeScenario(TelemetryEvent.CreateACSAdapter);
-
-                        resolve(adapter);
-                    } catch {
-                        throw new Error('Failed to load ACSAdapter');
-                    }
-                }, () => {
-                    this.scenarioMarker.failScenario(TelemetryEvent.CreateACSAdapter);
-                    throw new Error('Failed to load ACSAdapter');
-                });
-            });
+            const fileManager = new AMSFileManager(this.AMSClient as FramedClient, this.acsAdapterLogger);
+            return createACSAdapter(optionalParams, this.chatSDKConfig, this.liveChatVersion, ChatAdapterProtocols.ACS, this.telemetry as typeof AriaTelemetry, this.scenarioMarker, this.omnichannelConfig, this.chatToken, fileManager, this.ACSClient?.getChatClient() as ChatClient, this.acsAdapterLogger as ACSAdapterLogger);
         } else if (protocol === ChatAdapterProtocols.IC3 || this.liveChatVersion === LiveChatVersion.V1) {
             return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
                 const options = optionalParams.IC3Adapter? optionalParams.IC3Adapter.options: {};
