@@ -80,6 +80,7 @@ import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
 import { defaultMessageTags } from "./core/messaging/MessageTags";
 import {isCustomerMessage} from "./utils/utilities";
 import libraries from "./utils/libraries";
+import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 
 class OmnichannelChatSDK {
@@ -1917,15 +1918,7 @@ class OmnichannelChatSDK {
     }
 
     private resolveIC3ClientUrl(): string {
-        if (this.chatSDKConfig.ic3Config && 'ic3ClientCDNUrl' in this.chatSDKConfig.ic3Config) {
-            return this.chatSDKConfig.ic3Config.ic3ClientCDNUrl as string;
-        }
-
-        if (this.chatSDKConfig.ic3Config && 'ic3ClientVersion' in this.chatSDKConfig.ic3Config) {
-            return libraries.getIC3ClientCDNUrl(this.chatSDKConfig.ic3Config.ic3ClientVersion);
-        }
-
-        return libraries.getIC3ClientCDNUrl();
+        return urlResolvers.resolveIC3ClientUrl(this.chatSDKConfig);
     }
 
     private resolveChatAdapterUrl(protocol: string): string {
