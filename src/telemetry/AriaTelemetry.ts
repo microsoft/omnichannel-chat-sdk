@@ -35,6 +35,7 @@ interface CDNPackagesInfo {
     IC3Client?: string;
     IC3Adapter?: string;
     ACSAdapter?: string;
+    DirectLine?: string;
     SpoolSDK?: string;
     VoiceVideoCalling?: string;
 }
