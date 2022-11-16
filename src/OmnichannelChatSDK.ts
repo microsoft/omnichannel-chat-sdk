@@ -15,13 +15,16 @@ import AuthSettings from "./core/AuthSettings";
 import CallingOptionsOptionSetNumber from "./core/CallingOptionsOptionSetNumber";
 import ChatAdapterOptionalParams from "./core/messaging/ChatAdapterOptionalParams";
 import ChatAdapterProtocols from "./core/messaging/ChatAdapterProtocols";
+import { ChatClient } from "@azure/communication-chat";
 import ChatConfig from "./core/ChatConfig";
 import ChatReconnectContext from "./core/ChatReconnectContext";
 import ChatReconnectOptionalParams from "./core/ChatReconnectOptionalParams";
 import ChatSDKConfig from "./core/ChatSDKConfig";
+import ChatSDKErrors from "./core/ChatSDKErrors";
 import ChatSDKExceptionDetails from "./core/ChatSDKExceptionDetails";
 import ChatSDKMessage from "./core/messaging/ChatSDKMessage";
 import ChatTranscriptBody from "./core/ChatTranscriptBody";
+import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
 import ConversationMode from "./core/ConversationMode";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
@@ -39,7 +42,6 @@ import IFileMetadata from "@microsoft/omnichannel-ic3core/lib/model/IFileMetadat
 import IGetChatTokenOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTokenOptionalParams";
 import IGetChatTranscriptsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTranscriptsOptionalParams";
 import IGetLWIDetailsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetLWIDetailsOptionalParams";
-import IIC3AdapterOptions from "./external/IC3Adapter/IIC3AdapterOptions";
 import IInitializationInfo from "@microsoft/omnichannel-ic3core/lib/model/IInitializationInfo";
 import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import InitializeOptionalParams from "./core/InitializeOptionalParams";
@@ -71,15 +73,12 @@ import ScenarioMarker from "./telemetry/ScenarioMarker";
 import StartChatOptionalParams from "./core/StartChatOptionalParams";
 import TelemetryEvent from "./telemetry/TelemetryEvent";
 import createAMSClient from "@microsoft/omnichannel-amsclient";
-import createChannelDataEgressMiddleware from "./external/ACSAdapter/createChannelDataEgressMiddleware";
-import createFormatEgressTagsMiddleware from "./external/ACSAdapter/createFormatEgressTagsMiddleware";
-import createFormatIngressTagsMiddleware from "./external/ACSAdapter/createFormatIngressTagsMiddleware";
 import createOmnichannelMessage from "./utils/createOmnichannelMessage";
 import createTelemetry from "./utils/createTelemetry";
 import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
 import { defaultMessageTags } from "./core/messaging/MessageTags";
 import {isCustomerMessage} from "./utils/utilities";
-import libraries from "./utils/libraries";
+import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 
 class OmnichannelChatSDK {
@@ -452,7 +451,7 @@ class OmnichannelChatSDK {
         if (optionalParams.sendDefaultInitContext) {
             if (platform.isNode() || platform.isReactNative()) {
                 const exceptionDetails: ChatSDKExceptionDetails = {
-                    response: "UnsupportedPlatform",
+                    response: ChatSDKErrors.UnsupportedPlatform,
                     message: "sendDefaultInitContext is only supported on browser"
                 };
 
@@ -1447,7 +1446,6 @@ class OmnichannelChatSDK {
         });
 
         try {
-
             if (this.authenticatedUserToken) {
                 emailTranscriptOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
             }
@@ -1519,94 +1517,18 @@ class OmnichannelChatSDK {
         }
 
         const {protocol} = optionalParams;
-        const supportedChatAdapterProtocols = [ChatAdapterProtocols.ACS, ChatAdapterProtocols.IC3];
+        const supportedChatAdapterProtocols = [ChatAdapterProtocols.ACS, ChatAdapterProtocols.IC3, ChatAdapterProtocols.DirectLine];
         if (protocol && !supportedChatAdapterProtocols.includes(protocol as string)) {
             return Promise.reject(`ChatAdapter for protocol ${protocol} currently not supported`);
         }
 
-        if (protocol === ChatAdapterProtocols.ACS || this.liveChatVersion === LiveChatVersion.V2) {
-            return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
-                const options = optionalParams.ACSAdapter? optionalParams.ACSAdapter.options: {};
-
-                // Tags formatting middlewares are required to be the last in the pipeline to ensure tags are converted to the right format
-                const defaultEgressMiddlewares = [createChannelDataEgressMiddleware({widgetId: this.omnichannelConfig.widgetId}), createFormatEgressTagsMiddleware()];
-                const defaultIngressMiddlewares = [createFormatIngressTagsMiddleware()];
-                const egressMiddleware = options?.egressMiddleware? [...options.egressMiddleware, ...defaultEgressMiddlewares]: [...defaultEgressMiddlewares];
-                const ingressMiddleware = options?.ingressMiddleware? [...options.egressMiddleware, ...defaultIngressMiddlewares]: [...defaultIngressMiddlewares];
-                const featuresOption = {
-                    enableAdaptiveCards: true, // Whether to enable adaptive card payload in adapter (payload in JSON string)
-                    enableThreadMemberUpdateNotification: true, // Whether to enable chat thread member join/leave notification
-                    enableLeaveThreadOnWindowClosed: false, // Whether to remove user on browser close event
-                    ...options, // overrides
-                    ingressMiddleware,
-                    egressMiddleware
-                };
-
-                const acsAdapterCDNUrl = this.resolveChatAdapterUrl(protocol || ChatAdapterProtocols.ACS);
-                this.telemetry?.setCDNPackages({
-                    ACSAdapter: acsAdapterCDNUrl
-                });
-
-                await loadScript(acsAdapterCDNUrl, () => {
-                    /* istanbul ignore next */
-                    this.debug && console.debug('ACSAdapter loaded!');
-                    try {
-                        const { ChatAdapter } = window as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-                        const fileManager = new AMSFileManager(this.AMSClient as FramedClient, this.acsAdapterLogger);
-                        const adapter = ChatAdapter.createACSAdapter(
-                            this.chatToken.token as string,
-                            this.chatToken.visitorId || 'teamsvisitor',
-                            this.chatToken.chatId as string,
-                            this.chatToken.acsEndpoint as string,
-                            fileManager,
-                            30000,
-                            ACSParticipantDisplayName.Customer,
-                            this.ACSClient?.getChatClient(),
-                            this.acsAdapterLogger, // logger
-                            featuresOption,
-                        );
-
-                        resolve(adapter);
-                    } catch {
-                        throw new Error('Failed to load ACSAdapter');
-                    }
-                }, () => {
-                    reject('Failed to load ACSADapter');
-                });
-            });
+        if (protocol === ChatAdapterProtocols.DirectLine) {
+            return createDirectLine(optionalParams, this.chatSDKConfig, this.liveChatVersion, ChatAdapterProtocols.DirectLine, this.telemetry as typeof AriaTelemetry, this.scenarioMarker);
+        } else if (protocol === ChatAdapterProtocols.ACS || this.liveChatVersion === LiveChatVersion.V2) {
+            const fileManager = new AMSFileManager(this.AMSClient as FramedClient, this.acsAdapterLogger);
+            return createACSAdapter(optionalParams, this.chatSDKConfig, this.liveChatVersion, ChatAdapterProtocols.ACS, this.telemetry as typeof AriaTelemetry, this.scenarioMarker, this.omnichannelConfig, this.chatToken, fileManager, this.ACSClient?.getChatClient() as ChatClient, this.acsAdapterLogger as ACSAdapterLogger);
         } else if (protocol === ChatAdapterProtocols.IC3 || this.liveChatVersion === LiveChatVersion.V1) {
-            return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
-                const options = optionalParams.IC3Adapter? optionalParams.IC3Adapter.options: {};
-                const ic3AdapterCDNUrl = this.resolveChatAdapterUrl(protocol || ChatAdapterProtocols.IC3);
-                this.telemetry?.setCDNPackages({
-                    IC3Adapter: ic3AdapterCDNUrl
-                });
-
-                this.scenarioMarker.startScenario(TelemetryEvent.CreateIC3Adapter);
-
-                await loadScript(ic3AdapterCDNUrl, () => {
-                    /* istanbul ignore next */
-                    this.debug && console.debug('IC3Adapter loaded!');
-                    const adapterConfig: IIC3AdapterOptions = {
-                        chatToken: this.chatToken,
-                        userDisplayName: 'Customer',
-                        userId:  this.chatToken.visitorId || 'teamsvisitor',
-                        sdkURL: this.resolveIC3ClientUrl(),
-                        sdk: this.IC3Client,
-                        ...options // overrides
-                    };
-
-                    const adapter = new window.Microsoft.BotFramework.WebChat.IC3Adapter(adapterConfig);
-                    adapter.logger = this.ic3ClientLogger;
-
-                    this.scenarioMarker.completeScenario(TelemetryEvent.CreateIC3Adapter);
-
-                    resolve(adapter);
-                }, () => {
-                    this.scenarioMarker.failScenario(TelemetryEvent.CreateIC3Adapter);
-                    reject('Failed to load IC3Adapter');
-                });
-            });
+            return createIC3Adapter(optionalParams, this.chatSDKConfig, this.liveChatVersion, ChatAdapterProtocols.IC3, this.telemetry as typeof AriaTelemetry, this.scenarioMarker, this.chatToken, this.IC3Client, this.ic3ClientLogger as IC3ClientLogger);
         }
 
         return Promise.reject(`ChatAdapter for protocol ${protocol} currently not supported`);
@@ -1912,46 +1834,11 @@ class OmnichannelChatSDK {
     }
 
     private resolveIC3ClientUrl(): string {
-        if (this.chatSDKConfig.ic3Config && 'ic3ClientCDNUrl' in this.chatSDKConfig.ic3Config) {
-            return this.chatSDKConfig.ic3Config.ic3ClientCDNUrl as string;
-        }
-
-        if (this.chatSDKConfig.ic3Config && 'ic3ClientVersion' in this.chatSDKConfig.ic3Config) {
-            return libraries.getIC3ClientCDNUrl(this.chatSDKConfig.ic3Config.ic3ClientVersion);
-        }
-
-        return libraries.getIC3ClientCDNUrl();
+        return urlResolvers.resolveIC3ClientUrl(this.chatSDKConfig);
     }
 
     private resolveChatAdapterUrl(protocol: string): string {
-        const supportedChatAdapterProtocols = [ChatAdapterProtocols.ACS, ChatAdapterProtocols.IC3];
-        if (protocol && !supportedChatAdapterProtocols.includes(protocol as string)) {
-            throw new Error(`ChatAdapter for protocol ${protocol} currently not supported`);
-        }
-
-        if (protocol === ChatAdapterProtocols.ACS || this.liveChatVersion === LiveChatVersion.V2) {
-            if (this.chatSDKConfig.chatAdapterConfig && 'webChatACSAdapterCDNUrl' in this.chatSDKConfig.chatAdapterConfig) {
-                return this.chatSDKConfig.chatAdapterConfig.webChatACSAdapterCDNUrl as string;
-            }
-
-            if (this.chatSDKConfig.chatAdapterConfig && 'webChatACSAdapterVersion' in this.chatSDKConfig.chatAdapterConfig) {
-                return libraries.getACSAdapterCDNUrl(this.chatSDKConfig.chatAdapterConfig.webChatACSAdapterVersion);
-            }
-
-            return libraries.getACSAdapterCDNUrl();
-        } else if (protocol === ChatAdapterProtocols.IC3 || this.liveChatVersion === LiveChatVersion.V1) {
-            if (this.chatSDKConfig.chatAdapterConfig && 'webChatIC3AdapterCDNUrl' in this.chatSDKConfig.chatAdapterConfig) {
-                return this.chatSDKConfig.chatAdapterConfig.webChatIC3AdapterCDNUrl as string;
-            }
-
-            if (this.chatSDKConfig.chatAdapterConfig && 'webChatIC3AdapterVersion' in this.chatSDKConfig.chatAdapterConfig) {
-                return libraries.getIC3AdapterCDNUrl(this.chatSDKConfig.chatAdapterConfig.webChatIC3AdapterVersion);
-            }
-
-            return libraries.getIC3AdapterCDNUrl();
-        }
-
-        return '';
+        return urlResolvers.resolveChatAdapterUrl(this.chatSDKConfig, this.liveChatVersion, protocol);
     }
 
     private async updateChatToken(newToken: string, newRegionGTMS: IRegionGtms): Promise<void> {

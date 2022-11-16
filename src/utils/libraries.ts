@@ -1,4 +1,4 @@
-import { ic3ClientVersion, webChatACSAdapterVersion, webChatIC3AdapterVersion } from "../config/settings";
+import { ic3ClientVersion, webChatACSAdapterVersion, webChatDirectLineVersion, webChatIC3AdapterVersion } from "../config/settings";
 
 const getIC3ClientCDNUrl = (version = ic3ClientVersion): string => {
     const IC3ClientCDNUrl = `https://comms.omnichannelengagementhub.com/release/${version}/Scripts/SDK/SDK.min.js`;
@@ -15,14 +15,21 @@ const getACSAdapterCDNUrl = (version = webChatACSAdapterVersion): string => {
     return ACSAdapterCDNUrl;
 }
 
+const getDirectLineCDNUrl = (version = webChatDirectLineVersion): string => {
+    const DirectLineCDNUrl = `https://unpkg.com/botframework-directlinejs@${version}/dist/directline.js`;
+    return DirectLineCDNUrl;
+}
+
 export default {
     getIC3ClientCDNUrl,
     getIC3AdapterCDNUrl,
-    getACSAdapterCDNUrl
+    getACSAdapterCDNUrl,
+    getDirectLineCDNUrl
 }
 
 export {
     getIC3ClientCDNUrl,
     getIC3AdapterCDNUrl,
-    getACSAdapterCDNUrl
+    getACSAdapterCDNUrl,
+    getDirectLineCDNUrl
 }

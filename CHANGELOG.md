@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Added
+- Add ability to use `ChatSDK.createChatAdapter()` for `DirectLine` protocol
+- Add `CreateACSAdapter` telemetry event
 
 ## [1.2.0] - 2022-11-11
 ### Added
