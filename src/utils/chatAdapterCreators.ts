@@ -1,4 +1,4 @@
-import { ACSAdapterLogger } from "./loggers";
+import { ACSAdapterLogger, IC3ClientLogger } from "./loggers";
 import ACSParticipantDisplayName from "../core/messaging/ACSParticipantDisplayName";
 import AMSFileManager from "../external/ACSAdapter/AMSFileManager";
 import AriaTelemetry from "../telemetry/AriaTelemetry";
@@ -9,6 +9,7 @@ import createChannelDataEgressMiddleware from "../external/ACSAdapter/createChan
 import createFormatEgressTagsMiddleware from "../external/ACSAdapter/createFormatEgressTagsMiddleware";
 import createFormatIngressTagsMiddleware from "../external/ACSAdapter/createFormatIngressTagsMiddleware";
 import IChatToken from "../external/IC3Adapter/IChatToken";
+import IIC3AdapterOptions from "../external/IC3Adapter/IIC3AdapterOptions";
 import LiveChatVersion from "../core/LiveChatVersion";
 import { loadScript } from "./WebUtils";
 import OmnichannelConfig from "../core/OmnichannelConfig";
@@ -29,6 +30,7 @@ const createDirectLine = async (optionalParams: ChatAdapterOptionalParams, chatS
     try {
         await loadScript(directLineCDNUrl);
     } catch {
+        scenarioMarker.failScenario(TelemetryEvent.CreateDirectLine);
         throw new Error('Failed to load DirectLine');
     }
 
@@ -38,6 +40,7 @@ const createDirectLine = async (optionalParams: ChatAdapterOptionalParams, chatS
         scenarioMarker.completeScenario(TelemetryEvent.CreateDirectLine);
         return adapter;
     } catch {
+        scenarioMarker.failScenario(TelemetryEvent.CreateDirectLine);
         throw new Error('Failed to create DirectLine');
     }
 };
@@ -69,6 +72,7 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
     try {
         await loadScript(acsAdapterCDNUrl);
     } catch {
+        scenarioMarker.failScenario(TelemetryEvent.CreateACSAdapter);
         throw new Error('Failed to load ACSAdapter');
     }
 
@@ -90,16 +94,56 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
         scenarioMarker.completeScenario(TelemetryEvent.CreateACSAdapter);
         return adapter;
     } catch {
+        scenarioMarker.failScenario(TelemetryEvent.CreateACSAdapter);
         throw new Error('Failed to create ACSAdapter');
+    }
+};
+
+const createIC3Adapter = async (optionalParams: ChatAdapterOptionalParams, chatSDKConfig: ChatSDKConfig, liveChatVersion: LiveChatVersion, protocol: string, telemetry: typeof AriaTelemetry, scenarioMarker: ScenarioMarker, chatToken: IChatToken, ic3Client: any, logger: IC3ClientLogger): Promise<unknown> => {
+    const options = optionalParams.IC3Adapter? optionalParams.IC3Adapter.options: {};
+    const ic3AdapterCDNUrl = urlResolvers.resolveChatAdapterUrl(chatSDKConfig, liveChatVersion, protocol);
+
+    telemetry?.setCDNPackages({
+        IC3Adapter: ic3AdapterCDNUrl
+    });
+
+    scenarioMarker.startScenario(TelemetryEvent.CreateIC3Adapter);
+
+    try {
+        await loadScript(ic3AdapterCDNUrl);
+    } catch {
+        scenarioMarker.failScenario(TelemetryEvent.CreateIC3Adapter);
+        throw new Error('Failed to load IC3Adapter');
+    }
+
+    const adapterConfig: IIC3AdapterOptions = {
+        chatToken: chatToken,
+        userDisplayName: 'Customer',
+        userId: chatToken.visitorId || 'teamsvisitor',
+        sdkURL: urlResolvers.resolveIC3ClientUrl(chatSDKConfig),
+        sdk: ic3Client,
+        ...options // overrides
+    };
+
+    try {
+        const adapter = new window.Microsoft.BotFramework.WebChat.IC3Adapter(adapterConfig);
+        adapter.logger = logger;
+        scenarioMarker.completeScenario(TelemetryEvent.CreateIC3Adapter);
+        return adapter;
+    } catch {
+        scenarioMarker.failScenario(TelemetryEvent.CreateIC3Adapter);
+        throw new Error('Failed to create IC3Adapter');
     }
 };
 
 export default {
     createDirectLine,
-    createACSAdapter
+    createACSAdapter,
+    createIC3Adapter
 };
 
 export {
     createDirectLine,
-    createACSAdapter
+    createACSAdapter,
+    createIC3Adapter
 };

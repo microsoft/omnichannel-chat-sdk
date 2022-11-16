@@ -24,7 +24,7 @@ import ChatSDKErrors from "./core/ChatSDKErrors";
 import ChatSDKExceptionDetails from "./core/ChatSDKExceptionDetails";
 import ChatSDKMessage from "./core/messaging/ChatSDKMessage";
 import ChatTranscriptBody from "./core/ChatTranscriptBody";
-import { createACSAdapter, createDirectLine } from "./utils/chatAdapterCreators";
+import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
 import ConversationMode from "./core/ConversationMode";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
@@ -42,7 +42,6 @@ import IFileMetadata from "@microsoft/omnichannel-ic3core/lib/model/IFileMetadat
 import IGetChatTokenOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTokenOptionalParams";
 import IGetChatTranscriptsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTranscriptsOptionalParams";
 import IGetLWIDetailsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetLWIDetailsOptionalParams";
-import IIC3AdapterOptions from "./external/IC3Adapter/IIC3AdapterOptions";
 import IInitializationInfo from "@microsoft/omnichannel-ic3core/lib/model/IInitializationInfo";
 import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import InitializeOptionalParams from "./core/InitializeOptionalParams";
@@ -1529,38 +1528,7 @@ class OmnichannelChatSDK {
             const fileManager = new AMSFileManager(this.AMSClient as FramedClient, this.acsAdapterLogger);
             return createACSAdapter(optionalParams, this.chatSDKConfig, this.liveChatVersion, ChatAdapterProtocols.ACS, this.telemetry as typeof AriaTelemetry, this.scenarioMarker, this.omnichannelConfig, this.chatToken, fileManager, this.ACSClient?.getChatClient() as ChatClient, this.acsAdapterLogger as ACSAdapterLogger);
         } else if (protocol === ChatAdapterProtocols.IC3 || this.liveChatVersion === LiveChatVersion.V1) {
-            return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
-                const options = optionalParams.IC3Adapter? optionalParams.IC3Adapter.options: {};
-                const ic3AdapterCDNUrl = this.resolveChatAdapterUrl(protocol || ChatAdapterProtocols.IC3);
-                this.telemetry?.setCDNPackages({
-                    IC3Adapter: ic3AdapterCDNUrl
-                });
-
-                this.scenarioMarker.startScenario(TelemetryEvent.CreateIC3Adapter);
-
-                await loadScript(ic3AdapterCDNUrl, () => {
-                    /* istanbul ignore next */
-                    this.debug && console.debug('IC3Adapter loaded!');
-                    const adapterConfig: IIC3AdapterOptions = {
-                        chatToken: this.chatToken,
-                        userDisplayName: 'Customer',
-                        userId:  this.chatToken.visitorId || 'teamsvisitor',
-                        sdkURL: this.resolveIC3ClientUrl(),
-                        sdk: this.IC3Client,
-                        ...options // overrides
-                    };
-
-                    const adapter = new window.Microsoft.BotFramework.WebChat.IC3Adapter(adapterConfig);
-                    adapter.logger = this.ic3ClientLogger;
-
-                    this.scenarioMarker.completeScenario(TelemetryEvent.CreateIC3Adapter);
-
-                    resolve(adapter);
-                }, () => {
-                    this.scenarioMarker.failScenario(TelemetryEvent.CreateIC3Adapter);
-                    throw new Error('Failed to load IC3Adapter');
-                });
-            });
+            return createIC3Adapter(optionalParams, this.chatSDKConfig, this.liveChatVersion, ChatAdapterProtocols.IC3, this.telemetry as typeof AriaTelemetry, this.scenarioMarker, this.chatToken, this.IC3Client, this.ic3ClientLogger as IC3ClientLogger);
         }
 
         return Promise.reject(`ChatAdapter for protocol ${protocol} currently not supported`);
