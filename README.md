@@ -125,6 +125,11 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
     npm install react-native-url-polyfill --save-dev
     ```
 
+1. Install `@azure/core-asynciterator-polyfill`
+    ```
+    npm install @azure/core-asynciterator-polyfill --save-dev
+    ```
+
 1. Update *metro.config.js* to use React Native compatible Node Core modules
     ```ts
     module.exports = {
@@ -143,7 +148,8 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
     ```ts
     import 'node-libs-react-native/globals';
     import 'react-native-get-random-values';
-    import 'react-native-url-polyfill';
+    import 'react-native-url-polyfill/auto';
+    import '@azure/core-asynciterator-polyfill';
     ```
 
 ## SDK Methods
