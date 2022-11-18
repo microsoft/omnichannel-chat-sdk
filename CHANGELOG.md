@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file.
 - Add ability to use `ChatSDK.createChatAdapter()` for `DirectLine` protocol
 - Add `CreateACSAdapter` telemetry event
 
+### Fixed
+- Fix `ChatAdapterOptionalParams.ACSAdapter.options.egressMiddleware` being used as `ingressMiddleware`
+
 ## [1.2.0] - 2022-11-11
 ### Added
 - Add `sendDefaultInitContext` optional parameter to `ChatSDK.startChat()` to automatically populate `browser`, `device`, `originurl` & `os` as default init context on web

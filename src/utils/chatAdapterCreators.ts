@@ -57,7 +57,7 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
     const defaultEgressMiddlewares = [createChannelDataEgressMiddleware({widgetId: omnichannelConfig.widgetId}), createFormatEgressTagsMiddleware()];
     const defaultIngressMiddlewares = [createFormatIngressTagsMiddleware()];
     const egressMiddleware = options?.egressMiddleware? [...options.egressMiddleware, ...defaultEgressMiddlewares]: [...defaultEgressMiddlewares];
-    const ingressMiddleware = options?.ingressMiddleware? [...options.egressMiddleware, ...defaultIngressMiddlewares]: [...defaultIngressMiddlewares];
+    const ingressMiddleware = options?.ingressMiddleware? [...options.ingressMiddleware, ...defaultIngressMiddlewares]: [...defaultIngressMiddlewares];
     const featuresOption = {
         enableAdaptiveCards: true, // Whether to enable adaptive card payload in adapter (payload in JSON string)
         enableThreadMemberUpdateNotification: true, // Whether to enable chat thread member join/leave notification
