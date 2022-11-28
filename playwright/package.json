@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build:babel": "babel ../lib -d dist",
+    "build:esbuild": "node esbuild.config.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Microsoft Corporation",
