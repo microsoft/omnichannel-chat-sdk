@@ -6,7 +6,7 @@
   "scripts": {
     "build:babel": "babel ../lib -d dist",
     "build:esbuild": "node esbuild.config.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test:integrations": "npx playwright test -c playwright.config.ts"
   },
   "author": "Microsoft Corporation",
   "license": "MIT",
@@ -16,6 +16,7 @@
     "@babel/preset-env": "^7.20.2",
     "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
     "@esbuild-plugins/node-modules-polyfill": "^0.1.4",
+    "@playwright/test": "^1.28.1",
     "esbuild": "^0.15.16"
   }
 }
