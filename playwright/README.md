@@ -28,3 +28,9 @@ npm run test:integrations
 ```sh
 npm run test:integrations -- -g UnauthenticatedChat
 ```
+
+or
+
+```sh
+npm run test:integrations -- --grep "@UnauthenticatedChat"
+```

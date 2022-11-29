@@ -8,7 +8,7 @@ const omnichannelConfig = {
     widgetId: ""
 };
 
-test.describe('UnauthenticatedChat', () => {
+test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
     test('ChatSDK.initialize() should fetch the live chat configuration', async ({ page }) => {
         await page.goto(testPage);
 
