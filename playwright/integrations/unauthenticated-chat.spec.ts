@@ -11,7 +11,7 @@ const omnichannelConfig = {
 test('ChatSDK.initialize() should fetch the live chat configuration', async ({ page }) => {
     await page.goto(testPage);
 
-    const [request, response] = await Promise.all([
+    const [request, response, runtimeContext] = await Promise.all([
         page.waitForRequest(request => {
             return request.url().includes("livechatconnector/config");
         }),
@@ -24,10 +24,18 @@ test('ChatSDK.initialize() should fetch the live chat configuration', async ({ p
 
             chatSDK.setDebug(true);
             await chatSDK.initialize();
+
+            const runtimeContext = {
+                requestId: chatSDK.requestId
+            };
+
+            return runtimeContext;
         }, { omnichannelConfig })
     ]);
 
+    const {requestId} = runtimeContext;
     const liveChatConfigPath = "livechatconnector/config";
-    expect(request.url().includes(liveChatConfigPath)).toBe(true);
+    const requestUrl = `${omnichannelConfig.orgUrl}/${liveChatConfigPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}?requestId=${requestId}&channelId=lcw`;
+    expect(request.url() === requestUrl).toBe(true);
     expect(response.status()).toBe(200);
 });
