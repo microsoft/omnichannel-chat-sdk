@@ -1,0 +1,9 @@
+DefaultSettings:
+  orgId: ''
+  orgUrl: ''
+  widgetId: ''
+UnauthenticatedChat:
+AuthenticatedChat:
+  orgId: ''
+  orgUrl: ''
+  widgetId: ''

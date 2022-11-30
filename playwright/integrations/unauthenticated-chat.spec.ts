@@ -1,12 +1,9 @@
+import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import { test, expect } from '@playwright/test';
 import {join} from 'path';
 
 const testPage = join('file:', __dirname, '..', 'public', 'index.html');
-const omnichannelConfig = {
-    orgId: "",
-    orgUrl: "",
-    widgetId: ""
-};
+const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChat');
 
 test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
     test('ChatSDK.initialize() should fetch the live chat configuration', async ({ page }) => {
