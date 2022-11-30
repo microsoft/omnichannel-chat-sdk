@@ -7,8 +7,6 @@ const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChatWithTranscr
 
 test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTranscripts', () => {
     test('ChatSDK.emailLiveChatTranscript() should not fail', async ({ page }) => {
-        // test.setTimeout(120000)
-
         await page.goto(testPage);
 
         const [request, response, runtimeContext] = await Promise.all([
