@@ -21,6 +21,12 @@ npm run build:esbuild
 npm run test:integrations
 ```
 
+### 3. View Integration Tests Report
+
+```sh
+npx playwright show-report integrations-report
+```
+
 ## Commands
 
 ### Run Unauthenticated Chat Scenarios
