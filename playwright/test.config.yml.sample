@@ -3,6 +3,7 @@ DefaultSettings:
   orgUrl: ''
   widgetId: ''
 UnauthenticatedChat:
+UnauthenticatedChatWithTyping:
 AuthenticatedChat:
   orgId: ''
   orgUrl: ''
