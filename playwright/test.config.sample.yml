@@ -4,6 +4,7 @@ DefaultSettings:
   widgetId: ''
 UnauthenticatedChat:
 UnauthenticatedChatWithTyping:
+UnauthenticatedChatWithTranscripts:
 AuthenticatedChat:
   orgId: ''
   orgUrl: ''
