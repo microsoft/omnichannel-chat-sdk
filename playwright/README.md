@@ -22,13 +22,34 @@ npm run build:babel
 npm run build:esbuild
 ```
 
-### 4. Run Integration Tests
+### 4. Create Test Config File
+
+```sh
+cp test.config.sample.yml test.config.yml
+```
+
+### 5. Add Test Configurations
+
+```diff
+DefaultSettings:
+- orgId: ""
++ orgId: "[orgId]"
+- orgUrl: ""
++ orgUrl: "[orgUrl]"
+- widgetId: ""
++ widgetId: "[widgetId]"
+UnauthenticatedChat:
+
+# ...
+```
+
+### 6. Run Integration Tests
 
 ```sh
 npm run test:integrations
 ```
 
-### 5. View Integration Tests Report
+### 7. View Integration Tests Report
 
 ```sh
 npx playwright show-report integrations-report
