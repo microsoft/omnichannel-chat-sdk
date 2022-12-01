@@ -55,13 +55,12 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
 
-                const optionalParams = {
+            const optionalParams = {
                     getLiveChatConfigOptionalParams: {
                         sendCacheHeaders: true
                     }
                 };
 
-                chatSDK.setDebug(true);
                 await chatSDK.initialize(optionalParams);
 
                 const runtimeContext = {
@@ -81,5 +80,51 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         expect(request.url() === requestUrl).toBe(true);
         expect(requestHeaders['cache-control']).toBe(cacheHeaders);
         expect(response.status()).toBe(200);
+    });
+
+    test('ChatSDK.startChat() should fetch the chat token & perform session init', async ({page}) => {
+        await page.goto(testPage);
+
+        const [chatTokenRequest, chatTokenResponse, sessionInitRequest, sessionInitResponse, runtimeContext] = await Promise.all([
+            page.waitForRequest(request => {
+                return request.url().includes("livechatconnector/v2/getchattoken");
+            }),
+            page.waitForResponse(response => {
+                return response.url().includes("livechatconnector/v2/getchattoken");
+            }),
+            page.waitForRequest(request => {
+                return request.url().includes("livechatconnector/sessioninit");
+            }),
+            page.waitForResponse(response => {
+                return response.url().includes("livechatconnector/sessioninit");
+            }),
+            await page.evaluate(async ({ omnichannelConfig }) => {
+                const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+
+                await chatSDK.initialize();
+
+                const runtimeContext = {
+                    requestId: chatSDK.requestId
+                };
+
+                await chatSDK.startChat();
+
+                await chatSDK.endChat();
+
+                return runtimeContext;
+            }, { omnichannelConfig })
+        ]);
+
+        const {requestId} = runtimeContext;
+        const chatTokenRequestPath = "livechatconnector/v2/getchattoken";
+        const chatTokenRequestUrl = `${omnichannelConfig.orgUrl}/${chatTokenRequestPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
+        const sessionInitRequestPath = "livechatconnector/sessioninit";
+        const sessionInitRequestUrl = `${omnichannelConfig.orgUrl}/${sessionInitRequestPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
+
+        expect(chatTokenRequest.url() === chatTokenRequestUrl).toBe(true);
+        expect(chatTokenResponse.status()).toBe(200);
+        expect(sessionInitRequest.url() === sessionInitRequestUrl).toBe(true);
+        expect(sessionInitResponse.status()).toBe(200);
     });
 });
