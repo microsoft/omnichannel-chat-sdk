@@ -1,9 +1,9 @@
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
+import fetchTestPageUrl from '../utils/fetchTestPageUrl';
 import { test, expect } from '@playwright/test';
-import {join} from 'path';
 import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 
-const testPage = join('file:', __dirname, '..', 'public', 'index.html');
+const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChatWithTyping');
 
 test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTyping', () => {
