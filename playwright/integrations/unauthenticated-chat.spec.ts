@@ -1,6 +1,7 @@
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import { test, expect } from '@playwright/test';
 import {join} from 'path';
+import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 
 const testPage = join('file:', __dirname, '..', 'public', 'index.html');
 const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChat');
@@ -11,10 +12,10 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
 
         const [request, response, runtimeContext] = await Promise.all([
             page.waitForRequest(request => {
-                return request.url().includes("livechatconnector/config");
+                return request.url().includes(OmnichannelEndpoints.LiveChatConfigPath);
             }),
             page.waitForResponse(response => {
-                return response.url().includes("livechatconnector/config");
+                return response.url().includes(OmnichannelEndpoints.LiveChatConfigPath);
             }),
             await page.evaluate(async ({ omnichannelConfig }) => {
                 const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
@@ -32,8 +33,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         ]);
 
         const {requestId} = runtimeContext;
-        const liveChatConfigPath = "livechatconnector/config";
-        const requestUrl = `${omnichannelConfig.orgUrl}/${liveChatConfigPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}?requestId=${requestId}&channelId=lcw`;
+        const requestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatConfigPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}?requestId=${requestId}&channelId=lcw`;
         const requestHeaders = request.headers();
 
         expect(request.url() === requestUrl).toBe(true);
@@ -46,10 +46,10 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
 
         const [request, response, runtimeContext] = await Promise.all([
             page.waitForRequest(request => {
-                return request.url().includes("livechatconnector/config");
+                return request.url().includes(OmnichannelEndpoints.LiveChatConfigPath);
             }),
             page.waitForResponse(response => {
-                return response.url().includes("livechatconnector/config");
+                return response.url().includes(OmnichannelEndpoints.LiveChatConfigPath);
             }),
             await page.evaluate(async ({ omnichannelConfig }) => {
                 const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
@@ -72,8 +72,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         ]);
 
         const {requestId} = runtimeContext;
-        const liveChatConfigPath = "livechatconnector/config";
-        const requestUrl = `${omnichannelConfig.orgUrl}/${liveChatConfigPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}?requestId=${requestId}&channelId=lcw`;
+        const requestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatConfigPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}?requestId=${requestId}&channelId=lcw`;
         const requestHeaders = request.headers();
         const cacheHeaders = 'no-store, must-revalidate, no-cache';
 
@@ -87,16 +86,16 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
 
         const [chatTokenRequest, chatTokenResponse, sessionInitRequest, sessionInitResponse, runtimeContext] = await Promise.all([
             page.waitForRequest(request => {
-                return request.url().includes("livechatconnector/v2/getchattoken");
+                return request.url().includes(OmnichannelEndpoints.LiveChatv2GetChatTokenPath);
             }),
             page.waitForResponse(response => {
-                return response.url().includes("livechatconnector/v2/getchattoken");
+                return response.url().includes(OmnichannelEndpoints.LiveChatv2GetChatTokenPath);
             }),
             page.waitForRequest(request => {
-                return request.url().includes("livechatconnector/sessioninit");
+                return request.url().includes(OmnichannelEndpoints.LiveChatSessionInitPath);
             }),
             page.waitForResponse(response => {
-                return response.url().includes("livechatconnector/sessioninit");
+                return response.url().includes(OmnichannelEndpoints.LiveChatSessionInitPath);
             }),
             await page.evaluate(async ({ omnichannelConfig }) => {
                 const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
@@ -117,10 +116,8 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         ]);
 
         const {requestId} = runtimeContext;
-        const chatTokenRequestPath = "livechatconnector/v2/getchattoken";
-        const chatTokenRequestUrl = `${omnichannelConfig.orgUrl}/${chatTokenRequestPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
-        const sessionInitRequestPath = "livechatconnector/sessioninit";
-        const sessionInitRequestUrl = `${omnichannelConfig.orgUrl}/${sessionInitRequestPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
+        const chatTokenRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatv2GetChatTokenPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
+        const sessionInitRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatSessionInitPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
 
         expect(chatTokenRequest.url() === chatTokenRequestUrl).toBe(true);
         expect(chatTokenResponse.status()).toBe(200);

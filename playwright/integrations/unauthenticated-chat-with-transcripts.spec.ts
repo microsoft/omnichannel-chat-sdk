@@ -1,6 +1,7 @@
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import { test, expect } from '@playwright/test';
 import {join} from 'path';
+import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 
 const testPage = join('file:', __dirname, '..', 'public', 'index.html');
 const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChatWithTranscripts');
@@ -11,10 +12,10 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTranscripts', () => 
 
         const [request, response, runtimeContext] = await Promise.all([
             page.waitForRequest(request => {
-                return request.url().includes("livechatconnector/createemailrequest");
+                return request.url().includes(OmnichannelEndpoints.LiveChatTranscriptEmailRequestPath);
             }),
             page.waitForResponse(response => {
-                return response.url().includes("livechatconnector/createemailrequest");
+                return response.url().includes(OmnichannelEndpoints.LiveChatTranscriptEmailRequestPath);
             }),
             await page.evaluate(async ({ omnichannelConfig }) => {
                 const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
@@ -42,8 +43,7 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTranscripts', () => 
         ]);
 
         const {requestId} = runtimeContext;
-        const emailTranscriptPath = "livechatconnector/createemailrequest";
-        const requestUrl = `${omnichannelConfig.orgUrl}/${emailTranscriptPath}/${requestId}?channelId=lcw`;
+        const requestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatTranscriptEmailRequestPath}/${requestId}?channelId=lcw`;
 
         expect(request.url() === requestUrl).toBe(true);
         expect(response.status()).toBe(200);
