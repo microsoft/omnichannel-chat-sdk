@@ -7,4 +7,5 @@ export default class OmnichannelEndpoints {
     public static readonly LiveChatSessionClosePath = "livechatconnector/sessionclose";
     public static readonly SendTypingIndicatorPath = "inbound/typingindicator/livechat/sendtypingindicator";
     public static readonly LiveChatTranscriptEmailRequestPath = "livechatconnector/createemailrequest";
+    public static readonly LiveChatLiveWorkItemDetailsPath = "livechatconnector/getliveworkitemdetails";
 }
