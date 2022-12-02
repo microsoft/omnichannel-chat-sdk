@@ -125,41 +125,6 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         expect(sessionInitResponse.status()).toBe(200);
     });
 
-    test('ChatSDK.endChat() should perform session close', async ({page}) => {
-        await page.goto(testPage);
-
-        const [sessionCloseRequest, sessionCloseResponse, runtimeContext] = await Promise.all([
-            page.waitForRequest(request => {
-                return request.url().includes(OmnichannelEndpoints.LiveChatSessionClosePath);
-            }),
-            page.waitForResponse(response => {
-                return response.url().includes(OmnichannelEndpoints.LiveChatSessionClosePath);
-            }),
-            await page.evaluate(async ({ omnichannelConfig }) => {
-                const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
-                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
-
-                await chatSDK.initialize();
-
-                const runtimeContext = {
-                    requestId: chatSDK.requestId
-                };
-
-                await chatSDK.startChat();
-
-                await chatSDK.endChat();
-
-                return runtimeContext;
-            }, { omnichannelConfig })
-        ]);
-
-        const {requestId} = runtimeContext;
-        const sessionCloseRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatSessionClosePath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
-
-        expect(sessionCloseRequest.url() === sessionCloseRequestUrl).toBe(true);
-        expect(sessionCloseResponse.status()).toBe(200);
-    });
-
     test('ChatSDK.startChat() with a liveChatContext of a closed conversation should throw an \'ClosedConversation\' error', async ({page}) => {
         await page.goto(testPage);
 
@@ -263,5 +228,40 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         expect(liveWorkItemDetailsResponse.status()).toBe(200);
         expect(liveWorkItemDetailsResponseDataJson.State).not.toBe('Closed');
         expect(sessionInitCalls.length).toBe(1);
+    });
+
+    test('ChatSDK.endChat() should perform session close', async ({page}) => {
+        await page.goto(testPage);
+
+        const [sessionCloseRequest, sessionCloseResponse, runtimeContext] = await Promise.all([
+            page.waitForRequest(request => {
+                return request.url().includes(OmnichannelEndpoints.LiveChatSessionClosePath);
+            }),
+            page.waitForResponse(response => {
+                return response.url().includes(OmnichannelEndpoints.LiveChatSessionClosePath);
+            }),
+            await page.evaluate(async ({ omnichannelConfig }) => {
+                const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+
+                await chatSDK.initialize();
+
+                const runtimeContext = {
+                    requestId: chatSDK.requestId
+                };
+
+                await chatSDK.startChat();
+
+                await chatSDK.endChat();
+
+                return runtimeContext;
+            }, { omnichannelConfig })
+        ]);
+
+        const {requestId} = runtimeContext;
+        const sessionCloseRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatSessionClosePath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
+
+        expect(sessionCloseRequest.url() === sessionCloseRequestUrl).toBe(true);
+        expect(sessionCloseResponse.status()).toBe(200);
     });
 });
