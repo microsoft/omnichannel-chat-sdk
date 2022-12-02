@@ -373,6 +373,53 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         expect(sentMessageContent).toBe(content);
     });
 
+    test('ChatSDK.onNewMessage() should not fail', async ({page}) => {
+        await page.goto(testPage);
+
+        const [runtimeContext] = await Promise.all([
+            await page.evaluate(async ({ omnichannelConfig}) => {
+                const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+                const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+
+                await chatSDK.initialize();
+
+                await chatSDK.startChat();
+
+                const runtimeContext = {
+                    requestId: chatSDK.requestId,
+                    chatId: chatSDK.chatToken.chatId,
+                    acsEndpoint: chatSDK.chatToken.acsEndpoint,
+                };
+
+                const messages = [];
+
+                try {
+                    chatSDK.onNewMessage((message) => {
+                        messages.push(message);
+                    });
+                } catch (err) {
+                    runtimeContext.errorMessage = `${err.message}`;
+                    runtimeContext.errorObject = `${err}`;
+                }
+
+                await sleep(15000); // Wait to accumulate messages if any
+
+                runtimeContext.messages = messages;
+
+                await chatSDK.endChat();
+
+                return runtimeContext;
+            }, { omnichannelConfig})
+        ]);
+
+        expect(runtimeContext.messages).toBeDefined();
+        expect(runtimeContext.messages.length >= 0).toBe(true);
+        expect(runtimeContext?.errorMessage).not.toBeDefined();
+        expect(runtimeContext?.errorObject).not.toBeDefined();
+    });
+
     test('ChatSDK.endChat() should perform session close', async ({page}) => {
         await page.goto(testPage);
 
