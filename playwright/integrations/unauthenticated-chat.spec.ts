@@ -159,4 +159,44 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         expect(sessionCloseRequest.url() === sessionCloseRequestUrl).toBe(true);
         expect(sessionCloseResponse.status()).toBe(200);
     });
+
+    test('ChatSDK.startChat() with a liveChatContext of a closed conversation should throw an \'ClosedConversation\' error', async ({page}) => {
+        await page.goto(testPage);
+
+        const [runtimeContext] = await Promise.all([
+            await page.evaluate(async ({ omnichannelConfig }) => {
+                const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+                const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+
+                await chatSDK.initialize();
+
+                const runtimeContext = {
+                    runtimeId: chatSDK.runtimeId,
+                    requestId: chatSDK.requestId,
+                };
+
+                await chatSDK.startChat();
+
+                const liveChatContext = await chatSDK.getCurrentLiveChatContext();
+
+                await chatSDK.endChat();
+
+                await sleep(3000); // Sleep to avoid race condition
+
+                try {
+                    await chatSDK.startChat({liveChatContext: liveChatContext});
+                } catch (err) {
+                    runtimeContext.errorMessage = `${err.message}`;
+                }
+
+                return runtimeContext;
+            }, { omnichannelConfig }),
+        ]);
+
+        const expectedErrorMessage = "ClosedConversation";
+        const {errorMessage} = runtimeContext;
+        expect(errorMessage).toBe(expectedErrorMessage);
+    });
 });
