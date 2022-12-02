@@ -125,6 +125,50 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         expect(sessionInitResponse.status()).toBe(200);
     });
 
+    test('ChatSDK.startChat() with customContext should be part of session init payload', async ({page}) => {
+        await page.goto(testPage);
+
+        const customContext = {
+            'contextKey1': {'value': 'contextValue1', 'isDisplayable': true}, // Valid
+            'contextKey2': {'value': 12.34, 'isDisplayable': false}, // Invalid
+            'contextKey3': {'value': true} // Invalid
+        };
+
+        const [sessionInitRequest, sessionInitResponse, runtimeContext] = await Promise.all([
+            page.waitForRequest(request => {
+                return request.url().includes(OmnichannelEndpoints.LiveChatSessionInitPath);
+            }),
+            page.waitForResponse(response => {
+                return response.url().includes(OmnichannelEndpoints.LiveChatSessionInitPath);
+            }),
+            await page.evaluate(async ({ omnichannelConfig, customContext }) => {
+                const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+
+                await chatSDK.initialize();
+
+                const runtimeContext = {
+                    requestId: chatSDK.requestId
+                };
+
+                await chatSDK.startChat({customContext});
+
+                await chatSDK.endChat();
+
+                return runtimeContext;
+            }, { omnichannelConfig, customContext })
+        ]);
+
+        const {requestId} = runtimeContext;
+        const sessionInitRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatSessionInitPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
+        const sessionInitRequestPostData = sessionInitRequest.postDataJSON();
+        const {customContextData: sessionInitCustomContextData} = sessionInitRequestPostData;
+
+        expect(sessionInitRequest.url() === sessionInitRequestUrl).toBe(true);
+        expect(sessionInitResponse.status()).toBe(200);
+        expect(sessionInitCustomContextData).toStrictEqual(customContext);
+    });
+
     test('ChatSDK.startChat() with a liveChatContext of a closed conversation should throw an \'ClosedConversation\' error', async ({page}) => {
         await page.goto(testPage);
 
