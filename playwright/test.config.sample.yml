@@ -1,0 +1,11 @@
+DefaultSettings:
+  orgId: ''
+  orgUrl: ''
+  widgetId: ''
+UnauthenticatedChat:
+UnauthenticatedChatWithTyping:
+UnauthenticatedChatWithTranscripts:
+AuthenticatedChat:
+  orgId: ''
+  orgUrl: ''
+  widgetId: ''

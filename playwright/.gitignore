@@ -1,0 +1,5 @@
+test.config.yml
+node_modules/
+/test-results/
+/integrations-report/
+/playwright/.cache/
