@@ -274,6 +274,57 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         expect(sessionInitCalls.length).toBe(1);
     });
 
+    test('ChatSDK.sendMessage() should send a message with default tags & proper metadata', async ({page}) => {
+        const sendMessagePathPattern = /chat\/threads\/(19%.+%40thread.v2)\/messages\?api-version=([\d]{4}-[\d]{2}-[\d]{2})/;
+
+        await page.goto(testPage);
+
+        const content = "Hi";
+        const [sendMessageRequest, sendMessageResponse, runtimeContext] = await Promise.all([
+            page.waitForRequest(request => {
+                return request.url().match(sendMessagePathPattern)?.length >= 0;
+            }),
+            page.waitForResponse(response => {
+                return response.url().match(sendMessagePathPattern)?.length >= 0;
+            }),
+            await page.evaluate(async ({ omnichannelConfig, content}) => {
+                const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+
+                await chatSDK.initialize();
+
+                await chatSDK.startChat();
+
+                const runtimeContext = {
+                    requestId: chatSDK.requestId,
+                    chatId: chatSDK.chatToken.chatId,
+                    acsEndpoint: chatSDK.chatToken.acsEndpoint,
+                };
+
+                await chatSDK.sendMessage({
+                    content
+                });
+
+                await chatSDK.endChat();
+
+                return runtimeContext;
+            }, { omnichannelConfig, content})
+        ]);
+
+        const {acsEndpoint, chatId} = runtimeContext;
+        const sendMessageRequestPartialUrl = `${acsEndpoint}chat/threads/${encodeURIComponent(chatId)}/messages?api-version=`;
+        const sendMessageRequestPostDataDataJson = sendMessageRequest.postDataJSON();
+        const {content: sendMessageRequestContent, metadata: {deliveryMode, tags, widgetId}} = sendMessageRequestPostDataDataJson;
+
+        expect(sendMessageRequestContent).toBe(content);
+        expect(deliveryMode).toBe('bridged');
+        expect(tags.split(',').includes('ChannelId-lcw')).toBe(true);
+        expect(tags.split(',').includes('FromCustomer')).toBe(true);
+        expect(widgetId).toBe(omnichannelConfig.widgetId);
+        expect(sendMessageRequest.url().includes(sendMessageRequestPartialUrl)).toBe(true);
+        expect(sendMessageResponse.status()).toBe(201);
+    });
+
     test('ChatSDK.endChat() should perform session close', async ({page}) => {
         await page.goto(testPage);
 
