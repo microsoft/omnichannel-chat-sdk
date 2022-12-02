@@ -43,4 +43,41 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTyping', () => {
         expect(request.url() === requestUrl).toBe(true);
         expect(response.status()).toBe(200);
     });
+
+    test('ChatSDK.onTypingEvent() should not fail', async ({page}) => {
+        await page.goto(testPage);
+
+        const [runtimeContext] = await Promise.all([
+            await page.evaluate(async ({ omnichannelConfig}) => {
+                const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+
+                await chatSDK.initialize();
+
+                await chatSDK.startChat();
+
+                const runtimeContext = {
+                    requestId: chatSDK.requestId,
+                    chatId: chatSDK.chatToken.chatId,
+                    acsEndpoint: chatSDK.chatToken.acsEndpoint,
+                };
+
+                try {
+                    chatSDK.onTypingEvent(() => {
+                        console.log("Agent is typing...");
+                    })
+                } catch (err) {
+                    runtimeContext.errorMessage = `${err.message}`;
+                    runtimeContext.errorObject = `${err}`;
+                }
+
+                await chatSDK.endChat();
+
+                return runtimeContext;
+            }, { omnichannelConfig})
+        ]);
+
+        expect(runtimeContext?.errorMessage).not.toBeDefined();
+        expect(runtimeContext?.errorObject).not.toBeDefined();
+    });
 });
