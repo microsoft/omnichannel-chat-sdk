@@ -324,6 +324,55 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         expect(sendMessageResponse.status()).toBe(201);
     });
 
+    test('ChatSDK.getMessages() should return a list of messages', async ({page}) => {
+        await page.goto(testPage);
+
+        const content = "Hi";
+        const [getMessagesRequest, getMessagesResponse, runtimeContext] = await Promise.all([
+            page.waitForRequest(request => {
+                return request.url().match(ACSEndpoints.getMessagesPathPattern)?.length >= 0 && request.method() === 'GET';
+            }),
+            page.waitForResponse(response => {
+                return response.url().match(ACSEndpoints.getMessagesPathPattern)?.length >= 0 && response.request().method() === 'GET'
+            }),
+            await page.evaluate(async ({ omnichannelConfig, content}) => {
+                const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+
+                await chatSDK.initialize();
+
+                await chatSDK.startChat();
+
+                const runtimeContext = {
+                    requestId: chatSDK.requestId,
+                    chatId: chatSDK.chatToken.chatId,
+                    acsEndpoint: chatSDK.chatToken.acsEndpoint,
+                };
+
+                await chatSDK.sendMessage({
+                    content
+                });
+
+                await chatSDK.getMessages();
+
+                await chatSDK.endChat();
+
+                return runtimeContext;
+            }, { omnichannelConfig, content})
+        ]);
+
+        const {acsEndpoint, chatId} = runtimeContext;
+        const getMessagesRequestPartialUrl = `${acsEndpoint}chat/threads/${encodeURIComponent(chatId)}/messages?api-version=`;
+        const getMessagesResponseDataJson = await getMessagesResponse.json();
+        const sentMessages = getMessagesResponseDataJson.value.filter((message) => message.type === 'text');
+        const sentMessageContent = sentMessages[0].content.message;
+
+        expect(getMessagesRequest.url().includes(getMessagesRequestPartialUrl)).toBe(true);
+        expect(getMessagesResponse.status()).toBe(200);
+        expect(getMessagesResponseDataJson).toBeDefined();
+        expect(sentMessageContent).toBe(content);
+    });
+
     test('ChatSDK.endChat() should perform session close', async ({page}) => {
         await page.goto(testPage);
 
