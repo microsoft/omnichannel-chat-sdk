@@ -2,6 +2,7 @@ import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
 import { test, expect } from '@playwright/test';
 import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
+import ACSEndpoints from '../utils/ACSEndpoints';
 
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChat');
@@ -275,17 +276,15 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
     });
 
     test('ChatSDK.sendMessage() should send a message with default tags & proper metadata', async ({page}) => {
-        const sendMessagePathPattern = /chat\/threads\/(19%.+%40thread.v2)\/messages\?api-version=([\d]{4}-[\d]{2}-[\d]{2})/;
-
         await page.goto(testPage);
 
         const content = "Hi";
         const [sendMessageRequest, sendMessageResponse, runtimeContext] = await Promise.all([
             page.waitForRequest(request => {
-                return request.url().match(sendMessagePathPattern)?.length >= 0;
+                return request.url().match(ACSEndpoints.sendMessagePathPattern)?.length >= 0;
             }),
             page.waitForResponse(response => {
-                return response.url().match(sendMessagePathPattern)?.length >= 0;
+                return response.url().match(ACSEndpoints.sendMessagePathPattern)?.length >= 0;
             }),
             await page.evaluate(async ({ omnichannelConfig, content}) => {
                 const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
