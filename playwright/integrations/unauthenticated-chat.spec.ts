@@ -175,7 +175,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
 
         const [runtimeContext] = await Promise.all([
             await page.evaluate(async ({ omnichannelConfig }) => {
-                const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+                const { sleep } = window;
 
                 const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
@@ -378,7 +378,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
 
         const [runtimeContext] = await Promise.all([
             await page.evaluate(async ({ omnichannelConfig}) => {
-                const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+                const { sleep } = window;
 
                 const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
@@ -426,7 +426,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         const content = "Hi";
         const [runtimeContext] = await Promise.all([
             await page.evaluate(async ({ omnichannelConfig, content}) => {
-                const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+                const { sleep } = window;
 
                 const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
