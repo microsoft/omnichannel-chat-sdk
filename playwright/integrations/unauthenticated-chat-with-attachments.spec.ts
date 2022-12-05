@@ -15,8 +15,8 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithAttachments', () => 
             page.waitForRequest(request => {
                 return request.url().includes(AMSEndpoints.rootDomain) && request.url().match(AMSEndpoints.uploadImagePattern)?.length >= 0;
             }),
-            page.waitForResponse(request => {
-                return request.url().includes(AMSEndpoints.rootDomain) && request.url().match(AMSEndpoints.uploadImagePattern)?.length >= 0;
+            page.waitForResponse(response => {
+                return response.url().includes(AMSEndpoints.rootDomain) && response.url().match(AMSEndpoints.uploadImagePattern)?.length >= 0;
             }),
             page.waitForRequest(request => {
                 return request.url().match(ACSEndpoints.sendMessagePathPattern)?.length >= 0;
