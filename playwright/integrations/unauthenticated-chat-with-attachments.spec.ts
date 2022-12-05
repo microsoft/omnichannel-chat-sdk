@@ -74,4 +74,60 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithAttachments', () => 
         expect(runtimeContext.errorMessage).not.toBeDefined();
         expect(runtimeContext.errorObject).not.toBeDefined();
     });
+
+    test('ChatSDK.downloadFileAttachment() should download an attachment',  async ({ page }) => {
+        await page.goto(testPage);
+
+        const [runtimeContext] = await Promise.all([
+            await page.evaluate(async ({ omnichannelConfig }) => {
+                const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+
+                await chatSDK.initialize();
+
+                await chatSDK.startChat();
+
+                const runtimeContext = {
+                    requestId: chatSDK.requestId
+                };
+
+                try {
+                    const response = await fetch('./images/600x400.png');
+                    const blob = await response.blob();
+                    const uploadedBlobContent = await blob.text();
+                    const file = new File([blob], '600x400.png', {
+                        type: "image/png"
+                    });
+
+                    await chatSDK.uploadFileAttachment(file);
+
+                    runtimeContext.uploadedBlobContent = uploadedBlobContent;
+                } catch (err) {
+                    runtimeContext.errorMessage = `${err.message}`;
+                    runtimeContext.errorObject = `${err}`;
+                }
+
+                const messages = await chatSDK.getMessages();
+                runtimeContext.messages = messages;
+
+                const attachmentMessageResult = messages.filter(message => message.fileMetadata !== undefined);
+                const attachmentMessage = attachmentMessageResult[0];
+
+                try {
+                    const blob = await chatSDK.downloadFileAttachment(attachmentMessage.fileMetadata);
+                    const downloadedBlobContent = await blob.text();
+                    runtimeContext.downloadedBlobContent = downloadedBlobContent;
+                } catch (err) {
+                    runtimeContext.errorMessage = `${err.message}`;
+                    runtimeContext.errorObject = `${err}`;
+                }
+
+                await chatSDK.endChat();
+
+                return runtimeContext;
+            }, { omnichannelConfig })
+        ]);
+
+        expect(runtimeContext.downloadedBlobContent).toBe(runtimeContext.uploadedBlobContent);
+    });
 });
