@@ -260,6 +260,8 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                     runtimeContext.errorMessage = `${err.message}`;
                 }
 
+                await chatSDK.endChat();
+
                 return runtimeContext;
             }, { omnichannelConfig })
         ]);
