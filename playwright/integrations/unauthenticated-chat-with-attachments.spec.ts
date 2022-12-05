@@ -13,10 +13,10 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithAttachments', () => 
 
         const [uploadImageRequest, uploadImageResponse, sendMessageRequest, sendMessageResponse, runtimeContext] = await Promise.all([
             page.waitForRequest(request => {
-                return  request.url().includes(AMSEndpoints.rootDomain) && request.url().match(AMSEndpoints.uploadImagePattern)?.length >= 0;
+                return request.url().includes(AMSEndpoints.rootDomain) && request.url().match(AMSEndpoints.uploadImagePattern)?.length >= 0;
             }),
             page.waitForResponse(request => {
-                return  request.url().includes(AMSEndpoints.rootDomain) && request.url().match(AMSEndpoints.uploadImagePattern)?.length >= 0;
+                return request.url().includes(AMSEndpoints.rootDomain) && request.url().match(AMSEndpoints.uploadImagePattern)?.length >= 0;
             }),
             page.waitForRequest(request => {
                 return request.url().match(ACSEndpoints.sendMessagePathPattern)?.length >= 0;
@@ -78,7 +78,19 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithAttachments', () => 
     test('ChatSDK.downloadFileAttachment() should download an attachment',  async ({ page }) => {
         await page.goto(testPage);
 
-        const [runtimeContext] = await Promise.all([
+        const [getImageViewStatusRequest, getImageViewStatusResponse, getImageViewRequest, getImageViewResponse, runtimeContext] = await Promise.all([
+            page.waitForRequest(request => {
+                return request.url().includes(AMSEndpoints.rootDomain) && request.url().match(AMSEndpoints.getImageViewStatusPattern)?.length >= 0;
+            }),
+            page.waitForResponse(response => {
+                return response.url().includes(AMSEndpoints.rootDomain) && response.url().match(AMSEndpoints.getImageViewStatusPattern)?.length >= 0;
+            }),
+            page.waitForRequest(request => {
+                return request.url().includes(AMSEndpoints.rootDomain) && request.url().match(AMSEndpoints.getImageViewPattern)?.length >= 0 && !request.url().endsWith("status");
+            }),
+            page.waitForResponse(response => {
+                return response.url().includes(AMSEndpoints.rootDomain) && response.url().match(AMSEndpoints.getImageViewPattern)?.length >= 0 && !response.url().endsWith("status");
+            }),
             await page.evaluate(async ({ omnichannelConfig }) => {
                 const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
@@ -128,6 +140,10 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithAttachments', () => 
             }, { omnichannelConfig })
         ]);
 
+        expect(getImageViewStatusRequest.method()).toBe('GET');
+        expect(getImageViewStatusResponse.status()).toBe(200);
+        expect(getImageViewRequest.method()).toBe('GET');
+        expect(getImageViewResponse.status()).toBe(200);
         expect(runtimeContext.downloadedBlobContent).toBe(runtimeContext.uploadedBlobContent);
     });
 });
