@@ -5,6 +5,7 @@ DefaultSettings:
 UnauthenticatedChat:
 UnauthenticatedChatWithTyping:
 UnauthenticatedChatWithTranscripts:
+UnauthenticatedChatWithAttachments:
 AuthenticatedChat:
   orgId: ''
   orgUrl: ''
