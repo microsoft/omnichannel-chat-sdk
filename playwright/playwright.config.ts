@@ -4,6 +4,14 @@ import { devices } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   globalSetup: require.resolve('./global-setup'),
   testDir: './integrations',
+  webServer: [
+    {
+      command: 'node ./server/app.js',
+      url: 'http://localhost:8080/',
+      timeout: 120 * 1000,
+      reuseExistingServer: !process.env.CI
+    },
+  ],
   timeout: 30 * 1000,
   expect: {
     timeout: 5000
