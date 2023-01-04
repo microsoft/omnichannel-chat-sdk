@@ -12,6 +12,7 @@ import CallingOptionsOptionSetNumber from "../src/core/CallingOptionsOptionSetNu
 import AriaTelemetry from "../src/telemetry/AriaTelemetry";
 import * as settings from '../src/config/settings';
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
+import ChatSDKErrors from "../src/core/ChatSDKErrors";
 
 describe('Omnichannel Chat SDK (Web)', () => {
     (settings as any).ariaTelemetryKey = '';
@@ -67,6 +68,40 @@ describe('Omnichannel Chat SDK (Web)', () => {
         expect(chatSDK.OCClient.sessionInit.mock.calls[0][1]).toMatchObject(sessionInitOptionalParams);
     });
 
+    it('ChatSDK.startChat() with sendDefaultInitContext should throw an error if not used on Web Platform', async () => {
+        const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+        chatSDK.getChatConfig = jest.fn();
+
+        await chatSDK.initialize();
+
+        chatSDK.IC3Client = {
+            initialize: jest.fn(),
+            joinConversation: jest.fn()
+        }
+
+        const optionalParams = {
+            sendDefaultInitContext: true
+        }
+
+        jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+            ChatId: '',
+            Token: '',
+            RegionGtms: '{}'
+        }));
+
+        jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+
+        jest.spyOn(platform, 'isNode').mockReturnValue(true);
+        jest.spyOn(platform, 'isReactNative').mockReturnValue(false);
+        jest.spyOn(platform, 'isBrowser').mockReturnValue(false);
+
+        try {
+            await chatSDK.startChat(optionalParams);
+        } catch (error) {
+            expect(error.message).toEqual(ChatSDKErrors.UnsupportedPlatform);
+        }
+    });
+
     it('ChatSDK.createChatAdapter() should be returned succesfully on Web platform', async () => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
@@ -109,7 +144,7 @@ describe('Omnichannel Chat SDK (Web)', () => {
         jest.spyOn(platform, 'isReactNative').mockReturnValue(false);
         jest.spyOn(platform, 'isBrowser').mockReturnValue(true);
 
-        const protocol = 'DirectLine';
+        const protocol = 'UnsupportedProtocol';
         const optionalParams = {
             protocol
         }

@@ -197,6 +197,58 @@ describe('Omnichannel Chat SDK', () => {
             expect(url).toBe(libraries.getACSAdapterCDNUrl());
         });
 
+        it('ChatSDK should be able to pick custom webChatDirectLineVersion if set', async () => {
+            const omnichannelConfig = {
+                orgUrl: '',
+                orgId: '',
+                widgetId: ''
+            };
+
+            const chatSDKConfig = {
+                chatAdapterConfig: {
+                    webChatDirectLineVersion: 'version'
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            const url = chatSDK.resolveChatAdapterUrl(ChatAdapterProtocols.DirectLine);
+
+            expect(url).toBe(libraries.getDirectLineCDNUrl(chatSDKConfig.chatAdapterConfig.webChatDirectLineVersion));
+        });
+
+        it('ChatSDK should be able to pick custom webChatDirectLineCDNUrl if set', async () => {
+            const omnichannelConfig = {
+                orgUrl: '',
+                orgId: '',
+                widgetId: ''
+            };
+
+            const chatSDKConfig = {
+                chatAdapterConfig: {
+                    webChatDirectLineVersion: 'version',
+                    webChatDirectLineCDNUrl: 'cdn'
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            const url = chatSDK.resolveChatAdapterUrl(ChatAdapterProtocols.DirectLine);
+
+            expect(url).toBe(chatSDKConfig.chatAdapterConfig.webChatDirectLineCDNUrl);
+        });
+
+        it('ChatSDK should pick the default webChatDirectLineCDNUrl if no chatAdapterConfig is set', async () => {
+            const omnichannelConfig = {
+                orgUrl: '',
+                orgId: '',
+                widgetId: ''
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            const url = chatSDK.resolveChatAdapterUrl(ChatAdapterProtocols.DirectLine);
+
+            expect(url).toBe(libraries.getDirectLineCDNUrl());
+        });
+
         it('ChatSDK should throw an error if ChatSDK.resolveChatAdapterUrl() is called with other protocol than supported protocols', async () => {
             const omnichannelConfig = {
                 orgUrl: '',
@@ -206,9 +258,10 @@ describe('Omnichannel Chat SDK', () => {
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
 
-            const protocol = ChatAdapterProtocols.DirectLine;
+            const protocol = "UnsupportedProtocol";
             try {
                 chatSDK.resolveChatAdapterUrl(protocol);
+                fail();
             } catch (error) {
                 expect(error.toString()).toContain(`ChatAdapter for protocol ${protocol} currently not supported`);
             }

@@ -53,6 +53,7 @@ Please make sure you have a chat widget configured before using this package or 
     - [Chat Reconnect with Authenticated User](#chat-reconnect-with-authenticated-user)
     - [Chat Reconnect with Unauthenticated User](#chat-reconnect-with-unauthenticated-user)
     - [Operating Hours](#operating-hours)
+    - [Single Sign-on for Bots](/docs/scenarios/SINGLE_SIGN_ON_FOR_BOTS.md)
 - [Sample Apps](https://github.com/microsoft/omnichannel-chat-sdk-samples)
 - [Feature Comparisons](#feature-comparisons)
 - [Telemetry](#telemetry)
@@ -124,6 +125,11 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
     npm install react-native-url-polyfill --save-dev
     ```
 
+1. Install `@azure/core-asynciterator-polyfill`
+    ```
+    npm install @azure/core-asynciterator-polyfill --save-dev
+    ```
+
 1. Update *metro.config.js* to use React Native compatible Node Core modules
     ```ts
     module.exports = {
@@ -142,7 +148,8 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
     ```ts
     import 'node-libs-react-native/globals';
     import 'react-native-get-random-values';
-    import 'react-native-url-polyfill';
+    import 'react-native-url-polyfill/auto';
+    import '@azure/core-asynciterator-polyfill';
     ```
 
 ## SDK Methods

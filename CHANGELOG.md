@@ -3,6 +3,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Added
+- Add ability to use `ChatSDK.createChatAdapter()` for `DirectLine` protocol
+- Add `CreateACSAdapter` telemetry event
+
+### Fixed
+- Fix `ChatAdapterOptionalParams.ACSAdapter.options.egressMiddleware` being used as `ingressMiddleware`
+
+## [1.2.0] - 2022-11-11
+### Added
 - Add `sendDefaultInitContext` optional parameter to `ChatSDK.startChat()` to automatically populate `browser`, `device`, `originurl` & `os` as default init context on web
 - Add `sendCacheHeaders` as optional paramater to `ChatSDK.initialize()` and `ChatSDK.getLiveChatConfig()`
 - Add `validateAuthChatRecord` call on `ChatSDK.startChat()` with `liveChatContext` for all authenticated chat scenarios
@@ -13,6 +21,8 @@ All notable changes to this project will be documented in this file.
 - Prevent `AMSFileManager.getFileIds()` & `AMSFileManager.getFileMetadata()` to be triggered on all activities with null checks
 - Add `LiveChatVersion` check on `ChatSDK.updateChatToken()`
 - Use `amsreferences` property instead of `amsReferences` by default
+- Fix attachment download to use MIME types instead of file extensions
+- Remove `fileMetadata` property on messages not containing any attachment
 
 ### Changed
 - Uptake [@microsoft/ocsdk@0.3.1](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.3.1)
@@ -20,6 +30,7 @@ All notable changes to this project will be documented in this file.
 - Uptake [acs_webchat-chat-adapter@0.0.35-beta.9](https://unpkg.com/acs_webchat-chat-adapter@0.0.35-beta.9/dist/chat-adapter.js)
 - Uptake [acs_webchat-chat-adapter@0.0.35-beta.12](https://unpkg.com/acs_webchat-chat-adapter@0.0.35-beta.12/dist/chat-adapter.js)
 - Uptake [@microsoft/omnichannel-amsclient@0.1.2](https://www.npmjs.com/package/@microsoft/omnichannel-amsclient/v/0.1.2)
+- Uptake [@microsoft/ocsdk@0.3.2](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.3.2)
 
 ## [1.1.0] - 2022-04-15
 ### Added
