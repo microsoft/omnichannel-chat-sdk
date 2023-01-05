@@ -1,4 +1,5 @@
 enum ChatSDKErrors {
+    ScriptLoadFailure = "ScriptLoadFailure",
     UnsupportedPlatform = "UnsupportedPlatform"
 }
 
