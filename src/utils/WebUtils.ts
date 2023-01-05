@@ -1,3 +1,6 @@
+import sleep from "./sleep";
+
+const maxBackoffSeconds = 60;
 const loadScript = async (scriptUrl: string, callbackOnload: CallableFunction = () => void(0), callbackError: CallableFunction = () => void(0), retries = 0, attempt = 0): Promise<void> => {
   return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
     const scriptElements = Array.from(document.getElementsByTagName('script'));
@@ -27,6 +30,9 @@ const loadScript = async (scriptUrl: string, callbackOnload: CallableFunction = 
       }
 
       scriptElement.remove();
+
+      const exponentialBackoffWaitTime = Math.min((2 ** attempt) + Math.random(), maxBackoffSeconds) * 1000;
+      await sleep(exponentialBackoffWaitTime);
 
       try {
         await loadScript(scriptUrl, callbackOnload, callbackError, retries, attempt);
