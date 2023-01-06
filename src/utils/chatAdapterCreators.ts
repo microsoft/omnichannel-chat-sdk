@@ -49,8 +49,16 @@ const createDirectLine = async (optionalParams: ChatAdapterOptionalParams, chatS
         const adapter = new DirectLine.DirectLine({...options});
         scenarioMarker.completeScenario(TelemetryEvent.CreateDirectLine);
         return adapter;
-    } catch {
-        scenarioMarker.failScenario(TelemetryEvent.CreateDirectLine);
+    } catch (error) {
+        const exceptionDetails: ChatSDKExceptionDetails = {
+            response: ChatSDKErrors.ChatAdapterInitializationFailure,
+            errorObject: `${error}`
+        };
+
+        scenarioMarker.failScenario(TelemetryEvent.CreateDirectLine, {
+            ExceptionDetails: JSON.stringify(exceptionDetails)
+        });
+
         throw new Error('Failed to create DirectLine');
     }
 };
@@ -111,8 +119,16 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
 
         scenarioMarker.completeScenario(TelemetryEvent.CreateACSAdapter);
         return adapter;
-    } catch {
-        scenarioMarker.failScenario(TelemetryEvent.CreateACSAdapter);
+    } catch (error) {
+        const exceptionDetails: ChatSDKExceptionDetails = {
+            response: ChatSDKErrors.ChatAdapterInitializationFailure,
+            errorObject: `${error}`
+        };
+
+        scenarioMarker.failScenario(TelemetryEvent.CreateACSAdapter, {
+            ExceptionDetails: JSON.stringify(exceptionDetails)
+        });
+
         throw new Error('Failed to create ACSAdapter');
     }
 };
@@ -156,8 +172,16 @@ const createIC3Adapter = async (optionalParams: ChatAdapterOptionalParams, chatS
         adapter.logger = logger;
         scenarioMarker.completeScenario(TelemetryEvent.CreateIC3Adapter);
         return adapter;
-    } catch {
-        scenarioMarker.failScenario(TelemetryEvent.CreateIC3Adapter);
+    } catch (error) {
+        const exceptionDetails: ChatSDKExceptionDetails = {
+            response: ChatSDKErrors.ChatAdapterInitializationFailure,
+            errorObject: `${error}`
+        };
+
+        scenarioMarker.failScenario(TelemetryEvent.CreateIC3Adapter, {
+            ExceptionDetails: JSON.stringify(exceptionDetails)
+        });
+
         throw new Error('Failed to create IC3Adapter');
     }
 };
