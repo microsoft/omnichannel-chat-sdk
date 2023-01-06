@@ -516,12 +516,12 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
     test('ChatSDK.createChatAdapter() should load ACSAdapter', async ({page}) => {
         await page.goto(testPage);
 
-        const [createChatAdapterRequest, runtimeContext] = await Promise.all([
-            page.waitForRequest(request => {
-                return request.url().includes("https://unpkg.com/acs_webchat-chat-adapter");
+        const [createChatAdapterResponse, runtimeContext] = await Promise.all([
+            page.waitForResponse(response => {
+                return response.url().includes("https://unpkg.com/acs_webchat-chat-adapter");
             }),
             await page.evaluate(async ({ omnichannelConfig }) => {
-                const { sleep, preloadChatAdapter } = window;
+                const { preloadChatAdapter } = window;
                 const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
 
@@ -547,6 +547,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
             }, { omnichannelConfig })
         ]);
 
+        expect(createChatAdapterResponse.status()).toBe(200);
         expect(runtimeContext.errorMessage).not.toBeDefined();
         expect(runtimeContext.errorObject).not.toBeDefined();
     });
