@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Add ability to use `ChatSDK.createChatAdapter()` for `DirectLine` protocol
 - Add `CreateACSAdapter` telemetry event
+- Improve `ChatSDK.createChatAdapter()` with retries using exponential backoff & additional details on failures
 
 ### Fixed
 - Fix `ChatAdapterOptionalParams.ACSAdapter.options.egressMiddleware` being used as `ingressMiddleware`
