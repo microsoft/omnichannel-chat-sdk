@@ -1,7 +1,8 @@
 import sleep from "./sleep";
 
+const defaultLoadScriptRetries = 3;
 const maxBackoffSeconds = 60;
-const loadScript = async (scriptUrl: string, callbackOnload: CallableFunction = () => void(0), callbackError: CallableFunction = () => void(0), retries = 0, attempt = 0): Promise<void> => {
+const loadScript = async (scriptUrl: string, callbackOnload: CallableFunction = () => void(0), callbackError: CallableFunction = () => void(0), retries = defaultLoadScriptRetries, attempt = 0): Promise<void> => {
   return new Promise (async (resolve, reject) => { // eslint-disable-line no-async-promise-executor
     const scriptElements = Array.from(document.getElementsByTagName('script'));
     const foundScriptElement = scriptElements.filter(scriptElement => scriptElement.src == scriptUrl);
