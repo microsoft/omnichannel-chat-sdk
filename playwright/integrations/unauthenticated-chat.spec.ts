@@ -367,7 +367,8 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         const getMessagesRequestPartialUrl = `${acsEndpoint}chat/threads/${encodeURIComponent(chatId)}/messages?api-version=`;
         const getMessagesResponseDataJson = await getMessagesResponse.json();
         const sentMessages = getMessagesResponseDataJson.value.filter((message) => message.type === 'text');
-        const sentMessageContent = sentMessages[0].content.message;
+        const sentMessage = sentMessages.filter((message) => message.content.message === content);
+        const sentMessageContent = sentMessage[0].content.message;
 
         expect(getMessagesRequest.url().includes(getMessagesRequestPartialUrl)).toBe(true);
         expect(getMessagesResponse.status()).toBe(200);
