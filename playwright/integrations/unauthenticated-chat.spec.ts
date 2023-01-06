@@ -512,4 +512,42 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         expect(sessionCloseRequest.url() === sessionCloseRequestUrl).toBe(true);
         expect(sessionCloseResponse.status()).toBe(200);
     });
+
+    test('ChatSDK.createChatAdapter() should load ACSAdapter', async ({page}) => {
+        await page.goto(testPage);
+
+        const [createChatAdapterRequest, runtimeContext] = await Promise.all([
+            page.waitForRequest(request => {
+                return request.url().includes("https://unpkg.com/acs_webchat-chat-adapter");
+            }),
+            await page.evaluate(async ({ omnichannelConfig }) => {
+                const { sleep, preloadChatAdapter } = window;
+                const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+
+                await chatSDK.initialize();
+
+                const runtimeContext = {
+                    requestId: chatSDK.requestId
+                };
+
+                await chatSDK.startChat();
+
+                try {
+                    await preloadChatAdapter();
+                    const chatAdapter = await chatSDK.createChatAdapter();
+                } catch (e) {
+                    runtimeContext.errorMessage = `${err.message}`;
+                    runtimeContext.errorObject = `${err}`;
+                }
+
+                await chatSDK.endChat();
+
+                return runtimeContext;
+            }, { omnichannelConfig })
+        ]);
+
+        expect(runtimeContext.errorMessage).not.toBeDefined();
+        expect(runtimeContext.errorObject).not.toBeDefined();
+    });
 });
