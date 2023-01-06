@@ -566,7 +566,6 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
 
         const [runtimeContext] = await Promise.all([
             await page.evaluate(async ({ omnichannelConfig }) => {
-                const { patchLoadScript } = window;
                 const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
 
@@ -579,7 +578,6 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 await chatSDK.startChat();
 
                 try {
-                    patchLoadScript();
                     const chatAdapter = await chatSDK.createChatAdapter();
                 } catch (err) {
                     runtimeContext.errorMessage = `${err.message}`;
