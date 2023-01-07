@@ -34,7 +34,6 @@ test.describe('AuthenticatedChat @AuthenticatedChat', () => {
 
                 const response = await fetch(authUrl, payload);
                 const authToken = await response.text();
-                console.log(authToken);
 
                 const chatSDKConfig = {
                     getAuthToken: () => authToken
