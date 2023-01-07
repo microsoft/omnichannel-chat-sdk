@@ -453,10 +453,11 @@ const context = await chatSDK.getPostChatSurveyContext();
 
 ### Get Agent Availability
 
-It gets information on whether the a queue is available, and whether there are agents available in that queue, as well as queue position and averatge wait time. This call only supports authenticated chat.
+It gets information on whether a queue is available, and whether there are agents available in that queue, as well as queue position and average wait time. This call only supports authenticated chat.
 
 ```ts
 const agentAvailability = await chatSDK.getAgentAvailability();
+```
 
 ## Common Scenarios
 
