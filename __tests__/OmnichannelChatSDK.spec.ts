@@ -3296,5 +3296,162 @@ describe('Omnichannel Chat SDK', () => {
                 throw("Should not throw error. " + ex);
             }
         });
+
+        it('ChatSDK.getAgentAvailability() should throw error if not auth chat', async () => {
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                },
+                chatReconnect: {
+                    disable: false,
+                }
+            };
+
+            const dummyConfig = {
+                ChatWidgetLanguage: {
+                    msdyn_localeid: "1033"
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+            
+            expect(chatSDK.authSettings).toBe(null);
+            jest.spyOn(console, 'error');
+
+            chatSDK.liveChatConfig = dummyConfig;
+
+            try {
+                await chatSDK.getAgentAvailability();
+                throw("Should throw error.");
+            } catch (ex) {
+                expect(ex?.message).toEqual("GetAgentAvailability is supported only for authenticated live chat widget.")
+            }
+        });
+
+        it('ChatSDK.getAgentAvailability() should throw error if auth token not set', async () => {
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                },
+                chatReconnect: {
+                    disable: false,
+                },
+                getAuthToken: async () => {
+                    return 'authenticatedUserToken'
+                }
+            };
+
+            const dummyConfig = {
+                ChatWidgetLanguage: {
+                    msdyn_localeid: "1033"
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+            chatSDK.authSettings = {};
+
+            expect(chatSDK.authenticatedUserToken).toBe(null);
+            jest.spyOn(console, 'error');
+
+            chatSDK.liveChatConfig = dummyConfig;
+
+            try {
+                await chatSDK.getAgentAvailability();
+                throw("Should throw error.");
+            } catch (ex) {
+                expect(ex?.message).toEqual("Missing AuthToken for GetAgentAvailability.")
+            }
+        });
+
+        it('ChatSDK.getAgentAvailability() should throw error if conversation already started', async () => {
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                },
+                chatReconnect: {
+                    disable: false,
+                },
+                getAuthToken: async () => {
+                    return 'authenticatedUserToken'
+                }
+            };
+
+            const dummyConfig = {
+                ChatWidgetLanguage: {
+                    msdyn_localeid: "1033"
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+            chatSDK.authSettings = {};
+            chatSDK.authenticatedUserToken = {};
+            chatSDK.conversation = {};
+            jest.spyOn(console, 'error');
+
+            chatSDK.liveChatConfig = dummyConfig;
+
+            try {
+                await chatSDK.getAgentAvailability();
+                throw("Should throw error.");
+            } catch (ex) {
+                expect(ex?.message).toEqual("GetAgentAvailability can only be called before a chat has started.")
+            }
+        });
+
+        it('ChatSDK.getAgentAvailability() should throw error if conversation already started', async () => {
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                },
+                chatReconnect: {
+                    disable: false,
+                }
+            };
+
+            const dummyConfig = {
+                LiveWSAndLiveChatEngJoin: {
+                    msdyn_postconversationsurveyenable: "true",
+                    msfp_sourcesurveyidentifier: "",
+                    msfp_botsourcesurveyidentifier: "1",
+                    postConversationSurveyOwnerId: "",
+                    postConversationBotSurveyOwnerId: "2"
+                },
+                ChatWidgetLanguage: {
+                    msdyn_localeid: "1033"
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+            
+            chatSDK.liveChatConfig = dummyConfig;
+            chatSDK.authSettings = {};
+            chatSDK.authenticatedUserToken = {};
+            chatSDK.conversation = null;
+
+            jest.spyOn(chatSDK.OCClient, 'getAgentAvailability').mockResolvedValue({
+                isAgentAvailable: true
+            });
+
+            try {
+                const agentAvailability = await chatSDK.getAgentAvailability();
+                expect(agentAvailability).toEqual({
+                    isAgentAvailable: true
+                });
+            } catch (ex) {
+                throw("Should not throw error. " + ex);
+            }
+        });
     });
 })
