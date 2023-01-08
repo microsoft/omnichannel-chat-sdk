@@ -419,6 +419,12 @@ class OmnichannelChatSDK {
 
         sessionInitOptionalParams = this.populateInitChatOptionalParam(sessionInitOptionalParams, optionalParams);
 
+        if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
+            sessionInitOptionalParams.reconnectId = this.reconnectId as string;
+        } else if (this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat) {
+            sessionInitOptionalParams.reconnectId = this.reconnectId as string;
+        }
+        
         // Skip session init when there's a valid live chat context
         if (!optionalParams.liveChatContext) {
             try {
