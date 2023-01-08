@@ -12,4 +12,7 @@ export default interface StartChatOptionalParams {
     initContext?: InitContext;
     reconnectId?: string;
     sendDefaultInitContext?: true;
+    isProactiveChat?: boolean;
+    latitude?: string;
+    longitude?: string;
 }
