@@ -4,10 +4,12 @@ import { ACSAdapterLogger, ACSClientLogger, CallingSDKLogger, IC3ClientLogger, O
 import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
 import { ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import {SDKProvider as OCSDKProvider, uuidv4} from "@microsoft/ocsdk";
+import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
 import { defaultLocaleId, getLocaleStringFromId } from "./utils/locale";
 import { loadScript, removeElementById } from "./utils/WebUtils";
 import platform, { isBrowser } from "./utils/platform";
 import validateSDKConfig, {defaultChatSDKConfig} from "./validators/SDKConfigValidators";
+
 import ACSParticipantDisplayName from "./core/messaging/ACSParticipantDisplayName";
 import AMSFileManager from "./external/ACSAdapter/AMSFileManager";
 import AriaTelemetry from "./telemetry/AriaTelemetry";
@@ -24,7 +26,6 @@ import ChatSDKErrors from "./core/ChatSDKErrors";
 import ChatSDKExceptionDetails from "./core/ChatSDKExceptionDetails";
 import ChatSDKMessage from "./core/messaging/ChatSDKMessage";
 import ChatTranscriptBody from "./core/ChatTranscriptBody";
-import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
 import ConversationMode from "./core/ConversationMode";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
@@ -44,7 +45,6 @@ import IGetChatTranscriptsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/I
 import IGetLWIDetailsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetLWIDetailsOptionalParams";
 import IInitializationInfo from "@microsoft/omnichannel-ic3core/lib/model/IInitializationInfo";
 import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
-import InitializeOptionalParams from "./core/InitializeOptionalParams";
 import IOmnichannelConfiguration from "@microsoft/ocsdk/lib/Interfaces/IOmnichannelConfiguration";
 import IPerson from "@microsoft/omnichannel-ic3core/lib/model/IPerson";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
@@ -55,6 +55,7 @@ import ISDKConfiguration from "@microsoft/ocsdk/lib/Interfaces/ISDKConfiguration
 import ISessionCloseOptionalParams from "@microsoft/ocsdk/lib/Interfaces/ISessionCloseOptionalParams";
 import ISessionInitOptionalParams from "@microsoft/ocsdk/lib/Interfaces/ISessionInitOptionalParams";
 import InitContext from "@microsoft/ocsdk/lib/Model/InitContext";
+import InitializeOptionalParams from "./core/InitializeOptionalParams";
 import LiveChatContext from "./core/LiveChatContext";
 import LiveChatVersion from "./core/LiveChatVersion";
 import LiveWorkItemDetails from "./core/LiveWorkItemDetails";
@@ -77,6 +78,7 @@ import createOmnichannelMessage from "./utils/createOmnichannelMessage";
 import createTelemetry from "./utils/createTelemetry";
 import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
 import { defaultMessageTags } from "./core/messaging/MessageTags";
+import { getLocationInfo } from "./utils/location";
 import {isCustomerMessage} from "./utils/utilities";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
@@ -481,6 +483,12 @@ class OmnichannelChatSDK {
         if (this.chatToken.chatId) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (sessionInitOptionalParams as any).initContext.chatId = this.chatToken.chatId;
+        }
+
+        if (this.liveChatConfig.LiveWSAndLiveChatEngJoin.msdyn_requestvisitorlocation === "true") {
+            const location = await getLocationInfo(this.scenarioMarker, this.chatToken.chatId as string, this.requestId);
+            sessionInitOptionalParams.initContext!.latitude = location.latitude;
+            sessionInitOptionalParams.initContext!.longitude = location.longitude;
         }
 
         // Skip session init when there's a valid live chat context
