@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Fix `ChatAdapterOptionalParams.ACSAdapter.options.egressMiddleware` being used as `ingressMiddleware`
+- Fix `ChatSDK.onTypingEvent()` being triggered on current user typing
 
 ## [1.2.0] - 2022-11-11
 ### Added
