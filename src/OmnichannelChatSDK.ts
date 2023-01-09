@@ -1656,7 +1656,7 @@ class OmnichannelChatSDK {
         });
 
         if (!this.authSettings) {
-            reportError("UnAuthUnsupported", "GetAgentAvailability is supported only for authenticated live chat widget.");
+            reportError("Unsupported", "GetAgentAvailability is supported only for authenticated live chat widget.");
         }
 
         if (!this.authenticatedUserToken) {
