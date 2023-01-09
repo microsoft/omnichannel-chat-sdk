@@ -3407,7 +3407,7 @@ describe('Omnichannel Chat SDK', () => {
             }
         });
 
-        it('ChatSDK.getAgentAvailability() should throw error if conversation already started', async () => {
+        it('ChatSDK.getAgentAvailability() should should return response in happy path', async () => {
             const chatSDKConfig = {
                 telemetry: {
                     disable: true

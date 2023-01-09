@@ -1,6 +1,6 @@
 import InitContext from "@microsoft/ocsdk/lib/Model/InitContext";
 
-export default interface GetAgantAvailabilityOptionalParams {
+export default interface GetAgentAvailabilityOptionalParams {
     preChatResponse?: object;
     customContext?: object;
     browser?: string;

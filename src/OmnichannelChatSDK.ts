@@ -32,7 +32,7 @@ import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/FileSharingProtocolType";
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
 import FramedlessClient from "@microsoft/omnichannel-amsclient/lib/FramedlessClient";
-import GetAgantAvailabilityOptionalParams from "./core/GetAgantAvailabilityOptionalParams";
+import GetAgentAvailabilityOptionalParams from "./core/GetAgentAvailabilityOptionalParams";
 import GetLiveChatConfigOptionalParams from "./core/GetLiveChatConfigOptionalParams";
 import HostType from "@microsoft/omnichannel-ic3core/lib/interfaces/HostType";
 import {SDKProvider as IC3SDKProvider} from '@microsoft/omnichannel-ic3core';
@@ -1635,54 +1635,36 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async getAgentAvailability(optionalParams: GetAgantAvailabilityOptionalParams = {}): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
-        const requestId = uuidv4();
-        
-        this.scenarioMarker.startScenario(TelemetryEvent.GetAgentAvailability, {
-            RequestId: requestId
-        });
-
-        if (!this.authSettings) {
+    public async getAgentAvailability(optionalParams: GetAgentAvailabilityOptionalParams = {}): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+        const reportError = (response: string, message: string, chatId = "") => {
             const exceptionDetails: ChatSDKExceptionDetails = {
-                response: "UnAuthUnsupported",
-                message: "GetAgentAvailability is supported only for authenticated live chat widget."
+                response,
+                message
             };
 
             this.scenarioMarker.failScenario(TelemetryEvent.GetAgentAvailability, {
-                RequestId: requestId,
-                ExceptionDetails: JSON.stringify(exceptionDetails)
+                RequestId: this.requestId,
+                ExceptionDetails: JSON.stringify(exceptionDetails),
+                ChatId: chatId
             });
 
             throw new Error(exceptionDetails.message);
+        }
+
+        this.scenarioMarker.startScenario(TelemetryEvent.GetAgentAvailability, {
+            RequestId: this.requestId
+        });
+
+        if (!this.authSettings) {
+            reportError("UnAuthUnsupported", "GetAgentAvailability is supported only for authenticated live chat widget.");
         }
 
         if (!this.authenticatedUserToken) {
-            const exceptionDetails = {
-                response: "UndefinedAuthToken",
-                message: "Missing AuthToken for GetAgentAvailability."
-            }
-
-            this.scenarioMarker.failScenario(TelemetryEvent.GetAgentAvailability, {
-                RequestId: requestId,
-                ExceptionDetails: JSON.stringify(exceptionDetails)
-            });
-
-            throw new Error(exceptionDetails.message);
+            reportError("UndefinedAuthToken", "Missing AuthToken for GetAgentAvailability.");
         }
 
         if (this.conversation) {
-            const exceptionDetails = {
-                response: "InvalidOperation",
-                message: "GetAgentAvailability can only be called before a chat has started."
-            }
-
-            this.scenarioMarker.failScenario(TelemetryEvent.GetAgentAvailability, {
-                RequestId: requestId,
-                ChatId: this.chatToken.chatId as string,
-                ExceptionDetails: JSON.stringify(exceptionDetails)
-            });
-
-            throw new Error(exceptionDetails.message);
+            reportError("InvalidOperation", "GetAgentAvailability can only be called before a chat has started.", this.chatToken.chatId as string);
         }
 
         let getAgentAvailabilityOptionalParams: IGetQueueAvailabilityOptionalParams = {
@@ -1692,25 +1674,15 @@ class OmnichannelChatSDK {
         getAgentAvailabilityOptionalParams = this.populateInitChatOptionalParam(getAgentAvailabilityOptionalParams, optionalParams);
 
         try {
-            const response = await this.OCClient.getAgentAvailability(requestId, getAgentAvailabilityOptionalParams);
+            const response = await this.OCClient.getAgentAvailability(this.requestId, getAgentAvailabilityOptionalParams);
             return response;
         } catch (e) {
-            const exceptionDetails = {
-                response: "GetAgentAvailabilityFailed",
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                message: (e as any).message
-            }
-
-            this.scenarioMarker.failScenario(TelemetryEvent.GetAgentAvailability, {
-                RequestId: requestId,
-                ExceptionDetails: JSON.stringify(exceptionDetails)
-            });
-
-            return new Error(exceptionDetails.response);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            reportError("GetAgentAvailabilityFailed", (e as any).message as string);
         }
     }
 
-    private populateInitChatOptionalParam = (requestOptionalParams: ISessionInitOptionalParams | IGetQueueAvailabilityOptionalParams, optionalParams: StartChatOptionalParams | GetAgantAvailabilityOptionalParams) => {
+    private populateInitChatOptionalParam = (requestOptionalParams: ISessionInitOptionalParams | IGetQueueAvailabilityOptionalParams, optionalParams: StartChatOptionalParams | GetAgentAvailabilityOptionalParams) => {
         requestOptionalParams.initContext!.locale = getLocaleStringFromId(this.localeId);
 
         if (optionalParams.customContext) {
