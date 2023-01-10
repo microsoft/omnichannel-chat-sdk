@@ -419,10 +419,7 @@ class OmnichannelChatSDK {
         };
 
         sessionInitOptionalParams = this.populateInitChatOptionalParam(sessionInitOptionalParams, optionalParams);
-
-        if (optionalParams.isProactiveChat) {
-            sessionInitOptionalParams.initContext!.isProactiveChat = optionalParams.isProactiveChat;
-        }
+        sessionInitOptionalParams.initContext!.isProactiveChat = !!optionalParams.isProactiveChat;
 
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
             sessionInitOptionalParams.reconnectId = this.reconnectId as string;
