@@ -1,8 +1,6 @@
 import InitContext from "@microsoft/ocsdk/lib/Model/InitContext";
-import LiveChatContext from "./LiveChatContext";
 
-export default interface StartChatOptionalParams {
-    liveChatContext?: LiveChatContext;
+export default interface GetAgentAvailabilityOptionalParams {
     preChatResponse?: object;
     customContext?: object;
     browser?: string;
@@ -12,7 +10,4 @@ export default interface StartChatOptionalParams {
     initContext?: InitContext;
     reconnectId?: string;
     sendDefaultInitContext?: true;
-    isProactiveChat?: boolean;
-    latitude?: string;
-    longitude?: string;
 }

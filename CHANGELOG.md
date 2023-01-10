@@ -6,9 +6,11 @@ All notable changes to this project will be documented in this file.
 - Add ability to use `ChatSDK.createChatAdapter()` for `DirectLine` protocol
 - Add `CreateACSAdapter` telemetry event
 - Improve `ChatSDK.createChatAdapter()` with retries using exponential backoff & additional details on failures
+- Add `GetAgentAvailability` SDK method for auth chat
 
 ### Fixed
 - Fix `ChatAdapterOptionalParams.ACSAdapter.options.egressMiddleware` being used as `ingressMiddleware`
+- Fix `ChatSDK.onTypingEvent()` being triggered on current user typing
 
 ## [1.2.0] - 2022-11-11
 ### Added

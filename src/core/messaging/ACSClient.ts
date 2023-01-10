@@ -280,6 +280,13 @@ export class ACSConversation {
 
         try {
             const listener = (event: TypingIndicatorReceivedEvent) => {
+                const {sender, recipient} = event;
+
+                // Ignore participant's own typing events
+                if ((sender as any).communicationUserId === (recipient as any).communicationUserId) { // eslint-disable-line @typescript-eslint/no-explicit-any
+                  return;
+                }
+
                 onTypingEventCallback(event);
             }
 
