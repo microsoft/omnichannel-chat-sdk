@@ -430,7 +430,7 @@ class OmnichannelChatSDK {
             sessionInitOptionalParams.reconnectId = this.reconnectId as string;
         }
         
-        if (this.liveChatConfig.LiveWSAndLiveChatEngJoin.msdyn_requestvisitorlocation === "true") {
+        if (this.liveChatConfig?.LiveWSAndLiveChatEngJoin?.msdyn_requestvisitorlocation === "true") {
             const location = await getLocationInfo(this.scenarioMarker, this.chatToken.chatId as string, this.requestId);
             sessionInitOptionalParams.initContext!.latitude = location.latitude;
             sessionInitOptionalParams.initContext!.longitude = location.longitude;

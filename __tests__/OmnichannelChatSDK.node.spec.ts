@@ -72,10 +72,6 @@ describe('Omnichannel Chat SDK (Node)', () => {
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
 
-        chatSDK.liveChatConfig = {
-            LiveWSAndLiveChatEngJoin: {}
-        }
-
         await chatSDK.initialize();
 
         chatSDK.OCClient.sessionInit = jest.fn();
@@ -103,10 +99,6 @@ describe('Omnichannel Chat SDK (Node)', () => {
         };
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
-        
-        chatSDK.liveChatConfig = {
-            LiveWSAndLiveChatEngJoin: {}
-        }
 
         await chatSDK.initialize();
 

@@ -2,22 +2,23 @@
 
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
+import platform from "./platform";
 
 interface Location {
     latitude: string;
     longitude: string;
 }
 
-export const getLocationInfo = (scenarioMarker: ScenarioMarker, chatId: string, requestId: string): Promise<Location> => {
+export const getLocationInfo = async (scenarioMarker: ScenarioMarker, chatId: string, requestId: string): Promise<Location> => {
     const reportLocationError = (response: string, error?: any) => {
         console.error(response, error);
         let exceptionDetails;
         try {
-            exceptionDetails = JSON.stringify(error)
+            exceptionDetails = JSON.stringify({Response: response, ExceptionalDetails: error})
         } catch {
             exceptionDetails = JSON.stringify({Response: response})
         }
-        scenarioMarker.failScenario(TelemetryEvent.GetGeoLocation, {
+        scenarioMarker.failScenario(TelemetryEvent.GetGeolocation, {
             RequestId: requestId,
             ChatId: chatId,
             ExceptionDetails: exceptionDetails
@@ -25,7 +26,7 @@ export const getLocationInfo = (scenarioMarker: ScenarioMarker, chatId: string, 
     }
 
     return new Promise((resolve, reject) => {
-        scenarioMarker.startScenario(TelemetryEvent.GetGeoLocation, {
+        scenarioMarker.startScenario(TelemetryEvent.GetGeolocation, {
             RequestId: requestId
         });
     
@@ -34,8 +35,8 @@ export const getLocationInfo = (scenarioMarker: ScenarioMarker, chatId: string, 
             longitude: ""
         };
 
-        if (!navigator.geolocation) {
-            reportLocationError("LocationNotSupportedOnBrowser");
+        if (platform.isNode() || platform.isReactNative() || !navigator.geolocation) {
+            reportLocationError("Unsupported");
             resolve(location);
         }
 
@@ -43,19 +44,19 @@ export const getLocationInfo = (scenarioMarker: ScenarioMarker, chatId: string, 
             try {
                 location.latitude = position.coords.latitude.toString();
                 location.longitude = position.coords.longitude.toString();
-                scenarioMarker.completeScenario(TelemetryEvent.GetGeoLocation, {
+                scenarioMarker.completeScenario(TelemetryEvent.GetGeolocation, {
                     RequestId: requestId,
                     ChatId: chatId
                 });
                 resolve(location);
             } catch (ex) {
-                reportLocationError("GetGeoLocationFailed", ex);
+                reportLocationError("GetGeolocationFailed", ex);
                 resolve(location);
             }
         }
 
         const onError = (ex: any) => {
-            reportLocationError("GetGeoLocationFailed", ex)
+            reportLocationError("GetGeolocationFailed", ex)
             resolve(location);
         }
 

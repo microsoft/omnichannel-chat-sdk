@@ -37,10 +37,7 @@ describe('Omnichannel Chat SDK (Web)', () => {
     it('ChatSDK.startChat() with sendDefaultInitContext should pass getContext to OCClient.sessionInit()', async () => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
-        chatSDK.liveChatConfig = {
-            LiveWSAndLiveChatEngJoin: {}
-        }
-
+        
         await chatSDK.initialize();
 
         chatSDK.IC3Client = {
@@ -111,10 +108,6 @@ describe('Omnichannel Chat SDK (Web)', () => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
-
-        chatSDK.liveChatConfig = {
-            LiveWSAndLiveChatEngJoin: {}
-        }
         
         await chatSDK.initialize();
 
@@ -140,10 +133,6 @@ describe('Omnichannel Chat SDK (Web)', () => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
-
-        chatSDK.liveChatConfig = {
-            LiveWSAndLiveChatEngJoin: {}
-        }
         
         await chatSDK.initialize();
 
@@ -172,10 +161,6 @@ describe('Omnichannel Chat SDK (Web)', () => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
-
-        chatSDK.liveChatConfig = {
-            LiveWSAndLiveChatEngJoin: {}
-        }
         
         await chatSDK.initialize();
 
