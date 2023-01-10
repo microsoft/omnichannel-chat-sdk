@@ -5,14 +5,16 @@
 export {}; // Fix for "Cannot redeclare block-scoped variable 'OmnichannelChatSDK'"
 
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
+
+import * as settings from '../src/config/settings';
+
+import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
+import AriaTelemetry from "../src/telemetry/AriaTelemetry";
+import CallingOptionsOptionSetNumber from "../src/core/CallingOptionsOptionSetNumber";
+import ChatSDKErrors from "../src/core/ChatSDKErrors";
+import WebUtils from "../src/utils/WebUtils";
 import libraries from "../src/utils/libraries";
 import platform from "../src/utils/platform";
-import WebUtils from "../src/utils/WebUtils";
-import CallingOptionsOptionSetNumber from "../src/core/CallingOptionsOptionSetNumber";
-import AriaTelemetry from "../src/telemetry/AriaTelemetry";
-import * as settings from '../src/config/settings';
-import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
-import ChatSDKErrors from "../src/core/ChatSDKErrors";
 
 describe('Omnichannel Chat SDK (Web)', () => {
     (settings as any).ariaTelemetryKey = '';
@@ -35,6 +37,9 @@ describe('Omnichannel Chat SDK (Web)', () => {
     it('ChatSDK.startChat() with sendDefaultInitContext should pass getContext to OCClient.sessionInit()', async () => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
+        chatSDK.liveChatConfig = {
+            LiveWSAndLiveChatEngJoin: {}
+        }
 
         await chatSDK.initialize();
 
@@ -107,6 +112,10 @@ describe('Omnichannel Chat SDK (Web)', () => {
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
 
+        chatSDK.liveChatConfig = {
+            LiveWSAndLiveChatEngJoin: {}
+        }
+        
         await chatSDK.initialize();
 
         chatSDK.OCClient.sessionInit = jest.fn();
@@ -132,6 +141,10 @@ describe('Omnichannel Chat SDK (Web)', () => {
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
 
+        chatSDK.liveChatConfig = {
+            LiveWSAndLiveChatEngJoin: {}
+        }
+        
         await chatSDK.initialize();
 
         chatSDK.OCClient.sessionInit = jest.fn();
@@ -160,6 +173,10 @@ describe('Omnichannel Chat SDK (Web)', () => {
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
 
+        chatSDK.liveChatConfig = {
+            LiveWSAndLiveChatEngJoin: {}
+        }
+        
         await chatSDK.initialize();
 
         chatSDK.callingOption = CallingOptionsOptionSetNumber.NoCalling;

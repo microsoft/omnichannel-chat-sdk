@@ -2,9 +2,10 @@
  * @jest-environment node
  */
 
-import AriaTelemetry from "../src/telemetry/AriaTelemetry";
 import * as settings from '../src/config/settings';
+
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
+import AriaTelemetry from "../src/telemetry/AriaTelemetry";
 
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 
@@ -71,6 +72,10 @@ describe('Omnichannel Chat SDK (Node)', () => {
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
 
+        chatSDK.liveChatConfig = {
+            LiveWSAndLiveChatEngJoin: {}
+        }
+
         await chatSDK.initialize();
 
         chatSDK.OCClient.sessionInit = jest.fn();
@@ -98,6 +103,10 @@ describe('Omnichannel Chat SDK (Node)', () => {
         };
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
+        
+        chatSDK.liveChatConfig = {
+            LiveWSAndLiveChatEngJoin: {}
+        }
 
         await chatSDK.initialize();
 
