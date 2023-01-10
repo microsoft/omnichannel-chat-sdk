@@ -80,6 +80,7 @@ import createOmnichannelMessage from "./utils/createOmnichannelMessage";
 import createTelemetry from "./utils/createTelemetry";
 import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
 import { defaultMessageTags } from "./core/messaging/MessageTags";
+import { getLocationInfo } from "./utils/location";
 import {isCustomerMessage} from "./utils/utilities";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
@@ -418,6 +419,7 @@ class OmnichannelChatSDK {
         };
 
         sessionInitOptionalParams = this.populateInitChatOptionalParam(sessionInitOptionalParams, optionalParams);
+        sessionInitOptionalParams.initContext!.isProactiveChat = !!optionalParams.isProactiveChat;
 
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
             sessionInitOptionalParams.reconnectId = this.reconnectId as string;
@@ -425,6 +427,12 @@ class OmnichannelChatSDK {
             sessionInitOptionalParams.reconnectId = this.reconnectId as string;
         }
         
+        if (this.liveChatConfig?.LiveWSAndLiveChatEngJoin?.msdyn_requestvisitorlocation === "true") {
+            const location = await getLocationInfo(this.scenarioMarker, this.chatToken.chatId as string, this.requestId);
+            sessionInitOptionalParams.initContext!.latitude = location.latitude;
+            sessionInitOptionalParams.initContext!.longitude = location.longitude;
+        }
+
         // Skip session init when there's a valid live chat context
         if (!optionalParams.liveChatContext) {
             try {
