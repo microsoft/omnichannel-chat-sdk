@@ -60,11 +60,11 @@ npx playwright show-report integrations-report
 ### Run Unauthenticated Chat Scenarios
 
 ```sh
-npm run test:integrations -- -g UnauthenticatedChat
+npm run test:integrations -- -g "@UnauthenticatedChat"
 ```
 
-or
+### Run Authenticated Chat Scenarios
 
 ```sh
-npm run test:integrations -- --grep "@UnauthenticatedChat"
+npm run test:integrations -- -g "@AuthenticatedChat"
 ```

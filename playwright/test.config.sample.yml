@@ -2,6 +2,7 @@ DefaultSettings:
   orgId: ''
   orgUrl: ''
   widgetId: ''
+  authUrl: ''
 UnauthenticatedChat:
 UnauthenticatedChatWithTyping:
 UnauthenticatedChatWithTranscripts:
@@ -10,3 +11,4 @@ AuthenticatedChat:
   orgId: ''
   orgUrl: ''
   widgetId: ''
+  authUrl: ''
