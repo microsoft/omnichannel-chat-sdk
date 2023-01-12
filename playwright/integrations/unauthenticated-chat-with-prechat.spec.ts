@@ -16,7 +16,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithPrechat', () => {
         };
 
         const preChatSurvey = "";
-        const [request, response, runtimeContext] = await Promise.all([
+        const [sessionInitRequest, sessionInitResponse, runtimeContext] = await Promise.all([
             page.waitForRequest(request => {
                 return request.url().includes(OmnichannelEndpoints.LiveChatSessionInitPath);
             }),
@@ -42,7 +42,12 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithPrechat', () => {
             }, { omnichannelConfig, optionalParams })
         ]);
 
-        const RequestPostData = request.postDataJSON();
+        const {requestId} = runtimeContext;
+        const sessionInitRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatSessionInitPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
+        const RequestPostData = sessionInitRequest.postDataJSON();
+
+        expect(sessionInitRequest.url() === sessionInitRequestUrl).toBe(true);
+        expect(sessionInitResponse.status()).toBe(200);
         const { preChatResponse: preChatResponseData } = RequestPostData;
         expect(optionalParams.preChatResponse).toEqual(preChatResponseData);
     });
