@@ -112,6 +112,19 @@ interface CallingSDKContract {
     ElapsedTimeInMilliseconds?: string;
 }
 
+interface AMSClientContract {
+    ChatSDKRuntimeId: string;
+    OrgId: string;
+    OrgUrl: string;
+    WidgetId: string;
+    RequestId?: string;
+    ChatId?: string;
+    Event?: string;
+    ExceptionDetails?: string;
+    ElapsedTimeInMilliseconds?: string;
+    AMSClientVersion: string;
+}
+
 enum Renderer {
     ReactNative = 'ReactNative'
 }
@@ -219,6 +232,18 @@ class AriaTelemetry {
             }
         }
 
+        if (scenarioType == ScenarioType.AMSCLIENT) {
+            event = {
+                name: ScenarioType.AMSCLIENT,
+                properties: {
+                    ...AriaTelemetry.populateAMSClientBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.INFO
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
         /* istanbul ignore next */
         this._debug && console.log(`[AriaTelemetry][info] ${scenarioType}`);
         /* istanbul ignore next */
@@ -295,6 +320,18 @@ class AriaTelemetry {
                 name: ScenarioType.CALLINGSDK,
                 properties: {
                     ...AriaTelemetry.populateCallingSDKBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.DEBUG
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
+        if (scenarioType == ScenarioType.AMSCLIENT) {
+            event = {
+                name: ScenarioType.AMSCLIENT,
+                properties: {
+                    ...AriaTelemetry.populateAMSClientBaseProperties(),
                     ...properties,
                     LogLevel: LogLevel.DEBUG
                 },
@@ -385,6 +422,18 @@ class AriaTelemetry {
             }
         }
 
+        if (scenarioType == ScenarioType.AMSCLIENT) {
+            event = {
+                name: ScenarioType.AMSCLIENT,
+                properties: {
+                    ...AriaTelemetry.populateAMSClientBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.WARN
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
         /* istanbul ignore next */
         this._debug && console.log(`[AriaTelemetry][warn] ${scenarioType}`);
         /* istanbul ignore next */
@@ -468,6 +517,18 @@ class AriaTelemetry {
             }
         }
 
+        if (scenarioType == ScenarioType.AMSCLIENT) {
+            event = {
+                name: ScenarioType.AMSCLIENT,
+                properties: {
+                    ...AriaTelemetry.populateAMSClientBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.ERROR
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
         /* istanbul ignore next */
         this._debug && console.log(`[AriaTelemetry][error] ${scenarioType}`);
         /* istanbul ignore next */
@@ -544,6 +605,18 @@ class AriaTelemetry {
                 name: ScenarioType.CALLINGSDK,
                 properties: {
                     ...AriaTelemetry.populateCallingSDKBaseProperties(),
+                    ...properties,
+                    LogLevel: LogLevel.LOG
+                },
+                priority: AWTEventPriority.High
+            }
+        }
+
+        if (scenarioType == ScenarioType.AMSCLIENT) {
+            event = {
+                name: ScenarioType.AMSCLIENT,
+                properties: {
+                    ...AriaTelemetry.populateAMSClientBaseProperties(),
                     ...properties,
                     LogLevel: LogLevel.LOG
                 },
@@ -735,6 +808,21 @@ class AriaTelemetry {
             Description: '',
             ExceptionDetails: '',
             ElapsedTimeInMilliseconds: ''
+        }
+    }
+
+    private static populateAMSClientBaseProperties(): AMSClientContract {
+        return {
+            ChatSDKRuntimeId: '',
+            OrgId: '',
+            OrgUrl: '',
+            WidgetId: '',
+            RequestId: '',
+            ChatId: '',
+            Event: '',
+            ExceptionDetails: '',
+            ElapsedTimeInMilliseconds: '',
+            AMSClientVersion: require('@microsoft/omnichannel-amsclient/package.json').version // eslint-disable-line @typescript-eslint/no-var-requires
         }
     }
 }
