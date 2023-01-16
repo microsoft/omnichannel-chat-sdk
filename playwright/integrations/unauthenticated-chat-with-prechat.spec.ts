@@ -12,10 +12,12 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithPrechat', () => {
         await page.goto(testPage);
 
         const optionalParams = {
-            preChatResponse: { 'Type': "InputSubmit" }, // PreChatSurvey response
+            preChatResponse: {
+                'Type': "InputSubmit",
+                '{"Name":"OmnichannelSurvey","IsOption":false,"Order":1,"IsRequired":false,"QuestionText":"OmnichannelSurvey"}': "ok"
+            }
         };
 
-        const preChatSurvey = "";
         const [sessionInitRequest, sessionInitResponse, runtimeContext] = await Promise.all([
             page.waitForRequest(request => {
                 return request.url().includes(OmnichannelEndpoints.LiveChatSessionInitPath);
@@ -23,7 +25,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithPrechat', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatSessionInitPath);
             }),
-            await page.evaluate(async ({ omnichannelConfig, preChatSurvey, optionalParams }) => {
+            await page.evaluate(async ({ omnichannelConfig, optionalParams }) => {
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
                 const runtimeContext = {};
@@ -34,7 +36,9 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithPrechat', () => {
 
                 runtimeContext.requestId = chatSDK.requestId;
 
-                preChatSurvey = await chatSDK.getPreChatSurvey();
+                const preChatSurveyRes = await chatSDK.getPreChatSurvey();
+
+                runtimeContext.preChatSurvey = preChatSurveyRes;
 
                 await chatSDK.endChat();
 
@@ -42,8 +46,10 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithPrechat', () => {
             }, { omnichannelConfig, optionalParams })
         ]);
 
-        const {requestId} = runtimeContext;
+        const { requestId, preChatSurvey } = runtimeContext;
         const sessionInitRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatSessionInitPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
+        const prechatSurveyBody = JSON.parse(preChatSurvey.body[2].id);
+        expect(prechatSurveyBody.Name).toEqual('OmnichannelSurvey');
         const RequestPostData = sessionInitRequest.postDataJSON();
 
         expect(sessionInitRequest.url() === sessionInitRequestUrl).toBe(true);
