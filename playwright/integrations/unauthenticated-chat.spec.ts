@@ -512,4 +512,57 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         expect(sessionCloseRequest.url() === sessionCloseRequestUrl).toBe(true);
         expect(sessionCloseResponse.status()).toBe(200);
     });
+
+    test('ChatSDK.startChat() with sendDefaultInitContext should send default init contexts', async ({page, browserName }) => {
+        await page.goto(testPage);
+
+        const [chatTokenRequest, chatTokenResponse, sessionInitRequest, sessionInitResponse, runtimeContext] = await Promise.all([
+            page.waitForRequest(request => {
+                return request.url().includes(OmnichannelEndpoints.LiveChatv2GetChatTokenPath);
+            }),
+            page.waitForResponse(response => {
+                return response.url().includes(OmnichannelEndpoints.LiveChatv2GetChatTokenPath);
+            }),
+            page.waitForRequest(request => {
+                return request.url().includes(OmnichannelEndpoints.LiveChatSessionInitPath);
+            }),
+            page.waitForResponse(response => {
+                return response.url().includes(OmnichannelEndpoints.LiveChatSessionInitPath);
+            }),
+            await page.evaluate(async ({ omnichannelConfig }) => {
+                const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+
+                await chatSDK.initialize();
+
+                const optionalParams = {
+                    sendDefaultInitContext: true
+                }
+
+                const runtimeContext = {
+                    requestId: chatSDK.requestId
+                };
+
+                await chatSDK.startChat(optionalParams);
+
+                await chatSDK.endChat();
+
+                return runtimeContext;
+            }, { omnichannelConfig })
+        ]);
+
+        const {requestId} = runtimeContext;
+        const chatTokenRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatv2GetChatTokenPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
+        const sessionInitRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatSessionInitPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
+        const sessionInitRequestPostData = sessionInitRequest.postDataJSON();
+
+        expect(chatTokenRequest.url() === chatTokenRequestUrl).toBe(true);
+        expect(chatTokenResponse.status()).toBe(200);
+        expect(sessionInitRequest.url() === sessionInitRequestUrl).toBe(true);
+        expect(sessionInitResponse.status()).toBe(200);
+        expect(sessionInitRequestPostData.browser).not.toBe(null);
+        expect(sessionInitRequestPostData.device).not.toBe(null);
+        expect(sessionInitRequestPostData.os).not.toBe(null);
+        expect(sessionInitRequestPostData.originurl).toBe(testPage);
+    });
 });
