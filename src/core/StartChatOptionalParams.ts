@@ -15,4 +15,5 @@ export default interface StartChatOptionalParams {
     isProactiveChat?: boolean;
     latitude?: string;
     longitude?: string;
+    portalContactId?: string;
 }

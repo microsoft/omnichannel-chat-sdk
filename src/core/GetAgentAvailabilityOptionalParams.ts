@@ -10,4 +10,5 @@ export default interface GetAgentAvailabilityOptionalParams {
     initContext?: InitContext;
     reconnectId?: string;
     sendDefaultInitContext?: true;
+    portalContactId?: string;
 }
