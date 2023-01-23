@@ -1717,6 +1717,10 @@ class OmnichannelChatSDK {
             requestOptionalParams.initContext!.preChatResponse = optionalParams.preChatResponse;
         }
 
+        if (optionalParams.portalContactId) {
+            requestOptionalParams.initContext!.portalcontactid = optionalParams.portalContactId;
+        }
+
         if (optionalParams.sendDefaultInitContext) {
             if (platform.isNode() || platform.isReactNative()) {
                 const exceptionDetails: ChatSDKExceptionDetails = {
