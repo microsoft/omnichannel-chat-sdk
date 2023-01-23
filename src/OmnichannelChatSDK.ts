@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { ACSAdapterLogger, ACSClientLogger, CallingSDKLogger, IC3ClientLogger, OCSDKLogger, createACSAdapterLogger, createACSClientLogger, createCallingSDKLogger, createIC3ClientLogger, createOCSDKLogger } from "./utils/loggers";
+import { ACSAdapterLogger, ACSClientLogger, CallingSDKLogger, IC3ClientLogger, OCSDKLogger, createACSAdapterLogger, createACSClientLogger, createCallingSDKLogger, createIC3ClientLogger, createOCSDKLogger, createAMSClientLogger, AMSClientLogger } from "./utils/loggers";
 import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
 import { ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import {SDKProvider as OCSDKProvider, uuidv4} from "@microsoft/ocsdk";
@@ -9,7 +9,6 @@ import { defaultLocaleId, getLocaleStringFromId } from "./utils/locale";
 import { loadScript, removeElementById } from "./utils/WebUtils";
 import platform, { isBrowser } from "./utils/platform";
 import validateSDKConfig, {defaultChatSDKConfig} from "./validators/SDKConfigValidators";
-
 import ACSParticipantDisplayName from "./core/messaging/ACSParticipantDisplayName";
 import AMSFileManager from "./external/ACSAdapter/AMSFileManager";
 import AriaTelemetry from "./telemetry/AriaTelemetry";
@@ -70,6 +69,7 @@ import OmnichannelErrorCodes from "./core/OmnichannelErrorCodes";
 import OmnichannelMessage from "./core/messaging/OmnichannelMessage";
 import OnNewMessageOptionalParams from "./core/messaging/OnNewMessageOptionalParams";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
+import PluggableLogger from "@microsoft/omnichannel-amsclient/lib/PluggableLogger";
 import PostChatContext from "./core/PostChatContext";
 import ProtocolType from "@microsoft/omnichannel-ic3core/lib/interfaces/ProtocoleType";
 import ScenarioMarker from "./telemetry/ScenarioMarker";
@@ -115,6 +115,7 @@ class OmnichannelChatSDK {
     private acsClientLogger: ACSClientLogger | null = null;
     private acsAdapterLogger: ACSAdapterLogger | null = null;
     private callingSdkLogger: CallingSDKLogger | null = null;
+    private amsClientLogger: AMSClientLogger | null = null;
     private isPersistentChat = false;
     private isChatReconnect = false;
     private reconnectId: null | string = null;
@@ -144,6 +145,7 @@ class OmnichannelChatSDK {
         this.acsClientLogger = createACSClientLogger(this.omnichannelConfig);
         this.acsAdapterLogger = createACSAdapterLogger(this.omnichannelConfig);
         this.callingSdkLogger = createCallingSDKLogger(this.omnichannelConfig);
+        this.amsClientLogger = createAMSClientLogger(this.omnichannelConfig);
 
         this.scenarioMarker.useTelemetry(this.telemetry);
         this.ic3ClientLogger.useTelemetry(this.telemetry);
@@ -151,6 +153,7 @@ class OmnichannelChatSDK {
         this.acsClientLogger.useTelemetry(this.telemetry);
         this.acsAdapterLogger.useTelemetry(this.telemetry);
         this.callingSdkLogger.useTelemetry(this.telemetry);
+        this.amsClientLogger.useTelemetry(this.telemetry);
 
         this.scenarioMarker.setRuntimeId(this.runtimeId);
         this.ic3ClientLogger.setRuntimeId(this.runtimeId);
@@ -158,6 +161,7 @@ class OmnichannelChatSDK {
         this.acsClientLogger.setRuntimeId(this.runtimeId);
         this.acsAdapterLogger.setRuntimeId(this.runtimeId);
         this.callingSdkLogger.setRuntimeId(this.runtimeId);
+        this.amsClientLogger.setRuntimeId(this.runtimeId);
 
         validateOmnichannelConfig(omnichannelConfig);
         validateSDKConfig(chatSDKConfig);
@@ -173,6 +177,7 @@ class OmnichannelChatSDK {
         this.acsClientLogger?.setRequestId(this.requestId);
         this.acsAdapterLogger?.setRequestId(this.requestId);
         this.callingSdkLogger?.setRequestId(this.requestId);
+        this.amsClientLogger?.setRequestId(this.requestId);
     }
 
     /* istanbul ignore next */
@@ -186,6 +191,7 @@ class OmnichannelChatSDK {
         this.acsClientLogger?.setDebug(flag);
         this.acsAdapterLogger?.setDebug(flag);
         this.callingSdkLogger?.setDebug(flag);
+        this.amsClientLogger?.setDebug(flag);
     }
 
     public async initialize(optionalParams: InitializeOptionalParams = {}): Promise<ChatConfig> {
@@ -210,7 +216,7 @@ class OmnichannelChatSDK {
                     framedMode: isBrowser(),
                     multiClient: true,
                     debug: false,
-                    logger: undefined
+                    logger: this.amsClientLogger as PluggableLogger
                 });
             } else {
                 this.IC3Client = await this.getIC3Client();
@@ -413,6 +419,7 @@ class OmnichannelChatSDK {
         this.acsClientLogger?.setChatId(this.chatToken.chatId || '');
         this.acsAdapterLogger?.setChatId(this.chatToken.chatId || '');
         this.callingSdkLogger?.setChatId(this.chatToken.chatId || '');
+        this.amsClientLogger?.setChatId(this.chatToken.chatId || '');
 
         let sessionInitOptionalParams: ISessionInitOptionalParams = {
             initContext: {} as InitContext
@@ -426,7 +433,7 @@ class OmnichannelChatSDK {
         } else if (this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat) {
             sessionInitOptionalParams.reconnectId = this.reconnectId as string;
         }
-        
+
         if (this.liveChatConfig?.LiveWSAndLiveChatEngJoin?.msdyn_requestvisitorlocation === "true") {
             const location = await getLocationInfo(this.scenarioMarker, this.chatToken.chatId as string, this.requestId);
             sessionInitOptionalParams.initContext!.latitude = location.latitude;
@@ -642,6 +649,9 @@ class OmnichannelChatSDK {
 
             this.callingSdkLogger?.setRequestId(this.requestId);
             this.callingSdkLogger?.setChatId('');
+
+            this.amsClientLogger?.setRequestId(this.requestId);
+            this.amsClientLogger?.setChatId('');
         } catch (error) {
             const exceptionDetails = {
                 response: "OCClientSessionCloseFailed"
