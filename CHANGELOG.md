@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Add `CreateACSAdapter` telemetry event
 - Improve `ChatSDK.createChatAdapter()` with retries using exponential backoff & additional details on failures
 - Add `GetAgentAvailability` SDK method for auth chat
+- Add `portalContactId` in `StartChatOptionalParams` and `GetAgentAvailabilityOptionalParams`
 
 ### Fixed
 - Fix `ChatAdapterOptionalParams.ACSAdapter.options.egressMiddleware` being used as `ingressMiddleware`
