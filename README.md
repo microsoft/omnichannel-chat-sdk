@@ -90,6 +90,7 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 | Persistent Chat | ✔ | ✔ |
 | Chat Reconnect | ✔ | ✔ |
 | Operating Hours | ✔ | ✔ |
+| Get Agent Availability | ✔ | ✔ |
 | Queue Position | ✔ | ✔ | No SDK method. Handled as *system message* |
 | Average Wait Time | ✔ | ✔ | No SDK method. Handled as *system message* |
 
@@ -448,6 +449,14 @@ It gets post chat survey link, survey locale, and whether an agent has joined th
 
 ```ts
 const context = await chatSDK.getPostChatSurveyContext();
+```
+
+### Get Agent Availability
+
+It gets information on whether a queue is available, and whether there are agents available in that queue, as well as queue position and average wait time. This call only supports authenticated chat.
+
+```ts
+const agentAvailability = await chatSDK.getAgentAvailability();
 ```
 
 ## Common Scenarios

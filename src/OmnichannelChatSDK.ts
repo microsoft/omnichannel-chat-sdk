@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { ACSAdapterLogger, ACSClientLogger, CallingSDKLogger, IC3ClientLogger, OCSDKLogger, createACSAdapterLogger, createACSClientLogger, createCallingSDKLogger, createIC3ClientLogger, createOCSDKLogger } from "./utils/loggers";
+import { ACSAdapterLogger, ACSClientLogger, CallingSDKLogger, IC3ClientLogger, OCSDKLogger, createACSAdapterLogger, createACSClientLogger, createCallingSDKLogger, createIC3ClientLogger, createOCSDKLogger, createAMSClientLogger, AMSClientLogger } from "./utils/loggers";
 import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
 import { ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import {SDKProvider as OCSDKProvider, uuidv4} from "@microsoft/ocsdk";
+import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
 import { defaultLocaleId, getLocaleStringFromId } from "./utils/locale";
 import { loadScript, removeElementById } from "./utils/WebUtils";
 import platform, { isBrowser } from "./utils/platform";
@@ -24,13 +25,13 @@ import ChatSDKErrors from "./core/ChatSDKErrors";
 import ChatSDKExceptionDetails from "./core/ChatSDKExceptionDetails";
 import ChatSDKMessage from "./core/messaging/ChatSDKMessage";
 import ChatTranscriptBody from "./core/ChatTranscriptBody";
-import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
 import ConversationMode from "./core/ConversationMode";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/FileSharingProtocolType";
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
 import FramedlessClient from "@microsoft/omnichannel-amsclient/lib/FramedlessClient";
+import GetAgentAvailabilityOptionalParams from "./core/GetAgentAvailabilityOptionalParams";
 import GetLiveChatConfigOptionalParams from "./core/GetLiveChatConfigOptionalParams";
 import HostType from "@microsoft/omnichannel-ic3core/lib/interfaces/HostType";
 import {SDKProvider as IC3SDKProvider} from '@microsoft/omnichannel-ic3core';
@@ -42,9 +43,9 @@ import IFileMetadata from "@microsoft/omnichannel-ic3core/lib/model/IFileMetadat
 import IGetChatTokenOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTokenOptionalParams";
 import IGetChatTranscriptsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTranscriptsOptionalParams";
 import IGetLWIDetailsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetLWIDetailsOptionalParams";
+import IGetQueueAvailabilityOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetQueueAvailabilityOptionalParams";
 import IInitializationInfo from "@microsoft/omnichannel-ic3core/lib/model/IInitializationInfo";
 import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
-import InitializeOptionalParams from "./core/InitializeOptionalParams";
 import IOmnichannelConfiguration from "@microsoft/ocsdk/lib/Interfaces/IOmnichannelConfiguration";
 import IPerson from "@microsoft/omnichannel-ic3core/lib/model/IPerson";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
@@ -55,6 +56,7 @@ import ISDKConfiguration from "@microsoft/ocsdk/lib/Interfaces/ISDKConfiguration
 import ISessionCloseOptionalParams from "@microsoft/ocsdk/lib/Interfaces/ISessionCloseOptionalParams";
 import ISessionInitOptionalParams from "@microsoft/ocsdk/lib/Interfaces/ISessionInitOptionalParams";
 import InitContext from "@microsoft/ocsdk/lib/Model/InitContext";
+import InitializeOptionalParams from "./core/InitializeOptionalParams";
 import LiveChatContext from "./core/LiveChatContext";
 import LiveChatVersion from "./core/LiveChatVersion";
 import LiveWorkItemDetails from "./core/LiveWorkItemDetails";
@@ -67,6 +69,7 @@ import OmnichannelErrorCodes from "./core/OmnichannelErrorCodes";
 import OmnichannelMessage from "./core/messaging/OmnichannelMessage";
 import OnNewMessageOptionalParams from "./core/messaging/OnNewMessageOptionalParams";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
+import PluggableLogger from "@microsoft/omnichannel-amsclient/lib/PluggableLogger";
 import PostChatContext from "./core/PostChatContext";
 import ProtocolType from "@microsoft/omnichannel-ic3core/lib/interfaces/ProtocoleType";
 import ScenarioMarker from "./telemetry/ScenarioMarker";
@@ -77,6 +80,7 @@ import createOmnichannelMessage from "./utils/createOmnichannelMessage";
 import createTelemetry from "./utils/createTelemetry";
 import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
 import { defaultMessageTags } from "./core/messaging/MessageTags";
+import { getLocationInfo } from "./utils/location";
 import {isCustomerMessage} from "./utils/utilities";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
@@ -111,6 +115,7 @@ class OmnichannelChatSDK {
     private acsClientLogger: ACSClientLogger | null = null;
     private acsAdapterLogger: ACSAdapterLogger | null = null;
     private callingSdkLogger: CallingSDKLogger | null = null;
+    private amsClientLogger: AMSClientLogger | null = null;
     private isPersistentChat = false;
     private isChatReconnect = false;
     private reconnectId: null | string = null;
@@ -140,6 +145,7 @@ class OmnichannelChatSDK {
         this.acsClientLogger = createACSClientLogger(this.omnichannelConfig);
         this.acsAdapterLogger = createACSAdapterLogger(this.omnichannelConfig);
         this.callingSdkLogger = createCallingSDKLogger(this.omnichannelConfig);
+        this.amsClientLogger = createAMSClientLogger(this.omnichannelConfig);
 
         this.scenarioMarker.useTelemetry(this.telemetry);
         this.ic3ClientLogger.useTelemetry(this.telemetry);
@@ -147,6 +153,7 @@ class OmnichannelChatSDK {
         this.acsClientLogger.useTelemetry(this.telemetry);
         this.acsAdapterLogger.useTelemetry(this.telemetry);
         this.callingSdkLogger.useTelemetry(this.telemetry);
+        this.amsClientLogger.useTelemetry(this.telemetry);
 
         this.scenarioMarker.setRuntimeId(this.runtimeId);
         this.ic3ClientLogger.setRuntimeId(this.runtimeId);
@@ -154,6 +161,7 @@ class OmnichannelChatSDK {
         this.acsClientLogger.setRuntimeId(this.runtimeId);
         this.acsAdapterLogger.setRuntimeId(this.runtimeId);
         this.callingSdkLogger.setRuntimeId(this.runtimeId);
+        this.amsClientLogger.setRuntimeId(this.runtimeId);
 
         validateOmnichannelConfig(omnichannelConfig);
         validateSDKConfig(chatSDKConfig);
@@ -169,6 +177,7 @@ class OmnichannelChatSDK {
         this.acsClientLogger?.setRequestId(this.requestId);
         this.acsAdapterLogger?.setRequestId(this.requestId);
         this.callingSdkLogger?.setRequestId(this.requestId);
+        this.amsClientLogger?.setRequestId(this.requestId);
     }
 
     /* istanbul ignore next */
@@ -182,6 +191,7 @@ class OmnichannelChatSDK {
         this.acsClientLogger?.setDebug(flag);
         this.acsAdapterLogger?.setDebug(flag);
         this.callingSdkLogger?.setDebug(flag);
+        this.amsClientLogger?.setDebug(flag);
     }
 
     public async initialize(optionalParams: InitializeOptionalParams = {}): Promise<ChatConfig> {
@@ -206,7 +216,7 @@ class OmnichannelChatSDK {
                     framedMode: isBrowser(),
                     multiClient: true,
                     debug: false,
-                    logger: undefined
+                    logger: this.amsClientLogger as PluggableLogger
                 });
             } else {
                 this.IC3Client = await this.getIC3Client();
@@ -409,78 +419,25 @@ class OmnichannelChatSDK {
         this.acsClientLogger?.setChatId(this.chatToken.chatId || '');
         this.acsAdapterLogger?.setChatId(this.chatToken.chatId || '');
         this.callingSdkLogger?.setChatId(this.chatToken.chatId || '');
+        this.amsClientLogger?.setChatId(this.chatToken.chatId || '');
 
-        const sessionInitOptionalParams: ISessionInitOptionalParams = {
+        let sessionInitOptionalParams: ISessionInitOptionalParams = {
             initContext: {} as InitContext
         };
 
-        sessionInitOptionalParams.initContext!.locale = getLocaleStringFromId(this.localeId);
+        sessionInitOptionalParams = this.populateInitChatOptionalParam(sessionInitOptionalParams, optionalParams);
+        sessionInitOptionalParams.initContext!.isProactiveChat = !!optionalParams.isProactiveChat;
 
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
             sessionInitOptionalParams.reconnectId = this.reconnectId as string;
-        }
-
-        if (this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat) {
+        } else if (this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat) {
             sessionInitOptionalParams.reconnectId = this.reconnectId as string;
         }
 
-        if (optionalParams.customContext) {
-            (sessionInitOptionalParams.initContext! as any).customContextData = optionalParams.customContext; // eslint-disable-line @typescript-eslint/no-explicit-any
-        }
-
-        if (optionalParams.browser) {
-            sessionInitOptionalParams.initContext!.browser = optionalParams.browser;
-        }
-
-        if (optionalParams.os) {
-            sessionInitOptionalParams.initContext!.os = optionalParams.os;
-        }
-
-        if (optionalParams.locale) {
-            sessionInitOptionalParams.initContext!.locale = optionalParams.locale;
-        }
-
-        if (optionalParams.device) {
-            sessionInitOptionalParams.initContext!.device = optionalParams.device;
-        }
-
-        if (optionalParams.preChatResponse) {
-            sessionInitOptionalParams.initContext!.preChatResponse = optionalParams.preChatResponse;
-        }
-
-        if (optionalParams.sendDefaultInitContext) {
-            if (platform.isNode() || platform.isReactNative()) {
-                const exceptionDetails: ChatSDKExceptionDetails = {
-                    response: ChatSDKErrors.UnsupportedPlatform,
-                    message: "sendDefaultInitContext is only supported on browser"
-                };
-
-                console.error(exceptionDetails.message);
-
-                this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: JSON.stringify(exceptionDetails)
-                });
-
-                throw new Error(exceptionDetails.response);
-            }
-
-            sessionInitOptionalParams.getContext = true;
-        }
-
-        // Override initContext completely
-        if (optionalParams.initContext) {
-            sessionInitOptionalParams.initContext = optionalParams.initContext;
-        }
-
-        if (this.authenticatedUserToken) {
-            sessionInitOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
-        }
-
-        if (this.chatToken.chatId) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (sessionInitOptionalParams as any).initContext.chatId = this.chatToken.chatId;
+        if (this.liveChatConfig?.LiveWSAndLiveChatEngJoin?.msdyn_requestvisitorlocation === "true") {
+            const location = await getLocationInfo(this.scenarioMarker, this.chatToken.chatId as string, this.requestId);
+            sessionInitOptionalParams.initContext!.latitude = location.latitude;
+            sessionInitOptionalParams.initContext!.longitude = location.longitude;
         }
 
         // Skip session init when there's a valid live chat context
@@ -692,6 +649,9 @@ class OmnichannelChatSDK {
 
             this.callingSdkLogger?.setRequestId(this.requestId);
             this.callingSdkLogger?.setChatId('');
+
+            this.amsClientLogger?.setRequestId(this.requestId);
+            this.amsClientLogger?.setChatId('');
         } catch (error) {
             const exceptionDetails = {
                 response: "OCClientSessionCloseFailed"
@@ -1691,6 +1651,122 @@ class OmnichannelChatSDK {
 
             return Promise.reject("Retrieving post chat context failed " + JSON.stringify(ex));
         }
+    }
+
+    public async getAgentAvailability(optionalParams: GetAgentAvailabilityOptionalParams = {}): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+        const reportError = (response: string, message: string, chatId = "") => {
+            const exceptionDetails: ChatSDKExceptionDetails = {
+                response,
+                message
+            };
+
+            this.scenarioMarker.failScenario(TelemetryEvent.GetAgentAvailability, {
+                RequestId: this.requestId,
+                ExceptionDetails: JSON.stringify(exceptionDetails),
+                ChatId: chatId
+            });
+
+            throw new Error(exceptionDetails.message);
+        }
+
+        this.scenarioMarker.startScenario(TelemetryEvent.GetAgentAvailability, {
+            RequestId: this.requestId
+        });
+
+        if (!this.authSettings) {
+            reportError("Unsupported", "GetAgentAvailability is supported only for authenticated live chat widget.");
+        }
+
+        if (!this.authenticatedUserToken) {
+            reportError("UndefinedAuthToken", "Missing AuthToken for GetAgentAvailability.");
+        }
+
+        if (this.conversation) {
+            reportError("InvalidOperation", "GetAgentAvailability can only be called before a chat has started.", this.chatToken.chatId as string);
+        }
+
+        let getAgentAvailabilityOptionalParams: IGetQueueAvailabilityOptionalParams = {
+            initContext: {} as InitContext
+        };
+
+        getAgentAvailabilityOptionalParams = this.populateInitChatOptionalParam(getAgentAvailabilityOptionalParams, optionalParams);
+
+        try {
+            const response = await this.OCClient.getAgentAvailability(this.requestId, getAgentAvailabilityOptionalParams);
+            return response;
+        } catch (e) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            reportError("GetAgentAvailabilityFailed", (e as any).message as string);
+        }
+    }
+
+    private populateInitChatOptionalParam = (requestOptionalParams: ISessionInitOptionalParams | IGetQueueAvailabilityOptionalParams, optionalParams: StartChatOptionalParams | GetAgentAvailabilityOptionalParams) => {
+        requestOptionalParams.initContext!.locale = getLocaleStringFromId(this.localeId);
+
+        if (optionalParams.customContext) {
+            (requestOptionalParams.initContext! as any).customContextData = optionalParams.customContext; // eslint-disable-line @typescript-eslint/no-explicit-any
+        }
+
+        if (optionalParams.browser) {
+            requestOptionalParams.initContext!.browser = optionalParams.browser;
+        }
+
+        if (optionalParams.os) {
+            requestOptionalParams.initContext!.os = optionalParams.os;
+        }
+
+        if (optionalParams.locale) {
+            requestOptionalParams.initContext!.locale = optionalParams.locale;
+        }
+
+        if (optionalParams.device) {
+            requestOptionalParams.initContext!.device = optionalParams.device;
+        }
+
+        if (optionalParams.preChatResponse) {
+            requestOptionalParams.initContext!.preChatResponse = optionalParams.preChatResponse;
+        }
+
+        if (optionalParams.portalContactId) {
+            requestOptionalParams.initContext!.portalcontactid = optionalParams.portalContactId;
+        }
+
+        if (optionalParams.sendDefaultInitContext) {
+            if (platform.isNode() || platform.isReactNative()) {
+                const exceptionDetails: ChatSDKExceptionDetails = {
+                    response: ChatSDKErrors.UnsupportedPlatform,
+                    message: "sendDefaultInitContext is only supported on browser"
+                };
+
+                console.error(exceptionDetails.message);
+
+                this.scenarioMarker.failScenario(TelemetryEvent.GetAgentAvailability, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string,
+                    ExceptionDetails: JSON.stringify(exceptionDetails)
+                });
+
+                throw new Error(exceptionDetails.response);
+            }
+
+            requestOptionalParams.getContext = true;
+        }
+
+        // Override initContext completely
+        if (optionalParams.initContext) {
+            requestOptionalParams.initContext = optionalParams.initContext;
+        }
+
+        if (this.authenticatedUserToken) {
+            requestOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
+        }
+
+        if (this.chatToken.chatId) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (requestOptionalParams as any).initContext.chatId = this.chatToken.chatId;
+        }
+
+        return requestOptionalParams;
     }
 
     private async getIC3Client() {

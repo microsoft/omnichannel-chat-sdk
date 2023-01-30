@@ -5,6 +5,7 @@ enum ScenarioType {
     ACSCLIENT = "occhatsdk_acsclientevents",
     ACSADAPTER = "occhatsdk_acsadapterevents",
     CALLINGSDK = "occhatsdk_callingsdkevents",
+    AMSCLIENT = "occhatsdk_amsclientevents",
     UNDEFINED = "undefined",
 }
 
