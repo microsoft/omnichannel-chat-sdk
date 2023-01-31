@@ -49,6 +49,6 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithMasking', () => {
         const sentMessages = getMessagesResponseDataJson.value.filter((message) => message.type === 'text');
         const sentMessageContent = sentMessages[0].content.message;
 
-        expect(sentMessageContent).toBe("################");
+        expect(sentMessageContent).toBe(content.replace(/[0-9]/g,'#'));
     });
 });

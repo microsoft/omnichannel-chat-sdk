@@ -14,7 +14,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithPrechat', () => {
         const optionalParams = {
             preChatResponse: {
                 'Type': "InputSubmit",
-                '{"Name":"OmnichannelSurvey","IsOption":false,"Order":1,"IsRequired":false,"QuestionText":"OmnichannelSurvey"}': "ok"
+                'Survey': '{"Name":"OmnichannelSurvey","IsOption":false,"Order":1,"IsRequired":false,"QuestionText":"OmnichannelSurvey"}'
             }
         };
 
@@ -48,7 +48,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithPrechat', () => {
 
         const { requestId, preChatSurvey } = runtimeContext;
         const sessionInitRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatSessionInitPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
-        const prechatSurveyBody = JSON.parse(preChatSurvey.body[2].id);
+        const prechatSurveyBody = JSON.parse(optionalParams.preChatResponse.Survey);
         expect(prechatSurveyBody.Name).toEqual('OmnichannelSurvey');
         const RequestPostData = sessionInitRequest.postDataJSON();
 

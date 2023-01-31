@@ -8,8 +8,6 @@ const fetchOmnichannelConfig = (scenario = ""): object => {
     omnichannelConfig.orgId = testConfig["DefaultSettings"].orgId;
     omnichannelConfig.orgUrl = testConfig["DefaultSettings"].orgUrl;
     omnichannelConfig.widgetId = testConfig["DefaultSettings"].widgetId;
-    omnichannelConfig.token = testConfig["DefaultSettings"].token;
-    omnichannelConfig.reconnectId = testConfig["DefaultSettings"].reconnectId;
 
     if (!scenario) {
         return omnichannelConfig;
@@ -23,8 +21,6 @@ const fetchOmnichannelConfig = (scenario = ""): object => {
     omnichannelConfig.orgId = testConfig[scenario]?.orgId || omnichannelConfig.orgId;
     omnichannelConfig.orgUrl = testConfig[scenario]?.orgUrl || omnichannelConfig.orgUrl;
     omnichannelConfig.widgetId = testConfig[scenario]?.widgetId || omnichannelConfig.widgetId;
-    omnichannelConfig.token = testConfig[scenario]?.token || omnichannelConfig.token;
-    omnichannelConfig.reconnectId = testConfig[scenario]?.reconnectId || omnichannelConfig.reconnectId;
 
     return omnichannelConfig;
 }

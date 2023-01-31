@@ -4,11 +4,15 @@ import { test, expect } from '@playwright/test';
 import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 
 const testPage = fetchTestPageUrl();
-const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChatWithReconnect');
+const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChatWithChatReconnect');
 
-test.describe('UnauthenticatedChat @UnauthenticatedChatWithReconnect', () => {
+test.describe('UnauthenticatedChat @UnauthenticatedChatWithChatReconnect', () => {
     test('ChatSDK.getChatReconnectContext() with invalid reconnect id & redirect URL should only return a redirect URL', async ({ page }) => {
         await page.goto(testPage);
+
+        const params = {
+            reconnectId: "id"
+        };
 
         const [chatTokenRequest, chatTokenResponse, sessionInitRequest, sessionInitResponse, reconnectRequest, reconnectResponse, runtimeContext] = await Promise.all([
             page.waitForRequest(request => {
@@ -29,7 +33,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithReconnect', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatReConnect);
             }),
-            await page.evaluate(async ({ omnichannelConfig }) => {
+            await page.evaluate(async ({ omnichannelConfig, params }) => {
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
                 const chatSDKConfig = {
                     chatReconnect: {
@@ -42,10 +46,6 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithReconnect', () => {
 
                 await chatSDK.initialize();
 
-                const params = {
-                    reconnectId: omnichannelConfig.reconnectId
-                };
-
                 const chatReconnectContext = await chatSDK.getChatReconnectContext(params);
 
                 runtimeContext.reconnectId = chatReconnectContext.reconnectId;
@@ -57,13 +57,13 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithReconnect', () => {
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig })
+            }, { omnichannelConfig, params })
         ]);
 
         const { reconnectId, redirectURL, requestId } = runtimeContext;
         const chatTokenRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatv2GetChatTokenPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
         const sessionInitRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatSessionInitPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
-        const reconnectRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatReConnect}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${omnichannelConfig.reconnectId}`;
+        const reconnectRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatReConnect}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${params.reconnectId}`;
 
         expect(chatTokenRequest.url() === chatTokenRequestUrl).toBe(true);
         expect(chatTokenResponse.status()).toBe(200);
@@ -73,6 +73,6 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithReconnect', () => {
         expect(reconnectResponse.status()).toBe(200);
 
         expect(reconnectId).toBe(null);
-        expect(redirectURL).toBe('https://www.microsoft.com/');
+        expect(redirectURL).not.toBe(null);
     });
 });

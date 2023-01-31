@@ -599,7 +599,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         expect(retryCount).toBe(expectedRetryCount);
     });
 
-    test('ChatSDK.startChat() with sendDefaultInitContext should send default init contexts', async ({ page, browserName }) => {
+    test('ChatSDK.startChat() with sendDefaultInitContext should send default init contexts', async ({ page }) => {
         await page.goto(testPage);
 
         const [chatTokenRequest, chatTokenResponse, sessionInitRequest, sessionInitResponse, runtimeContext] = await Promise.all([

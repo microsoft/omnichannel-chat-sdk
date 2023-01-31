@@ -7,6 +7,9 @@ UnauthenticatedChat:
 UnauthenticatedChatWithTyping:
 UnauthenticatedChatWithTranscripts:
 UnauthenticatedChatWithAttachments:
+UnauthenticatedChatWithPrechat:
+UnauthenticatedChatWithOOOH:
+UnauthenticatedChatWithChatReconnect:
 AuthenticatedChat:
   orgId: ''
   orgUrl: ''

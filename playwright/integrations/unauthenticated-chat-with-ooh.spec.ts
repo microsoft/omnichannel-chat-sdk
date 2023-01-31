@@ -35,6 +35,6 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithOOOH', () => {
 
         const expectedErrorMessage = "WidgetUseOutsideOperatingHour";
         const { errorMessage } = runtimeContext;
-        expect(errorMessage).toContain(expectedErrorMessage);
+        expect(errorMessage).toBe(expectedErrorMessage);
     });
 });
