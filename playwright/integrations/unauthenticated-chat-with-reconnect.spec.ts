@@ -71,7 +71,6 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithChatReconnect', () =>
         expect(sessionInitResponse.status()).toBe(200);
         expect(reconnectRequest.url() === reconnectRequestUrl).toBe(true);
         expect(reconnectResponse.status()).toBe(200);
-
         expect(reconnectId).toBe(null);
         expect(redirectURL).not.toBe(null);
     });

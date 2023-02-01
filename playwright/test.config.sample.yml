@@ -8,8 +8,9 @@ UnauthenticatedChatWithTyping:
 UnauthenticatedChatWithTranscripts:
 UnauthenticatedChatWithAttachments:
 UnauthenticatedChatWithPrechat:
-UnauthenticatedChatWithOOOH:
+UnauthenticatedChatOutsideOfOperatingHours:
 UnauthenticatedChatWithChatReconnect:
+UnauthenticatedChatWithMasking:
 AuthenticatedChat:
   orgId: ''
   orgUrl: ''

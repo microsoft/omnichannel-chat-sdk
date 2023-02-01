@@ -4,20 +4,19 @@ import { test, expect } from '@playwright/test';
 import ACSEndpoints from '../utils/ACSEndpoints';
 
 const testPage = fetchTestPageUrl();
-const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChat');
+const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChatWithMasking');
 
 test.describe('UnauthenticatedChat @UnauthenticatedChatWithMasking', () => {
     test('ChatSDK.sendMessage() should send the message masked', async ({ page }) => {
         await page.goto(testPage);
 
         const content = "4111111111111111";
-
-        const [getMessagesRequest, getMessagesResponse, runtimeContext] = await Promise.all([
+        const [sendMessageRequest, sendMessageResponse, runtimeContext] = await Promise.all([
             page.waitForRequest(request => {
-                return request.url().match(ACSEndpoints.getMessagesPathPattern)?.length >= 0 && request.method() === 'GET';
+                return request.url().match(ACSEndpoints.sendMessagePathPattern)?.length >= 0;
             }),
             page.waitForResponse(response => {
-                return response.url().match(ACSEndpoints.getMessagesPathPattern)?.length >= 0 && response.request().method() === 'GET'
+                return response.url().match(ACSEndpoints.sendMessagePathPattern)?.length >= 0;
             }),
             await page.evaluate(async ({ omnichannelConfig, content }) => {
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
@@ -37,18 +36,15 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithMasking', () => {
                     content
                 });
 
-                await chatSDK.getMessages();
-
                 await chatSDK.endChat();
 
                 return runtimeContext;
             }, { omnichannelConfig, content })
         ]);
 
-        const getMessagesResponseDataJson = await getMessagesResponse.json();
-        const sentMessages = getMessagesResponseDataJson.value.filter((message) => message.type === 'text');
-        const sentMessageContent = sentMessages[0].content.message;
+        const sendMessageRequestPostDataDataJson = sendMessageRequest.postDataJSON();
+        const {content: sendMessageRequestContent} = sendMessageRequestPostDataDataJson;
 
-        expect(sentMessageContent).toBe(content.replace(/[0-9]/g,'#'));
+        expect(sendMessageRequestContent).toBe(content.replace(/[0-9]/g,'#'));
     });
 });

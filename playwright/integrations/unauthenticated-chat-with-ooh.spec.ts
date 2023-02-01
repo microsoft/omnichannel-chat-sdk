@@ -3,9 +3,9 @@ import fetchTestPageUrl from '../utils/fetchTestPageUrl';
 import { test, expect } from '@playwright/test';
 
 const testPage = fetchTestPageUrl();
-const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChatWithOOOH');
+const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChatOutsideOfOperatingHours');
 
-test.describe('UnauthenticatedChat @UnauthenticatedChatWithOOOH', () => {
+test.describe('UnauthenticatedChat @UnauthenticatedChatOutsideOfOperatingHours', () => {
     //Bug 3114088: [Chat SDK] Not getting expected exception on startChart() with Outside of Operating Hours
     test.fixme('ChatSDK.startChat() on outside of operating hours should throw an exception', async ({ page }) => {
         await page.goto(testPage);

@@ -50,11 +50,11 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithPrechat', () => {
         const sessionInitRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatSessionInitPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
         const prechatSurveyBody = JSON.parse(optionalParams.preChatResponse.Survey);
         expect(prechatSurveyBody.Name).toEqual('OmnichannelSurvey');
-        const RequestPostData = sessionInitRequest.postDataJSON();
+        const requestPostData = sessionInitRequest.postDataJSON();
 
         expect(sessionInitRequest.url() === sessionInitRequestUrl).toBe(true);
         expect(sessionInitResponse.status()).toBe(200);
-        const { preChatResponse: preChatResponseData } = RequestPostData;
+        const { preChatResponse: preChatResponseData } = requestPostData;
         expect(optionalParams.preChatResponse).toEqual(preChatResponseData);
     });
 });
