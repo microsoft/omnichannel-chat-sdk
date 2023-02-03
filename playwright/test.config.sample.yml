@@ -12,3 +12,4 @@ AuthenticatedChat:
   orgUrl: ''
   widgetId: ''
   authUrl: ''
+AuthenticatedChatWithTyping:
