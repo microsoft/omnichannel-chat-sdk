@@ -10,7 +10,7 @@ const authUrl = fetchAuthUrl('AuthenticatedChatWithChatReconnect');
 
 test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
 
-    test.only('ChatSDK.getChatReconnectContext() should not return a reconnect id if theres no existing chat session', async ({ page }) => {
+    test('ChatSDK.getChatReconnectContext() should not return a reconnect id if theres no existing chat session', async ({ page }) => {
         await page.goto(testPage);
 
         const [reconnectableChatsRequest, reconnectableChatsRespense, runtimeContext] = await Promise.all([
