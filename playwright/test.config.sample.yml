@@ -17,3 +17,5 @@ AuthenticatedChat:
   widgetId: ''
   authUrl: ''
 AuthenticatedChatWithTyping:
+AuthenticatedChatWithMasking:
+AuthenticatedChatWithChatPersistent:
