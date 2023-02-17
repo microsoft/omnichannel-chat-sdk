@@ -5,11 +5,11 @@ import { test, expect } from '@playwright/test';
 import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 
 const testPage = fetchTestPageUrl();
-const omnichannelConfig = fetchOmnichannelConfig('AuthenticatedChatWithChatPersistent');
-const authUrl = fetchAuthUrl('AuthenticatedChatWithChatPersistent');
+const omnichannelConfig = fetchOmnichannelConfig('@AuthenticatedChatWithPersistentChat');
+const authUrl = fetchAuthUrl('@AuthenticatedChatWithPersistentChat');
 
-test.describe('AuthenticatedChat @AuthenticatedChatWithChatPersistent', () => {
-    test('Persistent Chat- ChatSDK.endChat() without any reconnect id should call session close with isPersistentChat=true as query params', async ({ page }) => {
+test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
+    test('ChatSDK.endChat() without any reconnect id should call session close with isPersistentChat=true as query params', async ({ page }) => {
         await page.goto(testPage);
 
         const [sessionCloseRequest, sessionCloseResponse, runtimeContext] = await Promise.all([
