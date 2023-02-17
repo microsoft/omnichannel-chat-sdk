@@ -46,6 +46,10 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
                     authToken
                 };
 
+                const chatReconnectContext = await chatSDK.getChatReconnectContext();
+
+                runtimeContext.reconnectId = chatReconnectContext.reconnectId;
+
                 await chatSDK.startChat();
 
                 await chatSDK.endChat();
