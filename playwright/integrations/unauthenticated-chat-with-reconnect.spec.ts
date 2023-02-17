@@ -74,4 +74,38 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithChatReconnect', () =>
         expect(reconnectId).toBe(null);
         expect(redirectURL).not.toBe(null);
     });
+
+    test('ChatSDK.getChatReconnectContext() with invalid reconnect id should not return any reconnect id', async ({ page }) => {
+        await page.goto(testPage);
+
+        const params = {
+            reconnectId: "id"
+        };
+
+        const [runtimeContext] = await Promise.all([
+            await page.evaluate(async ({ omnichannelConfig, params }) => {
+                const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
+                const chatSDKConfig = {
+                    chatReconnect: {
+                        disable: false,
+                    },
+                }
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);
+
+                const runtimeContext = {};
+
+                await chatSDK.initialize();
+
+                const chatReconnectContext = await chatSDK.getChatReconnectContext(params);
+
+                runtimeContext.reconnectId = chatReconnectContext.reconnectId;
+
+                return runtimeContext;
+            }, { omnichannelConfig, params })
+        ]);
+
+        const { reconnectId } = runtimeContext;
+
+        expect(reconnectId).toBe(null);
+    });
 });
