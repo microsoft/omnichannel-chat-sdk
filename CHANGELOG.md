@@ -14,6 +14,9 @@ All notable changes to this project will be documented in this file.
 - Fix `ChatAdapterOptionalParams.ACSAdapter.options.egressMiddleware` being used as `ingressMiddleware`
 - Fix `ChatSDK.onTypingEvent()` being triggered on current user typing
 
+### Changed
+- Uptake [@microsoft/omnichannel-amsclient@0.1.4](https://www.npmjs.com/package/@microsoft/omnichannel-amsclient/v/0.1.4)
+
 ## [1.2.0] - 2022-11-11
 ### Added
 - Add `sendDefaultInitContext` optional parameter to `ChatSDK.startChat()` to automatically populate `browser`, `device`, `originurl` & `os` as default init context on web
