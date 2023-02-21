@@ -5,8 +5,8 @@ import { test, expect } from '@playwright/test';
 import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 
 const testPage = fetchTestPageUrl();
-const omnichannelConfig = fetchOmnichannelConfig('@AuthenticatedChatWithPersistentChat');
-const authUrl = fetchAuthUrl('@AuthenticatedChatWithPersistentChat');
+const omnichannelConfig = fetchOmnichannelConfig('AuthenticatedChatWithPersistentChat');
+const authUrl = fetchAuthUrl('AuthenticatedChatWithPersistentChat');
 
 test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
     test('ChatSDK.getChatReconnectContext() should not return a reconnect id if theres no existing chat session', async ({ page }) => {
