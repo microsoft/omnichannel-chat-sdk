@@ -18,4 +18,5 @@ AuthenticatedChat:
   authUrl: ''
 AuthenticatedChatWithTyping:
 AuthenticatedChatWithAttachments:
+AuthenticatedChatWithPrechat:
 AuthenticatedChatWithChatReconnect:
