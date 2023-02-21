@@ -17,4 +17,6 @@ AuthenticatedChat:
   widgetId: ''
   authUrl: ''
 AuthenticatedChatWithTyping:
+AuthenticatedChatWithAttachments:
 AuthenticatedChatWithPrechat:
+AuthenticatedChatWithChatReconnect:
