@@ -1,19 +1,32 @@
-import { test, expect } from '@playwright/test';
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
+import fetchAuthUrl from '../utils/fetchAuthUrl';
+import { test, expect } from '@playwright/test';
 
 const testPage = fetchTestPageUrl();
-const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChatWithNoEscalationToVoiceandVideo');
+const omnichannelConfig = fetchOmnichannelConfig('AuthenticatedChatWithNoEscalationToVoiceAndVideo');
+const authUrl = fetchAuthUrl('AuthenticatedChatWithNoEscalationToVoiceAndVideo');
 
-test.describe('UnauthenticatedChat @UnauthenticatedChatWithNoEscalationToVoiceandVideo', () => {
+test.describe('AuthenticatedChat @AuthenticatedChatWithNoEscalationToVoiceAndVideo', () => {
     test('ChatSDK.getVoiceVideoCalling() should throw a FeatureDisabled exception', async ({ page }) => {
         await page.goto(testPage);
 
         const [runtimeContext] = await Promise.all([
-            await page.evaluate(async ({ omnichannelConfig }) => {
+            await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
-                
-                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+
+                const payload = {
+                    method: "POST"
+                };
+
+                const response = await fetch(authUrl, payload);
+                const authToken = await response.text();
+
+                const chatSDKConfig = {
+                    getAuthToken: () => authToken
+                };
+
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);
 
                 await chatSDK.initialize();
 
@@ -28,7 +41,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithNoEscalationToVoicean
                 }
 
                 return runtimeContext;
-            }, { omnichannelConfig })
+            }, { omnichannelConfig, authUrl })
         ]);
 
         const { errorMessage } = runtimeContext;

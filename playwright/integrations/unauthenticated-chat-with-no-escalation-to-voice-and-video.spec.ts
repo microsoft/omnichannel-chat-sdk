@@ -1,32 +1,19 @@
+import { test, expect } from '@playwright/test';
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
-import fetchAuthUrl from '../utils/fetchAuthUrl';
-import { test, expect } from '@playwright/test';
 
 const testPage = fetchTestPageUrl();
-const omnichannelConfig = fetchOmnichannelConfig('AuthenticatedChatWithNoEscalationToVoiceandVideo');
-const authUrl = fetchAuthUrl('AuthenticatedChatWithNoEscalationToVoiceandVideo');
+const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChatWithNoEscalationToVoiceAndVideo');
 
-test.describe('AuthenticatedChat @AuthenticatedChatWithNoEscalationToVoiceandVideo', () => {
+test.describe('UnauthenticatedChat @UnauthenticatedChatWithNoEscalationToVoiceAndVideo', () => {
     test('ChatSDK.getVoiceVideoCalling() should throw a FeatureDisabled exception', async ({ page }) => {
         await page.goto(testPage);
 
         const [runtimeContext] = await Promise.all([
-            await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
+            await page.evaluate(async ({ omnichannelConfig }) => {
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
-
-                const payload = {
-                    method: "POST"
-                };
-
-                const response = await fetch(authUrl, payload);
-                const authToken = await response.text();
-
-                const chatSDKConfig = {
-                    getAuthToken: () => authToken
-                };
-
-                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);
+                
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
 
                 await chatSDK.initialize();
 
@@ -41,7 +28,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithNoEscalationToVoiceandVid
                 }
 
                 return runtimeContext;
-            }, { omnichannelConfig, authUrl })
+            }, { omnichannelConfig })
         ]);
 
         const { errorMessage } = runtimeContext;
