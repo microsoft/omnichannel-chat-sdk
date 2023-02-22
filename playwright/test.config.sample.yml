@@ -20,3 +20,5 @@ AuthenticatedChatWithTyping:
 AuthenticatedChatWithAttachments:
 AuthenticatedChatWithPrechat:
 AuthenticatedChatWithChatReconnect:
+AuthenticatedChatWithPersistentChat:
+AuthenticatedChatWithMasking:
