@@ -8,7 +8,6 @@ const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChatWithPrechat
 
 test.describe('UnauthenticatedChat @UnauthenticatedChatWithPrechat', () => {
     test('ChatSDK.startChat() with preChatResponse should be part of session init payload', async ({ page }) => {
-
         await page.goto(testPage);
 
         const optionalParams = {
@@ -56,5 +55,78 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithPrechat', () => {
         expect(sessionInitResponse.status()).toBe(200);
         const { preChatResponse: preChatResponseData } = requestPostData;
         expect(optionalParams.preChatResponse).toEqual(preChatResponseData);
+    });
+
+    test('ChatSDK.getPreChatSurvey() should return the survey in JSON format', async ({ page }) => {
+        await page.goto(testPage);
+
+        const [runtimeContext] = await Promise.all([
+            await page.evaluate(async ({ omnichannelConfig }) => {
+                const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+                const runtimeContext = {};
+
+                await chatSDK.initialize();
+
+                const preChatSurveyRes = await chatSDK.getPreChatSurvey();
+
+                runtimeContext.preChatSurvey = preChatSurveyRes;
+
+                return runtimeContext;
+            }, { omnichannelConfig })
+        ]);
+
+        const { preChatSurvey } = runtimeContext;
+        expect(typeof (preChatSurvey) === 'object').toBe(true);
+    });
+
+    test('ChatSDK.getPreChatSurvey() with parseToJSON set to true should return the survey as JSON format', async ({ page }) => {
+        await page.goto(testPage);
+
+        const [runtimeContext] = await Promise.all([
+            await page.evaluate(async ({ omnichannelConfig }) => {
+                const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+                const runtimeContext = {};
+
+                await chatSDK.initialize();
+
+                const parseToJSON = true;
+
+                const preChatSurveyRes = await chatSDK.getPreChatSurvey(parseToJSON);
+
+                runtimeContext.preChatSurvey = preChatSurveyRes;
+
+                return runtimeContext;
+            }, { omnichannelConfig })
+        ]);
+
+        const { preChatSurvey } = runtimeContext;
+        expect(typeof (preChatSurvey) === 'object').toBe(true);
+    });
+
+    test('ChatSDK.getPreChatSurvey() with parseToJSON set to false should return the survey as string format', async ({ page }) => {
+        await page.goto(testPage);
+
+        const [runtimeContext] = await Promise.all([
+            await page.evaluate(async ({ omnichannelConfig }) => {
+                const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+                const runtimeContext = {};
+
+                await chatSDK.initialize();
+
+                const parseToJSON = false;
+
+                const preChatSurveyRes = await chatSDK.getPreChatSurvey(parseToJSON);
+
+                runtimeContext.preChatSurvey = preChatSurveyRes;
+
+                return runtimeContext;
+            }, { omnichannelConfig })
+        ]);
+
+        const { preChatSurvey } = runtimeContext;
+        expect(typeof (preChatSurvey) === 'string').toBe(true);
     });
 });
