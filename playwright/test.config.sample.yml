@@ -11,12 +11,14 @@ UnauthenticatedChatWithPrechat:
 UnauthenticatedChatOutsideOfOperatingHours:
 UnauthenticatedChatWithChatReconnect:
 UnauthenticatedChatWithMasking:
+UnauthenticatedChatWithNoEscalationToVoiceAndVideo:
 AuthenticatedChat:
   orgId: ''
   orgUrl: ''
   widgetId: ''
   authUrl: ''
 AuthenticatedChatWithTyping:
+AuthenticatedChatWithNoEscalationToVoiceAndVideo:
 AuthenticatedChatWithAttachments:
 AuthenticatedChatWithPrechat:
 AuthenticatedChatWithChatReconnect:
