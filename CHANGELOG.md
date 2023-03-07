@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Add `portalContactId` in `StartChatOptionalParams` and `GetAgentAvailabilityOptionalParams`
 - Added exception on initialization failure
 - Upgraded ACSAdapter to version beta.17
+- Changed default LiveChatVersion to V2
 
 ### Fixed
 - Fix `ChatAdapterOptionalParams.ACSAdapter.options.egressMiddleware` being used as `ingressMiddleware`

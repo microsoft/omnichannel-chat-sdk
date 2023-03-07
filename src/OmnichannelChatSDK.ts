@@ -130,7 +130,7 @@ class OmnichannelChatSDK {
             ...chatSDKConfig // overrides
         };
         this.isInitialized = false;
-        this.liveChatVersion = LiveChatVersion.V1;
+        this.liveChatVersion = LiveChatVersion.V2;
         this.localeId = defaultLocaleId;
         this.requestId = uuidv4();
         this.chatToken = {};
