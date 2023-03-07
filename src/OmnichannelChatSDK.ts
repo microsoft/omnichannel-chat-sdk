@@ -218,15 +218,19 @@ class OmnichannelChatSDK {
                     debug: false,
                     logger: this.amsClientLogger as PluggableLogger
                 });
-            } else {
+            } else if (this.liveChatVersion === LiveChatVersion.V1) {
                 this.IC3Client = await this.getIC3Client();
+            } else {
+                throw new Error("Invalid LiveChatVersion");
             }
 
             this.isInitialized = true;
 
             this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
-        } catch {
-            this.scenarioMarker.failScenario(TelemetryEvent.InitializeChatSDK);
+        } catch (e) {
+            this.scenarioMarker.failScenario(TelemetryEvent.InitializeChatSDK, {
+                ExceptionDetails: JSON.stringify(e)
+            });
         }
 
         return this.liveChatConfig;
