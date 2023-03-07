@@ -221,7 +221,7 @@ class OmnichannelChatSDK {
             } else if (this.liveChatVersion === LiveChatVersion.V1) {
                 this.IC3Client = await this.getIC3Client();
             } else {
-                throw new Error("Invalid LiveChatVersion");
+                throw new Error("Unsupported LiveChatVersion");
             }
 
             this.isInitialized = true;
