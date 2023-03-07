@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 - Add `GetAgentAvailability` SDK method for auth chat
 - Pass `logger` to AMSClient
 - Add `portalContactId` in `StartChatOptionalParams` and `GetAgentAvailabilityOptionalParams`
+- Added exception on initialization failure
+- Upgraded ACSAdapter to version beta.17
 
 ### Fixed
 - Fix `ChatAdapterOptionalParams.ACSAdapter.options.egressMiddleware` being used as `ingressMiddleware`
