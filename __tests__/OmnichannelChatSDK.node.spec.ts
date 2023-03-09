@@ -27,6 +27,7 @@ describe('Omnichannel Chat SDK (Node)', () => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
 
+        chatSDK.liveChatVersion = 1;
         await chatSDK.initialize();
 
         chatSDK.IC3Client = {
@@ -72,6 +73,7 @@ describe('Omnichannel Chat SDK (Node)', () => {
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
 
+        chatSDK.liveChatVersion = 1;
         await chatSDK.initialize();
 
         chatSDK.OCClient.sessionInit = jest.fn();
@@ -100,6 +102,7 @@ describe('Omnichannel Chat SDK (Node)', () => {
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
 
+        chatSDK.liveChatVersion = 1;
         await chatSDK.initialize();
 
         chatSDK.OCClient.sessionInit = jest.fn();

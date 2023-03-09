@@ -1588,8 +1588,14 @@ class OmnichannelChatSDK {
                 const participantType = liveWorkItemDetails?.participantType;
 
                 conversationId = liveWorkItemDetails?.conversationId;
-                const surveyInviteLinkRequest = {
-                    "FormId": participantType === "Bot" ? msfp_botsourcesurveyidentifier : msfp_sourcesurveyidentifier,
+                const agentSurveyInviteLinkRequest = {
+                    "FormId": msfp_sourcesurveyidentifier,
+                    "ConversationId": conversationId,
+                    "OCLocaleCode": getLocaleStringFromId(this.localeId)
+                };
+
+                const botSurveyInviteLinkRequest = {
+                    "FormId": msfp_botsourcesurveyidentifier,
                     "ConversationId": conversationId,
                     "OCLocaleCode": getLocaleStringFromId(this.localeId)
                 };
@@ -1602,13 +1608,15 @@ class OmnichannelChatSDK {
                     optionalParams.authenticatedUserToken = this.authenticatedUserToken;
                 }
 
-                const ownerId = participantType === "Bot" ? postConversationBotSurveyOwnerId : postConversationSurveyOwnerId;
-                const surveyInviteLinkResponse = await this.OCClient.getSurveyInviteLink(ownerId, surveyInviteLinkRequest, optionalParams);
+                const agentOwnerId = postConversationSurveyOwnerId;
+                const botOwnerId = postConversationBotSurveyOwnerId;
+                const agentSurveyInviteLinkResponse = await this.OCClient.getSurveyInviteLink(agentOwnerId, agentSurveyInviteLinkRequest, optionalParams);
+                const botSurveyInviteLinkResponse = botOwnerId && msfp_botsourcesurveyidentifier && await this.OCClient.getSurveyInviteLink(botOwnerId, botSurveyInviteLinkRequest, optionalParams);
 
-                let surveyInviteLink, formsProLocale;
-                if (surveyInviteLinkResponse != null) {
-                    if (surveyInviteLinkResponse.inviteList != null && surveyInviteLinkResponse.inviteList.length == 1) {
-                        surveyInviteLink = surveyInviteLinkResponse.inviteList[0].invitationLink;
+                let agentSurveyInviteLink, agentFormsProLocale, botSurveyInviteLink, botFormsProLocale;
+                if (agentSurveyInviteLinkResponse != null) {
+                    if (agentSurveyInviteLinkResponse.inviteList != null && agentSurveyInviteLinkResponse.inviteList.length == 1) {
+                        agentSurveyInviteLink = agentSurveyInviteLinkResponse.inviteList[0].invitationLink;
                     }
                     else {
                         this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {
@@ -1619,15 +1627,27 @@ class OmnichannelChatSDK {
                         return Promise.reject("Survey Invite link failed to send response.");
                     }
 
-                    if (surveyInviteLinkResponse.formsProLocaleCode != null) {
-                        formsProLocale = surveyInviteLinkResponse.formsProLocaleCode;
+                    if (agentSurveyInviteLinkResponse.formsProLocaleCode != null) {
+                        agentFormsProLocale = agentSurveyInviteLinkResponse.formsProLocaleCode;
+                    }
+
+                    if (botSurveyInviteLinkResponse != null) {
+                        if (botSurveyInviteLinkResponse.inviteList != null && botSurveyInviteLinkResponse.inviteList.length == 1) {
+                            botSurveyInviteLink = botSurveyInviteLinkResponse.inviteList[0].invitationLink;
+                        }
+    
+                        if (botSurveyInviteLinkResponse.formsProLocaleCode != null) {
+                            botFormsProLocale = botSurveyInviteLinkResponse.formsProLocaleCode;
+                        }
                     }
 
                     const postChatContext: PostChatContext = {
                         participantJoined,
                         participantType,
-                        surveyInviteLink,
-                        formsProLocale
+                        surveyInviteLink: agentSurveyInviteLink,
+                        botSurveyInviteLink,
+                        formsProLocale: agentFormsProLocale,
+                        botFormsProLocale
                     }
 
                     return Promise.resolve(postChatContext);
