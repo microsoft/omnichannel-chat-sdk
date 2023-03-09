@@ -1608,10 +1608,9 @@ class OmnichannelChatSDK {
                     optionalParams.authenticatedUserToken = this.authenticatedUserToken;
                 }
 
-                const agentOwnerId = postConversationSurveyOwnerId;
-                const botOwnerId = postConversationBotSurveyOwnerId;
-                const agentSurveyInviteLinkResponse = await this.OCClient.getSurveyInviteLink(agentOwnerId, agentSurveyInviteLinkRequest, optionalParams);
-                const botSurveyInviteLinkResponse = botOwnerId && msfp_botsourcesurveyidentifier && await this.OCClient.getSurveyInviteLink(botOwnerId, botSurveyInviteLinkRequest, optionalParams);
+                const agentSurveyInviteLinkResponse = await this.OCClient.getSurveyInviteLink(postConversationSurveyOwnerId, agentSurveyInviteLinkRequest, optionalParams);
+                const botSurveyInviteLinkResponse = postConversationBotSurveyOwnerId && msfp_botsourcesurveyidentifier &&
+                    await this.OCClient.getSurveyInviteLink(postConversationBotSurveyOwnerId, botSurveyInviteLinkRequest, optionalParams);
 
                 let agentSurveyInviteLink, agentFormsProLocale, botSurveyInviteLink, botFormsProLocale;
                 if (agentSurveyInviteLinkResponse != null) {
