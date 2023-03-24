@@ -10,10 +10,10 @@ const authUrl = fetchAuthUrl('AuthenticatedChatWithChatReconnect');
 
 test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
 
-    test('ChatSDK.getChatReconnectContext() should not return a reconnect id if theres no existing chat session', async ({ page }) => {
+    test("ChatSDK.getChatReconnectContext() should not return a reconnect id if there's no existing chat session", async ({ page }) => {
         await page.goto(testPage);
 
-        const [reconnectableChatsRequest, reconnectableChatsRespense, runtimeContext] = await Promise.all([
+        const [reconnectableChatsRequest, reconnectableChatsResponse, runtimeContext] = await Promise.all([
             page.waitForRequest(request => {
                 return request.url().includes(OmnichannelEndpoints.LiveChatAuthReconnectableChats) && request.method() === 'GET';
             }),
@@ -64,14 +64,14 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
         const reconnectableChatsRequestHeaders = reconnectableChatsRequest.headers();
 
         expect(reconnectableChatsRequest.url() === reconnectableChatsRequestUrl).toBe(true);
-        expect(reconnectableChatsRespense.status()).toBe(204);
+        expect(reconnectableChatsResponse.status()).toBe(204);
         expect(reconnectableChatsRequestHeaders['authenticatedusertoken']).toBe(authToken);
     });
 
-    test('ChatSDK.getChatReconnectContext() should return a reconnect id if theres an existing chat session', async ({ page }) => {
+    test("ChatSDK.getChatReconnectContext() should return a reconnect id if there's an existing chat session", async ({ page }) => {
         await page.goto(testPage);
 
-        const [_, reconnectableChatsRequest, reconnectableChatsRespense, runtimeContext] = await Promise.all([
+        const [_, reconnectableChatsRequest, reconnectableChatsResponse, runtimeContext] = await Promise.all([
             await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
@@ -149,7 +149,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
         const reconnectableChatsRequestHeaders = reconnectableChatsRequest.headers();
 
         expect(reconnectableChatsRequest.url() === reconnectableChatsRequestUrl).toBe(true);
-        expect(reconnectableChatsRespense.status()).toBe(200);
+        expect(reconnectableChatsResponse.status()).toBe(200);
         expect(reconnectableChatsRequestHeaders['authenticatedusertoken']).toBe(authToken);
     });
 });
