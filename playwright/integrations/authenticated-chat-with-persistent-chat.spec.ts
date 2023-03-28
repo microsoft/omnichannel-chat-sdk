@@ -60,7 +60,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
         expect(sessionCloseResponse.status()).toBe(200);
     });
 
-    test("ChatSDK.startChat() have a reconnect id if there's an existing chat session", async ({ page }) => {
+    test("ChatSDK.startChat() should have a reconnect id if there's an existing chat session", async ({ page }) => {
         await page.goto(testPage);
 
         const [reconnectableChatsRequest, reconnectableChatsResponse, chatTokenRequest, chatTokenResponse, sessionInitRequest, sessionInitResponse, runtimeContext] = await Promise.all([
