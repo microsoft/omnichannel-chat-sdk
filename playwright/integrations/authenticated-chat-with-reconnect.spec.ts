@@ -249,7 +249,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
         expect(sessionInitResponse.status()).toBe(200);
     });
 
-    test.only("ChatSDK.endChat() should close the chat reconnect session", async ({ page }) => {
+    test("ChatSDK.endChat() should close the chat reconnect session", async ({ page }) => {
         await page.goto(testPage);
 
         const [_, sessionCloseRequest, sessionCloseResponse, runtimeContext] = await Promise.all([
