@@ -3,4 +3,6 @@ export default interface PostChatContext {
   participantJoined: boolean;
   participantType: string | undefined;
   surveyInviteLink: string;
+  botFormsProLocale: string;
+  botSurveyInviteLink: string;
 }
