@@ -335,7 +335,7 @@ class OmnichannelChatSDK {
                 const reconnectableChatsResponse = await this.OCClient.getReconnectableChats(reconnectableChatsParams);
 
                 if (reconnectableChatsResponse && reconnectableChatsResponse.reconnectid) {
-                     this.reconnectId = reconnectableChatsResponse.reconnectid;
+                    this.reconnectId = reconnectableChatsResponse.reconnectid;
                 }
             } catch {
                 const exceptionDetails = {
@@ -354,7 +354,7 @@ class OmnichannelChatSDK {
             const conversationDetails = await this.getConversationDetails();
             if (Object.keys(conversationDetails).length === 0) {
                 const exceptionDetails = {
-                    response: "InvalidConversation"
+                    response: ChatSDKErrors.InvalidConversation
                 };
 
                 this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
@@ -369,7 +369,7 @@ class OmnichannelChatSDK {
 
             if (conversationDetails.state === LiveWorkItemState.WrapUp || conversationDetails.state === LiveWorkItemState.Closed) {
                 const exceptionDetails = {
-                    response: "ClosedConversation"
+                    response: ChatSDKErrors.ClosedConversation
                 };
 
                 this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
