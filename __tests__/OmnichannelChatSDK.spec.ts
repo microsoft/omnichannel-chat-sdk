@@ -742,10 +742,9 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.ACSClient.joinConversation).toHaveBeenCalledTimes(1);
         });
 
-        it('[LiveChatV1] ChatSDK.startChat() should throw an error if OCClient.sessionInit() fails', async () => {
+        it('ChatSDK.startChat() should throw an error if OCClient.sessionInit() fails', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -756,8 +755,6 @@ describe('Omnichannel Chat SDK', () => {
             }));
 
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockRejectedValue(Promise.reject());
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve());
 
             try {
                 await chatSDK.startChat();
@@ -766,14 +763,11 @@ describe('Omnichannel Chat SDK', () => {
             }
 
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
-            expect(chatSDK.IC3Client.initialize).toHaveBeenCalledTimes(0);
-            expect(chatSDK.IC3Client.joinConversation).toHaveBeenCalledTimes(0);
         });
 
-        it('[LiveChatV1] ChatSDK.startChat() should throw a \'WidgetUseOutsideOperatingHour\' error if OCClient.sessionInit() fails with \'705\' error code', async () => {
+        it('ChatSDK.startChat() should throw a \'WidgetUseOutsideOperatingHour\' error if OCClient.sessionInit() fails with \'705\' error code', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -790,8 +784,6 @@ describe('Omnichannel Chat SDK', () => {
             axiosErrorObject.response.headers.errorcode = OmnichannelErrorCodes.WidgetUseOutsideOperatingHour.toString();
 
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockRejectedValue(axiosErrorObject);
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve());
 
             try {
                 await chatSDK.startChat();
@@ -801,8 +793,6 @@ describe('Omnichannel Chat SDK', () => {
             }
 
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
-            expect(chatSDK.IC3Client.initialize).toHaveBeenCalledTimes(0);
-            expect(chatSDK.IC3Client.joinConversation).toHaveBeenCalledTimes(0);
         });
 
         it('[LiveChatV1] ChatSDK.startChat() should fail if IC3Client.initialize() fails', async () => {
