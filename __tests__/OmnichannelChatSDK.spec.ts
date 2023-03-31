@@ -2584,7 +2584,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.getChatToken.mock.calls[0][1].reconnectId).toBe(chatSDK.reconnectId);
         });
 
-        it('ChatSDK.startChat() should call OCClient.getReconnectableChats() & setInterval() on Persistent Chat', async () => {
+        it('[LiveChatV1] ChatSDK.startChat() should call OCClient.getReconnectableChats() & setInterval() on Persistent Chat', async () => {
             const chatSDKConfig = {
                 telemetry: {
                     disable: true
@@ -2599,6 +2599,7 @@ describe('Omnichannel Chat SDK', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.isPersistentChat = true;
             chatSDK.updateChatToken = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -2649,8 +2650,6 @@ describe('Omnichannel Chat SDK', () => {
             jest.spyOn(chatSDK.OCClient, 'getReconnectableChats').mockResolvedValue(Promise.resolve({
                 reconnectid: 'reconnectid'
             }));
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.OCClient, 'sessionClose').mockResolvedValue(Promise.resolve());
 
             await chatSDK.startChat();
@@ -2661,7 +2660,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.sessionClose.mock.calls[0][1].isReconnectChat).toBe(true);
         });
 
-        it('ChatSDK.updateChatToken() should initialize IC3Client with new session info', async () => {
+        it('[LiveChatV1] ChatSDK.updateChatToken() should initialize IC3Client with new session info', async () => {
             const chatSDKConfig = {
                 telemetry: {
                     disable: true
@@ -2676,6 +2675,7 @@ describe('Omnichannel Chat SDK', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
             chatSDK.isPersistentChat = true;
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
             global.setInterval = jest.fn();
 
             await chatSDK.initialize();
@@ -2808,8 +2808,6 @@ describe('Omnichannel Chat SDK', () => {
             }));
 
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve());
 
             await chatSDK.startChat({
                 reconnectId
@@ -2840,8 +2838,6 @@ describe('Omnichannel Chat SDK', () => {
             chatSDK.reconnectId = reconnectId;
 
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.OCClient, 'sessionClose').mockResolvedValue(Promise.resolve());
 
             await chatSDK.startChat();
@@ -3317,7 +3313,7 @@ describe('Omnichannel Chat SDK', () => {
             chatSDK.getChatConfig = jest.fn();
 
             await chatSDK.initialize();
-            
+
             expect(chatSDK.authSettings).toBe(null);
             jest.spyOn(console, 'error');
 
@@ -3434,7 +3430,7 @@ describe('Omnichannel Chat SDK', () => {
             chatSDK.getChatConfig = jest.fn();
 
             await chatSDK.initialize();
-            
+
             chatSDK.liveChatConfig = dummyConfig;
             chatSDK.authSettings = {};
             chatSDK.authenticatedUserToken = {};
