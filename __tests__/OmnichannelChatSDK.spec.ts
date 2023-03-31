@@ -855,7 +855,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.IC3Client.joinConversation).toHaveBeenCalledTimes(1);
         });
 
-        it('[LiveChatV1] ChatSDK.startchat() with existing liveChatContext should not call OCClient.getChatToken() & OCClient.sessionInit()', async() => {
+        it('ChatSDK.startchat() with existing liveChatContext should not call OCClient.getChatToken() & OCClient.sessionInit()', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.liveChatVersion = LiveChatVersion.V1;
@@ -872,8 +872,6 @@ describe('Omnichannel Chat SDK', () => {
                 ConversationId: 'id'
             }));
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve());
 
             const liveChatContext = {
                 chatToken: {
@@ -892,8 +890,6 @@ describe('Omnichannel Chat SDK', () => {
 
             expect(chatSDK.OCClient.getChatToken).toHaveBeenCalledTimes(0);
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(0);
-            expect(chatSDK.IC3Client.initialize).toHaveBeenCalledTimes(1);
-            expect(chatSDK.IC3Client.joinConversation).toHaveBeenCalledTimes(1);
         });
 
         it('ChatSDK.startChat() with invalid liveChatContext should throw an error', async() => {
@@ -2234,12 +2230,10 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(1);
         });
 
-        it('[LiveChatV2] ChatSDK.onNewMessage() should call conversation.registerOnNewMessage()', async() => {
+        it('ChatSDK.onNewMessage() should call conversation.registerOnNewMessage()', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
-
-            chatSDK.liveChatVersion = LiveChatVersion.V2;
 
             await chatSDK.initialize();
 
@@ -2263,12 +2257,10 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(1);
         });
 
-        it('[LiveChatV2] ChatSDK.onNewMessage() with rehydrate flag should call ChatSDK.getMessages()', async () => {
+        it('ChatSDK.onNewMessage() with rehydrate flag should call ChatSDK.getMessages()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
-
-            chatSDK.liveChatVersion = LiveChatVersion.V2;
 
             await chatSDK.initialize();
 
@@ -2326,7 +2318,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(count);
         });
 
-        it('[LiveChatV1] Ability to add multiple "onTypingEvent" event handler', async () => {
+        it('Ability to add multiple "onTypingEvent" event handler', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
@@ -2335,8 +2327,6 @@ describe('Omnichannel Chat SDK', () => {
             await chatSDK.initialize();
 
             chatSDK.OCClient.sessionInit = jest.fn();
-            chatSDK.IC3Client.initialize = jest.fn();
-            chatSDK.IC3Client.joinConversation = jest.fn();
 
             await chatSDK.startChat();
 
