@@ -130,7 +130,7 @@ class OmnichannelChatSDK {
             ...chatSDKConfig // overrides
         };
         this.isInitialized = false;
-        this.liveChatVersion = LiveChatVersion.V1;
+        this.liveChatVersion = LiveChatVersion.V2;
         this.localeId = defaultLocaleId;
         this.requestId = uuidv4();
         this.chatToken = {};
@@ -1634,7 +1634,7 @@ class OmnichannelChatSDK {
                         if (botSurveyInviteLinkResponse.inviteList != null && botSurveyInviteLinkResponse.inviteList.length == 1) {
                             botSurveyInviteLink = botSurveyInviteLinkResponse.inviteList[0].invitationLink;
                         }
-    
+
                         if (botSurveyInviteLinkResponse.formsProLocaleCode != null) {
                             botFormsProLocale = botSurveyInviteLinkResponse.formsProLocaleCode;
                         }
