@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Fix `ChatAdapterOptionalParams.ACSAdapter.options.egressMiddleware` being used as `ingressMiddleware`
 - Fix `ChatSDK.onTypingEvent()` being triggered on current user typing
+- Update `ChatSDK.liveChatVersion` to be `V2` by default
 
 ### Changed
 - Uptake [@microsoft/omnichannel-amsclient@0.1.4](https://www.npmjs.com/package/@microsoft/omnichannel-amsclient/v/0.1.4)
