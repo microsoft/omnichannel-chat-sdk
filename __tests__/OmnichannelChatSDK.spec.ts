@@ -453,6 +453,18 @@ describe('Omnichannel Chat SDK', () => {
             }
         });
 
+        it('ChatSDK.initialize() with ChatSDK.getChatConfig() failure should throw an exception', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn(() => {throw Error()});
+
+            try {
+                await chatSDK.initialize();
+            } catch (e) {
+                expect(e.message).toBe("ChatConfigRetrievalFailure");
+                expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(1);
+            }
+        });
+
         it('ChatSDK.initialize() with sendCacheHeaders set to \'true\' should be passed to ChatSDK.getChatConfig()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();

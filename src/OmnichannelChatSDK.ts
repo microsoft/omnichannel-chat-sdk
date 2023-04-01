@@ -220,9 +220,21 @@ class OmnichannelChatSDK {
 
         try {
             const {getLiveChatConfigOptionalParams} = optionalParams;
-
             await this.getChatConfig(getLiveChatConfigOptionalParams || {});
+        } catch (e) {
+            const exceptionDetails = {
+                response: ChatSDKErrors.ChatConfigRetrievalFailure,
+                errorObject: `${e}`
+            }
 
+            this.scenarioMarker.failScenario(TelemetryEvent.InitializeChatSDK, {
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
+            throw Error(exceptionDetails.response);
+        }
+
+        try {
             if (this.liveChatVersion === LiveChatVersion.V2) {
                 this.ACSClient = new ACSClient(this.acsClientLogger);
                 this.AMSClient = await createAMSClient({

@@ -8,6 +8,8 @@ enum ChatSDKErrors {
     ChatAdapterInitializationFailure = "ChatAdapterInitializationFailure",
     /** Failure in OCSDK initialization */
     OCSDKInitializationFailure = "OCSDKInitializationFailure",
+    /** Failure in retrieval of ChatConfig */
+    ChatConfigRetrievalFailure = "ChatConfigRetrievalFailure",
     /** Failure in loading a script dynamically */
     ScriptLoadFailure = "ScriptLoadFailure",
     /** Feature not supported in the platform used */
