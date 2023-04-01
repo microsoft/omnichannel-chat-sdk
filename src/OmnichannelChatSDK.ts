@@ -205,7 +205,20 @@ class OmnichannelChatSDK {
         try {
             this.OCSDKProvider = OCSDKProvider;
             this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, {} as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
+        } catch (e) {
+            const exceptionDetails = {
+                response: ChatSDKErrors.OCSDKInitializationFailure,
+                errorObject: `${e}`
+            }
 
+            this.scenarioMarker.failScenario(TelemetryEvent.InitializeChatSDK, {
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
+            throw Error(exceptionDetails.response);
+        }
+
+        try {
             const {getLiveChatConfigOptionalParams} = optionalParams;
 
             await this.getChatConfig(getLiveChatConfigOptionalParams || {});

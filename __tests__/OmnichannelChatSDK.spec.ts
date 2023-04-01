@@ -436,6 +436,23 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.AMSClient).toBeDefined();
         });
 
+        it('ChatSDK.initialize() with OCSDK failure should throw an exception', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            chatSDK.SDKProvider = {
+                getSDK: jest.fn(() => {throw Error()})
+            }
+
+            try {
+                await chatSDK.initialize();
+            } catch (e) {
+                expect(e.message).toBe("OCSDKInitializationFailure");
+                expect(chatSDK.OCClient).not.toBeDefined();
+                expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(0);
+            }
+        });
+
         it('ChatSDK.initialize() with sendCacheHeaders set to \'true\' should be passed to ChatSDK.getChatConfig()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
