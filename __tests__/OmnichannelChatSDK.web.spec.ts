@@ -16,6 +16,7 @@ import WebUtils from "../src/utils/WebUtils";
 import libraries from "../src/utils/libraries";
 import platform from "../src/utils/platform";
 
+jest.mock('@microsoft/omnichannel-amsclient', () => jest.fn());
 describe('Omnichannel Chat SDK (Web)', () => {
     (settings as any).ariaTelemetryKey = '';
     (AriaTelemetry as any)._disable = true;
@@ -37,13 +38,8 @@ describe('Omnichannel Chat SDK (Web)', () => {
     it('ChatSDK.startChat() with sendDefaultInitContext should pass getContext to OCClient.sessionInit()', async () => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
-        
-        await chatSDK.initialize();
 
-        chatSDK.IC3Client = {
-            initialize: jest.fn(),
-            joinConversation: jest.fn()
-        }
+        await chatSDK.initialize();
 
         const optionalParams = {
             sendDefaultInitContext: true
@@ -76,11 +72,6 @@ describe('Omnichannel Chat SDK (Web)', () => {
 
         await chatSDK.initialize();
 
-        chatSDK.IC3Client = {
-            initialize: jest.fn(),
-            joinConversation: jest.fn()
-        }
-
         const optionalParams = {
             sendDefaultInitContext: true
         }
@@ -108,12 +99,10 @@ describe('Omnichannel Chat SDK (Web)', () => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
-        
+
         await chatSDK.initialize();
 
         chatSDK.OCClient.sessionInit = jest.fn();
-        chatSDK.IC3Client.initialize = jest.fn();
-        chatSDK.IC3Client.joinConversation = jest.fn();
 
         await chatSDK.startChat();
 
@@ -133,12 +122,10 @@ describe('Omnichannel Chat SDK (Web)', () => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
-        
+
         await chatSDK.initialize();
 
         chatSDK.OCClient.sessionInit = jest.fn();
-        chatSDK.IC3Client.initialize = jest.fn();
-        chatSDK.IC3Client.joinConversation = jest.fn();
 
         await chatSDK.startChat();
 
@@ -161,13 +148,11 @@ describe('Omnichannel Chat SDK (Web)', () => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
-        
+
         await chatSDK.initialize();
 
         chatSDK.callingOption = CallingOptionsOptionSetNumber.NoCalling;
         chatSDK.OCClient.sessionInit = jest.fn();
-        chatSDK.IC3Client.initialize = jest.fn();
-        chatSDK.IC3Client.joinConversation = jest.fn();
 
         await chatSDK.startChat();
 
