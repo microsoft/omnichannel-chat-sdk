@@ -80,7 +80,7 @@ import createOmnichannelMessage from "./utils/createOmnichannelMessage";
 import createTelemetry from "./utils/createTelemetry";
 import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
 import { defaultMessageTags } from "./core/messaging/MessageTags";
-import exceptionThrower from "./utils/exceptionThrowers";
+import exceptionThrowers from "./utils/exceptionThrowers";
 import { getLocationInfo } from "./utils/location";
 import {isCustomerMessage} from "./utils/utilities";
 import urlResolvers from "./utils/urlResolvers";
@@ -207,19 +207,19 @@ class OmnichannelChatSDK {
             this.OCSDKProvider = OCSDKProvider;
             this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, {} as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
         } catch (e) {
-            exceptionThrower.throwOCSDKInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
+            exceptionThrowers.throwOCSDKInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
 
         try {
             const {getLiveChatConfigOptionalParams} = optionalParams;
             await this.getChatConfig(getLiveChatConfigOptionalParams || {});
         } catch (e) {
-            exceptionThrower.throwChatConfigRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
+            exceptionThrowers.throwChatConfigRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
 
         const supportedLiveChatVersions = [LiveChatVersion.V1, LiveChatVersion.V2];
         if (!supportedLiveChatVersions.includes(this.liveChatVersion)) {
-            exceptionThrower.throwUnsupportedLiveChatVersionFailure(new Error(ChatSDKErrors.UnsupportedLiveChatVersion), this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
+            exceptionThrowers.throwUnsupportedLiveChatVersionFailure(new Error(ChatSDKErrors.UnsupportedLiveChatVersion), this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
 
         try {
@@ -238,7 +238,7 @@ class OmnichannelChatSDK {
             this.isInitialized = true;
             this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
         } catch (e) {
-            exceptionThrower.throwMessagingSDKCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
+            exceptionThrowers.throwMessagingSDKCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
 
         return this.liveChatConfig;
@@ -326,7 +326,7 @@ class OmnichannelChatSDK {
         });
 
         if (!this.isInitialized) {
-            exceptionThrower.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.StartChat);
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.StartChat);
         }
 
         const shouldReinitIC3Client = !platform.isNode() && !platform.isReactNative() && !this.IC3Client && this.liveChatVersion === LiveChatVersion.V1;
@@ -844,7 +844,7 @@ class OmnichannelChatSDK {
                     ChatId: this.chatToken?.chatId as string,
                 };
 
-                exceptionThrower.throwChatTokenRetrievalFailure(error, this.scenarioMarker, TelemetryEvent.GetChatToken, telemetryData);
+                exceptionThrowers.throwChatTokenRetrievalFailure(error, this.scenarioMarker, TelemetryEvent.GetChatToken, telemetryData);
             }
         } else {
             this.scenarioMarker.completeScenario(TelemetryEvent.GetChatToken, {
