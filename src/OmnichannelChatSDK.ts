@@ -207,14 +207,14 @@ class OmnichannelChatSDK {
             this.OCSDKProvider = OCSDKProvider;
             this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, {} as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
         } catch (e) {
-            exceptionThrower.throwOCSDKInitializationFailure(e, this.scenarioMarker);
+            exceptionThrower.throwOCSDKInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
 
         try {
             const {getLiveChatConfigOptionalParams} = optionalParams;
             await this.getChatConfig(getLiveChatConfigOptionalParams || {});
         } catch (e) {
-            exceptionThrower.throwChatConfigRetrievalFailure(e, this.scenarioMarker);
+            exceptionThrower.throwChatConfigRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
 
         try {
