@@ -441,7 +441,7 @@ class OmnichannelChatSDK {
             initContext: {} as InitContext
         };
 
-        sessionInitOptionalParams = this.populateInitChatOptionalParam(sessionInitOptionalParams, optionalParams);
+        sessionInitOptionalParams = this.populateInitChatOptionalParam(sessionInitOptionalParams, optionalParams, TelemetryEvent.StartChat);
         sessionInitOptionalParams.initContext!.isProactiveChat = !!optionalParams.isProactiveChat;
 
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
@@ -1719,7 +1719,7 @@ class OmnichannelChatSDK {
             initContext: {} as InitContext
         };
 
-        getAgentAvailabilityOptionalParams = this.populateInitChatOptionalParam(getAgentAvailabilityOptionalParams, optionalParams);
+        getAgentAvailabilityOptionalParams = this.populateInitChatOptionalParam(getAgentAvailabilityOptionalParams, optionalParams, TelemetryEvent.GetAgentAvailability);
 
         try {
             const response = await this.OCClient.getAgentAvailability(this.requestId, getAgentAvailabilityOptionalParams);
@@ -1730,7 +1730,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    private populateInitChatOptionalParam = (requestOptionalParams: ISessionInitOptionalParams | IGetQueueAvailabilityOptionalParams, optionalParams: StartChatOptionalParams | GetAgentAvailabilityOptionalParams) => {
+    private populateInitChatOptionalParam = (requestOptionalParams: ISessionInitOptionalParams | IGetQueueAvailabilityOptionalParams, optionalParams: StartChatOptionalParams | GetAgentAvailabilityOptionalParams, telemetryEvent: TelemetryEvent) => {
         requestOptionalParams.initContext!.locale = getLocaleStringFromId(this.localeId);
 
         if (optionalParams.customContext) {
@@ -1770,7 +1770,7 @@ class OmnichannelChatSDK {
 
                 console.error(exceptionDetails.message);
 
-                this.scenarioMarker.failScenario(TelemetryEvent.GetAgentAvailability, {
+                this.scenarioMarker.failScenario(telemetryEvent, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string,
                     ExceptionDetails: JSON.stringify(exceptionDetails)
