@@ -94,6 +94,19 @@ export const throwInvalidConversation = (scenarioMarker: ScenarioMarker, telemet
     throw Error(exceptionDetails.response);
 };
 
+export const throwClosedConversation = (scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
+    const exceptionDetails = {
+        ...telemetryData,
+        response: ChatSDKErrors.ClosedConversation
+    }
+
+    scenarioMarker.failScenario(telemetryEvent, {
+        ExceptionDetails: JSON.stringify(exceptionDetails)
+    });
+
+    throw Error(exceptionDetails.response);
+};
+
 export default {
     throwOCSDKInitializationFailure,
     throwUnsupportedLiveChatVersionFailure,
@@ -101,5 +114,6 @@ export default {
     throwMessagingSDKCreationFailure,
     throwUninitializedChatSDK,
     throwChatTokenRetrievalFailure,
-    throwInvalidConversation
+    throwInvalidConversation,
+    throwClosedConversation
 }

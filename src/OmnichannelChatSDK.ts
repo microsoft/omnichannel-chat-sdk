@@ -374,18 +374,13 @@ class OmnichannelChatSDK {
             }
 
             if (conversationDetails.state === LiveWorkItemState.WrapUp || conversationDetails.state === LiveWorkItemState.Closed) {
-                const exceptionDetails = {
-                    response: ChatSDKErrors.ClosedConversation
-                };
-
-                this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
+                console.error(`Unable to join conversation that's in '${conversationDetails.state}' state`);
+                const telemetryData = {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: JSON.stringify(exceptionDetails)
-                });
+                };
 
-                console.error(`Unable to join conversation that's in '${conversationDetails.state}' state`);
-                throw Error(exceptionDetails.response);
+                exceptionThrowers.throwClosedConversation(this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
             }
         }
 
