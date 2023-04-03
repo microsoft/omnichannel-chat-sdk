@@ -16,6 +16,8 @@ enum ChatSDKErrors {
     ChatConfigRetrievalFailure = "ChatConfigRetrievalFailure",
     /** ChatSDK is not initialized */
     UninitializedChatSDK = "UninitializedChatSDK",
+    /** Failure in retrieving ChatToken */
+    ChatTokenRetrievalFailure = "ChatTokenRetrievalFailure",
     /** Failure in loading a script dynamically */
     ScriptLoadFailure = "ScriptLoadFailure",
     /** Feature not supported in the platform used */

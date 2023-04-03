@@ -816,6 +816,25 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
         });
 
+
+        it('ChatSDK.startChat() should not call OCClient.sessionInit() if OCClient.getChatToken() fails', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.reject());
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockRejectedValue(Promise.resolve());
+
+            try {
+                await chatSDK.startChat();
+            } catch (e) {
+                expect(e.message).toBe("ChatTokenRetrievalFailure");
+            }
+
+            expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(0);
+        });
+
         it('ChatSDK.startChat() should throw a \'WidgetUseOutsideOperatingHour\' error if OCClient.sessionInit() fails with \'705\' error code', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
@@ -1253,6 +1272,7 @@ describe('Omnichannel Chat SDK', () => {
         it('ChatSDK.getCallingToken() should return acs token if available', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
 
             await chatSDK.initialize();
 
@@ -1285,6 +1305,7 @@ describe('Omnichannel Chat SDK', () => {
         it('ChatSDK.getCallingToken() should return nothing if chatToken is invalid', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
 
             await chatSDK.initialize();
 
@@ -1308,6 +1329,7 @@ describe('Omnichannel Chat SDK', () => {
         it('ChatSDK.getCallingToken() should return skype token if acs token is not available', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
 
             await chatSDK.initialize();
 

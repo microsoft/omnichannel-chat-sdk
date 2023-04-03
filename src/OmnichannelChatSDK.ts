@@ -839,17 +839,12 @@ class OmnichannelChatSDK {
                     ChatId: this.chatToken.chatId as string
                 });
             } catch (error) {
-                const exceptionDetails = {
-                    response: "OCClientGetChatTokenFailed"
+                const telemetryData = {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken?.chatId as string,
                 };
 
-                this.scenarioMarker.failScenario(TelemetryEvent.GetChatToken, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: JSON.stringify(exceptionDetails),
-                });
-
-                console.error(`OmnichannelChatSDK/getChatToken/error ${error}`);
+                exceptionThrower.throwChatTokenRetrievalFailure(error, this.scenarioMarker, TelemetryEvent.GetChatToken, telemetryData);
             }
         } else {
             this.scenarioMarker.completeScenario(TelemetryEvent.GetChatToken, {
