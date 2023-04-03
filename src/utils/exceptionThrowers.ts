@@ -26,9 +26,23 @@ export const throwChatConfigRetrievalFailure = (e: unknown, scenarioMarker: Scen
     });
 
     throw Error(exceptionDetails.response);
-}
+};
+
+export const throwMessagingSDKInitializationFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
+    const exceptionDetails = {
+        response: ChatSDKErrors.MessagingSDKInitializationFailure,
+        errorObject: `${e}`
+    }
+
+    scenarioMarker.failScenario(telemetryEvent, {
+        ExceptionDetails: JSON.stringify(exceptionDetails)
+    });
+
+    throw Error(exceptionDetails.response);
+};
 
 export default {
     throwOCSDKInitializationFailure,
-    throwChatConfigRetrievalFailure
+    throwChatConfigRetrievalFailure,
+    throwMessagingSDKInitializationFailure
 }

@@ -16,7 +16,7 @@ import WebUtils from "../src/utils/WebUtils";
 import libraries from "../src/utils/libraries";
 import platform from "../src/utils/platform";
 
-jest.mock('@microsoft/omnichannel-amsclient', () => jest.fn());
+jest.mock('@microsoft/omnichannel-amsclient', () => ({default: jest.fn()}));
 describe('Omnichannel Chat SDK (Web)', () => {
     (settings as any).ariaTelemetryKey = '';
     (AriaTelemetry as any)._disable = true;

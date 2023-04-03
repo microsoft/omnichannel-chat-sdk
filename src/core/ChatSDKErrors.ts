@@ -1,6 +1,6 @@
 /**
  * Enum of ChatSDK standard errors.
- * 
+ *
  * @enum {string}
  */
 enum ChatSDKErrors {
@@ -8,6 +8,8 @@ enum ChatSDKErrors {
     ChatAdapterInitializationFailure = "ChatAdapterInitializationFailure",
     /** Failure in OCSDK initialization */
     OCSDKInitializationFailure = "OCSDKInitializationFailure",
+    /** Failure in messaging/communication SDK initialization */
+    MessagingSDKInitializationFailure = "MessagingSDKInitializationFailure",
     /** Failure in retrieval of ChatConfig */
     ChatConfigRetrievalFailure = "ChatConfigRetrievalFailure",
     /** Failure in loading a script dynamically */
