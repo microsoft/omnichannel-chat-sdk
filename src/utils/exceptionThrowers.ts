@@ -80,11 +80,26 @@ export const throwChatTokenRetrievalFailure = (e: unknown, scenarioMarker: Scena
     throw Error(exceptionDetails.response);
 }
 
+export const throwInvalidConversation = (scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
+    const exceptionDetails = {
+        ...telemetryData,
+        response: ChatSDKErrors.InvalidConversation
+    }
+
+    scenarioMarker.failScenario(telemetryEvent, {
+        ExceptionDetails: JSON.stringify(exceptionDetails)
+    });
+
+    console.error(`Conversation not found`);
+    throw Error(exceptionDetails.response);
+};
+
 export default {
     throwOCSDKInitializationFailure,
     throwUnsupportedLiveChatVersionFailure,
     throwChatConfigRetrievalFailure,
     throwMessagingSDKCreationFailure,
     throwUninitializedChatSDK,
-    throwChatTokenRetrievalFailure
+    throwChatTokenRetrievalFailure,
+    throwInvalidConversation
 }

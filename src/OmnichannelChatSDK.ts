@@ -365,18 +365,12 @@ class OmnichannelChatSDK {
             // Validate conversation
             const conversationDetails = await this.getConversationDetails();
             if (Object.keys(conversationDetails).length === 0) {
-                const exceptionDetails = {
-                    response: ChatSDKErrors.InvalidConversation
-                };
-
-                this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
+                const telemetryData = {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: JSON.stringify(exceptionDetails)
-                });
+                };
 
-                console.error(`Conversation not found`);
-                throw Error(exceptionDetails.response);
+                exceptionThrowers.throwInvalidConversation(this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
             }
 
             if (conversationDetails.state === LiveWorkItemState.WrapUp || conversationDetails.state === LiveWorkItemState.Closed) {
