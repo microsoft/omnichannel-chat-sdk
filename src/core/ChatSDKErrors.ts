@@ -9,7 +9,7 @@ enum ChatSDKErrors {
     /** Live Chat Version currently not supported with ChatSDK */
     UnsupportedLiveChatVersion = "UnsupportedLiveChatVersion",
     /** Failure in OCSDK initialization */
-    OCSDKInitializationFailure = "OCSDKInitializationFailure",
+    OmnichannelClientInitializationFailure = "OmnichannelClientInitializationFailure",
     /** Failure in messaging/communication SDK creation */
     MessagingSDKCreationFailure = "MessagingSDKCreationFailure",
     /** Failure in retrieval of ChatConfig */

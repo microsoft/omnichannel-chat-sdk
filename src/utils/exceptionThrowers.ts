@@ -2,9 +2,9 @@ import ChatSDKErrors from "../core/ChatSDKErrors";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
 
-export const throwOCSDKInitializationFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
+export const throwOmnichannelClientInitializationFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
     const exceptionDetails = {
-        response: ChatSDKErrors.OCSDKInitializationFailure,
+        response: ChatSDKErrors.OmnichannelClientInitializationFailure,
         errorObject: `${e}`
     }
 
@@ -108,7 +108,7 @@ export const throwClosedConversation = (scenarioMarker: ScenarioMarker, telemetr
 };
 
 export default {
-    throwOCSDKInitializationFailure,
+    throwOmnichannelClientInitializationFailure,
     throwUnsupportedLiveChatVersionFailure,
     throwChatConfigRetrievalFailure,
     throwMessagingSDKCreationFailure,

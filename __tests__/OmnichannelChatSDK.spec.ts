@@ -459,7 +459,7 @@ describe('Omnichannel Chat SDK', () => {
             try {
                 await chatSDK.initialize();
             } catch (e) {
-                expect(e.message).toBe("OCSDKInitializationFailure");
+                expect(e.message).toBe("OmnichannelClientInitializationFailure");
                 expect(chatSDK.OCClient).not.toBeDefined();
                 expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(0);
             }
