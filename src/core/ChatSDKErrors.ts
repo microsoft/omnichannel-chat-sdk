@@ -6,6 +6,8 @@
 enum ChatSDKErrors {
     /** Failure in ChatAdapter initialization */
     ChatAdapterInitializationFailure = "ChatAdapterInitializationFailure",
+    /** Live Chat Version currently not supported with ChatSDK */
+    UnsupportedLiveChatVersion = "UnsupportedLiveChatVersion",
     /** Failure in OCSDK initialization */
     OCSDKInitializationFailure = "OCSDKInitializationFailure",
     /** Failure in messaging/communication SDK initialization */

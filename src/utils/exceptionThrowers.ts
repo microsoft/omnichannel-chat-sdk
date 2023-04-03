@@ -28,6 +28,19 @@ export const throwChatConfigRetrievalFailure = (e: unknown, scenarioMarker: Scen
     throw Error(exceptionDetails.response);
 };
 
+export const throwUnsupportedLiveChatVersionFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
+    const exceptionDetails = {
+        response: ChatSDKErrors.UnsupportedLiveChatVersion,
+        errorObject: `${e}`
+    }
+
+    scenarioMarker.failScenario(telemetryEvent, {
+        ExceptionDetails: JSON.stringify(exceptionDetails)
+    });
+
+    throw Error(exceptionDetails.response);
+};
+
 export const throwMessagingSDKInitializationFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
     const exceptionDetails = {
         response: ChatSDKErrors.MessagingSDKInitializationFailure,
@@ -43,6 +56,7 @@ export const throwMessagingSDKInitializationFailure = (e: unknown, scenarioMarke
 
 export default {
     throwOCSDKInitializationFailure,
+    throwUnsupportedLiveChatVersionFailure,
     throwChatConfigRetrievalFailure,
     throwMessagingSDKInitializationFailure
 }

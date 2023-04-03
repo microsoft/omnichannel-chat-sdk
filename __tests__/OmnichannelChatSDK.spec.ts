@@ -408,6 +408,18 @@ describe('Omnichannel Chat SDK', () => {
             jest.clearAllMocks();
         });
 
+        it('ChatSDK.initialize() with an unsupported liveChatVersion should throw an exception', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.liveChatVersion = 'invalid';
+
+            try {
+                await chatSDK.initialize();
+            } catch (e) {
+                expect(e.message).toBe("UnsupportedLiveChatVersion");
+            }
+        });
+
         it('[LiveChatV1] ChatSDK.initialize() should instantiate OCSDK & IC3Core/IC3Client', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();

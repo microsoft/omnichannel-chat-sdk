@@ -217,6 +217,11 @@ class OmnichannelChatSDK {
             exceptionThrower.throwChatConfigRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
 
+        const supportedLiveChatVersions = [LiveChatVersion.V1, LiveChatVersion.V2];
+        if (!supportedLiveChatVersions.includes(this.liveChatVersion)) {
+            exceptionThrower.throwUnsupportedLiveChatVersionFailure(new Error(ChatSDKErrors.UnsupportedLiveChatVersion), this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
+        }
+
         try {
             if (this.liveChatVersion === LiveChatVersion.V2) {
                 this.ACSClient = new ACSClient(this.acsClientLogger);
@@ -228,12 +233,9 @@ class OmnichannelChatSDK {
                 });
             } else if (this.liveChatVersion === LiveChatVersion.V1) {
                 this.IC3Client = await this.getIC3Client();
-            } else {
-                throw new Error("Unsupported LiveChatVersion");
             }
 
             this.isInitialized = true;
-
             this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
         } catch (e) {
             exceptionThrower.throwMessagingSDKInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
