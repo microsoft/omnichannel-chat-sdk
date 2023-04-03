@@ -727,6 +727,16 @@ describe('Omnichannel Chat SDK', () => {
             expect(await chatSDK.getDataMaskingRules()).toBe(dataMaskingRules);
         });
 
+        it('ChatSDK.startChat() should throw an exception if ChatSDK.initialize() is not called', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+
+            try {
+                await chatSDK.startChat();
+            } catch (e) {
+                expect(e.message).toBe('UninitializedChatSDK');
+            }
+        });
+
         it('[LiveChatV1] ChatSDK.startchat() should start an OC chat', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();

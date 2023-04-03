@@ -325,6 +325,10 @@ class OmnichannelChatSDK {
             RequestId: this.requestId
         });
 
+        if (!this.isInitialized) {
+            exceptionThrower.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.StartChat);
+        }
+
         const shouldReinitIC3Client = !platform.isNode() && !platform.isReactNative() && !this.IC3Client && this.liveChatVersion === LiveChatVersion.V1;
         if (shouldReinitIC3Client) {
             this.IC3Client = await this.getIC3Client();

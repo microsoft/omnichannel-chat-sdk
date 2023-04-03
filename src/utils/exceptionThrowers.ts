@@ -54,9 +54,22 @@ export const throwMessagingSDKInitializationFailure = (e: unknown, scenarioMarke
     throw Error(exceptionDetails.response);
 };
 
+export const throwUninitializedChatSDK = (scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
+    const exceptionDetails = {
+        response: ChatSDKErrors.UninitializedChatSDK,
+    }
+
+    scenarioMarker.failScenario(telemetryEvent, {
+        ExceptionDetails: JSON.stringify(exceptionDetails)
+    });
+
+    throw Error(exceptionDetails.response);
+};
+
 export default {
     throwOCSDKInitializationFailure,
     throwUnsupportedLiveChatVersionFailure,
     throwChatConfigRetrievalFailure,
-    throwMessagingSDKInitializationFailure
+    throwMessagingSDKInitializationFailure,
+    throwUninitializedChatSDK
 }
