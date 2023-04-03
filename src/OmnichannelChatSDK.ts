@@ -349,12 +349,13 @@ class OmnichannelChatSDK {
                 if (reconnectableChatsResponse && reconnectableChatsResponse.reconnectid) {
                     this.reconnectId = reconnectableChatsResponse.reconnectid;
                 }
-            } catch {
-                const exceptionDetails = {
-                    response: "OCClientGetReconnectableChatsFailed"
-                }
+            } catch (e) {
+                const telemetryData = {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string,
+                };
 
-                throw Error(exceptionDetails.response);
+                exceptionThrowers.throwPersistentChatConversationRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
             }
         }
 

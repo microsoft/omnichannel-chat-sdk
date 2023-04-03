@@ -25,7 +25,9 @@ enum ChatSDKErrors {
     /** Conversation has been closed (WrapUp/Closed state) */
     ClosedConversation = "ClosedConversation",
     /** Conversation is invalid or not found */
-    InvalidConversation = "InvalidConversation"
+    InvalidConversation = "InvalidConversation",
+    /** Failure on retrieving conversation from persistent chat */
+    PersistentChatConversationRetrievalFailure = "PersistentChatConversationRetrievalFailure"
 }
 
 export default ChatSDKErrors;
