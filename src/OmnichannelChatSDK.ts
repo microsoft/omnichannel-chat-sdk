@@ -214,16 +214,7 @@ class OmnichannelChatSDK {
             const {getLiveChatConfigOptionalParams} = optionalParams;
             await this.getChatConfig(getLiveChatConfigOptionalParams || {});
         } catch (e) {
-            const exceptionDetails = {
-                response: ChatSDKErrors.ChatConfigRetrievalFailure,
-                errorObject: `${e}`
-            }
-
-            this.scenarioMarker.failScenario(TelemetryEvent.InitializeChatSDK, {
-                ExceptionDetails: JSON.stringify(exceptionDetails)
-            });
-
-            throw Error(exceptionDetails.response);
+            exceptionThrower.throwChatConfigRetrievalFailure(e, this.scenarioMarker);
         }
 
         try {

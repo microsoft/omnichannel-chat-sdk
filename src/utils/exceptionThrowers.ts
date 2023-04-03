@@ -15,6 +15,20 @@ export const throwOCSDKInitializationFailure = (e: unknown, scenarioMarker: Scen
     throw Error(exceptionDetails.response);
 };
 
+export const throwChatConfigRetrievalFailure = (e: unknown, scenarioMarker: ScenarioMarker): void => {
+    const exceptionDetails = {
+        response: ChatSDKErrors.ChatConfigRetrievalFailure,
+        errorObject: `${e}`
+    }
+
+    scenarioMarker.failScenario(TelemetryEvent.InitializeChatSDK, {
+        ExceptionDetails: JSON.stringify(exceptionDetails)
+    });
+
+    throw Error(exceptionDetails.response);
+}
+
 export default {
-    throwOCSDKInitializationFailure
+    throwOCSDKInitializationFailure,
+    throwChatConfigRetrievalFailure
 }
