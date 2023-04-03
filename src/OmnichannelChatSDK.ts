@@ -238,7 +238,7 @@ class OmnichannelChatSDK {
             this.isInitialized = true;
             this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
         } catch (e) {
-            exceptionThrowers.throwMessagingSDKCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
+            exceptionThrowers.throwMessagingClientCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
 
         return this.liveChatConfig;
