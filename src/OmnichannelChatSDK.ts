@@ -80,6 +80,7 @@ import createOmnichannelMessage from "./utils/createOmnichannelMessage";
 import createTelemetry from "./utils/createTelemetry";
 import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
 import { defaultMessageTags } from "./core/messaging/MessageTags";
+import exceptionThrower from "./utils/exceptionThrowers";
 import { getLocationInfo } from "./utils/location";
 import {isCustomerMessage} from "./utils/utilities";
 import urlResolvers from "./utils/urlResolvers";
@@ -206,16 +207,7 @@ class OmnichannelChatSDK {
             this.OCSDKProvider = OCSDKProvider;
             this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, {} as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
         } catch (e) {
-            const exceptionDetails = {
-                response: ChatSDKErrors.OCSDKInitializationFailure,
-                errorObject: `${e}`
-            }
-
-            this.scenarioMarker.failScenario(TelemetryEvent.InitializeChatSDK, {
-                ExceptionDetails: JSON.stringify(exceptionDetails)
-            });
-
-            throw Error(exceptionDetails.response);
+            exceptionThrower.throwOCSDKInitializationFailure(e, this.scenarioMarker);
         }
 
         try {
