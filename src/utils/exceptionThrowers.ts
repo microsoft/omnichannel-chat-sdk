@@ -1,3 +1,12 @@
+/**
+ * Utilities to throw exception on failures in ChatSDK.
+ *
+ * It should throw ChatSDK standard errors as response with the exception object if any.
+ *
+ * The error thrown should have a short message in CamelCase to allow the exception to be caught easily programmatically.
+ *
+ * If a longer message needs to displayed to the user, a console.error() would be preferred.
+ */
 import ChatSDKErrors from "../core/ChatSDKErrors";
 import ChatSDKExceptionDetails from "../core/ChatSDKExceptionDetails";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
