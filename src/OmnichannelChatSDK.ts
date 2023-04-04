@@ -513,17 +513,12 @@ class OmnichannelChatSDK {
                     chatToken: this.chatToken as OmnichannelChatToken
                 });
             } catch (error) {
-                const exceptionDetails = {
-                    response: "AMSClientInitializeFailed"
-                };
-
-                this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
+                const telemetryData = {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: JSON.stringify(exceptionDetails)
-                });
+                };
 
-                throw Error(exceptionDetails.response);
+                exceptionThrowers.throwMessagingClientInitializationFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
             }
         } else {
             try {

@@ -823,7 +823,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.IC3Client.joinConversation).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.startchat() should start an OC chat', async () => {
+        it('ChatSDK.startChat() should start an OC chat', async () => {
             // global.fetch = jest.fn();
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
@@ -983,6 +983,64 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
             expect(chatSDK.IC3Client.initialize).toHaveBeenCalledTimes(1);
             expect(chatSDK.IC3Client.joinConversation).toHaveBeenCalledTimes(1);
+        });
+
+        it('ChatSDK.startChat() should throw an exception if ACSClient.initialize() fails', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockRejectedValue(Promise.reject());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.AMSClient, 'initialize').mockResolvedValue(Promise.resolve());
+
+            try {
+                await chatSDK.startChat();
+            } catch (error) {
+                expect(error.message).toBe("MessagingClientInitializationFailure");
+            }
+
+            expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
+            expect(chatSDK.ACSClient.initialize).toHaveBeenCalledTimes(1);
+            expect(chatSDK.ACSClient.joinConversation).toHaveBeenCalledTimes(0);
+            expect(chatSDK.AMSClient.initialize).toHaveBeenCalledTimes(0);
+        });
+
+        it('ChatSDK.startChat() should throw an exception if AMSClient.initialize() fails', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.AMSClient, 'initialize').mockRejectedValue(Promise.reject());
+
+            try {
+                await chatSDK.startChat();
+            } catch (error) {
+                expect(error.message).toBe("MessagingClientInitializationFailure");
+            }
+
+            expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
+            expect(chatSDK.ACSClient.initialize).toHaveBeenCalledTimes(1);
+            expect(chatSDK.ACSClient.joinConversation).toHaveBeenCalledTimes(1);
+            expect(chatSDK.AMSClient.initialize).toHaveBeenCalledTimes(1);
         });
 
         it('ChatSDK.startchat() with existing liveChatContext should not call OCClient.getChatToken() & OCClient.sessionInit()', async() => {
