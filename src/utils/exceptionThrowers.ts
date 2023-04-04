@@ -166,6 +166,20 @@ export const throwConversationInitializationFailure = (e: unknown, scenarioMarke
     throw Error(exceptionDetails.response);
 };
 
+export const throwMessagingClientInitializationFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
+    const exceptionDetails: ChatSDKExceptionDetails = {
+        response: ChatSDKErrors.MessagingClientInitializationFailure,
+        errorObject: `${e}`
+    };
+
+    scenarioMarker.failScenario(telemetryEvent, {
+        ...telemetryData,
+        ExceptionDetails: JSON.stringify(exceptionDetails)
+    });
+
+    throw Error(exceptionDetails.response);
+};
+
 export default {
     throwOmnichannelClientInitializationFailure,
     throwUnsupportedLiveChatVersionFailure,
@@ -178,5 +192,6 @@ export default {
     throwAuthenticatedChatConversationRetrievalFailure,
     throwPersistentChatConversationRetrievalFailure,
     throwWidgetUseOutsideOperatingHour,
-    throwConversationInitializationFailure
+    throwConversationInitializationFailure,
+    throwMessagingClientInitializationFailure
 }

@@ -52,6 +52,8 @@ describe('Omnichannel Chat SDK (Web)', () => {
         }));
 
         jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+        chatSDK.ACSClient.initialize = jest.fn();
+        chatSDK.ACSClient.joinConversation = jest.fn();
 
         jest.spyOn(platform, 'isNode').mockReturnValue(false);
         jest.spyOn(platform, 'isReactNative').mockReturnValue(false);
@@ -103,6 +105,8 @@ describe('Omnichannel Chat SDK (Web)', () => {
         await chatSDK.initialize();
 
         chatSDK.OCClient.sessionInit = jest.fn();
+        chatSDK.ACSClient.initialize = jest.fn();
+        chatSDK.ACSClient.joinConversation = jest.fn();
 
         await chatSDK.startChat();
 
@@ -126,6 +130,8 @@ describe('Omnichannel Chat SDK (Web)', () => {
         await chatSDK.initialize();
 
         chatSDK.OCClient.sessionInit = jest.fn();
+        chatSDK.ACSClient.initialize = jest.fn();
+        chatSDK.ACSClient.joinConversation = jest.fn();
 
         await chatSDK.startChat();
 
@@ -153,6 +159,8 @@ describe('Omnichannel Chat SDK (Web)', () => {
 
         chatSDK.callingOption = CallingOptionsOptionSetNumber.NoCalling;
         chatSDK.OCClient.sessionInit = jest.fn();
+        chatSDK.ACSClient.initialize = jest.fn();
+        chatSDK.ACSClient.joinConversation = jest.fn();
 
         await chatSDK.startChat();
 

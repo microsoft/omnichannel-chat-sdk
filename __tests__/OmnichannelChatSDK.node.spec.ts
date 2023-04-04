@@ -74,6 +74,10 @@ describe('Omnichannel Chat SDK (Node)', () => {
 
         await chatSDK.initialize();
 
+        chatSDK.ACSClient.initialize = jest.fn();
+        chatSDK.ACSClient.joinConversation = jest.fn();
+        chatSDK.AMSClient.initialize = jest.fn();
+
         chatSDK.OCClient.sessionInit = jest.fn();
 
         await chatSDK.startChat();
@@ -99,6 +103,10 @@ describe('Omnichannel Chat SDK (Node)', () => {
         chatSDK.getChatToken = jest.fn();
 
         await chatSDK.initialize();
+
+        chatSDK.ACSClient.initialize = jest.fn();
+        chatSDK.ACSClient.joinConversation = jest.fn();
+        chatSDK.AMSClient.initialize = jest.fn();
 
         chatSDK.OCClient.sessionInit = jest.fn();
 
