@@ -107,6 +107,19 @@ export const throwClosedConversation = (scenarioMarker: ScenarioMarker, telemetr
     throw Error(exceptionDetails.response);
 };
 
+export const throwAuthenticatedChatConversationRetrievalFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
+    const exceptionDetails = {
+        ...telemetryData,
+        response: ChatSDKErrors.AuthenticatedChatConversationRetrievalFailure
+    }
+
+    scenarioMarker.failScenario(telemetryEvent, {
+        ExceptionDetails: JSON.stringify(exceptionDetails)
+    });
+
+    throw Error(exceptionDetails.response);
+};
+
 export const throwPersistentChatConversationRetrievalFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
     const exceptionDetails = {
         ...telemetryData,
@@ -118,7 +131,7 @@ export const throwPersistentChatConversationRetrievalFailure = (e: unknown, scen
     });
 
     throw Error(exceptionDetails.response);
-}
+};
 
 export default {
     throwOmnichannelClientInitializationFailure,
@@ -129,5 +142,6 @@ export default {
     throwChatTokenRetrievalFailure,
     throwInvalidConversation,
     throwClosedConversation,
+    throwAuthenticatedChatConversationRetrievalFailure,
     throwPersistentChatConversationRetrievalFailure
 }

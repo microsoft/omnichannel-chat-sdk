@@ -682,6 +682,47 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.validateAuthChatRecord).toHaveBeenCalledTimes(1);
         });
 
+        it('Authenticated Chat with liveChatContext should throw an exception if OCClient.validateAuthChatRecord() fails', async () => {
+            const chatSDKConfig = {
+                getAuthToken: async () => {
+                    return 'authenticatedUserToken'
+                }
+            };
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.authSettings = {};
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}',
+                AttachmentConfiguration: {
+                    AttachmentServiceEndpoint: 'AttachmentServiceEndpoint'
+                }
+            }));
+
+            jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue(Promise.resolve({state: 'state'}));
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'validateAuthChatRecord').mockResolvedValue(Promise.reject());
+            jest.spyOn(chatSDK.AMSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve());
+
+            const optionalParams = {
+                liveChatContext: { requestId: 'requestId', chatToken: {chatId: 'chatId'}}
+            }
+
+            try {
+                await chatSDK.startChat(optionalParams);
+            } catch (e) {
+                console.error(e);
+                expect(e.message).toBe('AuthenticatedChatConversationRetrievalFailure');
+                expect(chatSDK.OCClient.validateAuthChatRecord).toHaveBeenCalledTimes(1);
+            }
+        });
+
         it('ChatSDK.getPreChatSurvey() with preChat enabled should return a pre chat survey', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             const samplePreChatSurvey = '{"type":"AdaptiveCard", "version":"1.1", "body":[]}';

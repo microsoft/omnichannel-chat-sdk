@@ -399,19 +399,13 @@ class OmnichannelChatSDK {
                         authenticatedUserToken: this.authenticatedUserToken,
                         chatId: this.chatToken.chatId
                     });
-                } catch {
-                    const exceptionDetails = {
-                        response: "OCClientValidateAuthChatRecordFailed",
-                        message: "InvalidAuthChatRecord"
-                    };
-
-                    this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
+                } catch (e) {
+                    const telemetryData = {
                         RequestId: this.requestId,
                         ChatId: this.chatToken.chatId as string,
-                        ExceptionDetails: JSON.stringify(exceptionDetails)
-                    });
+                    };
 
-                    throw Error(exceptionDetails.response);
+                    exceptionThrowers.throwAuthenticatedChatConversationRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
                 }
             }
         }
