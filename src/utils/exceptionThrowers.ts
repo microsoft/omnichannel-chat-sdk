@@ -6,6 +6,8 @@
  * The error thrown should have a short message in CamelCase to allow the exception to be caught easily programmatically.
  *
  * If a longer message needs to displayed to the user, a console.error() would be preferred.
+ *
+ * Stack trace should only be logged and not printed.
  */
 import ChatSDKErrors from "../core/ChatSDKErrors";
 import ChatSDKExceptionDetails from "../core/ChatSDKExceptionDetails";
