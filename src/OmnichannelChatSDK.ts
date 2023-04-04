@@ -1457,16 +1457,8 @@ class OmnichannelChatSDK {
         this.scenarioMarker.startScenario(TelemetryEvent.GetVoiceVideoCalling);
 
         if (platform.isNode() || platform.isReactNative()) {
-            const exceptionDetails: ChatSDKExceptionDetails = {
-                response: "UnsupportedPlatform",
-                message: "VoiceVideoCalling is only supported on browser"
-            };
-
-            this.scenarioMarker.failScenario(TelemetryEvent.GetVoiceVideoCalling, {
-                ExceptionDetails: JSON.stringify(exceptionDetails)
-            });
-
-            throw new Error(exceptionDetails.response);
+            const message = "VoiceVideoCalling is only supported on browser";
+            exceptionThrowers.throwUnsupportedPlatform(this.scenarioMarker, TelemetryEvent.GetVoiceVideoCalling, message);
         }
 
         if (this.callingOption.toString() === CallingOptionsOptionSetNumber.NoCalling.toString()) {

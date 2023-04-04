@@ -110,12 +110,15 @@ describe('Omnichannel Chat SDK (Node)', () => {
 
         chatSDK.OCClient.sessionInit = jest.fn();
 
+        jest.spyOn(console, 'error');
+
         await chatSDK.startChat();
 
         try {
             await chatSDK.getVoiceVideoCalling();
         } catch (error) {
             expect(error.message).toEqual('UnsupportedPlatform');
+            expect(console.error).toHaveBeenCalledWith('VoiceVideoCalling is only supported on browser');
         }
     });
 
