@@ -167,11 +167,13 @@ describe('Omnichannel Chat SDK (Web)', () => {
         await chatSDK.startChat();
 
         jest.spyOn(platform, 'isNode').mockReturnValue(false);
+        jest.spyOn(console, 'error');
 
         try {
             await chatSDK.getVoiceVideoCalling();
         } catch (error) {
             expect(error.message).toEqual('FeatureDisabled');
+            expect(console.error).toHaveBeenCalledWith('Voice and video call is not enabled');
         }
     });
 });

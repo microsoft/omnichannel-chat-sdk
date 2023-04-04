@@ -12,7 +12,7 @@ import ChatSDKExceptionDetails from "../core/ChatSDKExceptionDetails";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
 
-export const throwUnsupportedPlatform =  (scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, message: string, telemetryData: {[key: string]: string} = {}): void => {
+export const throwUnsupportedPlatform = (scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, message: string, telemetryData: {[key: string]: string} = {}): void => {
     const exceptionDetails: ChatSDKExceptionDetails = {
         response: ChatSDKErrors.UnsupportedPlatform,
     }
@@ -23,6 +23,24 @@ export const throwUnsupportedPlatform =  (scenarioMarker: ScenarioMarker, teleme
     });
 
     if (message) {
+        exceptionDetails.message = message;
+        console.error(message);
+    }
+
+    throw Error(exceptionDetails.response);
+};
+
+export const throwFeatureDisabled = (scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, message: string): void => {
+    const exceptionDetails: ChatSDKExceptionDetails = {
+        response: ChatSDKErrors.FeatureDisabled,
+    }
+
+    scenarioMarker.failScenario(telemetryEvent, {
+        ExceptionDetails: JSON.stringify(exceptionDetails)
+    });
+
+    if (message) {
+        exceptionDetails.message = message;
         console.error(message);
     }
 
@@ -222,6 +240,7 @@ export const throwMessagingClientConversationJoinFailure = (e: unknown, scenario
 
 export default {
     throwUnsupportedPlatform,
+    throwFeatureDisabled,
     throwOmnichannelClientInitializationFailure,
     throwUnsupportedLiveChatVersionFailure,
     throwChatConfigRetrievalFailure,

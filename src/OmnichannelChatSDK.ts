@@ -1462,16 +1462,8 @@ class OmnichannelChatSDK {
         }
 
         if (this.callingOption.toString() === CallingOptionsOptionSetNumber.NoCalling.toString()) {
-            const exceptionDetails: ChatSDKExceptionDetails = {
-                response: "FeatureDisabled",
-                message: "Voice and video call is not enabled"
-            };
-
-            this.scenarioMarker.failScenario(TelemetryEvent.GetVoiceVideoCalling, {
-                ExceptionDetails: JSON.stringify(exceptionDetails)
-            });
-
-            throw new Error(exceptionDetails.response);
+            const message = "Voice and video call is not enabled";
+            exceptionThrowers.throwFeatureDisabled(this.scenarioMarker, TelemetryEvent.GetVoiceVideoCalling, message);
         }
 
         const chatConfig = await this.getChatConfig();

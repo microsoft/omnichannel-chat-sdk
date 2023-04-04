@@ -22,6 +22,8 @@ enum ChatSDKErrors {
     ScriptLoadFailure = "ScriptLoadFailure",
     /** Feature not supported in the platform used */
     UnsupportedPlatform = "UnsupportedPlatform",
+    /** Feature is not enabled. */
+    FeatureDisabled = "FeatureDisabled",
     /** Conversation has been closed (WrapUp/Closed state) */
     ClosedConversation = "ClosedConversation",
     /** Conversation is invalid or not found */
