@@ -947,7 +947,7 @@ describe('Omnichannel Chat SDK', () => {
             try {
                 await chatSDK.startChat();
             } catch (error) {
-                expect(console.error).toHaveBeenCalled();
+                expect(error.message).toBe("MessagingClientInitializationFailure");
             }
 
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
@@ -1075,7 +1075,6 @@ describe('Omnichannel Chat SDK', () => {
         it('ChatSDK.startchat() with existing liveChatContext should not call OCClient.getChatToken() & OCClient.sessionInit()', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
             jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
@@ -1089,6 +1088,9 @@ describe('Omnichannel Chat SDK', () => {
                 ConversationId: 'id'
             }));
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.AMSClient, 'initialize').mockResolvedValue(Promise.resolve());
 
             const liveChatContext = {
                 chatToken: {
@@ -2577,7 +2579,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(count);
         });
 
-        it('Ability to add multiple "onTypingEvent" event handler', async () => {
+        it('[LiveChatV1] Ability to add multiple "onTypingEvent" event handler', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
@@ -2586,6 +2588,8 @@ describe('Omnichannel Chat SDK', () => {
             await chatSDK.initialize();
 
             chatSDK.OCClient.sessionInit = jest.fn();
+            chatSDK.IC3Client.initialize = jest.fn();
+            chatSDK.IC3Client.joinConversation = jest.fn();
 
             await chatSDK.startChat();
 

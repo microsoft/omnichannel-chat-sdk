@@ -522,18 +522,12 @@ class OmnichannelChatSDK {
                     visitor: true
                 });
             } catch (error) {
-                const exceptionDetails = {
-                    response: "IC3ClientInitializeFailed"
-                };
-
-                this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
+                const telemetryData = {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: JSON.stringify(exceptionDetails)
-                });
+                };
 
-                console.error(`OmnichannelChatSDK/startChat/initialize/error ${error}`);
-                return error;
+                exceptionThrowers.throwMessagingClientInitializationFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
             }
 
             try {
