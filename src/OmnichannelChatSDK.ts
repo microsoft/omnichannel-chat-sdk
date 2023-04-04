@@ -1867,66 +1867,61 @@ class OmnichannelChatSDK {
 
     private async getChatConfig(optionalParams: GetLiveChatConfigOptionalParams = {}): Promise<ChatConfig> {
         const {sendCacheHeaders} = optionalParams;
-        try {
-            const bypassCache = sendCacheHeaders === true;
-            const liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache);
-            const {
-                DataMaskingInfo: dataMaskingConfig,
-                LiveChatConfigAuthSettings: authSettings,
-                LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin,
-                LiveChatVersion: liveChatVersion,
-                ChatWidgetLanguage: chatWidgetLanguage
-            } = liveChatConfig;
+        const bypassCache = sendCacheHeaders === true;
+        const liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache);
+        const {
+            DataMaskingInfo: dataMaskingConfig,
+            LiveChatConfigAuthSettings: authSettings,
+            LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin,
+            LiveChatVersion: liveChatVersion,
+            ChatWidgetLanguage: chatWidgetLanguage
+        } = liveChatConfig;
 
-            const {msdyn_localeid} = chatWidgetLanguage;
+        const {msdyn_localeid} = chatWidgetLanguage;
 
-            this.localeId = msdyn_localeid || defaultLocaleId;
-            this.liveChatVersion = liveChatVersion || LiveChatVersion.V1;
+        this.localeId = msdyn_localeid || defaultLocaleId;
+        this.liveChatVersion = liveChatVersion || LiveChatVersion.V2;
 
-            /* istanbul ignore next */
-            this.debug && console.log(`[OmnichannelChatSDK][getChatConfig][liveChatVersion] ${this.liveChatVersion}`);
+        /* istanbul ignore next */
+        this.debug && console.log(`[OmnichannelChatSDK][getChatConfig][liveChatVersion] ${this.liveChatVersion}`);
 
-            const {setting} = dataMaskingConfig;
-            if (setting.msdyn_maskforcustomer) {
-                this.dataMaskingRules = dataMaskingConfig.dataMaskingRules;
-            }
-
-            if (authSettings) {
-                this.authSettings = authSettings;
-            }
-
-            const {PreChatSurvey: preChatSurvey, msdyn_prechatenabled, msdyn_callingoptions, msdyn_conversationmode, msdyn_enablechatreconnect} = liveWSAndLiveChatEngJoin;
-            const isPreChatEnabled = msdyn_prechatenabled === true || msdyn_prechatenabled == "true";
-            const isChatReconnectEnabled = msdyn_enablechatreconnect === true || msdyn_enablechatreconnect == "true";
-
-            if (msdyn_conversationmode?.toString() === ConversationMode.PersistentChat.toString()) {
-                this.isPersistentChat = true;
-            }
-
-            if (isChatReconnectEnabled && !this.isPersistentChat) {
-                this.isChatReconnect = true;
-            }
-
-            if (isPreChatEnabled && preChatSurvey && preChatSurvey.trim().length > 0) {
-                this.preChatSurvey = preChatSurvey;
-            }
-
-            if (this.authSettings) {
-                await this.setAuthTokenProvider(this.chatSDKConfig.getAuthToken);
-            }
-
-            if (this.preChatSurvey) {
-                /* istanbul ignore next */
-                this.debug && console.log('Prechat Survey!');
-            }
-
-            this.callingOption = msdyn_callingoptions;
-            this.liveChatConfig = liveChatConfig;
-            return this.liveChatConfig;
-        } catch (error) {
-            console.error(`OmnichannelChatSDK/getChatConfig/error ${error}`);
-            return error;
+        const {setting} = dataMaskingConfig;
+        if (setting.msdyn_maskforcustomer) {
+            this.dataMaskingRules = dataMaskingConfig.dataMaskingRules;
         }
+
+        if (authSettings) {
+            this.authSettings = authSettings;
+        }
+
+        const {PreChatSurvey: preChatSurvey, msdyn_prechatenabled, msdyn_callingoptions, msdyn_conversationmode, msdyn_enablechatreconnect} = liveWSAndLiveChatEngJoin;
+        const isPreChatEnabled = msdyn_prechatenabled === true || msdyn_prechatenabled == "true";
+        const isChatReconnectEnabled = msdyn_enablechatreconnect === true || msdyn_enablechatreconnect == "true";
+
+        if (msdyn_conversationmode?.toString() === ConversationMode.PersistentChat.toString()) {
+            this.isPersistentChat = true;
+        }
+
+        if (isChatReconnectEnabled && !this.isPersistentChat) {
+            this.isChatReconnect = true;
+        }
+
+        if (isPreChatEnabled && preChatSurvey && preChatSurvey.trim().length > 0) {
+            this.preChatSurvey = preChatSurvey;
+        }
+
+        if (this.authSettings) {
+            await this.setAuthTokenProvider(this.chatSDKConfig.getAuthToken);
+        }
+
+        if (this.preChatSurvey) {
+            /* istanbul ignore next */
+            this.debug && console.log('Prechat Survey!');
+        }
+
+        this.callingOption = msdyn_callingoptions;
+        this.liveChatConfig = liveChatConfig;
+        return this.liveChatConfig;
     }
 
     private resolveIC3ClientUrl(): string {

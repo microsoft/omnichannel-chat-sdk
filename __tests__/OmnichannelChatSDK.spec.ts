@@ -15,6 +15,8 @@ import OmnichannelErrorCodes from "../src/core/OmnichannelErrorCodes";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
 import libraries from "../src/utils/libraries";
+// import createAMSClient from "@microsoft/omnichannel-amsclient";
+import * as AMSLib from "@microsoft/omnichannel-amsclient";
 
 describe('Omnichannel Chat SDK', () => {
     AWTLogManager.initialize = jest.fn();
@@ -550,7 +552,15 @@ describe('Omnichannel Chat SDK', () => {
         it('ChatSDK.getChatConfig() with sendCacheHeaders set to \'true\' should be passed to OCClient.getChatConfig()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.OCClient = {};
-            chatSDK.OCClient.getChatConfig = jest.fn();
+            chatSDK.OCClient.getChatConfig = jest.fn(() => Promise.resolve({
+                DataMaskingInfo: { setting: { msdyn_maskforcustomer: false } },
+                LiveWSAndLiveChatEngJoin: { PreChatSurvey: { msdyn_prechatenabled: false } },
+                LiveChatConfigAuthSettings: {},
+                ChatWidgetLanguage: {
+                    msdyn_localeid: '1033',
+                    msdyn_languagename: 'English - United States'
+                }
+            }));
 
             const optionalParams = {
                 sendCacheHeaders: true
@@ -563,7 +573,15 @@ describe('Omnichannel Chat SDK', () => {
         it('ChatSDK.getChatConfig() with sendCacheHeaders set to \'false\' should be passed to OCClient.getChatConfig()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.OCClient = {};
-            chatSDK.OCClient.getChatConfig = jest.fn();
+            chatSDK.OCClient.getChatConfig = jest.fn(() => Promise.resolve({
+                DataMaskingInfo: { setting: { msdyn_maskforcustomer: false } },
+                LiveWSAndLiveChatEngJoin: { PreChatSurvey: { msdyn_prechatenabled: false } },
+                LiveChatConfigAuthSettings: {},
+                ChatWidgetLanguage: {
+                    msdyn_localeid: '1033',
+                    msdyn_languagename: 'English - United States'
+                }
+            }));
 
             const optionalParams = {
                 sendCacheHeaders: false
@@ -706,6 +724,10 @@ describe('Omnichannel Chat SDK', () => {
                 LiveWSAndLiveChatEngJoin: {
                     PreChatSurvey: samplePreChatSurvey,
                     msdyn_prechatenabled: false
+                },
+                ChatWidgetLanguage: {
+                    msdyn_localeid: '1033',
+                    msdyn_languagename: 'English - United States'
                 }
             }));
 
@@ -716,6 +738,8 @@ describe('Omnichannel Chat SDK', () => {
 
         it('ChatSDK.getDataMaskingRules() should return active data masking rules', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
             const dataMaskingRules = {
                 'SSN': "\\b(?!000|666|9)\\d{3}[- ]?(?!00)\\d{2}[- ]?(?!0000)\\d{4}\\b"
             }
@@ -1063,7 +1087,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(0);
         });
 
-        it('ChatSDK.getLiveChatConfig() with useRuntimeCache set to \'false\' should call ChatSDK.getChaConfig()', async () => {
+        it('ChatSDK.getLiveChatConfig() with useRuntimeCache set to \'false\' should call ChatSDK.getChatConfig()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
@@ -1076,7 +1100,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.getLiveChatConfig() with no useRuntimeCache should call ChatSDK.getChaConfig()', async () => {
+        it('ChatSDK.getLiveChatConfig() with no useRuntimeCache should call ChatSDK.getChatConfig()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
@@ -2600,7 +2624,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.isPersistentChat).toBe(true);
         });
 
-        it('ChatSDK.getChatToken() should pass reconnectId to OCClient.getChatToken if any on Persistent Chat', async () => {
+        it('ChatSDK.getChatToken() should pass reconnectId to OCClient.getChatToken() if any on Persistent Chat', async () => {
             const chatSDKConfig = {
                 telemetry: {
                     disable: true
@@ -2792,6 +2816,10 @@ describe('Omnichannel Chat SDK', () => {
                 },
                 LiveWSAndLiveChatEngJoin: {
                     msdyn_enablechatreconnect: "false"
+                },
+                ChatWidgetLanguage: {
+                    msdyn_localeid: '1033',
+                    msdyn_languagename: 'English - United States'
                 }
             }));
 
