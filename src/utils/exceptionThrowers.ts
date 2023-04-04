@@ -136,6 +136,22 @@ export const throwPersistentChatConversationRetrievalFailure = (e: unknown, scen
     throw Error(exceptionDetails.response);
 };
 
+export const throwWidgetUseOutsideOperatingHour = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
+    const exceptionDetails: ChatSDKExceptionDetails = {
+        response: ChatSDKErrors.WidgetUseOutsideOperatingHour,
+        message: 'Widget used outside of operating hours',
+        errorObject: `${e}`
+    };
+
+    scenarioMarker.failScenario(telemetryEvent, {
+        ...telemetryData,
+        ExceptionDetails: JSON.stringify(exceptionDetails)
+    });
+
+    console.log(exceptionDetails.message);
+    throw Error(exceptionDetails.response);
+};
+
 export default {
     throwOmnichannelClientInitializationFailure,
     throwUnsupportedLiveChatVersionFailure,
@@ -146,5 +162,6 @@ export default {
     throwInvalidConversation,
     throwClosedConversation,
     throwAuthenticatedChatConversationRetrievalFailure,
-    throwPersistentChatConversationRetrievalFailure
+    throwPersistentChatConversationRetrievalFailure,
+    throwWidgetUseOutsideOperatingHour
 }

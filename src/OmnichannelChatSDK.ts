@@ -445,16 +445,19 @@ class OmnichannelChatSDK {
             try {
                 await this.OCClient.sessionInit(this.requestId, sessionInitOptionalParams);
             } catch (error) {
-                const exceptionDetails: ChatSDKExceptionDetails = {
-                    response: "OCClientSessionInitFailed"
+                const telemetryData = {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string,
                 };
 
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 if ((error as any)?.isAxiosError && (error as any).response?.headers?.errorcode.toString() === OmnichannelErrorCodes.WidgetUseOutsideOperatingHour.toString()) {
-                    exceptionDetails.response = OmnichannelErrorCodes[OmnichannelErrorCodes.WidgetUseOutsideOperatingHour].toString();
-                    exceptionDetails.message = 'Widget used outside of operating hours';
-                    console.error(exceptionDetails.message);
+                    exceptionThrowers.throwWidgetUseOutsideOperatingHour(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
                 }
+
+                const exceptionDetails: ChatSDKExceptionDetails = {
+                    response: "OCClientSessionInitFailed"
+                };
 
                 this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
                     RequestId: this.requestId,

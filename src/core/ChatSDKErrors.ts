@@ -30,6 +30,8 @@ enum ChatSDKErrors {
     AuthenticatedChatConversationRetrievalFailure = "AuthenticatedChatConversationRetrievalFailure",
     /** Failure on retrieving conversation from persistent chat */
     PersistentChatConversationRetrievalFailure = "PersistentChatConversationRetrievalFailure",
+    /** Failure on conversation init due to widget being outside of operating hours */
+    WidgetUseOutsideOperatingHour = "WidgetUseOutsideOperatingHour",
 }
 
 export default ChatSDKErrors;
