@@ -717,7 +717,6 @@ describe('Omnichannel Chat SDK', () => {
             try {
                 await chatSDK.startChat(optionalParams);
             } catch (e) {
-                console.error(e);
                 expect(e.message).toBe('AuthenticatedChatConversationRetrievalFailure');
                 expect(chatSDK.OCClient.validateAuthChatRecord).toHaveBeenCalledTimes(1);
             }
@@ -873,7 +872,7 @@ describe('Omnichannel Chat SDK', () => {
             try {
                 await chatSDK.startChat();
             } catch (error) {
-                expect(error).toBeDefined();
+                expect(error.message).toBe("ConversationInitializationFailure");
             }
 
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);

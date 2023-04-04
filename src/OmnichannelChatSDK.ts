@@ -455,17 +455,7 @@ class OmnichannelChatSDK {
                     exceptionThrowers.throwWidgetUseOutsideOperatingHour(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
                 }
 
-                const exceptionDetails: ChatSDKExceptionDetails = {
-                    response: "OCClientSessionInitFailed"
-                };
-
-                this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: JSON.stringify(exceptionDetails)
-                });
-
-                throw new Error(exceptionDetails.response);
+                exceptionThrowers.throwConversationInitializationFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
             }
         }
 
