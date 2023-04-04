@@ -210,6 +210,20 @@ export const throwConversationInitializationFailure = (e: unknown, scenarioMarke
     throw Error(exceptionDetails.response);
 };
 
+export const throwConversationClosureFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
+    const exceptionDetails: ChatSDKExceptionDetails = {
+        response: ChatSDKErrors.ConversationClosureFailure,
+        errorObject: `${e}`
+    };
+
+    scenarioMarker.failScenario(telemetryEvent, {
+        ...telemetryData,
+        ExceptionDetails: JSON.stringify(exceptionDetails)
+    });
+
+    throw Error(exceptionDetails.response);
+};
+
 export const throwMessagingClientInitializationFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
     const exceptionDetails: ChatSDKExceptionDetails = {
         response: ChatSDKErrors.MessagingClientInitializationFailure,
@@ -253,6 +267,7 @@ export default {
     throwPersistentChatConversationRetrievalFailure,
     throwWidgetUseOutsideOperatingHour,
     throwConversationInitializationFailure,
+    throwConversationClosureFailure,
     throwMessagingClientInitializationFailure,
     throwMessagingClientConversationJoinFailure
 }

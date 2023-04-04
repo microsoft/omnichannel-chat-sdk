@@ -36,10 +36,12 @@ enum ChatSDKErrors {
     WidgetUseOutsideOperatingHour = "WidgetUseOutsideOperatingHour",
     /** Failure in conversation initialization */
     ConversationInitializationFailure = "ConversationInitializationFailure",
+    /** Failure in closure of the conversation */
+    ConversationClosureFailure = "ConversationClosureFailure",
     /** Failure in messaging/communication client initialization */
     MessagingClientInitializationFailure = "MessagingClientInitializationFailure",
     /** Failure in message/communication client joining the conversation */
-    MessagingClientConversationJoinFailure = "MessagingClientConversationJoinFailure"
+    MessagingClientConversationJoinFailure = "MessagingClientConversationJoinFailure",
 }
 
 export default ChatSDKErrors;

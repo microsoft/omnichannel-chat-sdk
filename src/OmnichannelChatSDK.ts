@@ -617,18 +617,12 @@ class OmnichannelChatSDK {
             this.amsClientLogger?.setRequestId(this.requestId);
             this.amsClientLogger?.setChatId('');
         } catch (error) {
-            const exceptionDetails = {
-                response: "OCClientSessionCloseFailed"
+            const telemetryData = {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
             };
 
-            this.scenarioMarker.failScenario(TelemetryEvent.EndChat, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string,
-                ExceptionDetails: JSON.stringify(exceptionDetails),
-            });
-
-            console.error(`OmnichannelChatSDK/endChat/error ${error}`);
-            return error;
+            exceptionThrowers.throwConversationClosureFailure(error, this.scenarioMarker, TelemetryEvent.EndChat, telemetryData);
         }
 
         if (this.refreshTokenTimer !== null) {

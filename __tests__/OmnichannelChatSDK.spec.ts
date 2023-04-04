@@ -2710,7 +2710,7 @@ describe('Omnichannel Chat SDK', () => {
             try {
                 await chatSDK.endChat();
             } catch (error) {
-                expect(console.error).toHaveBeenCalled();
+                expect(error.message).toBe('ConversationClosureFailure');
             }
 
             expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(1);
