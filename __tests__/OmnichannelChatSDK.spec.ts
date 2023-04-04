@@ -653,8 +653,6 @@ describe('Omnichannel Chat SDK', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.authSettings = {};
 
-            chatSDK.liveChatVersion = LiveChatVersion.V2;
-
             await chatSDK.initialize();
 
             jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
