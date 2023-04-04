@@ -110,7 +110,8 @@ export const throwClosedConversation = (scenarioMarker: ScenarioMarker, telemetr
 export const throwAuthenticatedChatConversationRetrievalFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
     const exceptionDetails = {
         ...telemetryData,
-        response: ChatSDKErrors.AuthenticatedChatConversationRetrievalFailure
+        response: ChatSDKErrors.AuthenticatedChatConversationRetrievalFailure,
+        errorObject: `${e}`
     }
 
     scenarioMarker.failScenario(telemetryEvent, {
@@ -123,7 +124,8 @@ export const throwAuthenticatedChatConversationRetrievalFailure = (e: unknown, s
 export const throwPersistentChatConversationRetrievalFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
     const exceptionDetails = {
         ...telemetryData,
-        response: ChatSDKErrors.PersistentChatConversationRetrievalFailure
+        response: ChatSDKErrors.PersistentChatConversationRetrievalFailure,
+        errorObject: `${e}`
     }
 
     scenarioMarker.failScenario(telemetryEvent, {
