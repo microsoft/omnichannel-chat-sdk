@@ -1711,20 +1711,13 @@ class OmnichannelChatSDK {
 
         if (optionalParams.sendDefaultInitContext) {
             if (platform.isNode() || platform.isReactNative()) {
-                const exceptionDetails: ChatSDKExceptionDetails = {
-                    response: ChatSDKErrors.UnsupportedPlatform,
-                    message: "sendDefaultInitContext is only supported on browser"
+                const message = "sendDefaultInitContext is only supported on browser";
+                const telemetryData = {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string
                 };
 
-                console.error(exceptionDetails.message);
-
-                this.scenarioMarker.failScenario(telemetryEvent, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: JSON.stringify(exceptionDetails)
-                });
-
-                throw new Error(exceptionDetails.response);
+                exceptionThrowers.throwUnsupportedPlatform(this.scenarioMarker, telemetryEvent, message, telemetryData);
             }
 
             requestOptionalParams.getContext = true;

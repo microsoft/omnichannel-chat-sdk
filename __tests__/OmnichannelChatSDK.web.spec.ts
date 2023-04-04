@@ -89,11 +89,13 @@ describe('Omnichannel Chat SDK (Web)', () => {
         jest.spyOn(platform, 'isNode').mockReturnValue(true);
         jest.spyOn(platform, 'isReactNative').mockReturnValue(false);
         jest.spyOn(platform, 'isBrowser').mockReturnValue(false);
+        jest.spyOn(console, 'error');
 
         try {
             await chatSDK.startChat(optionalParams);
         } catch (error) {
             expect(error.message).toEqual(ChatSDKErrors.UnsupportedPlatform);
+            expect(console.error).toHaveBeenCalledWith("sendDefaultInitContext is only supported on browser");
         }
     });
 
