@@ -15,8 +15,6 @@ import OmnichannelErrorCodes from "../src/core/OmnichannelErrorCodes";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
 import libraries from "../src/utils/libraries";
-// import createAMSClient from "@microsoft/omnichannel-amsclient";
-import * as AMSLib from "@microsoft/omnichannel-amsclient";
 
 describe('Omnichannel Chat SDK', () => {
     AWTLogManager.initialize = jest.fn();
