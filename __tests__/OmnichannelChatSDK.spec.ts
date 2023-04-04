@@ -972,12 +972,10 @@ describe('Omnichannel Chat SDK', () => {
             jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockRejectedValue(Promise.reject());
 
-            jest.spyOn(console, 'error');
-
             try {
                 await chatSDK.startChat();
             } catch (error) {
-                expect(console.error).toHaveBeenCalled();
+                expect(error.message).toBe("MessagingClientConversationJoinFailure");
             }
 
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);

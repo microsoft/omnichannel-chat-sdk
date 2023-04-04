@@ -537,18 +537,12 @@ class OmnichannelChatSDK {
                     ChatId: this.chatToken.chatId as string
                 });
             } catch (error) {
-                const exceptionDetails = {
-                    response: "IC3ClientJoinConversationFailed"
-                };
-
-                this.scenarioMarker.failScenario(TelemetryEvent.StartChat, {
+                const telemetryData = {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: JSON.stringify(exceptionDetails)
-                });
+                };
 
-                console.error(`OmnichannelChatSDK/startChat/joinConversation/error ${error}`);
-                return error;
+                exceptionThrowers.throwMessagingClientConversationJoinFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
             }
         }
 
