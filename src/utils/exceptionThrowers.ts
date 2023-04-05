@@ -14,7 +14,7 @@ import ChatSDKExceptionDetails from "../core/ChatSDKExceptionDetails";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
 
-const throwChatSDKError = (chatSDKError: ChatSDKErrors, e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string} = {}, message: string = ""): void => {
+export const throwChatSDKError = (chatSDKError: ChatSDKErrors, e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string} = {}, message: string = ""): void => {
     const exceptionDetails: ChatSDKExceptionDetails = {
         response: chatSDKError
     };
@@ -57,69 +57,24 @@ export const throwChatConfigRetrievalFailure = (e: unknown, scenarioMarker: Scen
 };
 
 export const throwUnsupportedLiveChatVersionFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
-    const exceptionDetails: ChatSDKExceptionDetails = {
-        response: ChatSDKErrors.UnsupportedLiveChatVersion,
-        errorObject: `${e}`
-    }
-
-    scenarioMarker.failScenario(telemetryEvent, {
-        ExceptionDetails: JSON.stringify(exceptionDetails)
-    });
-
-    throw Error(exceptionDetails.response);
+    throwChatSDKError(ChatSDKErrors.UnsupportedLiveChatVersion, e, scenarioMarker, telemetryEvent)
 };
 
 export const throwMessagingClientCreationFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
-    const exceptionDetails: ChatSDKExceptionDetails = {
-        response: ChatSDKErrors.MessagingClientCreationFailure,
-        errorObject: `${e}`
-    }
-
-    scenarioMarker.failScenario(telemetryEvent, {
-        ExceptionDetails: JSON.stringify(exceptionDetails)
-    });
-
-    throw Error(exceptionDetails.response);
+    throwChatSDKError(ChatSDKErrors.MessagingClientCreationFailure, e, scenarioMarker, telemetryEvent)
 };
 
 export const throwUninitializedChatSDK = (scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
-    const exceptionDetails: ChatSDKExceptionDetails = {
-        response: ChatSDKErrors.UninitializedChatSDK,
-    }
-
-    scenarioMarker.failScenario(telemetryEvent, {
-        ExceptionDetails: JSON.stringify(exceptionDetails)
-    });
-
-    throw Error(exceptionDetails.response);
+    throwChatSDKError(ChatSDKErrors.UninitializedChatSDK, undefined, scenarioMarker, telemetryEvent)
 };
 
 export const throwChatTokenRetrievalFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    const exceptionDetails: ChatSDKExceptionDetails = {
-        response: ChatSDKErrors.ChatTokenRetrievalFailure,
-        errorObject: `${e}`
-    }
-
-    scenarioMarker.failScenario(telemetryEvent, {
-        ...telemetryData,
-        ExceptionDetails: JSON.stringify(exceptionDetails)
-    });
-
-    throw Error(exceptionDetails.response);
+    throwChatSDKError(ChatSDKErrors.ChatTokenRetrievalFailure, e, scenarioMarker, telemetryEvent, telemetryData);
 }
 
 export const throwInvalidConversation = (scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    const exceptionDetails = {
-        response: ChatSDKErrors.InvalidConversation
-    }
-
-    scenarioMarker.failScenario(telemetryEvent, {
-        ...telemetryData,
-        ExceptionDetails: JSON.stringify(exceptionDetails)
-    });
-
-    console.error(`Conversation not found`);
-    throw Error(exceptionDetails.response);
+    const message = `Conversation not found`;
+    throwChatSDKError(ChatSDKErrors.InvalidConversation, undefined, scenarioMarker, telemetryEvent, telemetryData, message);
 };
 
 export const throwClosedConversation = (scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
@@ -249,6 +204,7 @@ export const throwChatAdapterInitializationFailure = (e: unknown, scenarioMarker
 };
 
 export default {
+    throwChatSDKError,
     throwScriptLoadFailure,
     throwUnsupportedPlatform,
     throwFeatureDisabled,
