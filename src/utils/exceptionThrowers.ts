@@ -14,22 +14,13 @@ import ChatSDKExceptionDetails from "../core/ChatSDKExceptionDetails";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
 
-export const throwScriptLoadFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
+const throwChatSDKError = (chatSDKError: ChatSDKErrors, e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string} = {}, message: string = ""): void => {
     const exceptionDetails: ChatSDKExceptionDetails = {
-        response: ChatSDKErrors.ScriptLoadFailure,
-        errorObject: `${e}`
+        response: chatSDKError
     };
 
-    scenarioMarker.failScenario(telemetryEvent, {
-        ExceptionDetails: JSON.stringify(exceptionDetails)
-    });
-
-    throw new Error(exceptionDetails.response);
-};
-
-export const throwUnsupportedPlatform = (scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, message: string, telemetryData: {[key: string]: string} = {}): void => {
-    const exceptionDetails: ChatSDKExceptionDetails = {
-        response: ChatSDKErrors.UnsupportedPlatform,
+    if (e) {
+        exceptionDetails.errorObject = `${e}`;
     }
 
     scenarioMarker.failScenario(telemetryEvent, {
@@ -42,50 +33,27 @@ export const throwUnsupportedPlatform = (scenarioMarker: ScenarioMarker, telemet
         console.error(message);
     }
 
-    throw Error(exceptionDetails.response);
+    throw new Error(exceptionDetails.response);
+}
+
+export const throwScriptLoadFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
+    throwChatSDKError(ChatSDKErrors.ScriptLoadFailure, e, scenarioMarker, telemetryEvent);
+};
+
+export const throwUnsupportedPlatform = (scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, message: string, telemetryData: {[key: string]: string} = {}): void => {
+    throwChatSDKError(ChatSDKErrors.UnsupportedPlatform, undefined, scenarioMarker, telemetryEvent, telemetryData, message);
 };
 
 export const throwFeatureDisabled = (scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, message: string): void => {
-    const exceptionDetails: ChatSDKExceptionDetails = {
-        response: ChatSDKErrors.FeatureDisabled,
-    }
-
-    scenarioMarker.failScenario(telemetryEvent, {
-        ExceptionDetails: JSON.stringify(exceptionDetails)
-    });
-
-    if (message) {
-        exceptionDetails.message = message;
-        console.error(message);
-    }
-
-    throw Error(exceptionDetails.response);
+    throwChatSDKError(ChatSDKErrors.FeatureDisabled, undefined, scenarioMarker, telemetryEvent, {}, message);
 };
 
 export const throwOmnichannelClientInitializationFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
-    const exceptionDetails: ChatSDKExceptionDetails = {
-        response: ChatSDKErrors.OmnichannelClientInitializationFailure,
-        errorObject: `${e}`
-    }
-
-    scenarioMarker.failScenario(telemetryEvent, {
-        ExceptionDetails: JSON.stringify(exceptionDetails)
-    });
-
-    throw Error(exceptionDetails.response);
+    throwChatSDKError(ChatSDKErrors.OmnichannelClientInitializationFailure, e, scenarioMarker, telemetryEvent);
 };
 
 export const throwChatConfigRetrievalFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
-    const exceptionDetails: ChatSDKExceptionDetails = {
-        response: ChatSDKErrors.ChatConfigRetrievalFailure,
-        errorObject: `${e}`
-    }
-
-    scenarioMarker.failScenario(telemetryEvent, {
-        ExceptionDetails: JSON.stringify(exceptionDetails)
-    });
-
-    throw Error(exceptionDetails.response);
+    throwChatSDKError(ChatSDKErrors.ChatConfigRetrievalFailure, e, scenarioMarker, telemetryEvent);
 };
 
 export const throwUnsupportedLiveChatVersionFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
