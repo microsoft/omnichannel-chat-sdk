@@ -62,4 +62,22 @@ describe('exceptionThrowers', () => {
             expect(scenarioMarker.failScenario.mock.calls[0][1].requestId).toBe(telemetryData.requestId);
         }
     });
+
+    it('throwChatSDKError() with additional message should call console.error()', () => {
+        const chatSDKError: any = "TestError";
+        const scenarioMarker: any = {
+            failScenario: jest.fn()
+        };
+        const telemetryEvent: any = "TestEvent";
+        const message = "message";
+
+        jest.spyOn(console, 'error');
+
+        try {
+            exceptionThrowers.throwChatSDKError(chatSDKError, undefined, scenarioMarker, telemetryEvent, {}, message);
+        } catch (e) {
+            expect(e.message).toBe(chatSDKError);
+            expect(console.error).toHaveBeenCalledWith(message);
+        }
+    });
 });
