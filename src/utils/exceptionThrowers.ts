@@ -99,58 +99,19 @@ export const throwConversationInitializationFailure = (e: unknown, scenarioMarke
 };
 
 export const throwConversationClosureFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    const exceptionDetails: ChatSDKExceptionDetails = {
-        response: ChatSDKErrors.ConversationClosureFailure,
-        errorObject: `${e}`
-    };
-
-    scenarioMarker.failScenario(telemetryEvent, {
-        ...telemetryData,
-        ExceptionDetails: JSON.stringify(exceptionDetails)
-    });
-
-    throw Error(exceptionDetails.response);
+    throwChatSDKError(ChatSDKErrors.ConversationClosureFailure, e, scenarioMarker, telemetryEvent, telemetryData);
 };
 
 export const throwMessagingClientInitializationFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    const exceptionDetails: ChatSDKExceptionDetails = {
-        response: ChatSDKErrors.MessagingClientInitializationFailure,
-        errorObject: `${e}`
-    };
-
-    scenarioMarker.failScenario(telemetryEvent, {
-        ...telemetryData,
-        ExceptionDetails: JSON.stringify(exceptionDetails)
-    });
-
-    throw Error(exceptionDetails.response);
+    throwChatSDKError(ChatSDKErrors.MessagingClientInitializationFailure, e, scenarioMarker, telemetryEvent, telemetryData);
 };
 
 export const throwMessagingClientConversationJoinFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    const exceptionDetails: ChatSDKExceptionDetails = {
-        response: ChatSDKErrors.MessagingClientConversationJoinFailure,
-        errorObject: `${e}`
-    };
-
-    scenarioMarker.failScenario(telemetryEvent, {
-        ...telemetryData,
-        ExceptionDetails: JSON.stringify(exceptionDetails)
-    });
-
-    throw Error(exceptionDetails.response);
+    throwChatSDKError(ChatSDKErrors.MessagingClientConversationJoinFailure, e, scenarioMarker, telemetryEvent, telemetryData);
 };
 
 export const throwChatAdapterInitializationFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
-    const exceptionDetails: ChatSDKExceptionDetails = {
-        response: ChatSDKErrors.ChatAdapterInitializationFailure,
-        errorObject: `${e}`
-    }
-
-    scenarioMarker.failScenario(telemetryEvent, {
-        ExceptionDetails: JSON.stringify(exceptionDetails)
-    });
-
-    throw Error(exceptionDetails.response);
+    throwChatSDKError(ChatSDKErrors.ChatAdapterInitializationFailure, e, scenarioMarker, telemetryEvent);
 };
 
 export default {
