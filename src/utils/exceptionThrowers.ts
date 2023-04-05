@@ -78,74 +78,24 @@ export const throwInvalidConversation = (scenarioMarker: ScenarioMarker, telemet
 };
 
 export const throwClosedConversation = (scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    const exceptionDetails = {
-        response: ChatSDKErrors.ClosedConversation
-    }
-
-    scenarioMarker.failScenario(telemetryEvent, {
-        ...telemetryData,
-        ExceptionDetails: JSON.stringify(exceptionDetails)
-    });
-
-    throw Error(exceptionDetails.response);
+    throwChatSDKError(ChatSDKErrors.ClosedConversation, undefined, scenarioMarker, telemetryEvent, telemetryData);
 };
 
 export const throwAuthenticatedChatConversationRetrievalFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    const exceptionDetails = {
-        response: ChatSDKErrors.AuthenticatedChatConversationRetrievalFailure,
-        errorObject: `${e}`
-    }
-
-    scenarioMarker.failScenario(telemetryEvent, {
-        ...telemetryData,
-        ExceptionDetails: JSON.stringify(exceptionDetails)
-    });
-
-    throw Error(exceptionDetails.response);
+    throwChatSDKError(ChatSDKErrors.AuthenticatedChatConversationRetrievalFailure, e, scenarioMarker, telemetryEvent, telemetryData);
 };
 
 export const throwPersistentChatConversationRetrievalFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    const exceptionDetails = {
-        response: ChatSDKErrors.PersistentChatConversationRetrievalFailure,
-        errorObject: `${e}`
-    }
-
-    scenarioMarker.failScenario(telemetryEvent, {
-        ...telemetryData,
-        ExceptionDetails: JSON.stringify(exceptionDetails)
-    });
-
-    throw Error(exceptionDetails.response);
+    throwChatSDKError(ChatSDKErrors.PersistentChatConversationRetrievalFailure, e, scenarioMarker, telemetryEvent, telemetryData);
 };
 
 export const throwWidgetUseOutsideOperatingHour = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    const exceptionDetails: ChatSDKExceptionDetails = {
-        response: ChatSDKErrors.WidgetUseOutsideOperatingHour,
-        message: 'Widget used outside of operating hours',
-        errorObject: `${e}`
-    };
-
-    scenarioMarker.failScenario(telemetryEvent, {
-        ...telemetryData,
-        ExceptionDetails: JSON.stringify(exceptionDetails)
-    });
-
-    console.log(exceptionDetails.message);
-    throw Error(exceptionDetails.response);
+    const message = 'Widget used outside of operating hours';
+    throwChatSDKError(ChatSDKErrors.WidgetUseOutsideOperatingHour, e, scenarioMarker, telemetryEvent, telemetryData, message);
 };
 
 export const throwConversationInitializationFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    const exceptionDetails: ChatSDKExceptionDetails = {
-        response: ChatSDKErrors.ConversationInitializationFailure,
-        errorObject: `${e}`
-    };
-
-    scenarioMarker.failScenario(telemetryEvent, {
-        ...telemetryData,
-        ExceptionDetails: JSON.stringify(exceptionDetails)
-    });
-
-    throw Error(exceptionDetails.response);
+    throwChatSDKError(ChatSDKErrors.ConversationInitializationFailure, e, scenarioMarker, telemetryEvent, telemetryData);
 };
 
 export const throwConversationClosureFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
