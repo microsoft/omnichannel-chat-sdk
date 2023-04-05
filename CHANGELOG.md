@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Changed
+- Update `ChatSDKErrors` to include standard ChatSDK errors to be more predictable
 
 ## [1.3.0] - 2023-04-05
 ### Added
