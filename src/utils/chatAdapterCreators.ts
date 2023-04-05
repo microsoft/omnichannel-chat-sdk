@@ -59,7 +59,7 @@ const createDirectLine = async (optionalParams: ChatAdapterOptionalParams, chatS
             ExceptionDetails: JSON.stringify(exceptionDetails)
         });
 
-        throw new Error('Failed to create DirectLine');
+        throw new Error(exceptionDetails.response);
     }
 };
 
@@ -129,7 +129,7 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
             ExceptionDetails: JSON.stringify(exceptionDetails)
         });
 
-        throw new Error('Failed to create ACSAdapter');
+        throw new Error(exceptionDetails.response);
     }
 };
 
@@ -182,7 +182,7 @@ const createIC3Adapter = async (optionalParams: ChatAdapterOptionalParams, chatS
             ExceptionDetails: JSON.stringify(exceptionDetails)
         });
 
-        throw new Error('Failed to create IC3Adapter');
+        throw new Error(exceptionDetails.response);
     }
 };
 
