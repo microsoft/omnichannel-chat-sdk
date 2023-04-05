@@ -14,6 +14,19 @@ import ChatSDKExceptionDetails from "../core/ChatSDKExceptionDetails";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
 
+export const throwScriptLoadFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
+    const exceptionDetails: ChatSDKExceptionDetails = {
+        response: ChatSDKErrors.ScriptLoadFailure,
+        errorObject: `${e}`
+    };
+
+    scenarioMarker.failScenario(telemetryEvent, {
+        ExceptionDetails: JSON.stringify(exceptionDetails)
+    });
+
+    throw new Error(exceptionDetails.response);
+};
+
 export const throwUnsupportedPlatform = (scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, message: string, telemetryData: {[key: string]: string} = {}): void => {
     const exceptionDetails: ChatSDKExceptionDetails = {
         response: ChatSDKErrors.UnsupportedPlatform,
@@ -268,6 +281,7 @@ export const throwChatAdapterInitializationFailure = (e: unknown, scenarioMarker
 };
 
 export default {
+    throwScriptLoadFailure,
     throwUnsupportedPlatform,
     throwFeatureDisabled,
     throwOmnichannelClientInitializationFailure,

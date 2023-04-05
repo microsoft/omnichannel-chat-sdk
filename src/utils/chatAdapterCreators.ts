@@ -33,16 +33,7 @@ const createDirectLine = async (optionalParams: ChatAdapterOptionalParams, chatS
     try {
         await WebUtils.loadScript(directLineCDNUrl);
     } catch (error) {
-        const exceptionDetails: ChatSDKExceptionDetails = {
-            response: ChatSDKErrors.ScriptLoadFailure,
-            errorObject: `${error}`
-        };
-
-        scenarioMarker.failScenario(TelemetryEvent.CreateDirectLine, {
-            ExceptionDetails: JSON.stringify(exceptionDetails)
-        });
-
-        throw new Error(exceptionDetails.response);
+        exceptionThrowers.throwScriptLoadFailure(error, scenarioMarker, TelemetryEvent.CreateDirectLine);
     }
 
     try {
@@ -82,16 +73,7 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
     try {
         await WebUtils.loadScript(acsAdapterCDNUrl);
     } catch (error) {
-        const exceptionDetails: ChatSDKExceptionDetails = {
-            response: ChatSDKErrors.ScriptLoadFailure,
-            errorObject: `${error}`
-        };
-
-        scenarioMarker.failScenario(TelemetryEvent.CreateACSAdapter, {
-            ExceptionDetails: JSON.stringify(exceptionDetails)
-        });
-
-        throw new Error(exceptionDetails.response);
+        exceptionThrowers.throwScriptLoadFailure(error, scenarioMarker, TelemetryEvent.CreateACSAdapter);
     }
 
     try {
@@ -129,16 +111,7 @@ const createIC3Adapter = async (optionalParams: ChatAdapterOptionalParams, chatS
     try {
         await WebUtils.loadScript(ic3AdapterCDNUrl);
     } catch (error) {
-        const exceptionDetails: ChatSDKExceptionDetails = {
-            response: ChatSDKErrors.ScriptLoadFailure,
-            errorObject: `${error}`
-        };
-
-        scenarioMarker.failScenario(TelemetryEvent.CreateIC3Adapter, {
-            ExceptionDetails: JSON.stringify(exceptionDetails)
-        });
-
-        throw new Error(exceptionDetails.response);
+        exceptionThrowers.throwScriptLoadFailure(error, scenarioMarker, TelemetryEvent.CreateACSAdapter);
     }
 
     const adapterConfig: IIC3AdapterOptions = {
