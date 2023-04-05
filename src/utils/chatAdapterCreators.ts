@@ -13,7 +13,7 @@ import createFormatIngressTagsMiddleware from "../external/ACSAdapter/createForm
 import IChatToken from "../external/IC3Adapter/IChatToken";
 import IIC3AdapterOptions from "../external/IC3Adapter/IIC3AdapterOptions";
 import LiveChatVersion from "../core/LiveChatVersion";
-import { loadScript } from "./WebUtils";
+import WebUtils from "./WebUtils";
 import OmnichannelConfig from "../core/OmnichannelConfig";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
@@ -30,7 +30,7 @@ const createDirectLine = async (optionalParams: ChatAdapterOptionalParams, chatS
     scenarioMarker.startScenario(TelemetryEvent.CreateDirectLine);
 
     try {
-        await loadScript(directLineCDNUrl);
+        await WebUtils.loadScript(directLineCDNUrl);
     } catch (error) {
         const exceptionDetails: ChatSDKExceptionDetails = {
             response: ChatSDKErrors.ScriptLoadFailure,
@@ -41,7 +41,7 @@ const createDirectLine = async (optionalParams: ChatAdapterOptionalParams, chatS
             ExceptionDetails: JSON.stringify(exceptionDetails)
         });
 
-        throw new Error('Failed to load DirectLine');
+        throw new Error(exceptionDetails.response);
     }
 
     try {
@@ -88,7 +88,7 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
     scenarioMarker.startScenario(TelemetryEvent.CreateACSAdapter);
 
     try {
-        await loadScript(acsAdapterCDNUrl);
+        await WebUtils.loadScript(acsAdapterCDNUrl);
     } catch (error) {
         const exceptionDetails: ChatSDKExceptionDetails = {
             response: ChatSDKErrors.ScriptLoadFailure,
@@ -99,7 +99,7 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
             ExceptionDetails: JSON.stringify(exceptionDetails)
         });
 
-        throw new Error('Failed to load ACSAdapter');
+        throw new Error(exceptionDetails.response);
     }
 
     try {
@@ -144,7 +144,7 @@ const createIC3Adapter = async (optionalParams: ChatAdapterOptionalParams, chatS
     scenarioMarker.startScenario(TelemetryEvent.CreateIC3Adapter);
 
     try {
-        await loadScript(ic3AdapterCDNUrl);
+        await WebUtils.loadScript(ic3AdapterCDNUrl);
     } catch (error) {
         const exceptionDetails: ChatSDKExceptionDetails = {
             response: ChatSDKErrors.ScriptLoadFailure,
@@ -155,7 +155,7 @@ const createIC3Adapter = async (optionalParams: ChatAdapterOptionalParams, chatS
             ExceptionDetails: JSON.stringify(exceptionDetails)
         });
 
-        throw new Error('Failed to load IC3Adapter');
+        throw new Error(exceptionDetails.response);
     }
 
     const adapterConfig: IIC3AdapterOptions = {
