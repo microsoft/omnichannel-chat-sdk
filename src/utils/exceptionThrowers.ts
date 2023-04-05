@@ -254,6 +254,19 @@ export const throwMessagingClientConversationJoinFailure = (e: unknown, scenario
     throw Error(exceptionDetails.response);
 };
 
+export const throwChatAdapterInitializationFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
+    const exceptionDetails: ChatSDKExceptionDetails = {
+        response: ChatSDKErrors.ChatAdapterInitializationFailure,
+        errorObject: `${e}`
+    }
+
+    scenarioMarker.failScenario(telemetryEvent, {
+        ExceptionDetails: JSON.stringify(exceptionDetails)
+    });
+
+    throw Error(exceptionDetails.response);
+};
+
 export default {
     throwUnsupportedPlatform,
     throwFeatureDisabled,
@@ -271,5 +284,6 @@ export default {
     throwConversationInitializationFailure,
     throwConversationClosureFailure,
     throwMessagingClientInitializationFailure,
-    throwMessagingClientConversationJoinFailure
+    throwMessagingClientConversationJoinFailure,
+    throwChatAdapterInitializationFailure
 }
