@@ -224,9 +224,11 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
 
                 const chatReconnectContext = await chatSDK.getChatReconnectContext();
 
-                runtimeContext.reconnectId = chatReconnectContext.reconnectId;
+                const { reconnectId } = chatReconnectContext;
 
-                await chatSDK.startChat(runtimeContext.reconnectId);
+                runtimeContext.reconnectId = { reconnectId };
+
+                await chatSDK.startChat({ reconnectId });
 
                 await chatSDK.endChat();
 
@@ -235,8 +237,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
         ]);
 
         const { requestId, reconnectId, authToken } = runtimeContext;
-        const chatTokenRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatv2AuthGetChatTokenPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}/${reconnectId}?channelId=lcw`;
-        const sessionInitRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}/${reconnectId}?channelId=lcw`;
+        const chatTokenRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatv2AuthGetChatTokenPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}/${reconnectId.reconnectId}?channelId=lcw`;
+        const sessionInitRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}/${reconnectId.reconnectId}?channelId=lcw`;
 
         const chatTokenRequestHeaders = chatTokenRequest.headers();
         const sessionInitRequestHeaders = sessionInitRequest.headers();
@@ -314,9 +316,11 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
 
                 const chatReconnectContext = await chatSDK.getChatReconnectContext();
 
-                runtimeContext.reconnectId = chatReconnectContext.reconnectId;
+                const { reconnectId } = chatReconnectContext;
 
-                await chatSDK.startChat(runtimeContext.reconnectId);
+                runtimeContext.reconnectId = { reconnectId };
+
+                await chatSDK.startChat({ reconnectId });
 
                 await chatSDK.endChat();
 
@@ -325,8 +329,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
         ]);
 
         const { reconnectId } = runtimeContext;
-        const sessionCloseRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionClosePath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${reconnectId}?channelId=lcw&isReconnectChat=true`;
-        
+        const sessionCloseRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionClosePath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${reconnectId.reconnectId}?channelId=lcw&isReconnectChat=true`;
+
         expect(sessionCloseRequest.url() === sessionCloseRequestUrl).toBe(true);
         expect(sessionCloseResponse.status()).toBe(200);
     });
