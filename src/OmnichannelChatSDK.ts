@@ -706,12 +706,16 @@ class OmnichannelChatSDK {
 
             return liveWorkItemDetails;
         } catch (error) {
+            const exceptionDetails: ChatSDKExceptionDetails = {
+                response: ChatSDKErrors.ConversationDetailsRetrievalFailure,
+                errorObject: `${error}`
+            };
+
             this.scenarioMarker.failScenario(TelemetryEvent.GetConversationDetails, {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string || '',
+                ExceptionDetails: JSON.stringify(exceptionDetails)
             });
-
-            console.error(`OmnichannelChatSDK/getConversationDetails/error ${error}`);
         }
 
         return {} as LiveWorkItemDetails;
