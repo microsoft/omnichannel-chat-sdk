@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Added
+- Add ability to use `ChatSDK.getLiveChatTranscript()` to fetch live chat transcript from `liveChatContext`
+
 ### Changed
 - Update `ChatSDKErrors` to include standard ChatSDK errors to be more predictable
 
