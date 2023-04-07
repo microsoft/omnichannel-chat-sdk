@@ -1270,6 +1270,30 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.sessionInit.mock.calls[0][1]).toMatchObject(sessionInitOptionalParams);
         });
 
+        it("ChatSDK.startChat() with an unsupported locale should throw an exception", async () => {
+            const omnichannelConfig = {
+                orgUrl: '',
+                orgId: '',
+                widgetId: ''
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+
+            await chatSDK.initialize();
+
+            const optionalParams = {
+                locale: 'unsupported-locale'
+            };
+
+            try {
+                await chatSDK.startChat(optionalParams);
+            } catch (e) {
+                expect(e.message).toBe("ConversationInitializationFailure");
+            }
+        });
+
         it('[LiveChatV1] ChatSDK.startChat() with customContext, browser, os, locale, device defined in sessionInitOptionalParams should pass it to OCClient.sessionInit() call\'s optional parameters', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
