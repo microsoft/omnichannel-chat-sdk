@@ -1428,10 +1428,12 @@ class OmnichannelChatSDK {
 
             return transcriptResponse;
         } catch (error) {
-            this.scenarioMarker.failScenario(TelemetryEvent.GetLiveChatTranscript, {
+            const telemetryData = {
                 RequestId: requestId,
                 ChatId: chatId
-            });
+            };
+
+            exceptionThrowers.throwLiveChatTranscriptRetrievalFailure(error, this.scenarioMarker, TelemetryEvent.GetLiveChatTranscript, telemetryData);
         }
     }
 

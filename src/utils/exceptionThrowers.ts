@@ -114,6 +114,10 @@ export const throwChatAdapterInitializationFailure = (e: unknown, scenarioMarker
     throwChatSDKError(ChatSDKErrors.ChatAdapterInitializationFailure, e, scenarioMarker, telemetryEvent);
 };
 
+export const throwLiveChatTranscriptRetrievalFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
+    throwChatSDKError(ChatSDKErrors.LiveChatTranscriptRetrievalFailure, e, scenarioMarker, telemetryEvent, telemetryData);
+}
+
 export default {
     throwChatSDKError,
     throwScriptLoadFailure,
@@ -134,5 +138,6 @@ export default {
     throwConversationClosureFailure,
     throwMessagingClientInitializationFailure,
     throwMessagingClientConversationJoinFailure,
-    throwChatAdapterInitializationFailure
+    throwChatAdapterInitializationFailure,
+    throwLiveChatTranscriptRetrievalFailure
 }

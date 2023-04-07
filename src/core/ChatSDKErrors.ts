@@ -42,6 +42,8 @@ enum ChatSDKErrors {
     MessagingClientInitializationFailure = "MessagingClientInitializationFailure",
     /** Failure in message/communication client joining the conversation */
     MessagingClientConversationJoinFailure = "MessagingClientConversationJoinFailure",
+    /** Failure on retrieving live chat transcript of a conversation */
+    LiveChatTranscriptRetrievalFailure = "LiveChatTranscriptRetrievalFailure"
 }
 
 export default ChatSDKErrors;
