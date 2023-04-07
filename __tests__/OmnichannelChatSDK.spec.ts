@@ -2374,6 +2374,54 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.getChatTranscripts.mock.calls[0][3]).toMatchObject(getChatTranscriptOptionalParams);
         });
 
+        it("ChatSDK.getLiveChatTranscript() with liveChatContext should fetch transcript from liveChatContext", async () => {
+            const omnichannelConfig = {
+                orgUrl: '',
+                orgId: '',
+                widgetId: ''
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
+            const chatToken = {
+                ChatId: 'ChatId',
+                Token: 'Token',
+                RegionGtms: '{}'
+            };
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve(chatToken));
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'getChatTranscripts').mockResolvedValue(Promise.resolve());
+
+            await chatSDK.startChat();
+            await chatSDK.getLiveChatTranscript();
+
+            const liveChatContext = {
+                requestId: 'requestId',
+                chatToken: {
+                    chatId: 'chatId',
+                    token: 'token'
+                }
+            }
+
+            await chatSDK.getLiveChatTranscript({liveChatContext});
+
+            expect(chatSDK.OCClient.getChatTranscripts).toHaveBeenCalledTimes(2);
+            expect(chatSDK.OCClient.getChatTranscripts.mock.calls[1][0]).toBe(liveChatContext.requestId);
+            expect(chatSDK.OCClient.getChatTranscripts.mock.calls[1][1]).toBe(liveChatContext.chatToken.chatId);
+            expect(chatSDK.OCClient.getChatTranscripts.mock.calls[1][2]).toBe(liveChatContext.chatToken.token);
+            expect(chatSDK.OCClient.getChatTranscripts.mock.calls[1][0]).not.toBe(chatSDK.requestId);
+            expect(chatSDK.OCClient.getChatTranscripts.mock.calls[1][1]).not.toBe(chatToken.ChatId);
+            expect(chatSDK.OCClient.getChatTranscripts.mock.calls[1][2]).not.toBe(chatToken.Token);
+        });
+
         it('[LiveChatV1] ChatSDK.getIC3Client() should return IC3Core if platform is Node', async () => {
             const IC3SDKProvider = require('@microsoft/omnichannel-ic3core').SDKProvider;
             const platform = require('../src/utils/platform').default;
