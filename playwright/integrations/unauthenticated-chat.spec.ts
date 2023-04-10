@@ -593,7 +593,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         await page.unroute(chatAdapterUrl);
 
         const expectedRetryCount = 3;
-        const expectedErrorMessage = "Failed to load ACSAdapter";
+        const expectedErrorMessage = "ScriptLoadFailure";
         expect(runtimeContext.errorObject).toBeDefined();
         expect(runtimeContext.errorMessage).toBe(expectedErrorMessage);
         expect(retryCount).toBe(expectedRetryCount);
