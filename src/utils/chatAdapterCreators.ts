@@ -5,19 +5,18 @@ import AriaTelemetry from "../telemetry/AriaTelemetry";
 import ChatAdapterOptionalParams from "../core/messaging/ChatAdapterOptionalParams";
 import { ChatClient } from "@azure/communication-chat";
 import ChatSDKConfig from "../core/ChatSDKConfig";
-import ChatSDKErrors from "../core/ChatSDKErrors";
-import ChatSDKExceptionDetails from "../core/ChatSDKExceptionDetails";
 import createChannelDataEgressMiddleware from "../external/ACSAdapter/createChannelDataEgressMiddleware";
 import createFormatEgressTagsMiddleware from "../external/ACSAdapter/createFormatEgressTagsMiddleware";
 import createFormatIngressTagsMiddleware from "../external/ACSAdapter/createFormatIngressTagsMiddleware";
 import IChatToken from "../external/IC3Adapter/IChatToken";
 import IIC3AdapterOptions from "../external/IC3Adapter/IIC3AdapterOptions";
 import LiveChatVersion from "../core/LiveChatVersion";
-import { loadScript } from "./WebUtils";
+import WebUtils from "./WebUtils";
 import OmnichannelConfig from "../core/OmnichannelConfig";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
 import urlResolvers from "./urlResolvers";
+import exceptionThrowers from "./exceptionThrowers";
 
 const createDirectLine = async (optionalParams: ChatAdapterOptionalParams, chatSDKConfig: ChatSDKConfig, liveChatVersion: LiveChatVersion, protocol: string, telemetry: typeof AriaTelemetry, scenarioMarker: ScenarioMarker): Promise<unknown> => {
     const options = optionalParams.DirectLine? optionalParams.DirectLine.options: {};
@@ -30,18 +29,9 @@ const createDirectLine = async (optionalParams: ChatAdapterOptionalParams, chatS
     scenarioMarker.startScenario(TelemetryEvent.CreateDirectLine);
 
     try {
-        await loadScript(directLineCDNUrl);
+        await WebUtils.loadScript(directLineCDNUrl);
     } catch (error) {
-        const exceptionDetails: ChatSDKExceptionDetails = {
-            response: ChatSDKErrors.ScriptLoadFailure,
-            errorObject: `${error}`
-        };
-
-        scenarioMarker.failScenario(TelemetryEvent.CreateDirectLine, {
-            ExceptionDetails: JSON.stringify(exceptionDetails)
-        });
-
-        throw new Error('Failed to load DirectLine');
+        exceptionThrowers.throwScriptLoadFailure(error, scenarioMarker, TelemetryEvent.CreateDirectLine);
     }
 
     try {
@@ -50,16 +40,7 @@ const createDirectLine = async (optionalParams: ChatAdapterOptionalParams, chatS
         scenarioMarker.completeScenario(TelemetryEvent.CreateDirectLine);
         return adapter;
     } catch (error) {
-        const exceptionDetails: ChatSDKExceptionDetails = {
-            response: ChatSDKErrors.ChatAdapterInitializationFailure,
-            errorObject: `${error}`
-        };
-
-        scenarioMarker.failScenario(TelemetryEvent.CreateDirectLine, {
-            ExceptionDetails: JSON.stringify(exceptionDetails)
-        });
-
-        throw new Error('Failed to create DirectLine');
+        exceptionThrowers.throwChatAdapterInitializationFailure(error, scenarioMarker, TelemetryEvent.CreateDirectLine)
     }
 };
 
@@ -88,18 +69,9 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
     scenarioMarker.startScenario(TelemetryEvent.CreateACSAdapter);
 
     try {
-        await loadScript(acsAdapterCDNUrl);
+        await WebUtils.loadScript(acsAdapterCDNUrl);
     } catch (error) {
-        const exceptionDetails: ChatSDKExceptionDetails = {
-            response: ChatSDKErrors.ScriptLoadFailure,
-            errorObject: `${error}`
-        };
-
-        scenarioMarker.failScenario(TelemetryEvent.CreateACSAdapter, {
-            ExceptionDetails: JSON.stringify(exceptionDetails)
-        });
-
-        throw new Error('Failed to load ACSAdapter');
+        exceptionThrowers.throwScriptLoadFailure(error, scenarioMarker, TelemetryEvent.CreateACSAdapter);
     }
 
     try {
@@ -120,16 +92,7 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
         scenarioMarker.completeScenario(TelemetryEvent.CreateACSAdapter);
         return adapter;
     } catch (error) {
-        const exceptionDetails: ChatSDKExceptionDetails = {
-            response: ChatSDKErrors.ChatAdapterInitializationFailure,
-            errorObject: `${error}`
-        };
-
-        scenarioMarker.failScenario(TelemetryEvent.CreateACSAdapter, {
-            ExceptionDetails: JSON.stringify(exceptionDetails)
-        });
-
-        throw new Error('Failed to create ACSAdapter');
+        exceptionThrowers.throwChatAdapterInitializationFailure(error, scenarioMarker, TelemetryEvent.CreateACSAdapter)
     }
 };
 
@@ -144,18 +107,9 @@ const createIC3Adapter = async (optionalParams: ChatAdapterOptionalParams, chatS
     scenarioMarker.startScenario(TelemetryEvent.CreateIC3Adapter);
 
     try {
-        await loadScript(ic3AdapterCDNUrl);
+        await WebUtils.loadScript(ic3AdapterCDNUrl);
     } catch (error) {
-        const exceptionDetails: ChatSDKExceptionDetails = {
-            response: ChatSDKErrors.ScriptLoadFailure,
-            errorObject: `${error}`
-        };
-
-        scenarioMarker.failScenario(TelemetryEvent.CreateIC3Adapter, {
-            ExceptionDetails: JSON.stringify(exceptionDetails)
-        });
-
-        throw new Error('Failed to load IC3Adapter');
+        exceptionThrowers.throwScriptLoadFailure(error, scenarioMarker, TelemetryEvent.CreateACSAdapter);
     }
 
     const adapterConfig: IIC3AdapterOptions = {
@@ -173,16 +127,7 @@ const createIC3Adapter = async (optionalParams: ChatAdapterOptionalParams, chatS
         scenarioMarker.completeScenario(TelemetryEvent.CreateIC3Adapter);
         return adapter;
     } catch (error) {
-        const exceptionDetails: ChatSDKExceptionDetails = {
-            response: ChatSDKErrors.ChatAdapterInitializationFailure,
-            errorObject: `${error}`
-        };
-
-        scenarioMarker.failScenario(TelemetryEvent.CreateIC3Adapter, {
-            ExceptionDetails: JSON.stringify(exceptionDetails)
-        });
-
-        throw new Error('Failed to create IC3Adapter');
+        exceptionThrowers.throwChatAdapterInitializationFailure(error, scenarioMarker, TelemetryEvent.CreateIC3Adapter)
     }
 };
 

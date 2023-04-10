@@ -16,7 +16,7 @@ import WebUtils from "../src/utils/WebUtils";
 import libraries from "../src/utils/libraries";
 import platform from "../src/utils/platform";
 
-jest.mock('@microsoft/omnichannel-amsclient', () => jest.fn());
+jest.mock('@microsoft/omnichannel-amsclient', () => ({default: jest.fn()}));
 describe('Omnichannel Chat SDK (Web)', () => {
     (settings as any).ariaTelemetryKey = '';
     (AriaTelemetry as any)._disable = true;
@@ -52,6 +52,8 @@ describe('Omnichannel Chat SDK (Web)', () => {
         }));
 
         jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+        chatSDK.ACSClient.initialize = jest.fn();
+        chatSDK.ACSClient.joinConversation = jest.fn();
 
         jest.spyOn(platform, 'isNode').mockReturnValue(false);
         jest.spyOn(platform, 'isReactNative').mockReturnValue(false);
@@ -87,11 +89,13 @@ describe('Omnichannel Chat SDK (Web)', () => {
         jest.spyOn(platform, 'isNode').mockReturnValue(true);
         jest.spyOn(platform, 'isReactNative').mockReturnValue(false);
         jest.spyOn(platform, 'isBrowser').mockReturnValue(false);
+        jest.spyOn(console, 'error');
 
         try {
             await chatSDK.startChat(optionalParams);
         } catch (error) {
             expect(error.message).toEqual(ChatSDKErrors.UnsupportedPlatform);
+            expect(console.error).toHaveBeenCalledWith("sendDefaultInitContext is only supported on browser");
         }
     });
 
@@ -103,6 +107,8 @@ describe('Omnichannel Chat SDK (Web)', () => {
         await chatSDK.initialize();
 
         chatSDK.OCClient.sessionInit = jest.fn();
+        chatSDK.ACSClient.initialize = jest.fn();
+        chatSDK.ACSClient.joinConversation = jest.fn();
 
         await chatSDK.startChat();
 
@@ -126,6 +132,8 @@ describe('Omnichannel Chat SDK (Web)', () => {
         await chatSDK.initialize();
 
         chatSDK.OCClient.sessionInit = jest.fn();
+        chatSDK.ACSClient.initialize = jest.fn();
+        chatSDK.ACSClient.joinConversation = jest.fn();
 
         await chatSDK.startChat();
 
@@ -153,15 +161,19 @@ describe('Omnichannel Chat SDK (Web)', () => {
 
         chatSDK.callingOption = CallingOptionsOptionSetNumber.NoCalling;
         chatSDK.OCClient.sessionInit = jest.fn();
+        chatSDK.ACSClient.initialize = jest.fn();
+        chatSDK.ACSClient.joinConversation = jest.fn();
 
         await chatSDK.startChat();
 
         jest.spyOn(platform, 'isNode').mockReturnValue(false);
+        jest.spyOn(console, 'error');
 
         try {
             await chatSDK.getVoiceVideoCalling();
         } catch (error) {
             expect(error.message).toEqual('FeatureDisabled');
+            expect(console.error).toHaveBeenCalledWith('Voice and video call is not enabled');
         }
     });
 });
