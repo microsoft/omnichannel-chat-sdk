@@ -85,6 +85,7 @@ import { getLocationInfo } from "./utils/location";
 import {isCustomerMessage} from "./utils/utilities";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
+import GetLiveChatTranscriptOptionalParams from "./core/GetLiveChatTranscriptOptionalParams";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -705,12 +706,16 @@ class OmnichannelChatSDK {
 
             return liveWorkItemDetails;
         } catch (error) {
+            const exceptionDetails: ChatSDKExceptionDetails = {
+                response: ChatSDKErrors.ConversationDetailsRetrievalFailure,
+                errorObject: `${error}`
+            };
+
             this.scenarioMarker.failScenario(TelemetryEvent.GetConversationDetails, {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string || '',
+                ExceptionDetails: JSON.stringify(exceptionDetails)
             });
-
-            console.error(`OmnichannelChatSDK/getConversationDetails/error ${error}`);
         }
 
         return {} as LiveWorkItemDetails;
@@ -1391,12 +1396,22 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async getLiveChatTranscript(): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+    public async getLiveChatTranscript(optionalParams: GetLiveChatTranscriptOptionalParams = {}): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
         const getChatTranscriptOptionalParams: IGetChatTranscriptsOptionalParams = {};
 
+        let requestId = this.requestId;
+        let chatToken = this.chatToken;
+        let chatId = chatToken.chatId as string;
+
+        if (optionalParams.liveChatContext) {
+            requestId = optionalParams.liveChatContext.requestId;
+            chatToken = optionalParams.liveChatContext.chatToken;
+            chatId = chatToken.chatId as string;
+        }
+
         this.scenarioMarker.startScenario(TelemetryEvent.GetLiveChatTranscript, {
-            RequestId: this.requestId,
-            ChatId: this.chatToken.chatId as string
+            RequestId: requestId,
+            ChatId: chatId
         });
 
         try {
@@ -1405,22 +1420,24 @@ class OmnichannelChatSDK {
             }
 
             const transcriptResponse = this.OCClient.getChatTranscripts(
-                this.requestId,
-                this.chatToken.chatId,
-                this.chatToken.token,
+                requestId,
+                chatToken.chatId,
+                chatToken.token,
                 getChatTranscriptOptionalParams);
 
             this.scenarioMarker.completeScenario(TelemetryEvent.GetLiveChatTranscript, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string
+                RequestId: requestId,
+                ChatId: chatId
             });
 
             return transcriptResponse;
         } catch (error) {
-            this.scenarioMarker.failScenario(TelemetryEvent.GetLiveChatTranscript, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string
-            });
+            const telemetryData = {
+                RequestId: requestId,
+                ChatId: chatId
+            };
+
+            exceptionThrowers.throwLiveChatTranscriptRetrievalFailure(error, this.scenarioMarker, TelemetryEvent.GetLiveChatTranscript, telemetryData);
         }
     }
 
