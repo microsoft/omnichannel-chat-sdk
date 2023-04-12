@@ -86,6 +86,7 @@ import {isCustomerMessage} from "./utils/utilities";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 import GetLiveChatTranscriptOptionalParams from "./core/GetLiveChatTranscriptOptionalParams";
+import GetConversationDetailsOptionalParams from "./core/GetConversationDetailsOptionalParams";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -658,20 +659,35 @@ class OmnichannelChatSDK {
         return chatSession;
     }
 
-    public async getConversationDetails(): Promise<LiveWorkItemDetails> {
+    public async getConversationDetails(optionalParams: GetConversationDetailsOptionalParams = {}): Promise<LiveWorkItemDetails> {
+        let requestId = this.requestId;
+        let chatToken = this.chatToken;
+        let chatId = chatToken.chatId as string;
+        let reconnectId = this.reconnectId;
+
+        if (optionalParams.liveChatContext) {
+            requestId = optionalParams.liveChatContext.requestId;
+            chatToken = optionalParams.liveChatContext.chatToken;
+            chatId = chatToken.chatId as string;
+        }
+
+        if (optionalParams.liveChatContext?.reconnectId) {
+            reconnectId = optionalParams.liveChatContext.reconnectId;
+        }
+
         this.scenarioMarker.startScenario(TelemetryEvent.GetConversationDetails, {
-            RequestId: this.requestId,
-            ChatId: this.chatToken?.chatId as string || '',
+            RequestId: requestId,
+            ChatId: chatId || '',
         });
 
         const getLWIDetailsOptionalParams: IGetLWIDetailsOptionalParams  = {};
 
-        if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable && this.reconnectId) {
-            getLWIDetailsOptionalParams.reconnectId = this.reconnectId as string;
+        if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable && reconnectId) {
+            getLWIDetailsOptionalParams.reconnectId = reconnectId as string;
         }
 
-        if (this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat && this.reconnectId) {
-            getLWIDetailsOptionalParams.reconnectId = this.reconnectId as string;
+        if (this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat && reconnectId) {
+            getLWIDetailsOptionalParams.reconnectId = reconnectId as string;
         }
 
         if (this.authenticatedUserToken) {
@@ -679,7 +695,7 @@ class OmnichannelChatSDK {
         }
 
         try {
-            const lwiDetails = await this.OCClient.getLWIDetails(this.requestId, getLWIDetailsOptionalParams);
+            const lwiDetails = await this.OCClient.getLWIDetails(requestId, getLWIDetailsOptionalParams);
             const {State: state, ConversationId: conversationId, AgentAcceptedOn: agentAcceptedOn, CanRenderPostChat: canRenderPostChat, ParticipantType: participantType} = lwiDetails;
 
             const liveWorkItemDetails: LiveWorkItemDetails = {
@@ -700,8 +716,8 @@ class OmnichannelChatSDK {
             }
 
             this.scenarioMarker.completeScenario(TelemetryEvent.GetConversationDetails, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken?.chatId as string || '',
+                RequestId: requestId,
+                ChatId: chatId || '',
             });
 
             return liveWorkItemDetails;
@@ -712,8 +728,8 @@ class OmnichannelChatSDK {
             };
 
             this.scenarioMarker.failScenario(TelemetryEvent.GetConversationDetails, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string || '',
+                RequestId: requestId,
+                ChatId: chatId || '',
                 ExceptionDetails: JSON.stringify(exceptionDetails)
             });
         }
