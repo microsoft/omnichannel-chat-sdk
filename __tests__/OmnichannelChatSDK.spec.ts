@@ -1746,6 +1746,49 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.getLWIDetails.mock.calls[0][1].reconnectId).toMatch(chatSDK.reconnectId);
         });
 
+        it("ChatSDK.getConversationDetails() with liveChatContext should fetch conversation details from liveChatContext", async () => {
+            const omnichannelConfig = {
+                orgUrl: '',
+                orgId: '',
+                widgetId: ''
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
+            const chatToken = {
+                ChatId: 'ChatId',
+                Token: 'Token',
+                RegionGtms: '{}'
+            };
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve(chatToken));
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue(Promise.resolve());
+
+            await chatSDK.startChat();
+
+            const liveChatContext = {
+                requestId: 'requestId',
+                chatToken: {
+                    chatId: 'chatId',
+                    token: 'token'
+                }
+            }
+
+            await chatSDK.getConversationDetails({liveChatContext});
+
+            expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
+            expect(chatSDK.OCClient.getLWIDetails.mock.calls[0][0]).toBe(liveChatContext.requestId);
+            expect(chatSDK.OCClient.getLWIDetails.mock.calls[0][0]).not.toBe(chatSDK.requestId);
+        });
+
         it('[LiveChatV1] ChatSDK.getMessages() should call conversation.getMessages()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
