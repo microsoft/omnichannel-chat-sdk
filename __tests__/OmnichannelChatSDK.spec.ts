@@ -1609,6 +1609,27 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
         });
 
+        it('ChatSDK.getConversationDetails() should return "{}" and not throw exception if OCClient.getLWIDetails() fails ', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockRejectedValue(Promise.reject());
+
+            let errorThrown = false;
+            let conversationDetails;
+            try {
+                conversationDetails = await chatSDK.getConversationDetails();
+            } catch (error) {
+                errorThrown = true;
+            }
+
+            expect(conversationDetails).toEqual({});
+            expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
+            expect(errorThrown).toBe(false);
+        });
+
         it('ChatSDK.getConversationDetails() with authenticatedUserToken should pass it to OCClient.getLWIDetails()', async () => {
             const chatSDKConfig = {
                 getAuthToken: async () => {
@@ -1747,12 +1768,6 @@ describe('Omnichannel Chat SDK', () => {
         });
 
         it("ChatSDK.getConversationDetails() with liveChatContext should fetch conversation details from liveChatContext", async () => {
-            const omnichannelConfig = {
-                orgUrl: '',
-                orgId: '',
-                widgetId: ''
-            };
-
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
