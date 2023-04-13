@@ -651,6 +651,10 @@ class OmnichannelChatSDK {
             return {};
         }
 
+        if (this.reconnectId) {
+            chatSession.reconnectId = this.reconnectId;
+        }
+
         this.scenarioMarker.completeScenario(TelemetryEvent.GetCurrentLiveChatContext, {
             RequestId: requestId,
             ChatId: chatToken.chatId as string
