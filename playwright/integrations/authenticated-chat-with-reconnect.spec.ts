@@ -62,7 +62,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
             }, { omnichannelConfig, authUrl })
         ]);
 
-        const { authToken } = runtimeContext;
+        const { authToken, reconnectId } = runtimeContext;
         const reconnectableChatsRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatAuthReconnectableChats}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${omnichannelConfig.orgId}?channelId=lcw`;
 
         const reconnectableChatsRequestHeaders = reconnectableChatsRequest.headers();
@@ -70,6 +70,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
         expect(reconnectableChatsRequest.url() === reconnectableChatsRequestUrl).toBe(true);
         expect(reconnectableChatsResponse.status()).toBe(204);
         expect(reconnectableChatsRequestHeaders['authenticatedusertoken']).toBe(authToken);
+        expect(reconnectId).toBe(null);
     });
 
     test("ChatSDK.getChatReconnectContext() should return a reconnect id if there's an existing chat session", async ({ page }) => {
@@ -145,7 +146,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
             }, { omnichannelConfig, authUrl })
         ]);
 
-        const { authToken } = runtimeContext;
+        const { authToken, reconnectId } = runtimeContext;
         const reconnectableChatsRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatAuthReconnectableChats}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${omnichannelConfig.orgId}?channelId=lcw`;
 
         const reconnectableChatsRequestHeaders = reconnectableChatsRequest.headers();
@@ -153,6 +154,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
         expect(reconnectableChatsRequest.url() === reconnectableChatsRequestUrl).toBe(true);
         expect(reconnectableChatsResponse.status()).toBe(200);
         expect(reconnectableChatsRequestHeaders['authenticatedusertoken']).toBe(authToken);
+        expect(reconnectId).not.toBe(null);
     });
 
     test("ChatSDK.startChat() with a valid reconnect id should reconnect to previous chat", async ({ page }) => {
