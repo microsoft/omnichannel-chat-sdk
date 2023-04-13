@@ -9,7 +9,6 @@ const omnichannelConfig = fetchOmnichannelConfig('AuthenticatedChatWithChatRecon
 const authUrl = fetchAuthUrl('AuthenticatedChatWithChatReconnect');
 
 test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
-
     test("ChatSDK.getChatReconnectContext() should not return a reconnect id if there's no existing chat session", async ({ page }) => {
         await page.goto(testPage);
 
@@ -21,10 +20,15 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatAuthReconnectableChats) && response.request().method() === 'GET';
             }),
             await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
-                const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
+                const { OmnichannelChatSDK_1: OmnichannelChatSDK, uuidv4 } = window;
+
+                const data = {
+                    contactid: uuidv4() // Ensures it's a new user
+                };
 
                 const payload = {
-                    method: "POST"
+                    method: "POST",
+                    body: JSON.stringify(data)
                 };
 
                 const response = await fetch(authUrl, payload);
@@ -149,5 +153,83 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
         expect(reconnectableChatsRequest.url() === reconnectableChatsRequestUrl).toBe(true);
         expect(reconnectableChatsResponse.status()).toBe(200);
         expect(reconnectableChatsRequestHeaders['authenticatedusertoken']).toBe(authToken);
+    });
+
+    test('ChatSDK.getConversationDetails() should not fail after a reconnect session', async ({page}) => {
+        await page.goto(testPage);
+
+        const [_, liveWorkItemDetailsRequest, liveWorkItemDetailsResponse, runtimeContext] = await Promise.all([
+            await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
+                const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
+                const payload = {
+                    method: "POST"
+                };
+
+                const response = await fetch(authUrl, payload);
+                const authToken = await response.text();
+
+                const chatSDKConfig = {
+                    getAuthToken: () => authToken,
+                    chatReconnect: {
+                        disable: false,
+                    },
+                };
+
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);
+                await chatSDK.initialize();
+
+                await chatSDK.startChat();
+            }, { omnichannelConfig, authUrl }),
+            page.waitForRequest(request => {
+                return request.url().includes(OmnichannelEndpoints.LiveChatAuthLiveWorkItemDetailsPath);
+            }),
+            page.waitForResponse(response => {
+                return response.url().includes(OmnichannelEndpoints.LiveChatAuthLiveWorkItemDetailsPath);
+            }),
+            await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
+                const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
+                const payload = {
+                    method: "POST"
+                };
+
+                const response = await fetch(authUrl, payload);
+                const authToken = await response.text();
+
+                const chatSDKConfig = {
+                    getAuthToken: () => authToken,
+                    chatReconnect: {
+                        disable: false,
+                    },
+                };
+
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);
+                await chatSDK.initialize();
+
+                const chatReconnectContext = await chatSDK.getChatReconnectContext();
+                const {reconnectId} = chatReconnectContext;
+
+                await chatSDK.startChat({reconnectId});
+
+                const conversationDetails = await chatSDK.getConversationDetails();
+
+                const runtimeContext = {
+                    requestId: chatSDK.requestId,
+                    reconnectId,
+                    conversationDetails
+                };
+
+                return runtimeContext;
+            }, { omnichannelConfig, authUrl }),
+        ]);
+
+        const { requestId, reconnectId, conversationDetails } = runtimeContext;
+        const liveWorkItemDetailsRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatAuthLiveWorkItemDetailsPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}/${reconnectId}?channelId=lcw`;
+        const liveWorkItemDetailsResponseDataJson = await liveWorkItemDetailsResponse.json();
+
+        expect(liveWorkItemDetailsRequest.url() === liveWorkItemDetailsRequestUrl).toBe(true);
+        expect(liveWorkItemDetailsResponse.status()).toBe(200);
+        expect(liveWorkItemDetailsResponseDataJson.State).toBe(conversationDetails.state);
+        expect(liveWorkItemDetailsResponseDataJson.ConversationId).toBe(conversationDetails.conversationId);
+        expect(liveWorkItemDetailsResponseDataJson.CanRenderPostChat).toBe(conversationDetails.canRenderPostChat);
     });
 });
