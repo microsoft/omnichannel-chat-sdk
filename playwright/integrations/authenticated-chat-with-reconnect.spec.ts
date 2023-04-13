@@ -94,9 +94,6 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
                 await chatSDK.initialize();
 
                 await chatSDK.startChat();
-
-                location.reload();
-
             }, { omnichannelConfig, authUrl }),
 
             page.waitForRequest(request => {
@@ -132,10 +129,11 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
                 };
 
                 const chatReconnectContext = await chatSDK.getChatReconnectContext();
+                const {reconnectId} = chatReconnectContext;
 
-                runtimeContext.reconnectId = chatReconnectContext.reconnectId;
+                runtimeContext.reconnectId = reconnectId;
 
-                await chatSDK.startChat(runtimeContext.reconnectId);
+                await chatSDK.startChat({reconnectId});
 
                 await chatSDK.endChat();
 
