@@ -3269,7 +3269,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(context.reconnectId).toBe(mockedResponse.reconnectid);
         });
 
-        it('ChatSDK.getChatReconnectContext() should pass reconnectId to OCClient.getReconnectAvailability() & return reconnectId if valid', async () => {
+        it('ChatSDK.getChatReconnectContext() should pass reconnectId to OCClient.getReconnectAvailability() & return reconnectId if valid & return redirectUrl with "null"', async () => {
             const chatSDKConfig = {
                 telemetry: {
                     disable: true
@@ -3295,6 +3295,7 @@ describe('Omnichannel Chat SDK', () => {
 
             expect(chatSDK.OCClient.getReconnectAvailability).toHaveBeenCalledTimes(1);
             expect(context.reconnectId).toBe(params.reconnectId);
+            expect(context.redirectURL).toBe(null);
         });
 
         it('ChatSDK.getChatReconnectContext() should pass reconnectId to OCClient.getReconnectAvailability() & not return reconnectId if invalid & return redirectUrl if any', async () => {
