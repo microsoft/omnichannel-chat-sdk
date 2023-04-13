@@ -22,7 +22,6 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTyping', () => {
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
                 const runtimeContext = {};
 
-                chatSDK.setDebug(true);
                 await chatSDK.initialize();
 
                 await chatSDK.startChat();

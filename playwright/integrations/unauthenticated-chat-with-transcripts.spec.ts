@@ -22,7 +22,6 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTranscripts', () => 
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
                 const runtimeContext = {};
 
-                chatSDK.setDebug(true);
                 await chatSDK.initialize();
 
                 await chatSDK.startChat();
@@ -64,7 +63,6 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTranscripts', () => 
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
                 const runtimeContext = {};
 
-                chatSDK.setDebug(true);
                 await chatSDK.initialize();
 
                 await chatSDK.startChat();
@@ -116,7 +114,6 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTranscripts', () => 
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
                 const runtimeContext = {};
 
-                chatSDK.setDebug(true);
                 await chatSDK.initialize();
 
                 await chatSDK.startChat();
