@@ -1902,13 +1902,13 @@ class OmnichannelChatSDK {
         })
 
         try {
-            const sessionInfo: IInitializationInfo = {
-                token: newToken,
-                regionGtms: newRegionGTMS,
-                visitor: true
-            }
-
             if (this.liveChatVersion === LiveChatVersion.V1) {
+                const sessionInfo: IInitializationInfo = {
+                    token: newToken,
+                    regionGtms: newRegionGTMS,
+                    visitor: true
+                };
+
                 await this.IC3Client.initialize(sessionInfo);
             }
 
