@@ -124,6 +124,7 @@ class OmnichannelChatSDK {
     private isChatReconnect = false;
     private reconnectId: null | string = null;
     private refreshTokenTimer: number | null = null;
+    private chatTokenRefreshTimer: number | null = null;
 
     constructor(omnichannelConfig: OmnichannelConfig, chatSDKConfig: ChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
@@ -470,6 +471,31 @@ class OmnichannelChatSDK {
                 environmentUrl: this.chatToken.acsEndpoint as string,
                 pollingInterval: 30000
             };
+
+            // TODO: Find atob() platform-agnostic alternative
+            if (!platform.isNode() && !platform.isReactNative()) {
+                const refreshChatToken = async () => {
+                    const {token} = this.chatToken;
+                    const payload = (token as string).split(".")[1];
+                    const decodedPayload = JSON.parse(atob(payload));
+                    const {expiry} = decodedPayload;
+                    const currentTime = new Date().getTime();
+                    const tokenExpired = currentTime >= expiry;
+                    const nextInterval = tokenExpired? 0: (expiry - currentTime) * 0.5;
+
+                    if (tokenExpired) {
+                        clearTimeout(this.chatTokenRefreshTimer as number);
+                        await this.getChatToken(false);
+                        chatAdapterConfig.token = this.chatToken.token; // Update token
+                    }
+
+                    this.chatTokenRefreshTimer = setTimeout(async () => {
+                        refreshChatToken();
+                    }, nextInterval) as unknown as number;
+                }
+
+                refreshChatToken();
+            }
 
             const tokenRefresher = async (): Promise<string> => {
                 return chatAdapterConfig.token as string;
