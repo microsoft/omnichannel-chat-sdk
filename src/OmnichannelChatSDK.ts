@@ -81,6 +81,7 @@ import createTelemetry from "./utils/createTelemetry";
 import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
 import { defaultMessageTags } from "./core/messaging/MessageTags";
 import exceptionThrowers from "./utils/exceptionThrowers";
+import exceptionSuppressors from "./utils/exceptionSuppressors";
 import { getLocationInfo } from "./utils/location";
 import {isCustomerMessage} from "./utils/utilities";
 import urlResolvers from "./utils/urlResolvers";
@@ -726,16 +727,12 @@ class OmnichannelChatSDK {
 
             return liveWorkItemDetails;
         } catch (error) {
-            const exceptionDetails: ChatSDKExceptionDetails = {
-                response: ChatSDKErrors.ConversationDetailsRetrievalFailure,
-                errorObject: `${error}`
-            };
-
-            this.scenarioMarker.failScenario(TelemetryEvent.GetConversationDetails, {
+            const telemetryData = {
                 RequestId: requestId,
                 ChatId: chatId || '',
-                ExceptionDetails: JSON.stringify(exceptionDetails)
-            });
+            };
+
+            exceptionSuppressors.suppressConversationDetailsRetrievalFailure(error, this.scenarioMarker, TelemetryEvent.GetConversationDetails, telemetryData);
         }
 
         return {} as LiveWorkItemDetails;
