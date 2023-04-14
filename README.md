@@ -272,7 +272,11 @@ const chatReconnectContext = await chatSDK.getChatReconnectContext(optionalParam
 It gets the details of the current conversation such as its state & when the agent joined the conversation.
 
 ```ts
-const conversationDetails = await chatSDK.getConversationDetails();
+const optionalParams = {
+    liveChatContext: {}, // EXISTING chat context data
+};
+
+const conversationDetails = await chatSDK.getConversationDetails(optionalParams);
 ```
 
 ### Get chat Token
@@ -376,7 +380,11 @@ await chatSDK.emailLiveChatTranscript(body);
 It fetches the current conversation transcript data in JSON.
 
 ```ts
-await chatSDK.getLiveChatTranscript();
+const optionalParams = {
+    liveChatContext: {}, // EXISTING chat context data
+};
+
+await chatSDK.getLiveChatTranscript(optionalParams);
 ```
 
 ### Upload File Attachment
