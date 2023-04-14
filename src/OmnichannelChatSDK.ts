@@ -1926,8 +1926,6 @@ class OmnichannelChatSDK {
                 ChatId: this.chatToken.chatId as string,
                 ExceptionDetails: JSON.stringify(exceptionDetails)
             });
-
-            console.error(`OmnichannelChatSDK/updateChatToken/error ${error}`);
         }
     }
 
