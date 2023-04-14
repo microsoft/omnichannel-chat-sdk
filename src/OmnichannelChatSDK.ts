@@ -471,10 +471,15 @@ class OmnichannelChatSDK {
                 pollingInterval: 30000
             };
 
+            const tokenRefresher = async (): Promise<string> => {
+                return chatAdapterConfig.token as string;
+            };
+
             try {
                 await this.ACSClient?.initialize({
                     token: chatAdapterConfig.token as string,
-                    environmentUrl: chatAdapterConfig.environmentUrl
+                    environmentUrl: chatAdapterConfig.environmentUrl,
+                    tokenRefresher
                 });
             } catch (error) {
                 const telemetryData = {

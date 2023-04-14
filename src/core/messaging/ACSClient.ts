@@ -4,7 +4,7 @@ import { ACSClientLogger } from "../../utils/loggers";
 import ACSParticipantDisplayName from "./ACSParticipantDisplayName";
 import ACSSessionInfo from "./ACSSessionInfo";
 import { ChatClient, ChatParticipant, ChatThreadClient, ChatMessage } from "@azure/communication-chat";
-import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
+import { AzureCommunicationTokenCredential, CommunicationTokenRefreshOptions, CommunicationUserIdentifier } from "@azure/communication-common";
 import { ChatMessageReceivedEvent, ParticipantsRemovedEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
 import ChatSDKMessage from "./ChatSDKMessage";
 import createOmnichannelMessage from "../../utils/createOmnichannelMessage";
@@ -407,8 +407,20 @@ class ACSClient {
     public async initialize(acsClientConfig: ACSClientConfig): Promise<void> {
         this.logger?.startScenario(ACSClientEvent.InitializeACSClient);
 
+        const tokenRefresher = async () => {
+            if (acsClientConfig.tokenRefresher) {
+                const token = await acsClientConfig.tokenRefresher();
+                return token;
+            }
+
+            return acsClientConfig.token;
+        };
+
         try {
-            this.tokenCredential = new AzureCommunicationTokenCredential(acsClientConfig.token);
+            this.tokenCredential = new AzureCommunicationTokenCredential({
+                token: acsClientConfig.token,
+                tokenRefresher
+            });
         } catch (error) {
             const exceptionDetails = {
                 response: 'CreateTokenCredentialFailure',
