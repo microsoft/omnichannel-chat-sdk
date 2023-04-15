@@ -481,9 +481,11 @@ class OmnichannelChatSDK {
                     const {expiry} = decodedPayload;
                     const currentTime = new Date().getTime();
                     const tokenExpired = currentTime >= expiry;
-                    const nextInterval = tokenExpired? 0: (expiry - currentTime) * 0.5;
+                    const tokenExpiringSoon = currentTime >= expiry - (30 * 1000);
+                    const ttl = (expiry - currentTime);
+                    const nextInterval = tokenExpired? 0: ttl * 0.5;
 
-                    if (tokenExpired) {
+                    if (tokenExpiringSoon) {
                         clearTimeout(this.chatTokenRefreshTimer as number);
                         await this.getChatToken(false);
                         chatAdapterConfig.token = this.chatToken.token; // Update token
