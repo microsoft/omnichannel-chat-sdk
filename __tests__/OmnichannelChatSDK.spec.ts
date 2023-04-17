@@ -1609,6 +1609,27 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
         });
 
+        it('ChatSDK.getConversationDetails() should return "{}" and not throw exception if OCClient.getLWIDetails() fails ', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockRejectedValue(Promise.reject());
+
+            let errorThrown = false;
+            let conversationDetails;
+            try {
+                conversationDetails = await chatSDK.getConversationDetails();
+            } catch (error) {
+                errorThrown = true;
+            }
+
+            expect(conversationDetails).toEqual({});
+            expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
+            expect(errorThrown).toBe(false);
+        });
+
         it('ChatSDK.getConversationDetails() with authenticatedUserToken should pass it to OCClient.getLWIDetails()', async () => {
             const chatSDKConfig = {
                 getAuthToken: async () => {
@@ -1744,6 +1765,43 @@ describe('Omnichannel Chat SDK', () => {
 
             expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
             expect(chatSDK.OCClient.getLWIDetails.mock.calls[0][1].reconnectId).toMatch(chatSDK.reconnectId);
+        });
+
+        it("ChatSDK.getConversationDetails() with liveChatContext should fetch conversation details from liveChatContext", async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
+            const chatToken = {
+                ChatId: 'ChatId',
+                Token: 'Token',
+                RegionGtms: '{}'
+            };
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve(chatToken));
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue(Promise.resolve());
+
+            await chatSDK.startChat();
+
+            const liveChatContext = {
+                requestId: 'requestId',
+                chatToken: {
+                    chatId: 'chatId',
+                    token: 'token'
+                }
+            }
+
+            await chatSDK.getConversationDetails({liveChatContext});
+
+            expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
+            expect(chatSDK.OCClient.getLWIDetails.mock.calls[0][0]).toBe(liveChatContext.requestId);
+            expect(chatSDK.OCClient.getLWIDetails.mock.calls[0][0]).not.toBe(chatSDK.requestId);
         });
 
         it('[LiveChatV1] ChatSDK.getMessages() should call conversation.getMessages()', async () => {
@@ -3211,7 +3269,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(context.reconnectId).toBe(mockedResponse.reconnectid);
         });
 
-        it('ChatSDK.getChatReconnectContext() should pass reconnectId to OCClient.getReconnectAvailability() & return reconnectId if valid', async () => {
+        it('ChatSDK.getChatReconnectContext() should pass reconnectId to OCClient.getReconnectAvailability() & return reconnectId if valid & return redirectUrl with "null"', async () => {
             const chatSDKConfig = {
                 telemetry: {
                     disable: true
@@ -3237,6 +3295,7 @@ describe('Omnichannel Chat SDK', () => {
 
             expect(chatSDK.OCClient.getReconnectAvailability).toHaveBeenCalledTimes(1);
             expect(context.reconnectId).toBe(params.reconnectId);
+            expect(context.redirectURL).toBe(null);
         });
 
         it('ChatSDK.getChatReconnectContext() should pass reconnectId to OCClient.getReconnectAvailability() & not return reconnectId if invalid & return redirectUrl if any', async () => {
