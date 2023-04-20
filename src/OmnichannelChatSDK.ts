@@ -472,35 +472,9 @@ class OmnichannelChatSDK {
                 pollingInterval: 30000
             };
 
-            // TODO: Find atob() platform-agnostic alternative
-            if (!platform.isNode() && !platform.isReactNative()) {
-                const refreshChatToken = async () => {
-                    const {token} = this.chatToken;
-                    const payload = (token as string).split(".")[1];
-                    const decodedPayload = JSON.parse(atob(payload));
-                    const {expiry} = decodedPayload;
-                    const currentTime = new Date().getTime();
-                    const tokenExpired = currentTime >= expiry;
-                    const tokenExpiringSoon = currentTime >= expiry - (30 * 1000);
-                    const ttl = (expiry - currentTime);
-                    const nextInterval = tokenExpired? 0: ttl * 0.5;
-
-                    if (tokenExpiringSoon) {
-                        clearTimeout(this.chatTokenRefreshTimer as number);
-                        await this.getChatToken(false);
-                        chatAdapterConfig.token = this.chatToken.token; // Update token
-                    }
-
-                    this.chatTokenRefreshTimer = setTimeout(async () => {
-                        refreshChatToken();
-                    }, nextInterval) as unknown as number;
-                }
-
-                refreshChatToken();
-            }
-
             const tokenRefresher = async (): Promise<string> => {
-                return chatAdapterConfig.token as string;
+                await this.getChatToken(false);
+                return this.chatToken.token as string;
             };
 
             try {
