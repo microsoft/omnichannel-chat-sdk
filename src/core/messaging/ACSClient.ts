@@ -419,7 +419,8 @@ class ACSClient {
         try {
             this.tokenCredential = new AzureCommunicationTokenCredential({
                 token: acsClientConfig.token,
-                tokenRefresher
+                tokenRefresher, // tokenRefresher is executed when token found to be expired on performing HTTP calls
+                refreshProactively: true // Flag to whether refresh token 10 mins it expires
             });
         } catch (error) {
             const exceptionDetails = {
