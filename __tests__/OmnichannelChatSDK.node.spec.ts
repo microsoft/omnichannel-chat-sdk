@@ -74,9 +74,11 @@ describe('Omnichannel Chat SDK (Node)', () => {
 
         await chatSDK.initialize();
 
+        chatSDK.ACSClient.initialize = jest.fn();
+        chatSDK.ACSClient.joinConversation = jest.fn();
+        chatSDK.AMSClient.initialize = jest.fn();
+
         chatSDK.OCClient.sessionInit = jest.fn();
-        chatSDK.IC3Client.initialize = jest.fn();
-        chatSDK.IC3Client.joinConversation = jest.fn();
 
         await chatSDK.startChat();
 
@@ -102,9 +104,13 @@ describe('Omnichannel Chat SDK (Node)', () => {
 
         await chatSDK.initialize();
 
+        chatSDK.ACSClient.initialize = jest.fn();
+        chatSDK.ACSClient.joinConversation = jest.fn();
+        chatSDK.AMSClient.initialize = jest.fn();
+
         chatSDK.OCClient.sessionInit = jest.fn();
-        chatSDK.IC3Client.initialize = jest.fn();
-        chatSDK.IC3Client.joinConversation = jest.fn();
+
+        jest.spyOn(console, 'error');
 
         await chatSDK.startChat();
 
@@ -112,6 +118,7 @@ describe('Omnichannel Chat SDK (Node)', () => {
             await chatSDK.getVoiceVideoCalling();
         } catch (error) {
             expect(error.message).toEqual('UnsupportedPlatform');
+            expect(console.error).toHaveBeenCalledWith('VoiceVideoCalling is only supported on browser');
         }
     });
 

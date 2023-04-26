@@ -1,5 +1,12 @@
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+const uuidv4 = () => {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+      const r = Math.random() * 16 | 0, v = c === "x" ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+};
+
 const patchLoadScript = () => {
     const { require_WebUtils} = window;
     const loadScript = require_WebUtils().default.loadScript;
@@ -18,5 +25,6 @@ const preloadChatAdapter = async () => {
 };
 
 window.sleep = sleep;
+window.uuidv4 = uuidv4;
 window.patchLoadScript = patchLoadScript;
 window.preloadChatAdapter = preloadChatAdapter;
