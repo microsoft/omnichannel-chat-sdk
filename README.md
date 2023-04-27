@@ -272,7 +272,11 @@ const chatReconnectContext = await chatSDK.getChatReconnectContext(optionalParam
 It gets the details of the current conversation such as its state & when the agent joined the conversation.
 
 ```ts
-const conversationDetails = await chatSDK.getConversationDetails();
+const optionalParams = {
+    liveChatContext: {}, // EXISTING chat context data
+};
+
+const conversationDetails = await chatSDK.getConversationDetails(optionalParams);
 ```
 
 ### Get chat Token
@@ -376,7 +380,11 @@ await chatSDK.emailLiveChatTranscript(body);
 It fetches the current conversation transcript data in JSON.
 
 ```ts
-await chatSDK.getLiveChatTranscript();
+const optionalParams = {
+    liveChatContext: {}, // EXISTING chat context data
+};
+
+await chatSDK.getLiveChatTranscript(optionalParams);
 ```
 
 ### Upload File Attachment
@@ -445,10 +453,10 @@ try {
 ```
 ### Get Post Chat Survey Context
 
-It gets post chat survey link, survey locale, and whether an agent has joined the survey.
+It gets the participant type that should be used for the survey and both the default and bot survey details.
 
 ```ts
-const context = await chatSDK.getPostChatSurveyContext();
+const postChatSurveyContext = await chatSDK.getPostChatSurveyContext();
 ```
 
 ### Get Agent Availability
@@ -512,7 +520,9 @@ try {
     if (context.participantJoined) { // participantJoined will be true if an agent has joined the conversation, or a bot has joined the conversation and the bot survey flag has been turned on on the admin side.
         // formsProLocale is the default language you have set on the CustomerVoice portal. You can override this url parameter with any locale that CustomerVoice supports.
         // If "&lang=" is not set on the url, the locale will be English.
-        const linkToSend = context.surveyInviteLink + "&lang=" + context.formsProLocale;
+        const link = context.participantType === "Bot" ? context.botSurveyInviteLink : context.surveyInviteLink;
+        const locale = context.participantType === "Bot" ? context.botFormsProLocale : context.formsProLocale;
+        const linkToSend = link + "&lang=" + locale;
         // This link is accessible and will redirect to the survey page. Use it as you see fit.
     }
 } catch (ex) {

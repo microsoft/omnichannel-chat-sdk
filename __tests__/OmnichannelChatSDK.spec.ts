@@ -93,7 +93,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(url).toBe(libraries.getIC3ClientCDNUrl());
         });
 
-        it('ChatSDK should be able to pick custom webChatIC3AdapterVersion if set', async () => {
+        it('[LiveChatV1] ChatSDK should be able to pick custom webChatIC3AdapterVersion if set', async () => {
             const omnichannelConfig = {
                 orgUrl: '',
                 orgId: '',
@@ -107,12 +107,14 @@ describe('Omnichannel Chat SDK', () => {
             };
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
+
             const url = chatSDK.resolveChatAdapterUrl(ChatAdapterProtocols.IC3);
 
             expect(url).toBe(libraries.getIC3AdapterCDNUrl(chatSDKConfig.chatAdapterConfig.webChatIC3AdapterVersion));
         });
 
-        it('ChatSDK should be able to pick custom webChatIC3AdapterCDNUrl if set', async () => {
+        it('[LiveChatV1] ChatSDK should be able to pick custom webChatIC3AdapterCDNUrl if set', async () => {
             const omnichannelConfig = {
                 orgUrl: '',
                 orgId: '',
@@ -127,12 +129,14 @@ describe('Omnichannel Chat SDK', () => {
             };
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
+
             const url = chatSDK.resolveChatAdapterUrl(ChatAdapterProtocols.IC3);
 
             expect(url).toBe(chatSDKConfig.chatAdapterConfig.webChatIC3AdapterCDNUrl);
         });
 
-        it('ChatSDK should pick the default webChatIC3AdapterCDNUrl if no chatAdapterConfig is set', async () => {
+        it('[LiveChatV1] ChatSDK should pick the default webChatIC3AdapterCDNUrl if no chatAdapterConfig is set', async () => {
             const omnichannelConfig = {
                 orgUrl: '',
                 orgId: '',
@@ -140,6 +144,8 @@ describe('Omnichannel Chat SDK', () => {
             };
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
+
             const url = chatSDK.resolveChatAdapterUrl(ChatAdapterProtocols.IC3);
 
             expect(url).toBe(libraries.getIC3AdapterCDNUrl());
@@ -402,9 +408,23 @@ describe('Omnichannel Chat SDK', () => {
             jest.clearAllMocks();
         });
 
-        it('ChatSDK.initialize() should instantiate OCSDK & IC3Core/IC3Client', async () => {
+        it('ChatSDK.initialize() with an unsupported liveChatVersion should throw an exception', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK.liveChatVersion = 'invalid';
+
+            try {
+                await chatSDK.initialize();
+            } catch (e) {
+                expect(e.message).toBe("UnsupportedLiveChatVersion");
+            }
+        });
+
+        it('[LiveChatV1] ChatSDK.initialize() should instantiate OCSDK & IC3Core/IC3Client', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
+
             jest.spyOn(chatSDK, 'getIC3Client');
 
             await chatSDK.initialize();
@@ -415,11 +435,10 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.IC3Client).toBeDefined();
         });
 
-        it('[LiveChatV2] ChatSDK.initialize() should instantiate OCSDK & ACSClient & AMSClient', async () => {
+        it('ChatSDK.initialize() should instantiate OCSDK & ACSClient & AMSClient', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            chatSDK.liveChatVersion = LiveChatVersion.V2;
             await chatSDK.initialize();
 
             expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(1);
@@ -427,6 +446,35 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.IC3Client).not.toBeDefined();
             expect(chatSDK.ACSClient).toBeDefined();
             expect(chatSDK.AMSClient).toBeDefined();
+        });
+
+        it('ChatSDK.initialize() with OCSDK failure should throw an exception', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            chatSDK.SDKProvider = {
+                getSDK: jest.fn(() => {throw Error()})
+            }
+
+            try {
+                await chatSDK.initialize();
+            } catch (e) {
+                expect(e.message).toBe("OmnichannelClientInitializationFailure");
+                expect(chatSDK.OCClient).not.toBeDefined();
+                expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(0);
+            }
+        });
+
+        it('ChatSDK.initialize() with ChatSDK.getChatConfig() failure should throw an exception', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn(() => {throw Error()});
+
+            try {
+                await chatSDK.initialize();
+            } catch (e) {
+                expect(e.message).toBe("ChatConfigRetrievalFailure");
+                expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(1);
+            }
         });
 
         it('ChatSDK.initialize() with sendCacheHeaders set to \'true\' should be passed to ChatSDK.getChatConfig()', async () => {
@@ -461,11 +509,13 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.getChatConfig.mock.calls[0][0].sendCacheHeaders).toEqual(getLiveChatConfigOptionalParams.sendCacheHeaders);
         });
 
-        it('ChatSDK.initialize() call multiple times should instantiate OCSDK & IC3Core/IC3Client only once', async () => {
+        it('[LiveChatV1] ChatSDK.initialize() call multiple times should instantiate OCSDK & IC3Core/IC3Client only once', async () => {
             jest.resetAllMocks();
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
+
             jest.spyOn(chatSDK, 'getIC3Client');
 
             await chatSDK.initialize();
@@ -500,7 +550,15 @@ describe('Omnichannel Chat SDK', () => {
         it('ChatSDK.getChatConfig() with sendCacheHeaders set to \'true\' should be passed to OCClient.getChatConfig()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.OCClient = {};
-            chatSDK.OCClient.getChatConfig = jest.fn();
+            chatSDK.OCClient.getChatConfig = jest.fn(() => Promise.resolve({
+                DataMaskingInfo: { setting: { msdyn_maskforcustomer: false } },
+                LiveWSAndLiveChatEngJoin: { PreChatSurvey: { msdyn_prechatenabled: false } },
+                LiveChatConfigAuthSettings: {},
+                ChatWidgetLanguage: {
+                    msdyn_localeid: '1033',
+                    msdyn_languagename: 'English - United States'
+                }
+            }));
 
             const optionalParams = {
                 sendCacheHeaders: true
@@ -513,7 +571,15 @@ describe('Omnichannel Chat SDK', () => {
         it('ChatSDK.getChatConfig() with sendCacheHeaders set to \'false\' should be passed to OCClient.getChatConfig()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.OCClient = {};
-            chatSDK.OCClient.getChatConfig = jest.fn();
+            chatSDK.OCClient.getChatConfig = jest.fn(() => Promise.resolve({
+                DataMaskingInfo: { setting: { msdyn_maskforcustomer: false } },
+                LiveWSAndLiveChatEngJoin: { PreChatSurvey: { msdyn_prechatenabled: false } },
+                LiveChatConfigAuthSettings: {},
+                ChatWidgetLanguage: {
+                    msdyn_localeid: '1033',
+                    msdyn_languagename: 'English - United States'
+                }
+            }));
 
             const optionalParams = {
                 sendCacheHeaders: false
@@ -587,8 +653,6 @@ describe('Omnichannel Chat SDK', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.authSettings = {};
 
-            chatSDK.liveChatVersion = LiveChatVersion.V2;
-
             await chatSDK.initialize();
 
             jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
@@ -614,6 +678,46 @@ describe('Omnichannel Chat SDK', () => {
             await chatSDK.startChat(optionalParams);
 
             expect(chatSDK.OCClient.validateAuthChatRecord).toHaveBeenCalledTimes(1);
+        });
+
+        it('Authenticated Chat with liveChatContext should throw an exception if OCClient.validateAuthChatRecord() fails', async () => {
+            const chatSDKConfig = {
+                getAuthToken: async () => {
+                    return 'authenticatedUserToken'
+                }
+            };
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.authSettings = {};
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}',
+                AttachmentConfiguration: {
+                    AttachmentServiceEndpoint: 'AttachmentServiceEndpoint'
+                }
+            }));
+
+            jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue(Promise.resolve({state: 'state'}));
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'validateAuthChatRecord').mockResolvedValue(Promise.reject());
+            jest.spyOn(chatSDK.AMSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve());
+
+            const optionalParams = {
+                liveChatContext: { requestId: 'requestId', chatToken: {chatId: 'chatId'}}
+            }
+
+            try {
+                await chatSDK.startChat(optionalParams);
+            } catch (e) {
+                expect(e.message).toBe('AuthenticatedChatConversationRetrievalFailure');
+                expect(chatSDK.OCClient.validateAuthChatRecord).toHaveBeenCalledTimes(1);
+            }
         });
 
         it('ChatSDK.getPreChatSurvey() with preChat enabled should return a pre chat survey', async () => {
@@ -656,6 +760,10 @@ describe('Omnichannel Chat SDK', () => {
                 LiveWSAndLiveChatEngJoin: {
                     PreChatSurvey: samplePreChatSurvey,
                     msdyn_prechatenabled: false
+                },
+                ChatWidgetLanguage: {
+                    msdyn_localeid: '1033',
+                    msdyn_languagename: 'English - United States'
                 }
             }));
 
@@ -666,6 +774,8 @@ describe('Omnichannel Chat SDK', () => {
 
         it('ChatSDK.getDataMaskingRules() should return active data masking rules', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
             const dataMaskingRules = {
                 'SSN': "\\b(?!000|666|9)\\d{3}[- ]?(?!00)\\d{2}[- ]?(?!0000)\\d{4}\\b"
             }
@@ -677,9 +787,21 @@ describe('Omnichannel Chat SDK', () => {
             expect(await chatSDK.getDataMaskingRules()).toBe(dataMaskingRules);
         });
 
-        it('ChatSDK.startchat() should start an OC chat', async () => {
+        it('ChatSDK.startChat() should throw an exception if ChatSDK.initialize() is not called', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+
+            try {
+                await chatSDK.startChat();
+            } catch (e) {
+                expect(e.message).toBe('UninitializedChatSDK');
+            }
+        });
+
+        it('[LiveChatV1] ChatSDK.startchat() should start an OC chat', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -701,12 +823,10 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.IC3Client.joinConversation).toHaveBeenCalledTimes(1);
         });
 
-        it('[LiveChatV2] ChatSDK.startchat() should start an OC chat', async () => {
+        it('ChatSDK.startChat() should start an OC chat', async () => {
             // global.fetch = jest.fn();
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
-
-            chatSDK.liveChatVersion = LiveChatVersion.V2;
 
             await chatSDK.initialize();
 
@@ -746,18 +866,33 @@ describe('Omnichannel Chat SDK', () => {
             }));
 
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockRejectedValue(Promise.reject());
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve());
 
             try {
                 await chatSDK.startChat();
             } catch (error) {
-                expect(error).toBeDefined();
+                expect(error.message).toBe("ConversationInitializationFailure");
             }
 
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
-            expect(chatSDK.IC3Client.initialize).toHaveBeenCalledTimes(0);
-            expect(chatSDK.IC3Client.joinConversation).toHaveBeenCalledTimes(0);
+        });
+
+
+        it('ChatSDK.startChat() should not call OCClient.sessionInit() if OCClient.getChatToken() fails', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.reject());
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockRejectedValue(Promise.resolve());
+
+            try {
+                await chatSDK.startChat();
+            } catch (e) {
+                expect(e.message).toBe("ChatTokenRetrievalFailure");
+            }
+
+            expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(0);
         });
 
         it('ChatSDK.startChat() should throw a \'WidgetUseOutsideOperatingHour\' error if OCClient.sessionInit() fails with \'705\' error code', async () => {
@@ -779,8 +914,6 @@ describe('Omnichannel Chat SDK', () => {
             axiosErrorObject.response.headers.errorcode = OmnichannelErrorCodes.WidgetUseOutsideOperatingHour.toString();
 
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockRejectedValue(axiosErrorObject);
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve());
 
             try {
                 await chatSDK.startChat();
@@ -790,13 +923,12 @@ describe('Omnichannel Chat SDK', () => {
             }
 
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
-            expect(chatSDK.IC3Client.initialize).toHaveBeenCalledTimes(0);
-            expect(chatSDK.IC3Client.joinConversation).toHaveBeenCalledTimes(0);
         });
 
-        it('ChatSDK.startChat() should fail if IC3Client.initialize() fails', async () => {
+        it('[LiveChatV1] ChatSDK.startChat() should fail if IC3Client.initialize() fails', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -815,7 +947,7 @@ describe('Omnichannel Chat SDK', () => {
             try {
                 await chatSDK.startChat();
             } catch (error) {
-                expect(console.error).toHaveBeenCalled();
+                expect(error.message).toBe("MessagingClientInitializationFailure");
             }
 
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
@@ -823,9 +955,10 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.IC3Client.joinConversation).toHaveBeenCalledTimes(0);
         });
 
-        it('ChatSDK.startChat() should fail if IC3Client.joinConversation() fails', async () => {
+        it('[LiveChatV1] ChatSDK.startChat() should fail if IC3Client.joinConversation() fails', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -839,17 +972,102 @@ describe('Omnichannel Chat SDK', () => {
             jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockRejectedValue(Promise.reject());
 
-            jest.spyOn(console, 'error');
-
             try {
                 await chatSDK.startChat();
             } catch (error) {
-                expect(console.error).toHaveBeenCalled();
+                expect(error.message).toBe("MessagingClientConversationJoinFailure");
             }
 
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
             expect(chatSDK.IC3Client.initialize).toHaveBeenCalledTimes(1);
             expect(chatSDK.IC3Client.joinConversation).toHaveBeenCalledTimes(1);
+        });
+
+        it('ChatSDK.startChat() should throw an exception if ACSClient.initialize() fails', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockRejectedValue(Promise.reject());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.AMSClient, 'initialize').mockResolvedValue(Promise.resolve());
+
+            try {
+                await chatSDK.startChat();
+            } catch (error) {
+                expect(error.message).toBe("MessagingClientInitializationFailure");
+            }
+
+            expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
+            expect(chatSDK.ACSClient.initialize).toHaveBeenCalledTimes(1);
+            expect(chatSDK.ACSClient.joinConversation).toHaveBeenCalledTimes(0);
+            expect(chatSDK.AMSClient.initialize).toHaveBeenCalledTimes(0);
+        });
+
+        it('ChatSDK.startChat() should throw an exception if AMSClient.initialize() fails', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.AMSClient, 'initialize').mockRejectedValue(Promise.reject());
+
+            try {
+                await chatSDK.startChat();
+            } catch (error) {
+                expect(error.message).toBe("MessagingClientInitializationFailure");
+            }
+
+            expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
+            expect(chatSDK.ACSClient.initialize).toHaveBeenCalledTimes(1);
+            expect(chatSDK.ACSClient.joinConversation).toHaveBeenCalledTimes(1);
+            expect(chatSDK.AMSClient.initialize).toHaveBeenCalledTimes(1);
+        });
+
+        it('ChatSDK.startChat() should throw an exception if ACSClient.joinConversation() fails', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockRejectedValue(Promise.reject());
+            jest.spyOn(chatSDK.AMSClient, 'initialize').mockResolvedValue(Promise.resolve());
+
+            try {
+                await chatSDK.startChat();
+            } catch (error) {
+                expect(error.message).toBe("MessagingClientConversationJoinFailure");
+            }
+
+            expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
+            expect(chatSDK.ACSClient.initialize).toHaveBeenCalledTimes(1);
+            expect(chatSDK.ACSClient.joinConversation).toHaveBeenCalledTimes(1);
+            expect(chatSDK.AMSClient.initialize).toHaveBeenCalledTimes(0);
         });
 
         it('ChatSDK.startchat() with existing liveChatContext should not call OCClient.getChatToken() & OCClient.sessionInit()', async() => {
@@ -868,8 +1086,9 @@ describe('Omnichannel Chat SDK', () => {
                 ConversationId: 'id'
             }));
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.AMSClient, 'initialize').mockResolvedValue(Promise.resolve());
 
             const liveChatContext = {
                 chatToken: {
@@ -888,8 +1107,6 @@ describe('Omnichannel Chat SDK', () => {
 
             expect(chatSDK.OCClient.getChatToken).toHaveBeenCalledTimes(0);
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(0);
-            expect(chatSDK.IC3Client.initialize).toHaveBeenCalledTimes(1);
-            expect(chatSDK.IC3Client.joinConversation).toHaveBeenCalledTimes(1);
         });
 
         it('ChatSDK.startChat() with invalid liveChatContext should throw an error', async() => {
@@ -993,7 +1210,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(0);
         });
 
-        it('ChatSDK.getLiveChatConfig() with useRuntimeCache set to \'false\' should call ChatSDK.getChaConfig()', async () => {
+        it('ChatSDK.getLiveChatConfig() with useRuntimeCache set to \'false\' should call ChatSDK.getChatConfig()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
@@ -1006,7 +1223,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.getLiveChatConfig() with no useRuntimeCache should call ChatSDK.getChaConfig()', async () => {
+        it('ChatSDK.getLiveChatConfig() with no useRuntimeCache should call ChatSDK.getChatConfig()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
@@ -1018,9 +1235,10 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.startChat() with preChatResponse should pass it to OCClient.sessionInit() call\'s optional parameters', async() => {
+        it('[LiveChatV1] ChatSDK.startChat() with preChatResponse should pass it to OCClient.sessionInit() call\'s optional parameters', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -1052,9 +1270,34 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.sessionInit.mock.calls[0][1]).toMatchObject(sessionInitOptionalParams);
         });
 
-        it('ChatSDK.startChat() with customContext, browser, os, locale, device defined in sessionInitOptionalParams should pass it to OCClient.sessionInit() call\'s optional parameters', async() => {
+        it("ChatSDK.startChat() with an unsupported locale should throw an exception", async () => {
+            const omnichannelConfig = {
+                orgUrl: '',
+                orgId: '',
+                widgetId: ''
+            };
+
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+
+            await chatSDK.initialize();
+
+            const optionalParams = {
+                locale: 'unsupported-locale'
+            };
+
+            try {
+                await chatSDK.startChat(optionalParams);
+            } catch (e) {
+                expect(e.message).toBe("ConversationInitializationFailure");
+            }
+        });
+
+        it('[LiveChatV1] ChatSDK.startChat() with customContext, browser, os, locale, device defined in sessionInitOptionalParams should pass it to OCClient.sessionInit() call\'s optional parameters', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -1095,9 +1338,10 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.sessionInit.mock.calls[0][1]).toMatchObject(sessionInitOptionalParams);
         });
 
-        it('ChatSDK.startChat() with initContext defined should override IStartChatOptionalParams', async() => {
+        it('[LiveChatV1] ChatSDK.startChat() with initContext defined should override IStartChatOptionalParams', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -1147,7 +1391,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.sessionInit.mock.calls[0][1]).toMatchObject(sessionInitOptionalParams);
         });
 
-        it('ChatSDK.startChat() with authenticatedUserToken should pass it to OCClient.sessionInit() call\'s optional parameters', async() => {
+        it('[LiveChatV1] ChatSDK.startChat() with authenticatedUserToken should pass it to OCClient.sessionInit() call\'s optional parameters', async() => {
             const chatSDKConfig = {
                 getAuthToken: async () => {
                     return 'authenticatedUserToken'
@@ -1156,6 +1400,7 @@ describe('Omnichannel Chat SDK', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             const oldGetChatConfig = chatSDK.getChatConfig;
             chatSDK.getChatConfig = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -1199,9 +1444,11 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.sessionInit.mock.calls[0][1]).toMatchObject(sessionInitOptionalParams);
         });
 
-        it('ChatSDK.getCallingToken() should return acs token if available', async () => {
+        it('[LiveChatV1] ChatSDK.getCallingToken() should return acs token if available', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -1231,9 +1478,11 @@ describe('Omnichannel Chat SDK', () => {
             expect(callingToken).toEqual(chatSDK.chatToken.voiceVideoCallToken.Token);
         });
 
-        it('ChatSDK.getCallingToken() should return nothing if chatToken is invalid', async () => {
+        it('[LiveChatV1] ChatSDK.getCallingToken() should return nothing if chatToken is invalid', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -1254,9 +1503,11 @@ describe('Omnichannel Chat SDK', () => {
             expect(callingToken).toEqual('');
         });
 
-        it('ChatSDK.getCallingToken() should return skype token if acs token is not available', async () => {
+        it('[LiveChatV1] ChatSDK.getCallingToken() should return skype token if acs token is not available', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -1282,9 +1533,10 @@ describe('Omnichannel Chat SDK', () => {
             expect(callingToken).toEqual(chatSDK.chatToken.token);
         });
 
-        it('ChatSDK.getCurrentLiveChatContext() should return chat session data', async () => {
+        it('[LiveChatV1] ChatSDK.getCurrentLiveChatContext() should return chat session data', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -1357,6 +1609,27 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
         });
 
+        it('ChatSDK.getConversationDetails() should return "{}" and not throw exception if OCClient.getLWIDetails() fails ', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockRejectedValue(Promise.reject());
+
+            let errorThrown = false;
+            let conversationDetails;
+            try {
+                conversationDetails = await chatSDK.getConversationDetails();
+            } catch (error) {
+                errorThrown = true;
+            }
+
+            expect(conversationDetails).toEqual({});
+            expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
+            expect(errorThrown).toBe(false);
+        });
+
         it('ChatSDK.getConversationDetails() with authenticatedUserToken should pass it to OCClient.getLWIDetails()', async () => {
             const chatSDKConfig = {
                 getAuthToken: async () => {
@@ -1369,8 +1642,9 @@ describe('Omnichannel Chat SDK', () => {
 
             await chatSDK.initialize();
 
-            chatSDK.IC3Client.initialize = jest.fn();
-            chatSDK.IC3Client.joinConversation = jest.fn();
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
 
             const optionalParams = {
                 authenticatedUserToken: 'authenticatedUserToken'
@@ -1417,10 +1691,11 @@ describe('Omnichannel Chat SDK', () => {
 
             await chatSDK.initialize();
 
-            chatSDK.reconnectId = 'reconnectId';
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
 
-            chatSDK.IC3Client.initialize = jest.fn();
-            chatSDK.IC3Client.joinConversation = jest.fn();
+            chatSDK.reconnectId = 'reconnectId';
 
             jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
                 ChatId: '',
@@ -1444,7 +1719,7 @@ describe('Omnichannel Chat SDK', () => {
         });
 
 
-        it('ChatSDK.getConversationDetails() should pass reconnectId to OCClient.getLWIDetails() if any on Persistent Chat', async () => {
+        it('[LiveChatV1] ChatSDK.getConversationDetails() should pass reconnectId to OCClient.getLWIDetails() if any on Persistent Chat', async () => {
             const chatSDKConfig = {
                 telemetry: {
                     disable: true
@@ -1459,6 +1734,8 @@ describe('Omnichannel Chat SDK', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.isPersistentChat = true;
             global.setInterval = jest.fn();
+
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -1490,10 +1767,49 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.getLWIDetails.mock.calls[0][1].reconnectId).toMatch(chatSDK.reconnectId);
         });
 
-        it('ChatSDK.getMessages() should call conversation.getMessages()', async () => {
+        it("ChatSDK.getConversationDetails() with liveChatContext should fetch conversation details from liveChatContext", async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
+            const chatToken = {
+                ChatId: 'ChatId',
+                Token: 'Token',
+                RegionGtms: '{}'
+            };
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve(chatToken));
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue(Promise.resolve());
+
+            await chatSDK.startChat();
+
+            const liveChatContext = {
+                requestId: 'requestId',
+                chatToken: {
+                    chatId: 'chatId',
+                    token: 'token'
+                }
+            }
+
+            await chatSDK.getConversationDetails({liveChatContext});
+
+            expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
+            expect(chatSDK.OCClient.getLWIDetails.mock.calls[0][0]).toBe(liveChatContext.requestId);
+            expect(chatSDK.OCClient.getLWIDetails.mock.calls[0][0]).not.toBe(chatSDK.requestId);
+        });
+
+        it('[LiveChatV1] ChatSDK.getMessages() should call conversation.getMessages()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -1515,12 +1831,10 @@ describe('Omnichannel Chat SDK', () => {
         });
 
 
-        it('[LiveChatV2] ChatSDK.getMessages() should call conversation.getMessages()', async () => {
+        it('ChatSDK.getMessages() should call conversation.getMessages()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
-
-            chatSDK.liveChatVersion = LiveChatVersion.V2;
 
             await chatSDK.initialize();
 
@@ -1546,10 +1860,12 @@ describe('Omnichannel Chat SDK', () => {
         });
 
 
-        it('ChatSDK.sendMessage() should mask characters if enabled', async () => {
+        it('[LiveChatV1] ChatSDK.sendMessage() should mask characters if enabled', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -1595,10 +1911,12 @@ describe('Omnichannel Chat SDK', () => {
             expect((chatSDK.conversation.sendMessage.mock.calls[0][0] as any).content).toBe(content);
         });
 
-        it('ChatSDK.sendMessage() should NOT mask characters if disabled', async () => {
+        it('[LiveChatV1] ChatSDK.sendMessage() should NOT mask characters if disabled', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -1636,10 +1954,12 @@ describe('Omnichannel Chat SDK', () => {
             expect((chatSDK.conversation.sendMessage.mock.calls[0][0] as any).content).toBe(messageToSend.content);
         });
 
-        it('ChatSDK.sendMessage() should send message with custom tags if set', async () => {
+        it('[LiveChatV1] ChatSDK.sendMessage() should send message with custom tags if set', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -1665,10 +1985,12 @@ describe('Omnichannel Chat SDK', () => {
             expect((chatSDK.conversation.sendMessage.mock.calls[0][0] as any).tags.length).not.toBe(0);
         });
 
-        it('ChatSDK.sendMessage() should send message with custom timestamp if set', async () => {
+        it('[LiveChatV1] ChatSDK.sendMessage() should send message with custom timestamp if set', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -1694,12 +2016,10 @@ describe('Omnichannel Chat SDK', () => {
             expect((chatSDK.conversation.sendMessage.mock.calls[0][0] as any).timestamp).toEqual(messageToSend.timestamp);
         });
 
-        it('[LiveChatV2] ChatSDK.sendMessage() should call conversation.sendMessage()', async() => {
+        it('ChatSDK.sendMessage() should call conversation.sendMessage()', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
-
-            chatSDK.liveChatVersion = LiveChatVersion.V2;
 
             await chatSDK.initialize();
 
@@ -1728,10 +2048,12 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.sendTypingEvent() should call conversation.sendMessageToBot()', async() => {
+        it('[LiveChatV1] ChatSDK.sendTypingEvent() should call conversation.sendMessageToBot()', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -1762,10 +2084,12 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.conversation.sendMessageToBot).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.sendTypingEvent() should fail if conversation.sendMessageToBot() fails', async() => {
+        it('[LiveChatV1] ChatSDK.sendTypingEvent() should fail if conversation.sendMessageToBot() fails', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -1803,12 +2127,10 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.conversation.sendMessageToBot).toHaveBeenCalledTimes(1);
         });
 
-        it('[LiveChatV2] ChatSDK.sendTypingEvent() should call OCClient.sendTypingIndicator()', async() => {
+        it('ChatSDK.sendTypingEvent() should call OCClient.sendTypingIndicator()', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
-
-            chatSDK.liveChatVersion = LiveChatVersion.V2;
 
             await chatSDK.initialize();
 
@@ -1833,10 +2155,12 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.conversation.sendTyping).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.uploadFileAttachment() should call conversation.sendFileData() & conversation.sendFileMessage()', async () => {
+        it('[LiveChatV1] ChatSDK.uploadFileAttachment() should call conversation.sendFileData() & conversation.sendFileMessage()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -1861,12 +2185,10 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.conversation.sendFileMessage).toHaveBeenCalledTimes(1);
         });
 
-        it('[LiveChatV2] ChatSDK.uploadFileAttachment() should call AMSClient.createObject, AMSClient.uploadDocument() & conversation.sendMessage()', async () => {
+        it('ChatSDK.uploadFileAttachment() should call AMSClient.createObject, AMSClient.uploadDocument() & conversation.sendMessage()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
-
-            chatSDK.liveChatVersion = LiveChatVersion.V2;
 
             await chatSDK.initialize();
 
@@ -1895,10 +2217,12 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.downloadFileAttachment() should call conversation.downloadFile()', async() => {
+        it('[LiveChatV1] ChatSDK.downloadFileAttachment() should call conversation.downloadFile()', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -1920,12 +2244,10 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.conversation.downloadFile).toHaveBeenCalledTimes(1);
         });
 
-        it('[LiveChatV2] ChatSDK.downloadFileAttachment() should call conversation.downloadFile()', async() => {
+        it('ChatSDK.downloadFileAttachment() should call conversation.downloadFile()', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
-
-            chatSDK.liveChatVersion = LiveChatVersion.V2;
 
             await chatSDK.initialize();
 
@@ -1958,12 +2280,12 @@ describe('Omnichannel Chat SDK', () => {
 
             await chatSDK.initialize();
 
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.OCClient, 'emailTranscript').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
-                sendMessage: (message: any) => {}
-            }));
 
             await chatSDK.startChat();
 
@@ -1988,12 +2310,12 @@ describe('Omnichannel Chat SDK', () => {
 
             await chatSDK.initialize();
 
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.OCClient, 'emailTranscript').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
-                sendMessage: (message: any) => {}
-            }));
 
             await chatSDK.startChat();
 
@@ -2022,8 +2344,9 @@ describe('Omnichannel Chat SDK', () => {
 
             await chatSDK.initialize();
 
-            chatSDK.IC3Client.initialize = jest.fn();
-            chatSDK.IC3Client.joinConversation = jest.fn();
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
 
             const optionalParams = {
                 authenticatedUserToken: 'authenticatedUserToken'
@@ -2070,12 +2393,12 @@ describe('Omnichannel Chat SDK', () => {
 
             await chatSDK.initialize();
 
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.OCClient, 'getChatTranscripts').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
-                sendMessage: (message: any) => {}
-            }));
 
             await chatSDK.startChat();
             await chatSDK.getLiveChatTranscript();
@@ -2095,8 +2418,9 @@ describe('Omnichannel Chat SDK', () => {
 
             await chatSDK.initialize();
 
-            chatSDK.IC3Client.initialize = jest.fn();
-            chatSDK.IC3Client.joinConversation = jest.fn();
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
 
             const optionalParams = {
                 authenticatedUserToken: 'authenticatedUserToken'
@@ -2132,13 +2456,62 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.getChatTranscripts.mock.calls[0][3]).toMatchObject(getChatTranscriptOptionalParams);
         });
 
-        it('ChatSDK.getIC3Client() should return IC3Core if platform is Node', async () => {
+        it("ChatSDK.getLiveChatTranscript() with liveChatContext should fetch transcript from liveChatContext", async () => {
+            const omnichannelConfig = {
+                orgUrl: '',
+                orgId: '',
+                widgetId: ''
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
+            const chatToken = {
+                ChatId: 'ChatId',
+                Token: 'Token',
+                RegionGtms: '{}'
+            };
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve(chatToken));
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'getChatTranscripts').mockResolvedValue(Promise.resolve());
+
+            await chatSDK.startChat();
+            await chatSDK.getLiveChatTranscript();
+
+            const liveChatContext = {
+                requestId: 'requestId',
+                chatToken: {
+                    chatId: 'chatId',
+                    token: 'token'
+                }
+            }
+
+            await chatSDK.getLiveChatTranscript({liveChatContext});
+
+            expect(chatSDK.OCClient.getChatTranscripts).toHaveBeenCalledTimes(2);
+            expect(chatSDK.OCClient.getChatTranscripts.mock.calls[1][0]).toBe(liveChatContext.requestId);
+            expect(chatSDK.OCClient.getChatTranscripts.mock.calls[1][1]).toBe(liveChatContext.chatToken.chatId);
+            expect(chatSDK.OCClient.getChatTranscripts.mock.calls[1][2]).toBe(liveChatContext.chatToken.token);
+            expect(chatSDK.OCClient.getChatTranscripts.mock.calls[1][0]).not.toBe(chatSDK.requestId);
+            expect(chatSDK.OCClient.getChatTranscripts.mock.calls[1][1]).not.toBe(chatToken.ChatId);
+            expect(chatSDK.OCClient.getChatTranscripts.mock.calls[1][2]).not.toBe(chatToken.Token);
+        });
+
+        it('[LiveChatV1] ChatSDK.getIC3Client() should return IC3Core if platform is Node', async () => {
             const IC3SDKProvider = require('@microsoft/omnichannel-ic3core').SDKProvider;
             const platform = require('../src/utils/platform').default;
             const HostType = require('@microsoft/omnichannel-ic3core/lib/interfaces/HostType').default;
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             jest.spyOn(platform, 'isNode').mockReturnValue(true);
             jest.spyOn(platform, 'isReactNative').mockReturnValue(false);
@@ -2156,13 +2529,14 @@ describe('Omnichannel Chat SDK', () => {
             expect(platform.isNode).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.getIC3Client() should return IC3Core if platform is RN', async () => {
+        it('[LiveChatV1] ChatSDK.getIC3Client() should return IC3Core if platform is RN', async () => {
             const IC3SDKProvider = require('@microsoft/omnichannel-ic3core').SDKProvider;
             const platform = require('../src/utils/platform').default;
             const HostType = require('@microsoft/omnichannel-ic3core/lib/interfaces/HostType').default;
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             jest.spyOn(platform, 'isNode').mockReturnValue(false);
             jest.spyOn(platform, 'isReactNative').mockReturnValue(true);
@@ -2180,10 +2554,11 @@ describe('Omnichannel Chat SDK', () => {
             expect(platform.isReactNative).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.onNewMessage() with rehydrate flag should call ChatSDK.getMessages()', async () => {
+        it('[LiveChatV1] ChatSDK.onNewMessage() with rehydrate flag should call ChatSDK.getMessages()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -2213,10 +2588,11 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.onNewMessage() with rehydrate flag & with no messages should not break', async () => {
+        it('[LiveChatV1] ChatSDK.onNewMessage() with rehydrate flag & with no messages should not break', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -2240,12 +2616,10 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(1);
         });
 
-        it('[LiveChatV2] ChatSDK.onNewMessage() should call conversation.registerOnNewMessage()', async() => {
+        it('ChatSDK.onNewMessage() should call conversation.registerOnNewMessage()', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
-
-            chatSDK.liveChatVersion = LiveChatVersion.V2;
 
             await chatSDK.initialize();
 
@@ -2269,12 +2643,10 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(1);
         });
 
-        it('[LiveChatV2] ChatSDK.onNewMessage() with rehydrate flag should call ChatSDK.getMessages()', async () => {
+        it('ChatSDK.onNewMessage() with rehydrate flag should call ChatSDK.getMessages()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
-
-            chatSDK.liveChatVersion = LiveChatVersion.V2;
 
             await chatSDK.initialize();
 
@@ -2317,8 +2689,9 @@ describe('Omnichannel Chat SDK', () => {
             await chatSDK.initialize();
 
             chatSDK.OCClient.sessionInit = jest.fn();
-            chatSDK.IC3Client.initialize = jest.fn();
-            chatSDK.IC3Client.joinConversation = jest.fn();
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
 
             await chatSDK.startChat();
 
@@ -2334,10 +2707,11 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(count);
         });
 
-        it('Ability to add multiple "onTypingEvent" event handler', async () => {
+        it('[LiveChatV1] Ability to add multiple "onTypingEvent" event handler', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -2367,8 +2741,9 @@ describe('Omnichannel Chat SDK', () => {
             await chatSDK.initialize();
 
             chatSDK.OCClient.sessionInit = jest.fn();
-            chatSDK.IC3Client.initialize = jest.fn();
-            chatSDK.IC3Client.joinConversation = jest.fn();
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
 
             await chatSDK.startChat();
 
@@ -2384,10 +2759,11 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.conversation.registerOnThreadUpdate).toHaveBeenCalledTimes(count);
         });
 
-        it('ChatSDK.endChat() should end conversation', async () => {
+        it('[LiveChatV1] ChatSDK.endChat() should end conversation', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -2416,16 +2792,18 @@ describe('Omnichannel Chat SDK', () => {
         });
 
 
-        it('[LiveChatV2] ChatSDK.endChat() should end conversation', async () => {
+        it('ChatSDK.endChat() should end conversation', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
-            chatSDK.liveChatVersion = LiveChatVersion.V2;
 
             await chatSDK.initialize();
 
             chatSDK.OCClient.sessionInit = jest.fn();
             chatSDK.OCClient.sessionClose = jest.fn();
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
 
             await chatSDK.startChat();
 
@@ -2453,18 +2831,16 @@ describe('Omnichannel Chat SDK', () => {
             chatSDK.OCClient = {};
             chatSDK.OCClient.sessionInit = jest.fn();
             chatSDK.OCClient.sessionClose = jest.fn(() => Promise.reject());
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
 
             await chatSDK.startChat();
-
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
-                disconnect: () => {}
-            }));
 
             try {
                 await chatSDK.endChat();
             } catch (error) {
-                expect(console.error).toHaveBeenCalled();
+                expect(error.message).toBe('ConversationClosureFailure');
             }
 
             expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(1);
@@ -2482,8 +2858,9 @@ describe('Omnichannel Chat SDK', () => {
 
             await chatSDK.initialize();
 
-            chatSDK.IC3Client.initialize = jest.fn();
-            chatSDK.IC3Client.joinConversation = jest.fn();
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
 
             const optionalParams = {
                 authenticatedUserToken: 'authenticatedUserToken'
@@ -2554,7 +2931,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.isPersistentChat).toBe(true);
         });
 
-        it('ChatSDK.getChatToken() should pass reconnectId to OCClient.getChatToken if any on Persistent Chat', async () => {
+        it('ChatSDK.getChatToken() should pass reconnectId to OCClient.getChatToken() if any on Persistent Chat', async () => {
             const chatSDKConfig = {
                 telemetry: {
                     disable: true
@@ -2584,7 +2961,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.getChatToken.mock.calls[0][1].reconnectId).toBe(chatSDK.reconnectId);
         });
 
-        it('ChatSDK.startChat() should call OCClient.getReconnectableChats() & setInterval() on Persistent Chat', async () => {
+        it('[LiveChatV1] ChatSDK.startChat() should call OCClient.getReconnectableChats() & setInterval() on Persistent Chat', async () => {
             const chatSDKConfig = {
                 telemetry: {
                     disable: true
@@ -2599,6 +2976,7 @@ describe('Omnichannel Chat SDK', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.isPersistentChat = true;
             chatSDK.updateChatToken = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -2645,12 +3023,14 @@ describe('Omnichannel Chat SDK', () => {
 
             await chatSDK.initialize();
 
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.OCClient, 'getReconnectableChats').mockResolvedValue(Promise.resolve({
                 reconnectid: 'reconnectid'
             }));
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.OCClient, 'sessionClose').mockResolvedValue(Promise.resolve());
 
             await chatSDK.startChat();
@@ -2661,7 +3041,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.sessionClose.mock.calls[0][1].isReconnectChat).toBe(true);
         });
 
-        it('ChatSDK.updateChatToken() should initialize IC3Client with new session info', async () => {
+        it('[LiveChatV1] ChatSDK.updateChatToken() should initialize IC3Client with new session info', async () => {
             const chatSDKConfig = {
                 telemetry: {
                     disable: true
@@ -2676,6 +3056,7 @@ describe('Omnichannel Chat SDK', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
             chatSDK.isPersistentChat = true;
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
             global.setInterval = jest.fn();
 
             await chatSDK.initialize();
@@ -2746,6 +3127,10 @@ describe('Omnichannel Chat SDK', () => {
                 },
                 LiveWSAndLiveChatEngJoin: {
                     msdyn_enablechatreconnect: "false"
+                },
+                ChatWidgetLanguage: {
+                    msdyn_localeid: '1033',
+                    msdyn_languagename: 'English - United States'
                 }
             }));
 
@@ -2798,6 +3183,9 @@ describe('Omnichannel Chat SDK', () => {
             chatSDK.isChatReconnect = true;
 
             await chatSDK.initialize();
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
 
             const reconnectId = 'reconnectId';
 
@@ -2808,8 +3196,6 @@ describe('Omnichannel Chat SDK', () => {
             }));
 
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve());
 
             await chatSDK.startChat({
                 reconnectId
@@ -2836,12 +3222,14 @@ describe('Omnichannel Chat SDK', () => {
 
             await chatSDK.initialize();
 
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
             const reconnectId = 'reconnectId';
             chatSDK.reconnectId = reconnectId;
 
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.OCClient, 'sessionClose').mockResolvedValue(Promise.resolve());
 
             await chatSDK.startChat();
@@ -2881,7 +3269,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(context.reconnectId).toBe(mockedResponse.reconnectid);
         });
 
-        it('ChatSDK.getChatReconnectContext() should pass reconnectId to OCClient.getReconnectAvailability() & return reconnectId if valid', async () => {
+        it('ChatSDK.getChatReconnectContext() should pass reconnectId to OCClient.getReconnectAvailability() & return reconnectId if valid & return redirectUrl with "null"', async () => {
             const chatSDKConfig = {
                 telemetry: {
                     disable: true
@@ -2907,6 +3295,7 @@ describe('Omnichannel Chat SDK', () => {
 
             expect(chatSDK.OCClient.getReconnectAvailability).toHaveBeenCalledTimes(1);
             expect(context.reconnectId).toBe(params.reconnectId);
+            expect(context.redirectURL).toBe(null);
         });
 
         it('ChatSDK.getChatReconnectContext() should pass reconnectId to OCClient.getReconnectAvailability() & not return reconnectId if invalid & return redirectUrl if any', async () => {
@@ -3317,7 +3706,7 @@ describe('Omnichannel Chat SDK', () => {
             chatSDK.getChatConfig = jest.fn();
 
             await chatSDK.initialize();
-            
+
             expect(chatSDK.authSettings).toBe(null);
             jest.spyOn(console, 'error');
 
@@ -3434,7 +3823,7 @@ describe('Omnichannel Chat SDK', () => {
             chatSDK.getChatConfig = jest.fn();
 
             await chatSDK.initialize();
-            
+
             chatSDK.liveChatConfig = dummyConfig;
             chatSDK.authSettings = {};
             chatSDK.authenticatedUserToken = {};
