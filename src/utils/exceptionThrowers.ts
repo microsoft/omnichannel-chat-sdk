@@ -15,7 +15,7 @@ import ChatSDKExceptionDetails from "../core/ChatSDKExceptionDetails";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
 
-export const throwChatSDKError = (chatSDKError: ChatSDKErrors, e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string} = {}, message = ""): void => {
+export const throwChatSDKError = (chatSDKError: ChatSDKErrors, e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string} = {}, message = "", throwOriginalError = false): void => {
     const exceptionDetails: ChatSDKExceptionDetails = {
         response: chatSDKError
     };
@@ -34,7 +34,7 @@ export const throwChatSDKError = (chatSDKError: ChatSDKErrors, e: unknown, scena
         console.error(message);
     }
 
-    throw e ?? new Error(exceptionDetails.response);
+    throw throwOriginalError ? (e ?? new Error(exceptionDetails.response)) : new Error(exceptionDetails.response);
 }
 
 export const throwScriptLoadFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
@@ -70,7 +70,7 @@ export const throwUninitializedChatSDK = (scenarioMarker: ScenarioMarker, teleme
 };
 
 export const throwChatTokenRetrievalFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    throwChatSDKError(ChatSDKErrors.ChatTokenRetrievalFailure, e, scenarioMarker, telemetryEvent, telemetryData);
+    throwChatSDKError(ChatSDKErrors.ChatTokenRetrievalFailure, e, scenarioMarker, telemetryEvent, telemetryData, "", true);
 }
 
 export const throwInvalidConversation = (scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
@@ -87,7 +87,7 @@ export const throwAuthenticatedChatConversationRetrievalFailure = (e: unknown, s
 };
 
 export const throwPersistentChatConversationRetrievalFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    throwChatSDKError(ChatSDKErrors.PersistentChatConversationRetrievalFailure, e, scenarioMarker, telemetryEvent, telemetryData);
+    throwChatSDKError(ChatSDKErrors.PersistentChatConversationRetrievalFailure, e, scenarioMarker, telemetryEvent, telemetryData, "", true);
 };
 
 export const throwWidgetUseOutsideOperatingHour = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
@@ -120,15 +120,15 @@ export const throwLiveChatTranscriptRetrievalFailure = (e: unknown, scenarioMark
 }
 
 export const throwReconnectContextRetrievalFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    throwChatSDKError(ChatSDKErrors.ReconnectContextRetrievalFailure, e, scenarioMarker, telemetryEvent, telemetryData);
+    throwChatSDKError(ChatSDKErrors.ReconnectContextRetrievalFailure, e, scenarioMarker, telemetryEvent, telemetryData, "", true);
 }
 
 export const throwGetConversationDetailsFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    throwChatSDKError(ChatSDKErrors.GetConversationDetailsFailure, e, scenarioMarker, telemetryEvent, telemetryData);
+    throwChatSDKError(ChatSDKErrors.GetConversationDetailsFailure, e, scenarioMarker, telemetryEvent, telemetryData, "", true);
 }
 
 export const throwGetAgentAvailabilityFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    throwChatSDKError(ChatSDKErrors.GetConversationDetailsFailure, e, scenarioMarker, telemetryEvent, telemetryData);
+    throwChatSDKError(ChatSDKErrors.GetConversationDetailsFailure, e, scenarioMarker, telemetryEvent, telemetryData, "", true);
 }
 
 export default {
