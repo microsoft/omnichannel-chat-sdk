@@ -9,6 +9,7 @@
  *
  * Stack trace should only be logged and not printed.
  */
+
 import ChatSDKErrors from "../core/ChatSDKErrors";
 import ChatSDKExceptionDetails from "../core/ChatSDKExceptionDetails";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
@@ -33,7 +34,7 @@ export const throwChatSDKError = (chatSDKError: ChatSDKErrors, e: unknown, scena
         console.error(message);
     }
 
-    throw new Error(exceptionDetails.response);
+    throw e ?? new Error(exceptionDetails.response);
 }
 
 export const throwScriptLoadFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
@@ -118,6 +119,18 @@ export const throwLiveChatTranscriptRetrievalFailure = (e: unknown, scenarioMark
     throwChatSDKError(ChatSDKErrors.LiveChatTranscriptRetrievalFailure, e, scenarioMarker, telemetryEvent, telemetryData);
 }
 
+export const throwReconnectContextRetrievalFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
+    throwChatSDKError(ChatSDKErrors.ReconnectContextRetrievalFailure, e, scenarioMarker, telemetryEvent, telemetryData);
+}
+
+export const throwGetConversationDetailsFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
+    throwChatSDKError(ChatSDKErrors.GetConversationDetailsFailure, e, scenarioMarker, telemetryEvent, telemetryData);
+}
+
+export const throwGetAgentAvailabilityFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
+    throwChatSDKError(ChatSDKErrors.GetConversationDetailsFailure, e, scenarioMarker, telemetryEvent, telemetryData);
+}
+
 export default {
     throwChatSDKError,
     throwScriptLoadFailure,
@@ -139,5 +152,8 @@ export default {
     throwMessagingClientInitializationFailure,
     throwMessagingClientConversationJoinFailure,
     throwChatAdapterInitializationFailure,
-    throwLiveChatTranscriptRetrievalFailure
+    throwLiveChatTranscriptRetrievalFailure,
+    throwReconnectContextRetrievalFailure,
+    throwGetConversationDetailsFailure,
+    throwGetAgentAvailabilityFailure
 }

@@ -46,6 +46,12 @@ enum ChatSDKErrors {
     LiveChatTranscriptRetrievalFailure = "LiveChatTranscriptRetrievalFailure",
     /** Failure on retrieving conversation details */
     ConversationDetailsRetrievalFailure = "ConversationDetailsRetrievalFailure",
+    /** Failure on retrieving reconnect context */
+    ReconnectContextRetrievalFailure = "ReconnectContextRetrievalFailure",
+    /** Failure on retrieving conversation details */
+    GetConversationDetailsFailure = "GetConversationDetailsFailure",
+    /** Failure on retrieving agent availability details */
+    GetAgentAvailabilityFailure = "GetAgentAvailabilityFailure",
 }
 
 export default ChatSDKErrors;
