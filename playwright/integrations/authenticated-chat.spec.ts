@@ -9,7 +9,7 @@ const omnichannelConfig = fetchOmnichannelConfig('AuthenticatedChat');
 const authUrl = fetchAuthUrl('AuthenticatedChat');
 
 test.describe('AuthenticatedChat @AuthenticatedChat', () => {
-    test('ChatSDK.startChat() should fetch the chat token & perform session init', async ({page}) => {
+    test('ChatSDK.startChat() should fetch the chat token & perform session init', async ({ page }) => {
         await page.goto(testPage);
 
         const [chatTokenRequest, chatTokenResponse, sessionInitRequest, sessionInitResponse, runtimeContext] = await Promise.all([
@@ -26,7 +26,7 @@ test.describe('AuthenticatedChat @AuthenticatedChat', () => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatAuthSessionInitPath);
             }),
             await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
-                const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
+                const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
                 const payload = {
                     method: "POST"
@@ -56,7 +56,7 @@ test.describe('AuthenticatedChat @AuthenticatedChat', () => {
             }, { omnichannelConfig, authUrl })
         ]);
 
-        const {requestId, authToken} = runtimeContext;
+        const { requestId, authToken } = runtimeContext;
         const chatTokenRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatv2AuthGetChatTokenPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
         const sessionInitRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
 
@@ -144,7 +144,7 @@ test.describe('AuthenticatedChat @AuthenticatedChat', () => {
 
                 runtimeContext.runtimeIdSecondSession = chatSDK.runtimeId;
                 runtimeContext.requestIdSecondSession = chatSDK.requestId;
-                runtimeContext.authToken= authToken;
+                runtimeContext.authToken = authToken;
 
                 try {
                     await chatSDK.startChat({ liveChatContext: runtimeContext.liveChatContext });
@@ -177,7 +177,7 @@ test.describe('AuthenticatedChat @AuthenticatedChat', () => {
         expect(liveChatMapRecordRequestHeaders['authenticatedusertoken']).toBe(authToken);
     });
 
-    test('ChatSDK.endChat() should perform session close', async ({page}) => {
+    test('ChatSDK.endChat() should perform session close', async ({ page }) => {
         await page.goto(testPage);
 
         const [sessionCloseRequest, sessionCloseResponse, runtimeContext] = await Promise.all([
@@ -188,7 +188,7 @@ test.describe('AuthenticatedChat @AuthenticatedChat', () => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatAuthSessionClosePath);
             }),
             await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
-                const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
+                const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
                 const payload = {
                     method: "POST"
@@ -218,7 +218,7 @@ test.describe('AuthenticatedChat @AuthenticatedChat', () => {
             }, { omnichannelConfig, authUrl })
         ]);
 
-        const {requestId, authToken} = runtimeContext;
+        const { requestId, authToken } = runtimeContext;
         const sessionCloseRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionClosePath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
         const sessionCloseRequestHeaders = sessionCloseRequest.headers();
 
@@ -227,7 +227,7 @@ test.describe('AuthenticatedChat @AuthenticatedChat', () => {
         expect(sessionCloseRequestHeaders['authenticatedusertoken']).toBe(authToken);
     });
 
-    test('ChatSDK.getConversationDetails() should not fail', async ({page}) => {
+    test('ChatSDK.getConversationDetails() should not fail', async ({ page }) => {
         await page.goto(testPage);
 
         const [liveWorkItemDetailsRequest, liveWorkItemDetailsResponse, runtimeContext] = await Promise.all([
@@ -276,5 +276,99 @@ test.describe('AuthenticatedChat @AuthenticatedChat', () => {
         expect(liveWorkItemDetailsResponseDataJson.State).toBe(conversationDetails.state);
         expect(liveWorkItemDetailsResponseDataJson.ConversationId).toBe(conversationDetails.conversationId);
         expect(liveWorkItemDetailsResponseDataJson.CanRenderPostChat).toBe(conversationDetails.canRenderPostChat);
+    });
+
+    test('ChatSDK.getConversationDetails() with liveChatContext should not fail', async ({ page }) => {
+        await page.goto(testPage);
+
+        const [invalidLiveWorkItemDetailsRequest, invalidLiveWorkItemDetailsResponse, _, liveChatContextLiveWorkItemDetailsRequest, liveChatContextLiveWorkItemDetailsResponse, runtimeContext] = await Promise.all([
+            page.waitForRequest(request => {
+                return request.url().includes(OmnichannelEndpoints.LiveChatAuthLiveWorkItemDetailsPath);
+            }),
+            page.waitForResponse(response => {
+                return response.url().includes(OmnichannelEndpoints.LiveChatAuthLiveWorkItemDetailsPath);
+            }),
+            await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
+                const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
+
+                const payload = {
+                    method: "POST"
+                };
+
+                const response = await fetch(authUrl, payload);
+                const authToken = await response.text();
+
+                const chatSDKConfig = {
+                    getAuthToken: () => authToken
+                };
+
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);
+
+                await chatSDK.initialize();
+
+                await chatSDK.startChat();
+
+                const liveChatContext = await chatSDK.getCurrentLiveChatContext();
+
+                const runtimeContext = {
+                    liveChatContext
+                };
+
+                await chatSDK.endChat();
+                runtimeContext.invalidRequestId = chatSDK.requestId;
+
+                const invalidRequestIdConversationDetails = await chatSDK.getConversationDetails();
+                runtimeContext.invalidRequestIdConversationDetails = invalidRequestIdConversationDetails;
+
+                (window as any).runtimeContext = runtimeContext;
+            }, { omnichannelConfig, authUrl }),
+            page.waitForRequest(request => {
+                return request.url().includes(OmnichannelEndpoints.LiveChatAuthLiveWorkItemDetailsPath);
+            }),
+            page.waitForResponse(response => {
+                return response.url().includes(OmnichannelEndpoints.LiveChatAuthLiveWorkItemDetailsPath);
+            }),
+            await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
+                const { OmnichannelChatSDK_1: OmnichannelChatSDK, runtimeContext } = window;
+
+                const payload = {
+                    method: "POST"
+                };
+
+                const response = await fetch(authUrl, payload);
+                const authToken = await response.text();
+
+                const chatSDKConfig = {
+                    getAuthToken: () => authToken
+                };
+
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);
+
+                await chatSDK.initialize();
+
+                runtimeContext.authToken= authToken;
+
+                const liveChatContextConversationDetails = await chatSDK.getConversationDetails({ liveChatContext: runtimeContext.liveChatContext });
+                runtimeContext.liveChatContextConversationDetails = liveChatContextConversationDetails;
+
+                return runtimeContext;
+            }, { omnichannelConfig, authUrl }),
+        ]);
+
+        const { invalidRequestId, liveChatContext, invalidRequestIdConversationDetails, liveChatContextConversationDetails, authToken } = runtimeContext;
+        const invalidLiveWorkItemDetailsRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatAuthLiveWorkItemDetailsPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${invalidRequestId}?channelId=lcw`;
+        const liveChatContextLiveWorkItemDetailsRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatAuthLiveWorkItemDetailsPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${liveChatContext.requestId}?channelId=lcw`;
+
+        const liveChatContextLiveWorkItemDetailsRequestHeaders = liveChatContextLiveWorkItemDetailsRequest.headers();
+
+        expect(invalidLiveWorkItemDetailsRequest.url() === invalidLiveWorkItemDetailsRequestUrl).toBe(true);
+        expect(invalidLiveWorkItemDetailsResponse.status()).toBe(400);
+        expect(liveChatContextLiveWorkItemDetailsRequest.url() === liveChatContextLiveWorkItemDetailsRequestUrl).toBe(true);
+        expect(liveChatContextLiveWorkItemDetailsResponse.status()).toBe(200);
+        expect(liveChatContextLiveWorkItemDetailsRequestHeaders['authenticatedusertoken']).toBe(authToken);
+        expect(invalidRequestIdConversationDetails).toEqual({});
+        expect(liveChatContextConversationDetails.state).toBeDefined();
+        expect(liveChatContextConversationDetails.conversationId).toBeDefined();
+        expect(liveChatContextConversationDetails.canRenderPostChat).toBeDefined();
     });
 });
