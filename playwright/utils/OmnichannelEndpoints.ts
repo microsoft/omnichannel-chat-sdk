@@ -17,4 +17,5 @@ export default class OmnichannelEndpoints {
     public static readonly LiveChatReConnect = "livechatconnector/reconnect";
     public static readonly LiveChatAuthReconnectableChats = "livechatconnector/auth/reconnectablechats";
     public static readonly LiveChatAuthSessionClosePath = "livechatconnector/auth/sessionclose";
+    public static readonly LiveChatAuthTranscriptEmailRequestPath = "livechatconnector/auth/createemailrequest";
 }
