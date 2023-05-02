@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Add ability to use `ChatSDK.getLiveChatTranscript()` to fetch live chat transcript from `liveChatContext`
 - Add ability to use `ChatSDK.getConversationDetails()` to fetch conversation details from `liveChatContext`
+- Add `AuthContactIdNotFoundFailure` to `ExceptionThrower`
 
 ### Changed
 - Update `ChatSDKErrors` to include standard ChatSDK errors to be more predictable

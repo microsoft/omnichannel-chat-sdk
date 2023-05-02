@@ -62,4 +62,43 @@ describe('Utilities', () => {
 
         expect(utilities.isCustomerMessage(message)).toBe(false);
     });
+
+    it('utilities.isClientIdNotFoundErrorMessage() should return true if error has UserId Not Found error', () => {
+        const error = {
+            response: {
+                status: 401,
+                headers: {
+                    message: "UserId not found"
+                }
+            }
+        }
+
+        expect(utilities.isClientIdNotFoundErrorMessage(error)).toBe(true);
+    });
+
+    it('utilities.isClientIdNotFoundErrorMessage() should return false if error has unknown error message', () => {
+        const error = {
+            response: {
+                status: 401,
+                headers: {
+                    message: "test"
+                }
+            }
+        }
+
+        expect(utilities.isClientIdNotFoundErrorMessage(error)).toBe(false);
+    });
+
+    it('utilities.isClientIdNotFoundErrorMessage() should return false if error has other error code', () => {
+        const error = {
+            response: {
+                status: 403,
+                headers: {
+                    message: "test"
+                }
+            }
+        }
+
+        expect(utilities.isClientIdNotFoundErrorMessage(error)).toBe(false);
+    });
 });
