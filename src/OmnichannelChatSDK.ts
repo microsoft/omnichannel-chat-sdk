@@ -284,7 +284,7 @@ class OmnichannelChatSDK {
                     ExceptionDetails: JSON.stringify(exceptionDetails)
                 }
                 if (isClientIdNotFoundErrorMessage(error)) {
-                    exceptionThrowers.throwAuthContactIdNotFoundFailure(error, this.scenarioMarker, TelemetryEvent.GetChatToken, telemetryData);
+                    exceptionThrowers.throwAuthContactIdNotFoundFailure(error, this.scenarioMarker, TelemetryEvent.GetChatReconnectContext, telemetryData);
                 }
 
                 this.scenarioMarker.failScenario(TelemetryEvent.GetChatReconnectContext, telemetryData);
@@ -741,7 +741,7 @@ class OmnichannelChatSDK {
             };
 
             if (isClientIdNotFoundErrorMessage(error)) {
-                exceptionThrowers.throwAuthContactIdNotFoundFailure(error, this.scenarioMarker, TelemetryEvent.GetChatToken, telemetryData);
+                exceptionThrowers.throwAuthContactIdNotFoundFailure(error, this.scenarioMarker, TelemetryEvent.GetConversationDetails, telemetryData);
             }
 
             this.scenarioMarker.failScenario(TelemetryEvent.GetConversationDetails, telemetryData);
