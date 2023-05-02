@@ -24,5 +24,6 @@ export const isCustomerMessage = (message: any): boolean => { // eslint-disable-
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
 export const isClientIdNotFoundErrorMessage = (e: any): boolean => {
-    return e?.response?.status === 401; // && e?.response?.headers?.message === "UserId not found";
+    return e?.response?.status === 401
+        && e?.response?.headers?.message === "UserId not found";
 }
