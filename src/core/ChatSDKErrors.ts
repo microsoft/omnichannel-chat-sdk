@@ -46,6 +46,8 @@ enum ChatSDKErrors {
     LiveChatTranscriptRetrievalFailure = "LiveChatTranscriptRetrievalFailure",
     /** Failure on retrieving conversation details */
     ConversationDetailsRetrievalFailure = "ConversationDetailsRetrievalFailure",
+    /** Failure on finding the contact id related to the auth code */
+    AuthContactIdNotFoundFailure = "AuthContactIdNotFoundFailure"
 }
 
 export default ChatSDKErrors;
