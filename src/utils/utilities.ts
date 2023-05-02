@@ -1,5 +1,5 @@
-import MessageType from "@microsoft/omnichannel-ic3core/lib/model/MessageType";
 import ACSParticipantDisplayName from "../core/messaging/ACSParticipantDisplayName";
+import MessageType from "@microsoft/omnichannel-ic3core/lib/model/MessageType";
 
 export const isSystemMessage = (message: any): boolean => { // eslint-disable-line @typescript-eslint/no-explicit-any,  @typescript-eslint/explicit-module-boundary-types
     const {messageType, properties} = message;
@@ -20,4 +20,9 @@ export const isCustomerMessage = (message: any): boolean => { // eslint-disable-
     const conditionV2 = sender && sender.displayName && sender.displayName === ACSParticipantDisplayName.Customer;
 
     return conditionV1 || conditionV2 || false;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+export const isClientIdNotFoundErrorMessage = (e: any): boolean => {
+    return e?.response?.status === 401; // && e?.response?.headers?.message === "UserId not found";
 }
