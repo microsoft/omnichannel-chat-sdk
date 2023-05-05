@@ -1710,6 +1710,15 @@ class OmnichannelChatSDK {
         requestOptionalParams.initContext!.locale = getLocaleStringFromId(this.localeId);
 
         if (optionalParams.customContext) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const context: any = optionalParams.customContext;
+            if (typeof context === "object") {
+                for (const key in context) {
+                    if (context[key].value === null || context[key].value === undefined || context[key].value === "") {
+                        delete context[key];
+                    }
+                }
+            }
             (requestOptionalParams.initContext! as any).customContextData = optionalParams.customContext; // eslint-disable-line @typescript-eslint/no-explicit-any
         }
 
