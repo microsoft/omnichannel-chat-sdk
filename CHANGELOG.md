@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.4.1] - 2023-05-05
+
 ### Fixed
 
 - Skipped empty string or null context variables (parity with v1)
