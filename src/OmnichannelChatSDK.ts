@@ -207,9 +207,15 @@ class OmnichannelChatSDK {
             return this.liveChatConfig;
         }
 
+        const ocSDKConfiguration = {
+            getChatTokenRetryCount: 2,
+            getChatTokenTimeBetweenRetriesOnFailure: 2000,
+            getChatTokenRetryOn429: false,
+        };
+
         try {
             this.OCSDKProvider = OCSDKProvider;
-            this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, {} as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
+            this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, ocSDKConfiguration as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
         } catch (e) {
             exceptionThrowers.throwOmnichannelClientInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
