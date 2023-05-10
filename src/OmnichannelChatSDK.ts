@@ -1341,9 +1341,9 @@ class OmnichannelChatSDK {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string
                 });
-
-                return error;
             }
+
+            return {} as OmnichannelMessage;
         }
     }
 
