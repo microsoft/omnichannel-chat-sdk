@@ -1109,7 +1109,7 @@ class OmnichannelChatSDK {
                     ChatId: this.chatToken.chatId as string
                 });
 
-                throw new Error('OCClientSendTypingFailed');
+                throw new Error('SendTypingFailure');
             }
         } else {
             const typingPayload = `{isTyping: 0}`;
@@ -1125,13 +1125,12 @@ class OmnichannelChatSDK {
                     ChatId: this.chatToken.chatId as string
                 });
             } catch (error) {
-                console.error("OmnichannelChatSDK/sendTypingEvent/error");
-
                 this.scenarioMarker.failScenario(TelemetryEvent.SendTypingEvent, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string
                 });
-                return error;
+
+                throw new Error('SendTypingFailure');
             }
         }
     }
