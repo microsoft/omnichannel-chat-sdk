@@ -4,7 +4,7 @@ import { ACSClientLogger } from "../../utils/loggers";
 import ACSParticipantDisplayName from "./ACSParticipantDisplayName";
 import ACSSessionInfo from "./ACSSessionInfo";
 import { ChatClient, ChatParticipant, ChatThreadClient, ChatMessage } from "@azure/communication-chat";
-import { AzureCommunicationTokenCredential, CommunicationTokenRefreshOptions, CommunicationUserIdentifier } from "@azure/communication-common";
+import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
 import { ChatMessageReceivedEvent, ParticipantsRemovedEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
 import ChatSDKMessage from "./ChatSDKMessage";
 import createOmnichannelMessage from "../../utils/createOmnichannelMessage";
