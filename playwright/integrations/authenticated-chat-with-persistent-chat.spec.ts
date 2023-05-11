@@ -174,7 +174,31 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
     test('ChatSDK.endChat() on an existing session should call session close with isPersistentChat=true & isReconnectChat=true as query params', async ({ page }) => {
         await page.goto(testPage);
 
-        const [sessionCloseRequest, sessionCloseResponse, runtimeContext] = await Promise.all([
+        const [_, sessionCloseRequest, sessionCloseResponse, runtimeContext] = await Promise.all([
+            await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
+                const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
+
+                const payload = {
+                    method: "POST"
+                };
+
+                const response = await fetch(authUrl, payload);
+                const authToken = await response.text();
+
+                const chatSDKConfig = {
+                    getAuthToken: () => authToken,
+                    persistentChat: {
+                        disable: false,
+                    },
+                };
+
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);
+
+                await chatSDK.initialize();
+
+                await chatSDK.startChat();
+            }, { omnichannelConfig, authUrl }),
+
             page.waitForRequest(request => {
                 return request.url().includes(OmnichannelEndpoints.LiveChatAuthSessionClosePath);
             }),
@@ -207,10 +231,6 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
                     authToken
                 };
 
-                const chatReconnectContext = await chatSDK.getChatReconnectContext();
-
-                runtimeContext.reconnectId = chatReconnectContext.reconnectId;
-
                 await chatSDK.startChat();
 
                 await chatSDK.endChat();
@@ -219,8 +239,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
             }, { omnichannelConfig, authUrl })
         ]);
 
-        const { reconnectId } = runtimeContext;
-        const sessionCloseRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionClosePath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${reconnectId}?channelId=lcw&isReconnectChat=true&isPersistentChat=true`;
+        const { requestId } = runtimeContext;
+        const sessionCloseRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionClosePath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw&isReconnectChat=true&isPersistentChat=true`;
 
         expect(sessionCloseRequest.url() === sessionCloseRequestUrl).toBe(true);
         expect(sessionCloseResponse.status()).toBe(200);
