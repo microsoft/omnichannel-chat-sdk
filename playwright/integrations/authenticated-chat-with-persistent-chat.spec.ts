@@ -12,7 +12,10 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
     test('ChatSDK.endChat() without any reconnect id should call session close with isPersistentChat=true as query params', async ({ page }) => {
         await page.goto(testPage);
 
-        const [sessionCloseRequest, sessionCloseResponse, runtimeContext] = await Promise.all([
+        const [reconnectableChatsResponse, sessionCloseRequest, sessionCloseResponse, runtimeContext] = await Promise.all([
+            page.waitForResponse(response => {
+                return response.url().includes(OmnichannelEndpoints.LiveChatAuthReconnectableChats);
+            }),
             page.waitForRequest(request => {
                 return request.url().includes(OmnichannelEndpoints.LiveChatAuthSessionClosePath);
             }),
@@ -20,10 +23,15 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatAuthSessionClosePath);
             }),
             await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
-                const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
+                const { OmnichannelChatSDK_1: OmnichannelChatSDK, uuidv4 } = window;
+
+                const data = {
+                    contactid: uuidv4() // Ensures it's a new user
+                };
 
                 const payload = {
-                    method: "POST"
+                    method: "POST",
+                    body: JSON.stringify(data)
                 };
 
                 const response = await fetch(authUrl, payload);
@@ -54,8 +62,9 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
         ]);
 
         const { requestId } = runtimeContext;
-        const sessionCloseRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionClosePath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw&isReconnectChat=true&isPersistentChat=true`;
+        const sessionCloseRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionClosePath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw&isPersistentChat=true`;
 
+        expect(reconnectableChatsResponse.status()).toBe(204);
         expect(sessionCloseRequest.url() === sessionCloseRequestUrl).toBe(true);
         expect(sessionCloseResponse.status()).toBe(200);
     });
@@ -63,7 +72,31 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
     test("ChatSDK.startChat() should have a reconnect id if there's an existing chat session", async ({ page }) => {
         await page.goto(testPage);
 
-        const [reconnectableChatsRequest, reconnectableChatsResponse, chatTokenRequest, chatTokenResponse, sessionInitRequest, sessionInitResponse, runtimeContext] = await Promise.all([
+        const [_, reconnectableChatsRequest, reconnectableChatsResponse, chatTokenRequest, chatTokenResponse, sessionInitRequest, sessionInitResponse, runtimeContext] = await Promise.all([
+            await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
+                const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
+
+                const payload = {
+                    method: "POST"
+                };
+
+                const response = await fetch(authUrl, payload);
+                const authToken = await response.text();
+
+                const chatSDKConfig = {
+                    getAuthToken: () => authToken,
+                    persistentChat: {
+                        disable: false,
+                    },
+                };
+
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);
+
+                await chatSDK.initialize();
+
+                await chatSDK.startChat();
+            }, { omnichannelConfig, authUrl }),
+
             page.waitForRequest(request => {
                 return request.url().includes(OmnichannelEndpoints.LiveChatAuthReconnectableChats);
             }),

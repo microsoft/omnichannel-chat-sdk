@@ -2,6 +2,23 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+
+## [1.4.1] - 2023-05-05
+
+### Fixed
+
+- Skipped empty string or null context variables (parity with v1)
+
+## [1.4.0] - 2023-05-02
+### Added
+- Add ability to use `ChatSDK.getLiveChatTranscript()` to fetch live chat transcript from `liveChatContext`
+- Add ability to use `ChatSDK.getConversationDetails()` to fetch conversation details from `liveChatContext`
+- Add `AuthContactIdNotFoundFailure` to `ExceptionThrower`
+
+### Changed
+- Update `ChatSDKErrors` to include standard ChatSDK errors to be more predictable
+
+## [1.3.0] - 2023-04-05
 ### Added
 - Add ability to use `ChatSDK.createChatAdapter()` for `DirectLine` protocol
 - Add `CreateACSAdapter` telemetry event
@@ -16,6 +33,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Fix `ChatAdapterOptionalParams.ACSAdapter.options.egressMiddleware` being used as `ingressMiddleware`
 - Fix `ChatSDK.onTypingEvent()` being triggered on current user typing
+- Update `ChatSDK.liveChatVersion` to be `V2` by default
 
 ### Changed
 - Uptake [@microsoft/omnichannel-amsclient@0.1.4](https://www.npmjs.com/package/@microsoft/omnichannel-amsclient/v/0.1.4)

@@ -26,8 +26,6 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatOutsideOfOperatingHours',
                     runtimeContext.errorMessage = `${err.message}`;
                 }
 
-                await chatSDK.endChat();
-
                 return runtimeContext;
             }, { omnichannelConfig }),
         ]);
