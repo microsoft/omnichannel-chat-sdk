@@ -25,4 +25,3 @@ AuthenticatedChatWithPrechat:
 AuthenticatedChatWithChatReconnect:
 AuthenticatedChatWithPersistentChat:
 AuthenticatedChatWithMasking:
-AuthenticatedChatWithPersistentChatWithoutReconnect:
