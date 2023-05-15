@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed null check on startChat failure
+
 ## [1.4.1] - 2023-05-05
 
 ### Fixed
