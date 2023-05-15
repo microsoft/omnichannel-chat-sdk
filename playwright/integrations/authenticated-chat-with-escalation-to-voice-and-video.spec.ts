@@ -9,7 +9,7 @@ const omnichannelConfig = fetchOmnichannelConfig('authenticatedChatWithEscalatio
 const authUrl = fetchAuthUrl('authenticatedChatWithEscalationToVoiceAndVideo');
 
 test.describe('authenticatedChat @authenticatedChatWithEscalationToVoiceAndVideo', () => {
-    test.only('Authenticated Chat with Escalation to Voice & Video', async ({ page }) => {
+    test('Authenticated Chat with Escalation to Voice & Video', async ({ page }) => {
         await page.goto(testPage);
 
         const [CallingBundleRequest, CallingBundleResponse, runtimeContext] = await Promise.all([
