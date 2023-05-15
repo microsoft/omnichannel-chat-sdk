@@ -464,7 +464,7 @@ class OmnichannelChatSDK {
                 };
 
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                if ((error as any)?.isAxiosError && (error as any).response?.headers?.errorcode.toString() === OmnichannelErrorCodes.WidgetUseOutsideOperatingHour.toString()) {
+                if ((error as any)?.isAxiosError && (error as any).response?.headers?.errorcode?.toString() === OmnichannelErrorCodes.WidgetUseOutsideOperatingHour.toString()) {
                     exceptionThrowers.throwWidgetUseOutsideOperatingHour(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
                 }
 
