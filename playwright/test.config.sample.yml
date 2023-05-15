@@ -25,3 +25,5 @@ AuthenticatedChatWithPrechat:
 AuthenticatedChatWithChatReconnect:
 AuthenticatedChatWithPersistentChat:
 AuthenticatedChatWithMasking:
+UnauthenticatedChatWithEscalationToVoiceAndVideo:
+authenticatedChatWithEscalationToVoiceAndVideo:
