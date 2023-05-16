@@ -26,4 +26,4 @@ AuthenticatedChatWithChatReconnect:
 AuthenticatedChatWithPersistentChat:
 AuthenticatedChatWithMasking:
 UnauthenticatedChatWithEscalationToVoiceAndVideo:
-authenticatedChatWithEscalationToVoiceAndVideo:
+AuthenticatedChatWithEscalationToVoiceAndVideo:
