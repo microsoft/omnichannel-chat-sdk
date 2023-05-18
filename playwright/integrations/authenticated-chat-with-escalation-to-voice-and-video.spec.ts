@@ -5,10 +5,10 @@ import RegexExpression from '../utils/RegexExpression';
 import fetchAuthUrl from '../utils/fetchAuthUrl';
 
 const testPage = fetchTestPageUrl();
-const omnichannelConfig = fetchOmnichannelConfig('authenticatedChatWithEscalationToVoiceAndVideo');
-const authUrl = fetchAuthUrl('authenticatedChatWithEscalationToVoiceAndVideo');
+const omnichannelConfig = fetchOmnichannelConfig('AuthenticatedChatWithEscalationToVoiceAndVideo');
+const authUrl = fetchAuthUrl('AuthenticatedChatWithEscalationToVoiceAndVideo');
 
-test.describe('authenticatedChat @authenticatedChatWithEscalationToVoiceAndVideo', () => {
+test.describe('AuthenticatedChat @AuthenticatedChatWithEscalationToVoiceAndVideo', () => {
     test('Authenticated Chat with Escalation to Voice & Video', async ({ page }) => {
         await page.goto(testPage);
 
