@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
 ## [1.4.2] - 2023-05-19
 
 ### Fixed
