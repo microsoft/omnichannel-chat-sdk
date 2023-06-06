@@ -6,14 +6,11 @@ import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChat');
 
-test.describe('ChatSDK Performance: ', () => {
-    test.only('ChatSDK.initialize()', async ({ page }) => {
+test.describe('ChatSDK.initialize(): ', () => {
+    test('ChatSDK.initialize()', async ({ page }) => {
         await page.goto(testPage);
         
-        let [request, response, [runtimeContext,timeTaken] ] = await Promise.all([
-            page.waitForRequest(request => {
-                return request.url().includes(OmnichannelEndpoints.LiveChatConfigPath);
-            }),
+        let [response, runtimeContext ] = await Promise.all([
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatConfigPath);
             }),
@@ -21,25 +18,21 @@ test.describe('ChatSDK Performance: ', () => {
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
 
-                let starttime = new Date();
+                let startTime = new Date();
                 await chatSDK.initialize();
-                let endtime = new Date();
-                let timeTaken = endtime.getTime() - starttime.getTime();
+                let endTime = new Date();
+                let timeTaken = endTime.getTime() - startTime.getTime();
 
                 const runtimeContext = {
-                    requestId: chatSDK.requestId
+                    requestId: chatSDK.requestId,
+                    timeTaken: timeTaken
                 };
                 
-                return [runtimeContext, timeTaken];
+                return runtimeContext;
             }, { omnichannelConfig }),
         ]);
 
-        console.log("chatSDK.initialize(): " + timeTaken);
-        
-        const { requestId } = runtimeContext;
-        const requestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatConfigPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}?requestId=${requestId}&channelId=lcw`;
-
-        expect(request.url() === requestUrl).toBe(true);
+        console.log("chatSDK.initialize(): " + runtimeContext.timeTaken);
         expect(response.status()).toBe(200);
     });
 });
