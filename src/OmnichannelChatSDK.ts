@@ -124,7 +124,6 @@ class OmnichannelChatSDK {
     private isChatReconnect = false;
     private reconnectId: null | string = null;
     private refreshTokenTimer: number | null = null;
-    private chatTokenRefreshTimer: number | null = null;
 
     constructor(omnichannelConfig: OmnichannelConfig, chatSDKConfig: ChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
