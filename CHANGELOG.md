@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Add `tokenRefresher` mechanism to retrieve chat token on expiry
 
+### Changed
+- Add `ocSDKConfiguration` to reduce `chatToken` retries to 2
+
+### Fixed
+- Set `enableSenderDisplayNameInTypingNotification` to true to include display name on sending typing notification
+
 ## [1.4.2] - 2023-05-19
 
 ### Fixed
