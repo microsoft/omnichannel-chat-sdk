@@ -7,7 +7,7 @@ const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChat');
 
 test.describe('Performance @Performance: ', () => {
-    test('chatSDK.endChat()', async ({ page }) => {
+    test('ChatSDK.endChat()', async ({ page }) => {
         await page.goto(testPage);
         
         let [response, runtimeContext ] = await Promise.all([
