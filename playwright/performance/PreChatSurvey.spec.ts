@@ -29,7 +29,7 @@ test.describe('Performance @Performance', () => {
         ]);
 
         const { preChatSurvey, timeTaken } = runtimeContext;
-        console.log("chatSDK.startChat(): " + timeTaken);
+        console.log("chatSDK.getPreChatSurvey(): " + timeTaken);
 
         expect(typeof (preChatSurvey) === 'object').toBe(true);
     });
