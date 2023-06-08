@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChat');
 
-test.describe('ChatSDK.startChat() ', () => {
+test.describe('Performance @Performance', () => {
     test('ChatSDK.startChat()', async ({ page }) => {
         await page.goto(testPage);
 
