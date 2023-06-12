@@ -7,7 +7,7 @@ const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChat');
 
 test.describe('Performance @Performance: ', () => {
-    test.only('ChatSDK.getCurrentLiveChatContext()', async ({ page }) => {
+    test('ChatSDK.getCurrentLiveChatContext()', async ({ page }) => {
         await page.goto(testPage);
 
         let [response, runtimeContext ] = await Promise.all([
