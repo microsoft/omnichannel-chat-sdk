@@ -35,7 +35,7 @@ export const throwChatSDKError = (chatSDKError: ChatSDKErrors, e: unknown, scena
     }
 
     if (reject) {
-        reject(exceptionDetails.response)
+        reject(new Error(exceptionDetails.response));
     } else {
         throw new Error(exceptionDetails.response);
     }

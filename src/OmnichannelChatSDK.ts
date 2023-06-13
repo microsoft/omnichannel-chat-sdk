@@ -446,7 +446,7 @@ class OmnichannelChatSDK {
             sessionInitOptionalParams.initContext!.longitude = location.longitude;
         }
 
-        const promise1: Promise<void> = new Promise(async (resolve, reject) => {
+        const sessionInitPromise: Promise<void> = new Promise(async (resolve, reject) => {
             // Skip session init when there's a valid live chat context
             if (!optionalParams.liveChatContext) {
                 try {
@@ -468,7 +468,7 @@ class OmnichannelChatSDK {
             }
         });
 
-        const promise2: Promise<void> = new Promise(async (resolve, reject) => {
+        const acsClientPromise: Promise<void> = new Promise(async (resolve, reject) => {
             if (this.liveChatVersion === LiveChatVersion.V2) {
                 const chatAdapterConfig = {
                     token: this.chatToken.token,
@@ -546,7 +546,7 @@ class OmnichannelChatSDK {
             }
         });
 
-        const promise3: Promise<void> = new Promise(async (resolve, reject) => {
+        const amsClientPromise: Promise<void> = new Promise(async (resolve, reject) => {
             try {
                 await this.AMSClient?.initialize({ chatToken: this.chatToken as OmnichannelChatToken });
                 resolve();
@@ -560,7 +560,11 @@ class OmnichannelChatSDK {
             }
         });
 
-        await Promise.all([promise1, promise2, promise3]);
+        try {
+            await Promise.all([sessionInitPromise, acsClientPromise, amsClientPromise]);
+        } catch (ex) {
+            throw ex;
+        }
 
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
             this.refreshTokenTimer = setInterval(async () => {
