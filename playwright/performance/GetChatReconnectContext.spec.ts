@@ -6,7 +6,7 @@ import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChat');
 
-test.describe('Performance @Performance: ', () => {
+test.describe('Performance @Performance ', () => {
     test('ChatSDK.getChatReconnectContext()', async ({ page }) => {
         await page.goto(testPage);
         const params = {
