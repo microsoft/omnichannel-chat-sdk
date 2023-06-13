@@ -446,12 +446,11 @@ class OmnichannelChatSDK {
             sessionInitOptionalParams.initContext!.longitude = location.longitude;
         }
 
-        const sessionInitPromise: Promise<void> = new Promise(async (resolve, reject) => {
+        const sessionInitPromise = async () => {
             // Skip session init when there's a valid live chat context
             if (!optionalParams.liveChatContext) {
                 try {
                     await this.OCClient.sessionInit(this.requestId, sessionInitOptionalParams);
-                    resolve();
                 } catch (error) {
                     const telemetryData = {
                         RequestId: this.requestId,
@@ -460,15 +459,15 @@ class OmnichannelChatSDK {
     
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     if ((error as any)?.isAxiosError && (error as any).response?.headers?.errorcode?.toString() === OmnichannelErrorCodes.WidgetUseOutsideOperatingHour.toString()) {
-                        exceptionThrowers.throwWidgetUseOutsideOperatingHour(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData, reject);
+                        exceptionThrowers.throwWidgetUseOutsideOperatingHour(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
                     }
     
-                    exceptionThrowers.throwConversationInitializationFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData, reject);
+                    exceptionThrowers.throwConversationInitializationFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
                 }
             }
-        });
+        };
 
-        const acsClientPromise: Promise<void> = new Promise(async (resolve, reject) => {
+        const acsClientPromise = async () => {
             if (this.liveChatVersion === LiveChatVersion.V2) {
                 const chatAdapterConfig = {
                     token: this.chatToken.token,
@@ -489,7 +488,7 @@ class OmnichannelChatSDK {
                         ChatId: this.chatToken.chatId as string,
                     };
 
-                    exceptionThrowers.throwMessagingClientInitializationFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData, reject);
+                    exceptionThrowers.throwMessagingClientInitializationFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
                 }
 
                 try {
@@ -503,14 +502,13 @@ class OmnichannelChatSDK {
                         RequestId: this.requestId,
                         ChatId: this.chatToken.chatId as string
                     });
-                    resolve();
                 } catch (error) {
                     const telemetryData = {
                         RequestId: this.requestId,
                         ChatId: this.chatToken.chatId as string,
                     };
 
-                    exceptionThrowers.throwMessagingClientConversationJoinFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData, reject);
+                    exceptionThrowers.throwMessagingClientConversationJoinFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
                 }
             } else {
                 try {
@@ -525,7 +523,7 @@ class OmnichannelChatSDK {
                         ChatId: this.chatToken.chatId as string,
                     };
 
-                    exceptionThrowers.throwMessagingClientInitializationFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData, reject);
+                    exceptionThrowers.throwMessagingClientInitializationFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
                 }
 
                 try {
@@ -534,37 +532,31 @@ class OmnichannelChatSDK {
                         RequestId: this.requestId,
                         ChatId: this.chatToken.chatId as string
                     });
-                    resolve();
                 } catch (error) {
                     const telemetryData = {
                         RequestId: this.requestId,
                         ChatId: this.chatToken.chatId as string,
                     };
 
-                    exceptionThrowers.throwMessagingClientConversationJoinFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData, reject);
+                    exceptionThrowers.throwMessagingClientConversationJoinFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
                 }
             }
-        });
+        };
 
-        const amsClientPromise: Promise<void> = new Promise(async (resolve, reject) => {
+        const amsClientPromise = async () => {
             try {
                 await this.AMSClient?.initialize({ chatToken: this.chatToken as OmnichannelChatToken });
-                resolve();
             } catch (error) {
                 const telemetryData = {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string,
                 };
     
-                exceptionThrowers.throwMessagingClientInitializationFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData, reject);
+                exceptionThrowers.throwMessagingClientInitializationFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
             }
-        });
+        };
 
-        try {
-            await Promise.all([sessionInitPromise, acsClientPromise, amsClientPromise]);
-        } catch (ex) {
-            throw ex;
-        }
+        await Promise.all([sessionInitPromise, acsClientPromise, amsClientPromise]);
 
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
             this.refreshTokenTimer = setInterval(async () => {
