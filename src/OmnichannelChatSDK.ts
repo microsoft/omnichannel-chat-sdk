@@ -556,7 +556,7 @@ class OmnichannelChatSDK {
             }
         };
 
-        await Promise.all([sessionInitPromise, acsClientPromise, amsClientPromise]);
+        await Promise.all([sessionInitPromise(), acsClientPromise(), amsClientPromise()]);
 
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
             this.refreshTokenTimer = setInterval(async () => {
