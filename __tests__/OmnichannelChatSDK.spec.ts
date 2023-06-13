@@ -856,6 +856,8 @@ describe('Omnichannel Chat SDK', () => {
         it('ChatSDK.startChat() should throw an error if OCClient.sessionInit() fails', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
 
             await chatSDK.initialize();
 
@@ -898,6 +900,8 @@ describe('Omnichannel Chat SDK', () => {
         it('ChatSDK.startChat() should throw a \'WidgetUseOutsideOperatingHour\' error if OCClient.sessionInit() fails with \'705\' error code', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
 
             await chatSDK.initialize();
 
@@ -1009,7 +1013,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
             expect(chatSDK.ACSClient.initialize).toHaveBeenCalledTimes(1);
             expect(chatSDK.ACSClient.joinConversation).toHaveBeenCalledTimes(0);
-            expect(chatSDK.AMSClient.initialize).toHaveBeenCalledTimes(0);
+            expect(chatSDK.AMSClient.initialize).toHaveBeenCalledTimes(1);
         });
 
         it('ChatSDK.startChat() should throw an exception if AMSClient.initialize() fails', async () => {
@@ -1067,7 +1071,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
             expect(chatSDK.ACSClient.initialize).toHaveBeenCalledTimes(1);
             expect(chatSDK.ACSClient.joinConversation).toHaveBeenCalledTimes(1);
-            expect(chatSDK.AMSClient.initialize).toHaveBeenCalledTimes(0);
+            expect(chatSDK.AMSClient.initialize).toHaveBeenCalledTimes(1);
         });
 
         it('ChatSDK.startchat() with existing liveChatContext should not call OCClient.getChatToken() & OCClient.sessionInit()', async() => {
@@ -1280,6 +1284,8 @@ describe('Omnichannel Chat SDK', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
 
             await chatSDK.initialize();
 
