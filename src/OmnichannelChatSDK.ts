@@ -446,111 +446,121 @@ class OmnichannelChatSDK {
             sessionInitOptionalParams.initContext!.longitude = location.longitude;
         }
 
-        // Skip session init when there's a valid live chat context
-        if (!optionalParams.liveChatContext) {
-            try {
-                await this.OCClient.sessionInit(this.requestId, sessionInitOptionalParams);
-            } catch (error) {
-                const telemetryData = {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
+        const promise1: Promise<void> = new Promise(async (resolve, reject) => {
+            // Skip session init when there's a valid live chat context
+            if (!optionalParams.liveChatContext) {
+                try {
+                    await this.OCClient.sessionInit(this.requestId, sessionInitOptionalParams);
+                    resolve();
+                } catch (error) {
+                    const telemetryData = {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken.chatId as string,
+                    };
+    
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    if ((error as any)?.isAxiosError && (error as any).response?.headers?.errorcode?.toString() === OmnichannelErrorCodes.WidgetUseOutsideOperatingHour.toString()) {
+                        exceptionThrowers.throwWidgetUseOutsideOperatingHour(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData, reject);
+                    }
+    
+                    exceptionThrowers.throwConversationInitializationFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData, reject);
+                }
+            }
+        });
+
+        const promise2: Promise<void> = new Promise(async (resolve, reject) => {
+            if (this.liveChatVersion === LiveChatVersion.V2) {
+                const chatAdapterConfig = {
+                    token: this.chatToken.token,
+                    id: this.chatToken.visitorId || 'teamsvisitor',
+                    threadId: this.chatToken.chatId,
+                    environmentUrl: this.chatToken.acsEndpoint as string,
+                    pollingInterval: 30000
                 };
 
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                if ((error as any)?.isAxiosError && (error as any).response?.headers?.errorcode?.toString() === OmnichannelErrorCodes.WidgetUseOutsideOperatingHour.toString()) {
-                    exceptionThrowers.throwWidgetUseOutsideOperatingHour(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
+                try {
+                    await this.ACSClient?.initialize({
+                        token: chatAdapterConfig.token as string,
+                        environmentUrl: chatAdapterConfig.environmentUrl
+                    });
+                } catch (error) {
+                    const telemetryData = {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken.chatId as string,
+                    };
+
+                    exceptionThrowers.throwMessagingClientInitializationFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData, reject);
                 }
 
-                exceptionThrowers.throwConversationInitializationFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
+                try {
+                    this.conversation = await this.ACSClient?.joinConversation({
+                        id: chatAdapterConfig.id,
+                        threadId: chatAdapterConfig.threadId as string,
+                        pollingInterval: chatAdapterConfig.pollingInterval
+                    }) as ACSConversation;
+
+                    this.scenarioMarker.completeScenario(TelemetryEvent.StartChat, {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken.chatId as string
+                    });
+                    resolve();
+                } catch (error) {
+                    const telemetryData = {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken.chatId as string,
+                    };
+
+                    exceptionThrowers.throwMessagingClientConversationJoinFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData, reject);
+                }
+            } else {
+                try {
+                    await this.IC3Client.initialize({
+                        token: this.chatToken.token,
+                        regionGtms: this.chatToken.regionGTMS,
+                        visitor: true
+                    });
+                } catch (error) {
+                    const telemetryData = {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken.chatId as string,
+                    };
+
+                    exceptionThrowers.throwMessagingClientInitializationFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData, reject);
+                }
+
+                try {
+                    this.conversation = await this.IC3Client.joinConversation(this.chatToken.chatId);
+                    this.scenarioMarker.completeScenario(TelemetryEvent.StartChat, {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken.chatId as string
+                    });
+                    resolve();
+                } catch (error) {
+                    const telemetryData = {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken.chatId as string,
+                    };
+
+                    exceptionThrowers.throwMessagingClientConversationJoinFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData, reject);
+                }
             }
-        }
+        });
 
-        if (this.liveChatVersion === LiveChatVersion.V2) {
-            const chatAdapterConfig = {
-                token: this.chatToken.token,
-                id: this.chatToken.visitorId || 'teamsvisitor',
-                threadId: this.chatToken.chatId,
-                environmentUrl: this.chatToken.acsEndpoint as string,
-                pollingInterval: 30000
-            };
-
+        const promise3: Promise<void> = new Promise(async (resolve, reject) => {
             try {
-                await this.ACSClient?.initialize({
-                    token: chatAdapterConfig.token as string,
-                    environmentUrl: chatAdapterConfig.environmentUrl
-                });
+                await this.AMSClient?.initialize({ chatToken: this.chatToken as OmnichannelChatToken });
+                resolve();
             } catch (error) {
                 const telemetryData = {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string,
                 };
-
-                exceptionThrowers.throwMessagingClientInitializationFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
+    
+                exceptionThrowers.throwMessagingClientInitializationFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData, reject);
             }
+        });
 
-            try {
-                this.conversation = await this.ACSClient?.joinConversation({
-                    id: chatAdapterConfig.id,
-                    threadId: chatAdapterConfig.threadId as string,
-                    pollingInterval: chatAdapterConfig.pollingInterval
-                }) as ACSConversation;
-
-                this.scenarioMarker.completeScenario(TelemetryEvent.StartChat, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-            } catch (error) {
-                const telemetryData = {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                };
-
-                exceptionThrowers.throwMessagingClientConversationJoinFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
-            }
-
-            try {
-                await this.AMSClient?.initialize({
-                    chatToken: this.chatToken as OmnichannelChatToken
-                });
-            } catch (error) {
-                const telemetryData = {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                };
-
-                exceptionThrowers.throwMessagingClientInitializationFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
-            }
-        } else {
-            try {
-                await this.IC3Client.initialize({
-                    token: this.chatToken.token,
-                    regionGtms: this.chatToken.regionGTMS,
-                    visitor: true
-                });
-            } catch (error) {
-                const telemetryData = {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                };
-
-                exceptionThrowers.throwMessagingClientInitializationFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
-            }
-
-            try {
-                this.conversation = await this.IC3Client.joinConversation(this.chatToken.chatId);
-                this.scenarioMarker.completeScenario(TelemetryEvent.StartChat, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-            } catch (error) {
-                const telemetryData = {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                };
-
-                exceptionThrowers.throwMessagingClientConversationJoinFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
-            }
-        }
+        await Promise.all([promise1, promise2, promise3]);
 
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
             this.refreshTokenTimer = setInterval(async () => {
