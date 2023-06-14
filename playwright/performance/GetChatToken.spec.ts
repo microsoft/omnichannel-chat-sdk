@@ -10,9 +10,9 @@ test.describe('Performance @Performance', () => {
     test('ChatSDK.getChatToken()', async ({ page }) => {
         await page.goto(testPage);
 
-        const [sessionInitResponse, runtimeContext] = await Promise.all([
+        const [response, runtimeContext] = await Promise.all([
             page.waitForResponse(response => {
-                return response.url().includes(OmnichannelEndpoints.LiveChatSessionInitPath);
+                return response.url().includes(OmnichannelEndpoints.LiveChatv2GetChatTokenPath);
             }),
             await page.evaluate(async ({ omnichannelConfig }) => {
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
@@ -40,6 +40,6 @@ test.describe('Performance @Performance', () => {
         const { timeTaken } = runtimeContext;
         console.log("chatSDK.getChatToken(): " + timeTaken);
 
-        expect(sessionInitResponse.status()).toBe(200);
+        expect(response.status()).toBe(200);
     });
 });

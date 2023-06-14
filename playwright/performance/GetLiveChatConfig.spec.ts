@@ -38,13 +38,15 @@ test.describe('Performance @Performance', () => {
                     timeTaken: timeTaken
                 };
 
+                await chatSDK.endChat();
+
                 return runtimeContext;
             }, { omnichannelConfig })
         ]);
 
         const { timeTaken } = runtimeContext;
         console.log("chatSDK.getLiveChatConfig(): " + timeTaken);
-       
+
         expect(response.status()).toBe(200);
     });
 });
