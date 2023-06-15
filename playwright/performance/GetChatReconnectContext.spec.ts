@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
 import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 
 const testPage = fetchTestPageUrl();
-const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChat');
+const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChatWithChatReconnect');
 
 test.describe('Performance @Performance ', () => {
     test('ChatSDK.getChatReconnectContext()', async ({ page }) => {
