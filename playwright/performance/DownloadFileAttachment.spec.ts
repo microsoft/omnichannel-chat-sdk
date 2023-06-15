@@ -39,7 +39,6 @@ test.describe('Performance @Performance ', () => {
 
                 const runtimeContext = {
                     timeTaken: timeTaken,
-                    messages: messages,
                     downloadedBlobContent: downloadedBlobContent
                 };
 
