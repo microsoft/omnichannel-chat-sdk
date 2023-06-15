@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- [Perf] Make sessionInit, AcsClientInit and AmsClientInit calls in parallel
+- [Perf] Make sessionInit, AcsClientInit/Ic3ClientInit and AmsClientInit calls in parallel
 
 ## [1.4.2] - 2023-05-19
 

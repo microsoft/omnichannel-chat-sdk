@@ -467,7 +467,7 @@ class OmnichannelChatSDK {
             }
         };
 
-        const acsClientPromise = async () => {
+        const messagingClientPromise = async () => {
             if (this.liveChatVersion === LiveChatVersion.V2) {
                 const chatAdapterConfig = {
                     token: this.chatToken.token,
@@ -543,9 +543,11 @@ class OmnichannelChatSDK {
             }
         };
 
-        const amsClientPromise = async () => {
+        const attachmentClientPromise = async () => {
             try {
-                await this.AMSClient?.initialize({ chatToken: this.chatToken as OmnichannelChatToken });
+                if (this.liveChatVersion === LiveChatVersion.V2) {
+                    await this.AMSClient?.initialize({ chatToken: this.chatToken as OmnichannelChatToken });
+                }
             } catch (error) {
                 const telemetryData = {
                     RequestId: this.requestId,
@@ -556,7 +558,7 @@ class OmnichannelChatSDK {
             }
         };
 
-        await Promise.all([sessionInitPromise(), acsClientPromise(), amsClientPromise()]);
+        await Promise.all([sessionInitPromise(), messagingClientPromise(), attachmentClientPromise()]);
 
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
             this.refreshTokenTimer = setInterval(async () => {
