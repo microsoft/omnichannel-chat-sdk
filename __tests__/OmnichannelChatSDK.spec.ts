@@ -859,6 +859,10 @@ describe('Omnichannel Chat SDK', () => {
 
             await chatSDK.initialize();
 
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
             jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
                 ChatId: '',
                 Token: '',
@@ -900,6 +904,10 @@ describe('Omnichannel Chat SDK', () => {
             chatSDK.getChatConfig = jest.fn();
 
             await chatSDK.initialize();
+
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
 
             jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
                 ChatId: '',
@@ -1009,7 +1017,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
             expect(chatSDK.ACSClient.initialize).toHaveBeenCalledTimes(1);
             expect(chatSDK.ACSClient.joinConversation).toHaveBeenCalledTimes(0);
-            expect(chatSDK.AMSClient.initialize).toHaveBeenCalledTimes(0);
+            expect(chatSDK.AMSClient.initialize).toHaveBeenCalledTimes(1);
         });
 
         it('ChatSDK.startChat() should throw an exception if AMSClient.initialize() fails', async () => {
@@ -1067,7 +1075,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
             expect(chatSDK.ACSClient.initialize).toHaveBeenCalledTimes(1);
             expect(chatSDK.ACSClient.joinConversation).toHaveBeenCalledTimes(1);
-            expect(chatSDK.AMSClient.initialize).toHaveBeenCalledTimes(0);
+            expect(chatSDK.AMSClient.initialize).toHaveBeenCalledTimes(1);
         });
 
         it('ChatSDK.startchat() with existing liveChatContext should not call OCClient.getChatToken() & OCClient.sessionInit()', async() => {
@@ -1282,6 +1290,10 @@ describe('Omnichannel Chat SDK', () => {
             chatSDK.getChatToken = jest.fn();
 
             await chatSDK.initialize();
+
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
 
             const optionalParams = {
                 locale: 'unsupported-locale'
