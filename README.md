@@ -5,8 +5,6 @@
 ![Release CI](https://github.com/microsoft/omnichannel-chat-sdk/workflows/Release%20CI/badge.svg)
 ![npm](https://img.shields.io/npm/dm/@microsoft/omnichannel-chat-sdk)
 
-> ❗ Chat SDK **v1.1.0** is the minimum version to support the **new** messaging platform. More [here](https://docs.microsoft.com/en-us/dynamics365/customer-service/migrate-acs)
-
 > 📢 Try out our new React component library [omnichannel-chat-widget](https://github.com/microsoft/omnichannel-chat-widget) with Chat SDK
 
 Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel Services.
@@ -15,6 +13,7 @@ Please make sure you have a chat widget configured before using this package or 
 
 ## Table of Contents
 - [Live Chat Widget vs. Chat SDK](#live-chat-widget-vs-chat-sdk)
+- [Releases](#releases)
 - [Installation](#installation)
 - [Installation on React Native](#installation-on-react-native)
 - [SDK Methods](#sdk-methods)
@@ -95,6 +94,24 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 | Average Wait Time | ✔ | ✔ | No SDK method. Handled as *system message* |
 
 **\*** BYOI: Bring Your Own Implementation
+
+## Releases
+
+New releases are published on a regular basis to ensure the product quality.
+
+| Version | Docs | Release | End of Support |
+| -- | -- | -- | -- |
+| 1.4.3 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.4.3) | Jun 15th 2023 | Jun 15th 2024 |
+| 1.4.2 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.4.2) | May 19th 2023 | May 19th 2024 |
+| 1.4.1 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.4.1) | May 5th 2023 | May 5th 2024 |
+| 1.4.0 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.4.0) | May 2nd 2023 | May 2nd 2024 |
+| 1.3.0 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.3.0) | Apr 5th 2023 | Apr 5th 2024 |
+| 1.2.0 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.2.0) | Nov 11th 2022 | Nov 11th 2023 |
+| 1.1.0 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.1.0) | Apr 15th 2021 | Apr 15th 2022 |
+| 1.0.0 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.0.0) | Oct 8th 2021 | Oct 8th 2022 |
+| 0.3.0 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v0.3.0) | Sep 3rd 2021 | Sep 3rd 2022 |
+| 0.2.0 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v0.2.0) | Apr 30th 2021 | Apr 30th 2022 |
+| 0.1.0 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v0.1.0) | Oct 26th 2020 | Oct 26th 2021 |
 
 ## Installation
 
