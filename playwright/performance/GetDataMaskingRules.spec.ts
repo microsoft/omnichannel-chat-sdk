@@ -1,10 +1,9 @@
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
 import { test, expect } from '@playwright/test';
-import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 
 const testPage = fetchTestPageUrl();
-const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChat');
+const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChatWithMasking');
 
 test.describe('Performance @Performance ', () => {
     test('ChatSDK.getDataMaskingRules()', async ({ page }) => {
