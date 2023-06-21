@@ -3,7 +3,7 @@ import fetchTestPageUrl from '../utils/fetchTestPageUrl';
 import { test, expect } from '@playwright/test';
 
 const testPage = fetchTestPageUrl();
-const omnichannelConfig = fetchOmnichannelConfig('PostChatSurvey');
+const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChatWithPostChatSurvey');
 
 test.describe('Performance @Performance ', () => {
     test('ChatSDK.getPostChatSurveyContext()', async ({ page }) => {
