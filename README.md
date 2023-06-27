@@ -5,6 +5,8 @@
 ![Release CI](https://github.com/microsoft/omnichannel-chat-sdk/workflows/Release%20CI/badge.svg)
 ![npm](https://img.shields.io/npm/dm/@microsoft/omnichannel-chat-sdk)
 
+> ❗ We recommend using official release versions in production as listed [here](https://github.com/xTEddie/omnichannel-chat-sdk/blob/release-cycle/README.md#releases). Support will be provided only on official versions.
+
 > 📢 Try out our new React component library [omnichannel-chat-widget](https://github.com/microsoft/omnichannel-chat-widget) with Chat SDK
 
 Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel Services.
