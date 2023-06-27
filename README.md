@@ -101,7 +101,7 @@ Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SD
 
 New releases are published on a regular basis to ensure the product quality.
 
-| Version | Docs | Release | End of Support | Deprecated |
+| Version | Docs | Release Date | End of Support | Deprecated |
 | -- | -- | -- | -- | -- |
 | 1.4.3 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.4.3) | Jun 15th 2023 | Jun 15th 2024 | |
 | 1.4.2 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.4.2) | May 19th 2023 | May 19th 2024 | |
