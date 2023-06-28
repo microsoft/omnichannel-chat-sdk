@@ -28,10 +28,38 @@ describe('Omnichannel Chat SDK', () => {
             }
         });
 
-        it('ChatSDK should throw an error if a required omnichannelConfig value is missing', () => {
+        it('ChatSDK should throw an error if a required omnichannelConfig property is missing', () => {
             const omnichannelConfig = {
                 orgUrl: '[data-org-uri]',
                 orgId:'[data-org-id]'
+            };
+
+            try {
+                new OmnichannelChatSDK(omnichannelConfig);
+            } catch (error) {
+                expect(error).toBeInstanceOf(Error);
+            }
+        });
+
+        it('ChatSDK should throw an error if a required omnichannelConfig value is missing', () => {
+            const omnichannelConfig = {
+                orgUrl: '[data-org-uri]',
+                orgId:'[data-org-id]',
+                widgetId:''
+            };
+
+            try {
+                new OmnichannelChatSDK(omnichannelConfig);
+            } catch (error) {
+                expect(error).toBeInstanceOf(Error);
+            }
+        });
+
+        it('ChatSDK should throw an error if a required omnichannelConfig value is a string with blank space', () => {
+            const omnichannelConfig = {
+                orgUrl: '[data-org-uri]',
+                orgId:'[data-org-id]',
+                widgetId:' '
             };
 
             try {
