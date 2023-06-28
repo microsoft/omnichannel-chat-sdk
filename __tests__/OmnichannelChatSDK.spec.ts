@@ -30,8 +30,8 @@ describe('Omnichannel Chat SDK', () => {
 
         it('ChatSDK should throw an error if a required omnichannelConfig value is missing', () => {
             const omnichannelConfig = {
-                orgUrl: '',
-                orgId: ''
+                orgUrl: '[data-org-uri]',
+                orgId:'[data-org-id]'
             };
 
             try {
@@ -43,9 +43,9 @@ describe('Omnichannel Chat SDK', () => {
 
         it('ChatSDK should be able to pick custom ic3ClientVersion if set', async () => {
             const omnichannelConfig = {
-                orgUrl: '',
-                orgId: '',
-                widgetId: ''
+                orgUrl: '[data-org-uri]',
+                orgId:'[data-org-id]',
+                widgetId: '[data-app-id]'
             };
 
             const chatSDKConfig = {
@@ -62,9 +62,9 @@ describe('Omnichannel Chat SDK', () => {
 
         it('ChatSDK should be able to pick custom ic3ClientCDNUrl if set', async () => {
             const omnichannelConfig = {
-                orgUrl: '',
-                orgId: '',
-                widgetId: ''
+                orgUrl: '[data-org-uri]',
+                orgId:'[data-org-id]',
+                widgetId: '[data-app-id]'
             };
 
             const chatSDKConfig = {
@@ -82,9 +82,9 @@ describe('Omnichannel Chat SDK', () => {
 
         it('ChatSDK should pick the default ic3ClientCDNUrl if no ic3Config is set', async () => {
             const omnichannelConfig = {
-                orgUrl: '',
-                orgId: '',
-                widgetId: ''
+                orgUrl: '[data-org-uri]',
+                orgId:'[data-org-id]',
+                widgetId: '[data-app-id]'
             };
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
@@ -95,9 +95,9 @@ describe('Omnichannel Chat SDK', () => {
 
         it('[LiveChatV1] ChatSDK should be able to pick custom webChatIC3AdapterVersion if set', async () => {
             const omnichannelConfig = {
-                orgUrl: '',
-                orgId: '',
-                widgetId: ''
+                orgUrl: '[data-org-uri]',
+                orgId:'[data-org-id]',
+                widgetId: '[data-app-id]'
             };
 
             const chatSDKConfig = {
@@ -116,9 +116,9 @@ describe('Omnichannel Chat SDK', () => {
 
         it('[LiveChatV1] ChatSDK should be able to pick custom webChatIC3AdapterCDNUrl if set', async () => {
             const omnichannelConfig = {
-                orgUrl: '',
-                orgId: '',
-                widgetId: ''
+                orgUrl: '[data-org-uri]',
+                orgId:'[data-org-id]',
+                widgetId: '[data-app-id]'
             };
 
             const chatSDKConfig = {
@@ -138,9 +138,9 @@ describe('Omnichannel Chat SDK', () => {
 
         it('[LiveChatV1] ChatSDK should pick the default webChatIC3AdapterCDNUrl if no chatAdapterConfig is set', async () => {
             const omnichannelConfig = {
-                orgUrl: '',
-                orgId: '',
-                widgetId: ''
+                orgUrl: '[data-org-uri]',
+                orgId:'[data-org-id]',
+                widgetId: '[data-app-id]'
             };
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
@@ -153,9 +153,9 @@ describe('Omnichannel Chat SDK', () => {
 
         it('ChatSDK should be able to pick custom webChatACSAdapterVersion if set', async () => {
             const omnichannelConfig = {
-                orgUrl: '',
-                orgId: '',
-                widgetId: ''
+                orgUrl: '[data-org-uri]',
+                orgId:'[data-org-id]',
+                widgetId: '[data-app-id]'
             };
 
             const chatSDKConfig = {
@@ -172,9 +172,9 @@ describe('Omnichannel Chat SDK', () => {
 
         it('ChatSDK should be able to pick custom webChatACSAdapterCDNUrl if set', async () => {
             const omnichannelConfig = {
-                orgUrl: '',
-                orgId: '',
-                widgetId: ''
+                orgUrl: '[data-org-uri]',
+                orgId:'[data-org-id]',
+                widgetId: '[data-app-id]'
             };
 
             const chatSDKConfig = {
@@ -192,9 +192,9 @@ describe('Omnichannel Chat SDK', () => {
 
         it('ChatSDK should pick the default webChatACSAdapterCDNUrl if no chatAdapterConfig is set', async () => {
             const omnichannelConfig = {
-                orgUrl: '',
-                orgId: '',
-                widgetId: ''
+                orgUrl: '[data-org-uri]',
+                orgId:'[data-org-id]',
+                widgetId: '[data-app-id]'
             };
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
@@ -205,9 +205,9 @@ describe('Omnichannel Chat SDK', () => {
 
         it('ChatSDK should be able to pick custom webChatDirectLineVersion if set', async () => {
             const omnichannelConfig = {
-                orgUrl: '',
-                orgId: '',
-                widgetId: ''
+                orgUrl: '[data-org-uri]',
+                orgId:'[data-org-id]',
+                widgetId: '[data-app-id]'
             };
 
             const chatSDKConfig = {
@@ -224,9 +224,9 @@ describe('Omnichannel Chat SDK', () => {
 
         it('ChatSDK should be able to pick custom webChatDirectLineCDNUrl if set', async () => {
             const omnichannelConfig = {
-                orgUrl: '',
-                orgId: '',
-                widgetId: ''
+                orgUrl: '[data-org-uri]',
+                orgId:'[data-org-id]',
+                widgetId: '[data-app-id]'
             };
 
             const chatSDKConfig = {
@@ -244,9 +244,9 @@ describe('Omnichannel Chat SDK', () => {
 
         it('ChatSDK should pick the default webChatDirectLineCDNUrl if no chatAdapterConfig is set', async () => {
             const omnichannelConfig = {
-                orgUrl: '',
-                orgId: '',
-                widgetId: ''
+                orgUrl: '[data-org-uri]',
+                orgId:'[data-org-id]',
+                widgetId: '[data-app-id]'
             };
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
@@ -257,9 +257,9 @@ describe('Omnichannel Chat SDK', () => {
 
         it('ChatSDK should throw an error if ChatSDK.resolveChatAdapterUrl() is called with other protocol than supported protocols', async () => {
             const omnichannelConfig = {
-                orgUrl: '',
-                orgId: '',
-                widgetId: ''
+                orgUrl: '[data-org-uri]',
+                orgId:'[data-org-id]',
+                widgetId: '[data-app-id]'
             };
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
@@ -275,9 +275,9 @@ describe('Omnichannel Chat SDK', () => {
 
         it('Telemetry should be disabled if set', () => {
             const omnichannelConfig = {
-                orgUrl: '',
-                orgId: '',
-                widgetId: ''
+                orgUrl: 'www.microsoft.com',
+                orgId: '1234',
+                widgetId: '5678'
             };
 
             const chatSDKConfig = {
@@ -298,9 +298,9 @@ describe('Omnichannel Chat SDK', () => {
             jest.clearAllMocks();
 
             const omnichannelConfig = {
-                orgUrl: '',
-                orgId: '',
-                widgetId: ''
+                orgUrl: 'www.microsoft.com',
+                orgId: '1234',
+                widgetId: '5678'
             };
 
             jest.spyOn(AriaTelemetry, 'disable');
@@ -313,9 +313,9 @@ describe('Omnichannel Chat SDK', () => {
 
         it('ChatSDK should be able to pick up custom ariaTelemetryKey if set', () => {
             const omnichannelConfig = {
-                orgUrl: '',
-                orgId: '',
-                widgetId: ''
+                orgUrl: 'www.microsoft.com',
+                orgId: '1234',
+                widgetId: '56778'
             };
 
             const chatSDKConfig = {
@@ -335,9 +335,9 @@ describe('Omnichannel Chat SDK', () => {
 
         it('ChatSDK should be able to pick up the default persistent chat config if not set', () => {
             const omnichannelConfig = {
-                orgUrl: '',
-                orgId: '',
-                widgetId: ''
+                orgUrl: 'www.microsoft.com',
+                orgId: '1234',
+                widgetId: '5678'
             };
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
@@ -348,9 +348,9 @@ describe('Omnichannel Chat SDK', () => {
 
         it('ChatSDK should be able to pick up the custom persistent chat config if set', () => {
             const omnichannelConfig = {
-                orgUrl: '',
-                orgId: '',
-                widgetId: ''
+                orgUrl: 'www.microsft.com',
+                orgId: '12345',
+                widgetId: '398709'
             };
 
             const chatSDKConfig = {
@@ -368,9 +368,9 @@ describe('Omnichannel Chat SDK', () => {
 
         it('ChatSDK should be able to pick up the default chat reconnect config if not set', () => {
             const omnichannelConfig = {
-                orgUrl: '',
-                orgId: '',
-                widgetId: ''
+                orgUrl: 'www.microsoft.com',
+                orgId: '1234',
+                widgetId: '5678'
             };
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
@@ -380,9 +380,9 @@ describe('Omnichannel Chat SDK', () => {
 
         it('ChatSDK should be able to pick up the custom chat reconnect config if set', () => {
             const omnichannelConfig = {
-                orgUrl: '',
-                orgId: '',
-                widgetId: ''
+                orgUrl: 'www.microsoft.com',
+                orgId: '1234',
+                widgetId: '5678'
             };
 
             const chatSDKConfig = {
@@ -399,9 +399,9 @@ describe('Omnichannel Chat SDK', () => {
 
     describe('Functionalities', () => {
         const omnichannelConfig = {
-            orgUrl: '',
-            orgId: '',
-            widgetId: ''
+            orgUrl: 'www.microsoft.om',
+            orgId: '1234',
+            widgetId: '5678'
         };
 
         beforeEach(() => {
@@ -1280,9 +1280,9 @@ describe('Omnichannel Chat SDK', () => {
 
         it("ChatSDK.startChat() with an unsupported locale should throw an exception", async () => {
             const omnichannelConfig = {
-                orgUrl: '',
-                orgId: '',
-                widgetId: ''
+                orgUrl: 'microsofthealthcare.crm.dynamics.com',
+                orgId: '00000000-0000-0000-0000-000000000000',
+                widgetId: '12345678-1234-1234-1234-123456789012',
             };
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
@@ -2470,9 +2470,9 @@ describe('Omnichannel Chat SDK', () => {
 
         it("ChatSDK.getLiveChatTranscript() with liveChatContext should fetch transcript from liveChatContext", async () => {
             const omnichannelConfig = {
-                orgUrl: '',
-                orgId: '',
-                widgetId: ''
+                orgUrl: 'www.microsoft.com',
+                orgId: '1234',
+                widgetId: '5678'
             };
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);

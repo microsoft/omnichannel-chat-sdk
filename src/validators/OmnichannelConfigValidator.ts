@@ -7,9 +7,13 @@ const validateOmnichannelConfig = (omnichannelConfig: OmnichannelConfig): void =
       throw new Error(`OmnichannelConfiguration not found`);
     }
 
-    const currentOmnichannelConfigParams = Object.keys(omnichannelConfig);
+    const mapEntries = new Map(Object.entries(omnichannelConfig));
+    let valueOfEntry;
+
     for (const key of requiredOmnichannelConfigParams) {
-      if (!currentOmnichannelConfigParams.includes(key)) {
+      //check for they key present in the map, if not present or value is undefined then throw error
+      valueOfEntry = mapEntries.get(key);
+      if (!valueOfEntry) {
         throw new Error(`Missing '${key}' in OmnichannelConfiguration`);
       }
     }
