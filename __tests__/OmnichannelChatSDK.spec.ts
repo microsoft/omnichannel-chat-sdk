@@ -35,12 +35,15 @@ describe('Omnichannel Chat SDK', () => {
                 orgId:'[data-org-id]'
             };
 
+            let flag = false;
             try {
                 new OmnichannelChatSDK(omnichannelConfig);
-                fail();
+                flag= true;
             } catch (error) {
                 expect(error).toBeInstanceOf(Error);
             }
+
+            expect(flag).toBe(false);
         });
 
 
@@ -51,13 +54,15 @@ describe('Omnichannel Chat SDK', () => {
                 widgetId:'   '
             };
 
+            let flag = false;
             try {
                 new OmnichannelChatSDK(omnichannelConfig);
-                fail();
+                flag= true;
             } catch (error) {
                 expect(error).toBeInstanceOf(Error);
                 expect(error.message).toBe("Empty 'widgetId' in OmnichannelConfiguration");
             }
+            expect(flag).toBe(false);
         });
 
         it('ChatSDK should throw an error if a required omnichannelConfig value is missing', () => {
@@ -67,13 +72,15 @@ describe('Omnichannel Chat SDK', () => {
                 widgetId:undefined
             };
 
+            let flag = false;
             try {
                 new OmnichannelChatSDK(omnichannelConfig);
-                fail();
+                flag= true;
             } catch (error) {
                 expect(error).toBeInstanceOf(Error);
                 expect(error.message).toBe("Empty 'widgetId' in OmnichannelConfiguration");
             }
+            expect(flag).toBe(false);
         });
 
         it('ChatSDK should throw an error if a required omnichannelConfig value is declared as undefined', () => {
@@ -82,14 +89,15 @@ describe('Omnichannel Chat SDK', () => {
                 orgId:'[data-org-id]',
                 widgetId:undefined
             };
-
+            let flag = false;
             try {
-                new OmnichannelChatSDK(omnichannelConfig);
-                fail();
+             new OmnichannelChatSDK(omnichannelConfig);
+             flag= true;  
             } catch (error) {
                 expect(error).toBeInstanceOf(Error);
                 expect(error.message).toBe("Empty 'widgetId' in OmnichannelConfiguration");
             }
+            expect(flag).toBe(false);
         });
 
         it('ChatSDK should not throw an error if a required omnichannelConfig value is not string', () => {
@@ -98,12 +106,8 @@ describe('Omnichannel Chat SDK', () => {
                 orgId:1234,
                 widgetId:true
             };
-
-            try {
-                new OmnichannelChatSDK(omnichannelConfig);
-            } catch (error) {
-             fail("Expected no error to be thrown but got: " + error.message);
-            }
+            const result = new OmnichannelChatSDK(omnichannelConfig);
+            expect(result).toBeInstanceOf(OmnichannelChatSDK);
         });
 
         it('ChatSDK should throw an error if a required omnichannelConfig value is a string with blank space', () => {
@@ -113,11 +117,14 @@ describe('Omnichannel Chat SDK', () => {
                 widgetId:' '
             };
 
+            let flag=false;
             try {
                 new OmnichannelChatSDK(omnichannelConfig);
+                flag=true;
             } catch (error) {
                 expect(error).toBeInstanceOf(Error);
             }
+            expect(flag).toBe(false);
         });
 
         it('ChatSDK should be able to pick custom ic3ClientVersion if set', async () => {

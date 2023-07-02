@@ -22,7 +22,11 @@ const validateOmnichannelConfig = (omnichannelConfig: OmnichannelConfig): void =
       */
       const propertyValue = Reflect.get(omnichannelConfig, key);
 
-      if (propertyValue?.trim().length === 0) {
+      if (propertyValue) {
+        if ((typeof propertyValue === "string" && propertyValue?.trim().length === 0) || propertyValue.length === 0) {
+          throw new Error(`Empty '${key}' in OmnichannelConfiguration`);
+        }
+      } else {
         throw new Error(`Empty '${key}' in OmnichannelConfiguration`);
       }
     }
