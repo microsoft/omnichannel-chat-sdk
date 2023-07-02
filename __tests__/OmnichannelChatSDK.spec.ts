@@ -23,6 +23,7 @@ describe('Omnichannel Chat SDK', () => {
         it('ChatSDK should require omnichannelConfig as parameter', () => {
             try {
                 new OmnichannelChatSDK();
+                fail();
             } catch (error) {
                 expect(error).toBeInstanceOf(Error);
             }
@@ -36,8 +37,26 @@ describe('Omnichannel Chat SDK', () => {
 
             try {
                 new OmnichannelChatSDK(omnichannelConfig);
+                fail();
             } catch (error) {
                 expect(error).toBeInstanceOf(Error);
+            }
+        });
+
+
+        it('ChatSDK should throw an error if a required omnichannelConfig value is just blank spaces', () => {
+            const omnichannelConfig = {
+                orgUrl: '[data-org-uri]',
+                orgId:'[data-org-id]',
+                widgetId:'   '
+            };
+
+            try {
+                new OmnichannelChatSDK(omnichannelConfig);
+                fail();
+            } catch (error) {
+                expect(error).toBeInstanceOf(Error);
+                expect(error.message).toBe("Empty 'widgetId' in OmnichannelConfiguration");
             }
         });
 
@@ -45,13 +64,45 @@ describe('Omnichannel Chat SDK', () => {
             const omnichannelConfig = {
                 orgUrl: '[data-org-uri]',
                 orgId:'[data-org-id]',
-                widgetId:''
+                widgetId:undefined
+            };
+
+            try {
+                new OmnichannelChatSDK(omnichannelConfig);
+                fail();
+            } catch (error) {
+                expect(error).toBeInstanceOf(Error);
+                expect(error.message).toBe("Empty 'widgetId' in OmnichannelConfiguration");
+            }
+        });
+
+        it('ChatSDK should throw an error if a required omnichannelConfig value is declared as undefined', () => {
+            const omnichannelConfig = {
+                orgUrl: '[data-org-uri]',
+                orgId:'[data-org-id]',
+                widgetId:undefined
+            };
+
+            try {
+                new OmnichannelChatSDK(omnichannelConfig);
+                fail();
+            } catch (error) {
+                expect(error).toBeInstanceOf(Error);
+                expect(error.message).toBe("Empty 'widgetId' in OmnichannelConfiguration");
+            }
+        });
+
+        it('ChatSDK should not throw an error if a required omnichannelConfig value is not string', () => {
+            const omnichannelConfig = {
+                orgUrl: '[data-org-url]',
+                orgId:1234,
+                widgetId:true
             };
 
             try {
                 new OmnichannelChatSDK(omnichannelConfig);
             } catch (error) {
-                expect(error).toBeInstanceOf(Error);
+             fail("Expected no error to be thrown but got: " + error.message);
             }
         });
 

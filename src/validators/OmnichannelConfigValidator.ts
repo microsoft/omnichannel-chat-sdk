@@ -15,9 +15,14 @@ const validateOmnichannelConfig = (omnichannelConfig: OmnichannelConfig): void =
         throw new Error(`Missing '${key}' in OmnichannelConfiguration`);
       }
 
+      /**
+      * Since we know the keys that are required and we know those values are string, 
+      * there is no point in make a generic function to validate the object and different
+      * types of values based on its type. We can just check for the keys and check if the value is empty or not.
+      */
       const propertyValue = Reflect.get(omnichannelConfig, key);
 
-      if (propertyValue.length === 0) {
+      if (propertyValue?.trim().length === 0) {
         throw new Error(`Empty '${key}' in OmnichannelConfiguration`);
       }
     }
