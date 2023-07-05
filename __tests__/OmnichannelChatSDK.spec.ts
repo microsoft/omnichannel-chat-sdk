@@ -20,7 +20,7 @@ describe('Omnichannel Chat SDK', () => {
     AWTLogManager.initialize = jest.fn();
 
     const omnichannelConfigGlobal = {
-        orgUrl: '[data-org-uri]',
+        orgUrl: '[data-org-url]',
         orgId: '[data-org-id]',
         widgetId: '[data-app-id]'
     };
@@ -51,7 +51,7 @@ describe('Omnichannel Chat SDK', () => {
 
         it('ChatSDK should throw an error if a required omnichannelConfig value is just blank spaces', () => {
             const omnichannelConfig = {
-                orgUrl: '[data-org-uri]',
+                orgUrl: '[data-org-url]',
                 orgId: '[data-org-id]',
                 widgetId: '   '
             };
@@ -67,7 +67,7 @@ describe('Omnichannel Chat SDK', () => {
 
         it('ChatSDK should throw an error if a required omnichannelConfig value is missing', () => {
             const omnichannelConfig = {
-                orgUrl: '[data-org-uri]',
+                orgUrl: '[data-org-url]',
                 orgId: '[data-org-id]',
                 widgetId: undefined
             };
@@ -83,7 +83,7 @@ describe('Omnichannel Chat SDK', () => {
 
         it('ChatSDK should throw an error if a required omnichannelConfig value is declared as undefined', () => {
             const omnichannelConfig = {
-                orgUrl: '[data-org-uri]',
+                orgUrl: '[data-org-url]',
                 orgId: '[data-org-id]',
                 widgetId: undefined
             };

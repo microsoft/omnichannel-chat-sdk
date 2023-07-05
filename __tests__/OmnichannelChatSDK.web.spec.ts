@@ -23,7 +23,7 @@ describe('Omnichannel Chat SDK (Web)', () => {
     AWTLogManager.initialize = jest.fn();
 
     const omnichannelConfig = {
-        orgUrl: '[data-org-uri]',
+        orgUrl: '[data-org-url]',
         orgId: '[data-org-id]',
         widgetId: '[data-app-id]'
     };
