@@ -88,6 +88,7 @@ import exceptionSuppressors from "./utils/exceptionSuppressors";
 import { getLocationInfo } from "./utils/location";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
+import GetChatTokenOptionalParams from "./core/GetChatTokenOptionalParams";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -484,7 +485,21 @@ class OmnichannelChatSDK {
                 };
 
                 const tokenRefresher = async (): Promise<string> => {
-                    await this.getChatToken(false);
+                    await this.getChatToken(false, {refreshToken: true});
+
+                    if (!platform.isNode() && !platform.isReactNative()) {
+                        (this.AMSClient as FramedClient).dispose();
+
+                        this.AMSClient = await createAMSClient({
+                            framedMode: isBrowser(),
+                            multiClient: true,
+                            debug: false,
+                            logger: this.amsClientLogger as PluggableLogger
+                        });
+
+                        await this.AMSClient?.initialize({ chatToken: this.chatToken as OmnichannelChatToken });
+                    }
+
                     return this.chatToken.token as string;
                 };
 
@@ -788,7 +803,7 @@ class OmnichannelChatSDK {
         return this.getChatConfig({sendCacheHeaders: optionalParams?.sendCacheHeaders || false});
     }
 
-    public async getChatToken(cached = true): Promise<IChatToken> {
+    public async getChatToken(cached = true, optionalParams?: GetChatTokenOptionalParams): Promise<IChatToken> {
         this.scenarioMarker.startScenario(TelemetryEvent.GetChatToken, {
             RequestId: this.requestId
         });
@@ -806,6 +821,10 @@ class OmnichannelChatSDK {
 
                 if (this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat) {
                     getChatTokenOptionalParams.reconnectId = this.reconnectId as string;
+                }
+
+                if (optionalParams?.refreshToken === true) {
+                    getChatTokenOptionalParams.refreshToken = optionalParams?.refreshToken;
                 }
 
                 const chatToken = await this.OCClient.getChatToken(this.requestId, getChatTokenOptionalParams);
