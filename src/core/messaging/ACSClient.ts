@@ -85,8 +85,6 @@ export class ACSConversation {
             throw new Error(exceptionDetails.response);
         }
 
-        this.participantsMapping = await this.createParticipantsMapping();
-
         this.logger?.completeScenario(ACSClientEvent.InitializeACSConversation);
     }
 
@@ -94,6 +92,10 @@ export class ACSConversation {
         this.logger?.startScenario(ACSClientEvent.GetMessages);
 
         const messages: OmnichannelMessage[] = [];
+
+        if (!this.participantsMapping) {
+            this.participantsMapping = await this.createParticipantsMapping();
+        }
 
         try {
             const pagedAsyncIterableIterator = await (this.chatThreadClient as ChatThreadClient).listMessages();
