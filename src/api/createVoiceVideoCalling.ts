@@ -239,7 +239,6 @@ export class VoiceVideoCallingProxy {
             });
 
             console.error(`[VoiceVideoCallingProxy][rejectCall][makeSecondaryChannelEventRequest] Failure ${e}`);
-            return e;
         }
     }
 
