@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Add `ocSDKConfiguration` to reduce `chatToken` retries to 2
+- Uptake [@microsoft/ocsdk@0.4.0](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.4.0)
 
 ### Fixed
 - Set `enableSenderDisplayNameInTypingNotification` to true to include display name on sending typing notification
