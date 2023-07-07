@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- Remove redundant call to create of `participantsMapping`
+
 ## [1.4.3] - 2023-06-15
 
 ### Fixed
