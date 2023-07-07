@@ -85,8 +85,6 @@ export class ACSConversation {
             throw new Error(exceptionDetails.response);
         }
 
-        this.participantsMapping = await this.createParticipantsMapping();
-
         this.logger?.completeScenario(ACSClientEvent.InitializeACSConversation);
     }
 
@@ -111,12 +109,6 @@ export class ACSConversation {
                 if (chatMessage.content?.message) {
                     Object.assign(chatMessage, {content: chatMessage.content?.message});
                 }
-
-                const {sender} = chatMessage;
-
-                // Add alias to differentiate sender type
-                const participant = (this.participantsMapping as ParticipantMapping)[(sender as CommunicationUserIdentifier).communicationUserId];
-                Object.assign(chatMessage.sender, {alias: participant.displayName});
 
                 const omnichannelMessage = createOmnichannelMessage(chatMessage as ChatMessage, {
                     liveChatVersion: LiveChatVersion.V2
@@ -234,10 +226,6 @@ export class ACSConversation {
                 if (event.message) {
                     Object.assign(event, {content: event.message});
                 }
-
-                // Add alias to differentiate sender type
-                const participant = (this.participantsMapping as ParticipantMapping)[(sender as CommunicationUserIdentifier).communicationUserId];
-                Object.assign(event.sender, {alias: participant.displayName});
 
                 onNewMessageCallback(event);
                 postedMessageIds.add(id);
