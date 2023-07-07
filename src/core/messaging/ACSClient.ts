@@ -93,10 +93,6 @@ export class ACSConversation {
 
         const messages: OmnichannelMessage[] = [];
 
-        if (!this.participantsMapping) {
-            this.participantsMapping = await this.createParticipantsMapping();
-        }
-
         try {
             const pagedAsyncIterableIterator = await (this.chatThreadClient as ChatThreadClient).listMessages();
             let nextMessage = await pagedAsyncIterableIterator.next();
@@ -113,12 +109,6 @@ export class ACSConversation {
                 if (chatMessage.content?.message) {
                     Object.assign(chatMessage, {content: chatMessage.content?.message});
                 }
-
-                const {sender} = chatMessage;
-
-                // Add alias to differentiate sender type
-                const participant = (this.participantsMapping as ParticipantMapping)[(sender as CommunicationUserIdentifier).communicationUserId];
-                Object.assign(chatMessage.sender, {alias: participant.displayName});
 
                 const omnichannelMessage = createOmnichannelMessage(chatMessage as ChatMessage, {
                     liveChatVersion: LiveChatVersion.V2
@@ -236,10 +226,6 @@ export class ACSConversation {
                 if (event.message) {
                     Object.assign(event, {content: event.message});
                 }
-
-                // Add alias to differentiate sender type
-                const participant = (this.participantsMapping as ParticipantMapping)[(sender as CommunicationUserIdentifier).communicationUserId];
-                Object.assign(event.sender, {alias: participant.displayName});
 
                 onNewMessageCallback(event);
                 postedMessageIds.add(id);
