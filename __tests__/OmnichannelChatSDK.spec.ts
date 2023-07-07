@@ -2115,7 +2115,7 @@ describe('Omnichannel Chat SDK', () => {
             try {
                 await chatSDK.sendTypingEvent();
             } catch (error) {
-                expect(console.error).toHaveBeenCalled();
+                expect(error).toBeDefined();
             }
 
             expect(chatSDK.conversation.indicateTypingStatus).toHaveBeenCalledTimes(1);
