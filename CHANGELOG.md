@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Set `enableSenderDisplayNameInTypingNotification` to true to include display name on sending typing notification
+- Add `async` to `ChatSDK.getLiveChatTranscript()` internal call
 
 ## [1.4.3] - 2023-06-15
 

@@ -28,7 +28,7 @@ const config: PlaywrightTestConfig = {
     actionTimeout: 0,
     trace: 'on-first-retry',
     launchOptions: {
-      slowMo: 50
+      slowMo: parseInt(process.env.PLAYWRIGHT_SLOW_MO || 1000)
     }
   },
   projects: [
