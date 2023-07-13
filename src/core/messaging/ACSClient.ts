@@ -85,8 +85,6 @@ export class ACSConversation {
             throw new Error(exceptionDetails.response);
         }
 
-        this.participantsMapping = await this.createParticipantsMapping();
-
         this.logger?.completeScenario(ACSClientEvent.InitializeACSConversation);
     }
 
@@ -111,12 +109,6 @@ export class ACSConversation {
                 if (chatMessage.content?.message) {
                     Object.assign(chatMessage, {content: chatMessage.content?.message});
                 }
-
-                const {sender} = chatMessage;
-
-                // Add alias to differentiate sender type
-                const participant = (this.participantsMapping as ParticipantMapping)[(sender as CommunicationUserIdentifier).communicationUserId];
-                Object.assign(chatMessage.sender, {alias: participant.displayName});
 
                 const omnichannelMessage = createOmnichannelMessage(chatMessage as ChatMessage, {
                     liveChatVersion: LiveChatVersion.V2
@@ -234,10 +226,6 @@ export class ACSConversation {
                 if (event.message) {
                     Object.assign(event, {content: event.message});
                 }
-
-                // Add alias to differentiate sender type
-                const participant = (this.participantsMapping as ParticipantMapping)[(sender as CommunicationUserIdentifier).communicationUserId];
-                Object.assign(event.sender, {alias: participant.displayName});
 
                 onNewMessageCallback(event);
                 postedMessageIds.add(id);
@@ -407,8 +395,21 @@ class ACSClient {
     public async initialize(acsClientConfig: ACSClientConfig): Promise<void> {
         this.logger?.startScenario(ACSClientEvent.InitializeACSClient);
 
+        const tokenRefresher = async () => {
+            if (acsClientConfig.tokenRefresher) {
+                const token = await acsClientConfig.tokenRefresher();
+                return token;
+            }
+
+            return acsClientConfig.token;
+        };
+
         try {
-            this.tokenCredential = new AzureCommunicationTokenCredential(acsClientConfig.token);
+            this.tokenCredential = new AzureCommunicationTokenCredential({
+                token: acsClientConfig.token,
+                tokenRefresher, // tokenRefresher is executed when token found to be expired on performing HTTP calls
+                refreshProactively: true // Flag to whether refresh token 10 mins it expires
+            });
         } catch (error) {
             const exceptionDetails = {
                 response: 'CreateTokenCredentialFailure',

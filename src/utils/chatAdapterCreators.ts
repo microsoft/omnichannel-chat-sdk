@@ -61,6 +61,7 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
         enableAdaptiveCards: true, // Whether to enable adaptive card payload in adapter (payload in JSON string)
         enableThreadMemberUpdateNotification: true, // Whether to enable chat thread member join/leave notification
         enableLeaveThreadOnWindowClosed: false, // Whether to remove user on browser close event
+        enableSenderDisplayNameInTypingNotification: true, // Whether to send sender display name in typing notification
         ...options, // overrides
         ingressMiddleware,
         egressMiddleware

@@ -1,7 +1,9 @@
 /**
  * Utilities to throw exception on failures in ChatSDK.
  *
- * It should throw ChatSDK standard errors as response with the exception object if any.
+ * It should throw ChatSDK standard errors.
+ *
+ * An exception details object would be logged in telemetry with ChatSDK standard errors as response with the exception object if any.
  *
  * The error thrown should have a short message in CamelCase to allow the exception to be caught easily programmatically.
  *
