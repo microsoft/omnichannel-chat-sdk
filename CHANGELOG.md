@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
 ## [1.4.4] - 2023-07-19
 ### Added
 - Add `tokenRefresher` mechanism to retrieve chat token on expiry
