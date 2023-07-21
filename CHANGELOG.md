@@ -3,6 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.4.4] - 2023-07-19
 ### Added
 - Add `tokenRefresher` mechanism to retrieve chat token on expiry
 
@@ -16,19 +17,16 @@ All notable changes to this project will be documented in this file.
 - Add `async` to `ChatSDK.getLiveChatTranscript()` internal call
 
 ## [1.4.3] - 2023-06-15
-
 ### Fixed
 
 - [Perf] Make sessionInit, AcsClientInit/Ic3ClientInit and AmsClientInit calls in parallel
 
 ## [1.4.2] - 2023-05-19
-
 ### Fixed
 
 - Fixed null check on startChat failure
 
 ## [1.4.1] - 2023-05-05
-
 ### Fixed
 
 - Skipped empty string or null context variables (parity with v1)
