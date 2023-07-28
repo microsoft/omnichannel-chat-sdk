@@ -1,9 +1,12 @@
 import type { PlaywrightTestConfig } from '@playwright/test';
 import { devices } from '@playwright/test';
+import path from "path";
+const outPutDir = path.join(".", "generated/tests");
+const jUnitTestResults = path.join(outPutDir, "test-results/test-results.xml");
 
 const config: PlaywrightTestConfig = {
   globalSetup: require.resolve('./global-setup'),
-  testDir: './integrations',
+  testDir: 'playwright',
   webServer: [
     {
       command: 'node ./server/app.js',
@@ -21,7 +24,8 @@ const config: PlaywrightTestConfig = {
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : 1,
   reporter: [
-    ['html', {outputFolder: 'integrations-report'}]
+    ['html', {outputFolder: 'integrations-report'}],
+    ["junit", { outputFile: jUnitTestResults }]
   ],
   use: {
     headless: true,
@@ -38,7 +42,14 @@ const config: PlaywrightTestConfig = {
         ...devices['Desktop Chrome'],
       },
     },
-
+    {
+      name: 'integrations',
+      testDir: './integrations'
+    },
+    {
+      name: 'performance',
+      testDir: './performance'
+    },
     // {
     //   name: 'firefox',
     //   use: {
