@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- Upgraded ACSAdapter to version beta.20
+
 ## [1.4.4] - 2023-07-19
 ### Added
 - Add `tokenRefresher` mechanism to retrieve chat token on expiry
