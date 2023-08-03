@@ -1,0 +1,13 @@
+DefaultSettings:
+  orgId: ''
+  orgUrl: ''
+  widgetId: ''
+  authUrl: ''
+  apiUrl: ''
+  threshold: ''
+UnauthenticatedChat:
+  orgId: ''
+  orgUrl: ''
+  widgetId: ''
+  apiUrl: ''
+  threshold: ''

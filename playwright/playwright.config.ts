@@ -3,7 +3,7 @@ import { devices } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   globalSetup: require.resolve('./global-setup'),
-  testDir: './integrations',
+  testDir: 'playwright',
   webServer: [
     {
       command: 'node ./server/app.js',
@@ -38,7 +38,14 @@ const config: PlaywrightTestConfig = {
         ...devices['Desktop Chrome'],
       },
     },
-
+    {
+      name: 'integrations',
+      testDir: './integrations'
+    },
+    {
+      name: 'performance',
+      testDir: './performance'
+    },
     // {
     //   name: 'firefox',
     //   use: {

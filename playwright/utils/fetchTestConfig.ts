@@ -7,7 +7,11 @@ const fetchTestConfig = () => {
         return JSON.parse(process.env.testConfig);
     }
 
-    const testConfigFilePath = path.join(path.dirname(__dirname), 'test.config.yml');
+    let testConfigFilePath = "";
+    if (process.env.projectName === "performance")
+        testConfigFilePath = path.join(path.dirname(__dirname), 'performance.config.yml');
+    else
+        testConfigFilePath = path.join(path.dirname(__dirname), 'test.config.yml');
     let testConfig = null;
     try {
         const fileData = fs.readFileSync(testConfigFilePath, 'utf8');
