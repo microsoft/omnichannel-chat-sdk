@@ -1,22 +1,23 @@
 import { ACSAdapterLogger, IC3ClientLogger } from "./loggers";
+
 import ACSParticipantDisplayName from "../core/messaging/ACSParticipantDisplayName";
 import AMSFileManager from "../external/ACSAdapter/AMSFileManager";
 import AriaTelemetry from "../telemetry/AriaTelemetry";
 import ChatAdapterOptionalParams from "../core/messaging/ChatAdapterOptionalParams";
 import { ChatClient } from "@azure/communication-chat";
 import ChatSDKConfig from "../core/ChatSDKConfig";
-import createChannelDataEgressMiddleware from "../external/ACSAdapter/createChannelDataEgressMiddleware";
-import createFormatEgressTagsMiddleware from "../external/ACSAdapter/createFormatEgressTagsMiddleware";
-import createFormatIngressTagsMiddleware from "../external/ACSAdapter/createFormatIngressTagsMiddleware";
 import IChatToken from "../external/IC3Adapter/IChatToken";
 import IIC3AdapterOptions from "../external/IC3Adapter/IIC3AdapterOptions";
 import LiveChatVersion from "../core/LiveChatVersion";
-import WebUtils from "./WebUtils";
 import OmnichannelConfig from "../core/OmnichannelConfig";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
-import urlResolvers from "./urlResolvers";
+import WebUtils from "./WebUtils";
+import createChannelDataEgressMiddleware from "../external/ACSAdapter/createChannelDataEgressMiddleware";
+import createFormatEgressTagsMiddleware from "../external/ACSAdapter/createFormatEgressTagsMiddleware";
+import createFormatIngressTagsMiddleware from "../external/ACSAdapter/createFormatIngressTagsMiddleware";
 import exceptionThrowers from "./exceptionThrowers";
+import urlResolvers from "./urlResolvers";
 
 const createDirectLine = async (optionalParams: ChatAdapterOptionalParams, chatSDKConfig: ChatSDKConfig, liveChatVersion: LiveChatVersion, protocol: string, telemetry: typeof AriaTelemetry, scenarioMarker: ScenarioMarker): Promise<unknown> => {
     const options = optionalParams.DirectLine? optionalParams.DirectLine.options: {};
@@ -84,6 +85,8 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
             chatToken.acsEndpoint as string,
             fileManager,
             30000,
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            { notifyErrorEvent: () => {} }, // Passing empty callback for now for backward compatibility
             ACSParticipantDisplayName.Customer,
             chatClient,
             logger,
