@@ -488,16 +488,7 @@ class OmnichannelChatSDK {
                     await this.getChatToken(false, {refreshToken: true});
 
                     if (!platform.isNode() && !platform.isReactNative()) {
-                        (this.AMSClient as FramedClient).dispose();
-
-                        this.AMSClient = await createAMSClient({
-                            framedMode: isBrowser(),
-                            multiClient: true,
-                            debug: false,
-                            logger: this.amsClientLogger as PluggableLogger
-                        });
-
-                        await this.AMSClient?.initialize({ chatToken: this.chatToken as OmnichannelChatToken });
+                        (this.AMSClient as any).chatToken = this.chatToken; // eslint-disable-line @typescript-eslint/no-explicit-any
                     }
 
                     return this.chatToken.token as string;
