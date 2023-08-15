@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
 ## [1.4.6] - 2023-08-15
 ### Fixed
 - Fix `tokenRefresher` to update `chatToken` properly on expiry through reinitialization of AMSClient
