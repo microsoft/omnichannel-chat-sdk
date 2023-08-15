@@ -486,11 +486,7 @@ class OmnichannelChatSDK {
 
                 const tokenRefresher = async (): Promise<string> => {
                     await this.getChatToken(false, {refreshToken: true});
-
-                    if (!platform.isNode() && !platform.isReactNative()) {
-                        await this.AMSClient?.initialize({ chatToken: this.chatToken as OmnichannelChatToken });
-                    }
-
+                    await this.AMSClient?.initialize({ chatToken: this.chatToken as OmnichannelChatToken });
                     return this.chatToken.token as string;
                 };
 
