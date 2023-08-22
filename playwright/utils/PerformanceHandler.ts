@@ -41,3 +41,12 @@ export function createPerformanceData(Sceanrio: string, executionTime: number, t
     console.log("Performance data created", data);
     return data;
 }
+
+export enum ThresholdByScenario {
+    ChatSDK_Initialize = 4000,
+    ChatSDK_StartChat = 4000,
+    ChatSDK_GetLiveChatTranscript = 2000,
+    ChatSDK_UploadFileAttachment = 4000,
+    ChatSDK_DownloadFileAttachment = 2000
+
+}

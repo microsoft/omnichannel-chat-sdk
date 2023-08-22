@@ -2,12 +2,10 @@ import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
 import { test, expect } from '@playwright/test';
-import fetchApiData from '../utils/fetchPerformanceApiConfig';
-import { createPerformanceData, PerformanceTestResult, performanceData } from '../utils/PerformanceHandler';
+import { createPerformanceData, PerformanceTestResult, performanceData, ThresholdByScenario } from '../utils/PerformanceHandler';
 
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChat');
-const apiData = fetchApiData('DefaultSettings');
 
 let performanceDataTest: performanceData;
 let performanceTestData: performanceData[] = [];
@@ -21,7 +19,6 @@ test.afterAll(async () => {
 
 test.describe('Performance @Performance', () => {
     test('ChatSDK.startChat()', async ({ page }) => {
-        const threshold = apiData.threshold;
         await page.goto(testPage);
 
         const [chatTokenResponse, runtimeContext] = await Promise.all([
@@ -55,7 +52,7 @@ test.describe('Performance @Performance', () => {
         expect(chatTokenResponse.status()).toBe(200);
 
         const executionTime = runtimeContext.timeTaken;
-        const data: PerformanceData = createPerformanceData("chatSDK.startChat()", executionTime, threshold);
-        performanceDataTest = data; 
+        const data: PerformanceData = createPerformanceData("chatSDK.startChat()", executionTime, ThresholdByScenario.ChatSDK_StartChat);
+        performanceDataTest = data;
     });
 });
