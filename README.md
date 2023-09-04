@@ -103,6 +103,8 @@ New releases are published on a regular basis to ensure the product quality.
 
 | Version | Docs | Release Date | End of Support | Deprecated |
 | -- | -- | -- | -- | -- |
+| 1.4.6 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.4.6) | Aug 15th 2023 | Aug 15th 2024 | |
+| 1.4.5 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.4.5) | Aug 2nd 2023 | Aug 2nd 2024 | |
 | 1.4.4 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.4.4) | Jul 19th 2023 | Jul 19th 2024 | |
 | 1.4.3 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.4.3) | Jun 15th 2023 | Jun 15th 2024 | |
 | 1.4.2 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.4.2) | May 19th 2023 | May 19th 2024 | |
