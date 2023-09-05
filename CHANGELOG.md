@@ -2,9 +2,48 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+
+## [1.4.6] - 2023-08-15
+### Fixed
+- Fix `tokenRefresher` to update `chatToken` properly on expiry through reinitialization of AMSClient
+  
+## [1.4.5] - 2023-08-02
+### Changed
+- Upgraded ACSAdapter to version beta.20
+
+## [1.4.4] - 2023-07-19
+### Added
+- Add `tokenRefresher` mechanism to retrieve chat token on expiry
+
+### Changed
+- Add `ocSDKConfiguration` to reduce `chatToken` retries to 2
+- Uptake [@microsoft/ocsdk@0.4.0](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.4.0)
+- Remove redundant call to create of `participantsMapping`
+
+### Fixed
+- Set `enableSenderDisplayNameInTypingNotification` to true to include display name on sending typing notification
+- Add `async` to `ChatSDK.getLiveChatTranscript()` internal call
+
+## [1.4.3] - 2023-06-15
+### Fixed
+
+- [Perf] Make sessionInit, AcsClientInit/Ic3ClientInit and AmsClientInit calls in parallel
+
+## [1.4.2] - 2023-05-19
+### Fixed
+
+- Fixed null check on startChat failure
+
+## [1.4.1] - 2023-05-05
+### Fixed
+
+- Skipped empty string or null context variables (parity with v1)
+
+## [1.4.0] - 2023-05-02
 ### Added
 - Add ability to use `ChatSDK.getLiveChatTranscript()` to fetch live chat transcript from `liveChatContext`
 - Add ability to use `ChatSDK.getConversationDetails()` to fetch conversation details from `liveChatContext`
+- Add `AuthContactIdNotFoundFailure` to `ExceptionThrower`
 
 ### Changed
 - Update `ChatSDKErrors` to include standard ChatSDK errors to be more predictable
