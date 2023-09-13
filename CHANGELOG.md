@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.4.7] - 2023-09-13
+### Changed
+- Supporting getAgentAvailable SDK method for unauthenticated chat widget
+
 ## [1.4.6] - 2023-08-15
 ### Fixed
 - Fix `tokenRefresher` to update `chatToken` properly on expiry through reinitialization of AMSClient
