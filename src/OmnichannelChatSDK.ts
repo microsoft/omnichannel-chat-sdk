@@ -1699,14 +1699,6 @@ class OmnichannelChatSDK {
             RequestId: this.requestId
         });
 
-        if (!this.authSettings) {
-            reportError("Unsupported", "GetAgentAvailability is supported only for authenticated live chat widget.");
-        }
-
-        if (!this.authenticatedUserToken) {
-            reportError("UndefinedAuthToken", "Missing AuthToken for GetAgentAvailability.");
-        }
-
         if (this.conversation) {
             reportError("InvalidOperation", "GetAgentAvailability can only be called before a chat has started.", this.chatToken.chatId as string);
         }
