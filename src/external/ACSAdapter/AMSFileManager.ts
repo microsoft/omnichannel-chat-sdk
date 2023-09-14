@@ -48,6 +48,12 @@ enum AMSFileManagerEvent {
     CreateFileMetadataProperty = 'CreateFileMetadataProperty'
 }
 
+enum AMSDownloadStatus {
+    PASSED = "passed",
+    MALWARE = "malware",
+    INPROGRESS = "in progress"
+}
+
 class AMSFileManager {
     private logger: ACSAdapterLogger | null;
     private amsClient: FramedClient;
@@ -307,9 +313,23 @@ class AMSFileManager {
                 return undefined;
             }
 
-            const {view_location} = response;
-
             let blob: any;  // eslint-disable-line @typescript-eslint/no-explicit-any
+
+            const {view_location, scan} = response;
+
+            if (scan && scan.status !== AMSDownloadStatus.PASSED) {
+                const file = new File([blob], uploadedFile.metadata.fileName, { type: "malicious" });
+
+                const exceptionDetails = {
+                    response: "InvalidFileScanResult"
+                };
+
+                this.logger?.failScenario(AMSFileManagerEvent.AMSDownload, {
+                    ExceptionDetails: JSON.stringify(exceptionDetails)
+                });
+
+                return file;
+            }
 
             try {
                 blob = await this.amsClient.getView(fileMetadata, view_location);  // eslint-disable-line @typescript-eslint/no-explicit-any
