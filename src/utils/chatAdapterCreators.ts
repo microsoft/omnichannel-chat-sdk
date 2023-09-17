@@ -14,6 +14,7 @@ import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
 import WebUtils from "./WebUtils";
 import createChannelDataEgressMiddleware from "../external/ACSAdapter/createChannelDataEgressMiddleware";
+import createFileScanIngressMiddleware from "../external/ACSAdapter/createFileScanIngressMiddleware";
 import createFormatEgressTagsMiddleware from "../external/ACSAdapter/createFormatEgressTagsMiddleware";
 import createFormatIngressTagsMiddleware from "../external/ACSAdapter/createFormatIngressTagsMiddleware";
 import exceptionThrowers from "./exceptionThrowers";
@@ -55,7 +56,12 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
 
     // Tags formatting middlewares are required to be the last in the pipeline to ensure tags are converted to the right format
     const defaultEgressMiddlewares = [createChannelDataEgressMiddleware({widgetId: omnichannelConfig.widgetId}), createFormatEgressTagsMiddleware()];
-    const defaultIngressMiddlewares = [createFormatIngressTagsMiddleware()];
+    let defaultIngressMiddlewares = [createFormatIngressTagsMiddleware()];
+
+    if (optionalParams.ACSAdapter?.fileScan) {
+        defaultIngressMiddlewares = [createFileScanIngressMiddleware(), ...defaultIngressMiddlewares];
+    }
+
     const egressMiddleware = options?.egressMiddleware? [...options.egressMiddleware, ...defaultEgressMiddlewares]: [...defaultEgressMiddlewares];
     const ingressMiddleware = options?.ingressMiddleware? [...options.ingressMiddleware, ...defaultIngressMiddlewares]: [...defaultIngressMiddlewares];
     const featuresOption = {
