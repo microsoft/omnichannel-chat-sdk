@@ -6,6 +6,7 @@ interface ChatAdapterOptionalParams {
         }
     };
     ACSAdapter?: {
+        fileScan?: boolean;
         options?: {
             [key: string]: any // eslint-disable-line @typescript-eslint/no-explicit-any
         }
