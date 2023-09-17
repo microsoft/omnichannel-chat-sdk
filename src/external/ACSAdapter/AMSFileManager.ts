@@ -1,5 +1,6 @@
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
 import { ACSAdapterLogger } from "../../utils/loggers";
+import AMSFileScanner from "./AMSFileScanner";
 
 type FileMetadata = Record<string, string>;
 
@@ -57,10 +58,17 @@ enum AMSDownloadStatus {
 class AMSFileManager {
     private logger: ACSAdapterLogger | null;
     private amsClient: FramedClient;
+    private options: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    public fileScanner: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-    public constructor(amsClient: FramedClient, logger: ACSAdapterLogger | null = null) {
+    public constructor(amsClient: FramedClient, logger: ACSAdapterLogger | null = null, options: any = {}) {  // eslint-disable-line @typescript-eslint/no-explicit-any
         this.logger = logger;
         this.amsClient = amsClient;
+        this.options = options;
+
+        if (this.options.fileScan) {
+            this.fileScanner = new AMSFileScanner(this.amsClient);
+        }
     }
 
     public async uploadFiles(files: IFileUploadRequest[]): Promise<IUploadedFile[]> {
@@ -317,12 +325,14 @@ class AMSFileManager {
 
             const {view_location, scan} = response;
 
-            if (scan && scan.status !== AMSDownloadStatus.PASSED) {
-                const file = new File([blob], uploadedFile.metadata.fileName, { type: "malicious" });
+            if (this.options.fileScan && scan && scan.status !== AMSDownloadStatus.PASSED) {
+                const file = new File([blob], uploadedFile.metadata.fileName, { type: uploadedFile.metadata.contentType });
 
                 const exceptionDetails = {
                     response: "InvalidFileScanResult"
                 };
+
+                this.fileScanner.addOrUpdateFile(fileMetadata.id, fileMetadata, scan);
 
                 this.logger?.failScenario(AMSFileManagerEvent.AMSDownload, {
                     ExceptionDetails: JSON.stringify(exceptionDetails)
