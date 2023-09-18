@@ -95,7 +95,7 @@ class AMSFileScanner {
 
                         activity.attachments = attachmentData;
                         activity.channelData.attachmentSizes = attachmentSizes;
-                        next(activity);
+                        next(activity); // Send updated activity to webchat
                     }
 
                     if (scan.status === AMSDownloadStatus.MALWARE && next && activity) {

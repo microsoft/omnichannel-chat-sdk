@@ -16,6 +16,11 @@ const createFileScanIngressMiddleware = (): CallableFunction => {
             try {
                 const fileId = JSON.parse(amsreferences)[0];
                 const { fileScanner } = (window as any).chatAdapter.fileManager;  // eslint-disable-line @typescript-eslint/no-explicit-any
+
+                if (!fileScanner) {
+                    return next(activity);
+                }
+
                 const scanResult = fileScanner.retrieveFileScanResult(fileId);
 
                 if (scanResult) {
