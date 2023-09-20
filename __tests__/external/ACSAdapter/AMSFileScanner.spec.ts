@@ -55,4 +55,27 @@ describe("AMSFileScanner", () => {
         expect(initialSize).toBe(0);
         expect(fileScanner.scanResults?.size === 1).toBe(true);
     });
+
+    it("AMSFileScanner.addOrUpdateFile() should update the scan result if existing", async () => {
+        (global as any).setTimeout = jest.fn();
+        const amsClient: any = {};
+        const fileScanner = new AMSFileScanner(amsClient);
+
+        fileScanner.scanFiles = jest.fn();
+
+        const sampleFileId = "fileId";
+        const sampleFileMetadata = {id: "id", type: "type"};
+        const sampleScanResponse = {status: "status"};
+        const newSampleScanResponse = {status: "new status"}
+
+        fileScanner.addOrUpdateFile(sampleFileId, sampleFileMetadata, sampleScanResponse);
+        const initialScanResult = fileScanner.scanResults?.get(sampleFileId);
+
+        fileScanner.addOrUpdateFile(sampleFileId, sampleFileMetadata, newSampleScanResponse);
+        const newScanResult = fileScanner.scanResults?.get(sampleFileId);
+
+        expect(fileScanner.scanResults?.size === 1).toBe(true);
+        expect(initialScanResult).toEqual({fileMetadata: sampleFileMetadata, scan: sampleScanResponse});
+        expect(newScanResult).toEqual({fileMetadata: sampleFileMetadata, scan: newSampleScanResponse});
+    });
 });
