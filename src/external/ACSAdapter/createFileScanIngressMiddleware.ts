@@ -14,22 +14,31 @@ const createFileScanIngressMiddleware = (): CallableFunction => {
 
         if (amsreferences) {
             try {
-                const fileId = JSON.parse(amsreferences)[0];
-                const { fileScanner } = (window as any).chatAdapter.fileManager;  // eslint-disable-line @typescript-eslint/no-explicit-any
+                const scanFile = (fileId: string) => {
+                    const { fileScanner } = (window as any).chatAdapter.fileManager;  // eslint-disable-line @typescript-eslint/no-explicit-any
 
-                if (!fileScanner) {
-                    return next(activity);
-                }
+                    if (!fileScanner) {
+                        return next(activity);
+                    }
 
-                const scanResult = fileScanner.retrieveFileScanResult(fileId);
+                    const scanResult = fileScanner.retrieveFileScanResult(fileId);
+                    if (scanResult) {
+                        const {scan, fileMetadata} = scanResult;
+                        const index = activity.attachments.findIndex((attachment: any) => (attachment.name === fileMetadata.name)); // eslint-disable-line @typescript-eslint/no-explicit-any
 
-                if (scanResult) {
-                    const {scan} = scanResult;
-                    activity.channelData.fileScan = scan;
-                }
+                        if (!activity.channelData.fileScan) {
+                            activity.channelData.fileScan = [];
+                        }
 
-                fileScanner.addNext(fileId, next);
-                fileScanner.addActivity(fileId, activity);
+                        activity.channelData.fileScan[index] = scan;
+                    }
+
+                    fileScanner.addNext(fileId, next);
+                    fileScanner.addActivity(fileId, {...activity});
+                };
+
+                const fileIds = JSON.parse(amsreferences);
+                fileIds.forEach((fileId: string) => scanFile(fileId));
             } catch (e) {
                 console.error(e);
             }

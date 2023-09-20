@@ -61,13 +61,6 @@ class AMSFileScanner {
         this.queueScan();
     }
 
-    public addOrUpdateFile(id: string, fileMetadata: FileMetadata, scan: FileScanResponse): void {
-        this.scanResults?.set(id, {
-            fileMetadata,
-            scan
-        });
-    }
-
     public async queueScan(): Promise<void> {
         const interval = 7 * 1000;
 
@@ -83,6 +76,13 @@ class AMSFileScanner {
 
     public retrieveFileScanResult(id: string): FileScanResult | undefined {
         return this.scanResults?.get(id);
+    }
+
+    public addOrUpdateFile(id: string, fileMetadata: FileMetadata, scan: FileScanResponse): void {
+        this.scanResults?.set(id, {
+            fileMetadata,
+            scan
+        });
     }
 
     public addNext(id: string, next: Function): void {
@@ -109,7 +109,6 @@ class AMSFileScanner {
                     const {view_location, scan} = response;
 
                     this.addOrUpdateFile(id, scanResult.fileMetadata, scan);
-                    activity.channelData.fileScan = scan;
 
                     if (scan.status === AMSDownloadStatus.PASSED && next && activity) {
                         let blob: any; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -123,12 +122,17 @@ class AMSFileScanner {
                         const attachmentData = await getAttachments([file]);
                         const attachmentSizes = await getAttachmentSizes([file]);
 
-                        activity.attachments = attachmentData;
-                        activity.channelData.attachmentSizes = attachmentSizes;
+                        const index = activity.attachments.findIndex((attachment: any) => (attachment.name === fileMetadata.name)); // eslint-disable-line @typescript-eslint/no-explicit-any
+                        activity.channelData.fileScan[index] = scan;
+                        activity.attachments[index] = attachmentData[0];
+                        activity.channelData.attachmentSizes[index] = attachmentSizes[0];
+
                         next(activity); // Send updated activity to webchat
                     }
 
                     if (scan.status === AMSDownloadStatus.MALWARE && next && activity) {
+                        const index = activity.attachments.findIndex((attachment: any) => (attachment.name === fileMetadata.name)); // eslint-disable-line @typescript-eslint/no-explicit-any
+                        activity.channelData.fileScan[index] = scan;
                         next(activity);
                     }
                 } catch (e) {
