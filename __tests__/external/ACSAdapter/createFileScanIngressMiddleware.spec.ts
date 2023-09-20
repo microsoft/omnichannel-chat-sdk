@@ -32,4 +32,46 @@ describe('createFileScanIngressMiddleware', () => {
         expect(Object.keys(activity.channelData.metadata).indexOf("amsreferences") >= 0).toBe(true);
         expect((activity.channelData.metadata as any)["amsreferences"]).toBe(activity.channelData.metadata.amsReferences);
     });
+
+    it("createFileScanIngressMiddleware should populate 'activity.channelData.fileScan'", () => {
+        const fileMetadata = {id: "id", type: "type", name: "name", size: 0};
+        const scan = {status: "passed"};
+        const scanResult = {
+            fileMetadata,
+            scan
+        };
+
+        (global as any).window.chatAdapter = {
+            fileManager: {
+                fileScanner: {
+                    retrieveFileScanResult: jest.fn(() => scanResult),
+                    addNext: jest.fn(),
+                    addActivity: jest.fn()
+                }
+            }
+        }
+
+        const next = jest.fn();
+
+        const attachment = {contentType: fileMetadata.type, name: fileMetadata.name, thumbnailUrl: undefined};
+        const attachments = [attachment];
+        const amsReferences = [fileMetadata.id];
+        const activity = {
+            attachments,
+            channelData: {
+                metadata: {
+                    amsReferences: JSON.stringify(amsReferences)
+                }
+            }
+        };
+
+        createFileScanIngressMiddleware()()(next)(activity);
+
+        expect(next).toHaveBeenCalledWith(activity);
+        expect((activity.channelData as any).fileScan).toBeDefined();
+        expect((activity.channelData as any).fileScan).toEqual([scan]);
+        expect((global as any).window.chatAdapter.fileManager.fileScanner.retrieveFileScanResult).toHaveBeenCalled();
+        expect((global as any).window.chatAdapter.fileManager.fileScanner.addNext).toHaveBeenCalled();
+        expect((global as any).window.chatAdapter.fileManager.fileScanner.addActivity).toHaveBeenCalled();
+    });
 });
