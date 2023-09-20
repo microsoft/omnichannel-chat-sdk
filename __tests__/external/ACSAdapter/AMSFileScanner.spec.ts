@@ -122,4 +122,36 @@ describe("AMSFileScanner", () => {
         expect(scanResult).toEqual({...sampleScanResult, activity: sampleActivity});
         expect(scanResult?.activity).toEqual(sampleActivity);
     });
+
+    it("AMSFileScanner.scanFileCallback() where file scan status returns 'malware' should update the activity via next(activity)", async () => {
+        (global as any).setTimeout = jest.fn();
+
+        const amsClient: any = {};
+        amsClient.getViewStatus = jest.fn(() => ({
+            view_location: "view_location",
+            scan: {
+                status: "malware"
+            }
+        }));
+
+        const fileScanner = new AMSFileScanner(amsClient);
+
+        const fileMetadata = {id: "id", type: "type", name: "name", size: 0};
+        const attachment = {contentType: fileMetadata.type, name: fileMetadata.name, thumbnailUrl: undefined};
+        const attachments = [attachment];
+        const attachmentSizes = [fileMetadata.size];
+        const scan = {status: "in progress"};
+        const fileScan = [scan];
+
+        const sampleFileId = "fileId";
+        const sampleActivity = {type: "message", attachments, channelData: {fileScan, attachmentSizes}};
+        const sampleNext = jest.fn();
+        const sampleScanResult = {fileMetadata, scan, activity: sampleActivity, next: sampleNext};
+
+        await fileScanner.scanFileCallback(sampleScanResult, sampleFileId);
+
+        expect(sampleScanResult.next).toHaveBeenCalledWith(sampleScanResult.activity);
+        expect(sampleScanResult.activity.channelData.fileScan).toEqual(fileScan);
+        expect(sampleScanResult.activity.channelData.fileScan[0].status).toEqual("malware");
+    });
 });
