@@ -43,7 +43,9 @@ class AMSFileScanner {
     }
 
     public addOrUpdateFile(id: string, fileMetadata: FileMetadata, scan: FileScanResponse): void {
+        const scanResult = this.retrieveFileScanResult(id);
         this.scanResults?.set(id, {
+            ...(scanResult || {}),
             fileMetadata,
             scan
         });
