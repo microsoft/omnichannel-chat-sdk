@@ -55,6 +55,8 @@ export enum AMSDownloadStatus {
     INPROGRESS = "in progress"
 }
 
+export const defaultScanInterval = 7 * 1000;
+
 class AMSFileManager {
     private logger: ACSAdapterLogger | null;
     private amsClient: FramedClient;
@@ -66,8 +68,8 @@ class AMSFileManager {
         this.amsClient = amsClient;
         this.options = options;
 
-        if (this.options.fileScan) {
-            this.fileScanner = new AMSFileScanner(this.amsClient);
+        if (this.options.fileScan?.disabled === false) {
+            this.fileScanner = new AMSFileScanner(this.amsClient, this.options.fileScan?.interval || defaultScanInterval);
         }
     }
 
@@ -325,7 +327,7 @@ class AMSFileManager {
 
             const {view_location, scan} = response;
 
-            if (this.options.fileScan && scan && scan.status !== AMSDownloadStatus.PASSED) {
+            if (this.options.fileScan?.disabled === false && scan && scan?.status !== AMSDownloadStatus.PASSED) {
                 const file = new File([blob], uploadedFile.metadata.fileName, { type: uploadedFile.metadata.contentType });
 
                 const exceptionDetails = {

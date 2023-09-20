@@ -58,7 +58,7 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
     const defaultEgressMiddlewares = [createChannelDataEgressMiddleware({widgetId: omnichannelConfig.widgetId}), createFormatEgressTagsMiddleware()];
     let defaultIngressMiddlewares = [createFormatIngressTagsMiddleware()];
 
-    if (optionalParams.ACSAdapter?.fileScan) {
+    if (optionalParams.ACSAdapter?.fileScan?.disabled === false) {
         defaultIngressMiddlewares = [createFileScanIngressMiddleware(), ...defaultIngressMiddlewares];
     }
 
@@ -101,7 +101,7 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
 
         scenarioMarker.completeScenario(TelemetryEvent.CreateACSAdapter);
 
-        if (optionalParams.ACSAdapter?.fileScan) {
+        if (optionalParams.ACSAdapter?.fileScan?.disabled === false) {
             (window as any).chatAdapter = adapter;  // eslint-disable-line @typescript-eslint/no-explicit-any
         }
 

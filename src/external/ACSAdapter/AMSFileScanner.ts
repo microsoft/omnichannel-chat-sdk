@@ -1,7 +1,7 @@
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
 import sleep from "../../utils/sleep";
-import { AMSDownloadStatus } from "./AMSFileManager";
+import { AMSDownloadStatus, defaultScanInterval } from "./AMSFileManager";
 import activityUtils from "./activityUtils";
 
 interface FileScanResponse {
@@ -18,22 +18,22 @@ interface FileScanResult {
 class AMSFileScanner {
     public amsClient: FramedClient;
     public scanResults: Map<string, FileScanResult> | null = null;
+    public interval: number = defaultScanInterval;
 
-    constructor(amsClient: FramedClient) {
+    constructor(amsClient: FramedClient, interval: number = defaultScanInterval) {
         this.amsClient = amsClient;
         this.scanResults = new Map<string, FileScanResult>();
+        this.interval = interval;
         this.queueScan();
     }
 
     public async queueScan(): Promise<void> {
-        const interval = 7 * 1000;
-
         try {
             await this.scanFiles();
         } catch (e) {
             console.error(e);
         } finally {
-            await sleep(interval);
+            await sleep(this.interval);
             await this.queueScan();
         }
     }
