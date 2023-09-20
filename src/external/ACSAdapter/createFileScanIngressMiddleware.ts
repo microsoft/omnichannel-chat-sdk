@@ -7,7 +7,7 @@ const createFileScanIngressMiddleware = (): CallableFunction => {
 
         // Patch references
         if (!channelData?.metadata?.amsreferences && channelData?.metadata?.amsReferences) {
-            channelData.metadata.amsreferences = channelData.metadata.amsReferences;
+            activity.channelData.metadata.amsreferences = channelData.metadata.amsReferences;
         }
 
         const {metadata: {amsreferences}} = channelData;
