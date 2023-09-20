@@ -100,4 +100,26 @@ describe("AMSFileScanner", () => {
         expect(scanResult).toEqual({...sampleScanResult, next});
         expect(scanResult?.next).toEqual(next);
     });
+
+    it("AMSFileScanner.addActivity() should fill the activity property of the scan result", async () => {
+        (global as any).setTimeout = jest.fn();
+        const amsClient: any = {};
+        const fileScanner = new AMSFileScanner(amsClient);
+
+        fileScanner.scanFiles = jest.fn();
+
+        const sampleFileId = "fileId";
+        const sampleScanResult = {fileMetadata: {id: "id", type: "type"}, scan: {status: "status"}};
+
+        fileScanner.scanResults?.set(sampleFileId, sampleScanResult);
+
+        const sampleActivity = {type: "message", attachments: [{contentType: "", name: "", thumbnailUrl: undefined}], channelData: {fileScan: [{status: "in progress"}]}};
+        fileScanner.addActivity(sampleFileId, sampleActivity);
+
+        const scanResult = fileScanner.scanResults?.get(sampleFileId);
+
+        expect(fileScanner.scanResults?.size === 1).toBe(true);
+        expect(scanResult).toEqual({...sampleScanResult, activity: sampleActivity});
+        expect(scanResult?.activity).toEqual(sampleActivity);
+    });
 });
