@@ -102,6 +102,14 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
         scenarioMarker.completeScenario(TelemetryEvent.CreateACSAdapter);
 
         if (optionalParams.ACSAdapter?.fileScan?.disabled === false) {
+            if (adapter.end) {
+                const {end} = adapter;
+                adapter.end = () => {
+                    adapter.fileManager.fileScanner.end()
+                    end();
+                }
+            }
+
             (window as any).chatAdapter = adapter;  // eslint-disable-line @typescript-eslint/no-explicit-any
         }
 
