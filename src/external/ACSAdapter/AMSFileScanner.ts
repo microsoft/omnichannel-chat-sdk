@@ -2,6 +2,7 @@ import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
 import sleep from "../../utils/sleep";
 import { AMSDownloadStatus } from "./AMSFileManager";
+import activityUtils from "./activityUtils";
 
 interface FileScanResponse {
     status: string;
@@ -12,38 +13,6 @@ interface FileScanResult {
     scan: FileScanResponse;
     next?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     activity?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-}
-
-const getDataURL = (file: File): Promise<string | ArrayBuffer> => {
-    return new Promise((resolve) => {
-        const fileReader = new FileReader();
-        fileReader.onloadend = () => {
-            resolve((fileReader as any).result); // eslint-disable-line @typescript-eslint/no-explicit-any
-        };
-        fileReader.readAsDataURL(file);
-    });
-}
-
-const getAttachments = (files: File[]) => {
-    return Promise.all(
-        files.map(async (file: File) => {
-            if (file) {
-                const url = await getDataURL(file);
-                return {
-                    contentType: file.type,
-                    contentUrl: url,
-                    name: file.name,
-                    thumbnailUrl: file.type.match("(image|video|audio).*") ? url: undefined
-                }
-            }
-        })
-    )
-}
-
-const getAttachmentSizes = (files: File[]) => {
-    return files.map((file: File) => {
-        return file.size;
-    });
 }
 
 class AMSFileScanner {
@@ -114,8 +83,8 @@ class AMSFileScanner {
                         }
 
                         const file = new File([blob], fileMetadata.name as string, { type: fileMetadata.type});
-                        const attachmentData = await getAttachments([file]);
-                        const attachmentSizes = await getAttachmentSizes([file]);
+                        const attachmentData = await activityUtils.getAttachments([file]);
+                        const attachmentSizes = await activityUtils.getAttachmentSizes([file]);
 
                         const index = activity.attachments.findIndex((attachment: any) => (attachment.name === fileMetadata.name)); // eslint-disable-line @typescript-eslint/no-explicit-any
                         activity.channelData.fileScan[index] = scan;
