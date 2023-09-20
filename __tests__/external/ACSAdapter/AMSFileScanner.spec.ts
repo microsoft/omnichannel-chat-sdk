@@ -128,12 +128,14 @@ describe("AMSFileScanner", () => {
         (global as any).setTimeout = jest.fn();
 
         const amsClient: any = {};
-        amsClient.getViewStatus = jest.fn(() => ({
+        const sampleViewStatusResponse = {
             view_location: "view_location",
             scan: {
                 status: "malware"
             }
-        }));
+        };
+
+        amsClient.getViewStatus = jest.fn(() => sampleViewStatusResponse);
 
         const fileScanner = new AMSFileScanner(amsClient);
 
@@ -153,7 +155,7 @@ describe("AMSFileScanner", () => {
 
         expect(sampleScanResult.next).toHaveBeenCalledWith(sampleScanResult.activity);
         expect(sampleScanResult.activity.channelData.fileScan).toEqual(fileScan);
-        expect(sampleScanResult.activity.channelData.fileScan[0].status).toEqual("malware");
+        expect(sampleScanResult.activity.channelData.fileScan[0].status).toEqual(sampleViewStatusResponse.scan.status);
     });
 
     it("AMSFileScanner.scanFileCallback() where file scan status returns 'passed' should update the activity via next(activity)", async () => {
@@ -196,6 +198,6 @@ describe("AMSFileScanner", () => {
         expect(amsClient.getView).toHaveBeenCalled();
         expect(sampleScanResult.next).toHaveBeenCalledWith(sampleScanResult.activity);
         expect(sampleScanResult.activity.channelData.fileScan).toEqual(fileScan);
-        expect(sampleScanResult.activity.channelData.fileScan[0].status).toEqual("passed");
+        expect(sampleScanResult.activity.channelData.fileScan[0].status).toEqual(sampleViewStatusResponse.scan.status);
     });
 });
