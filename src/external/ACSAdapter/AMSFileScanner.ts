@@ -1,6 +1,7 @@
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
 import sleep from "../../utils/sleep";
+import { AMSDownloadStatus } from "./AMSFileManager";
 
 interface FileScanResponse {
     status: string;
@@ -11,12 +12,6 @@ interface FileScanResult {
     scan: FileScanResponse;
     next?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     activity?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-}
-
-enum AMSDownloadStatus {
-    PASSED = "passed",
-    MALWARE = "malware",
-    INPROGRESS = "in progress"
 }
 
 const getDataURL = (file: File): Promise<string | ArrayBuffer> => {
@@ -115,7 +110,7 @@ class AMSFileScanner {
                         try {
                             blob = await this.amsClient.getView(fileMetadata, view_location); // eslint-disable-line @typescript-eslint/no-explicit-any
                         } catch (error) {
-                            console.log(error);
+                            console.error(error);
                         }
 
                         const file = new File([blob], fileMetadata.name as string, { type: fileMetadata.type});
@@ -126,6 +121,15 @@ class AMSFileScanner {
                         activity.channelData.fileScan[index] = scan;
                         activity.attachments[index] = attachmentData[0];
                         activity.channelData.attachmentSizes[index] = attachmentSizes[0];
+
+                        const hasMultipleAttachments = index > 0;
+                        if (hasMultipleAttachments) {
+                            const {metadata: {amsreferences}} = activity.channelData;
+                            const fileIds = JSON.parse(amsreferences);
+                            fileIds.forEach((fileId: string) => {
+                                this.addActivity(fileId, activity);
+                            });
+                        }
 
                         next(activity); // Send updated activity to webchat
                     }

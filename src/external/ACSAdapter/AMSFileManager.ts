@@ -49,7 +49,7 @@ enum AMSFileManagerEvent {
     CreateFileMetadataProperty = 'CreateFileMetadataProperty'
 }
 
-enum AMSDownloadStatus {
+export enum AMSDownloadStatus {
     PASSED = "passed",
     MALWARE = "malware",
     INPROGRESS = "in progress"
