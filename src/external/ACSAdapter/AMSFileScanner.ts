@@ -1,5 +1,6 @@
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
+import sleep from "../../utils/sleep";
 
 interface FileScanResponse {
     status: string;
@@ -57,7 +58,7 @@ class AMSFileScanner {
     constructor(amsClient: FramedClient) {
         this.amsClient = amsClient;
         this.scanResults = new Map<string, FileScanResult>();
-        this.startScan();
+        this.queueScan();
     }
 
     public addOrUpdateFile(id: string, fileMetadata: FileMetadata, scan: FileScanResponse): void {
@@ -67,9 +68,38 @@ class AMSFileScanner {
         });
     }
 
-    public startScan(): void {
+    public async queueScan(): Promise<void> {
         const interval = 7 * 1000;
 
+        try {
+            await this.scanFiles();
+        } catch (e) {
+            console.error(e);
+        } finally {
+            await sleep(interval);
+            await this.queueScan();
+        }
+    }
+
+    public retrieveFileScanResult(id: string): FileScanResult | undefined {
+        return this.scanResults?.get(id);
+    }
+
+    public addNext(id: string, next: Function): void {
+        const scanResult = this.scanResults?.get(id);
+        if (scanResult) {
+            this.scanResults?.set(id, {...scanResult, next});
+        }
+    }
+
+    public addActivity(id: string, activity: any): void {  // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+        const scanResult = this.scanResults?.get(id);
+        if (scanResult) {
+            this.scanResults?.set(id, {...scanResult, activity});
+        }
+    }
+
+    public scanFiles(): Promise<void> {
         const scan = async (scanResult: FileScanResult, id: string) => {
             const {fileMetadata, next, activity} = scanResult;
 
@@ -107,29 +137,14 @@ class AMSFileScanner {
             }
         }
 
-        const scanFiles = () => {
+        this.scanResults?.forEach(async (scanResult, id) => {await scan(scanResult, id)});
+
+        // eslint-disable-next-line no-async-promise-executor
+        return new Promise(async (resolve) => {
             this.scanResults?.forEach(async (scanResult, id) => {await scan(scanResult, id)});
-        };
-
-        setInterval(scanFiles, interval);
-    }
-
-    public retrieveFileScanResult(id: string): FileScanResult | undefined {
-        return this.scanResults?.get(id);
-    }
-
-    public addNext(id: string, next: Function): void {
-        const scanResult = this.scanResults?.get(id);
-        if (scanResult) {
-            this.scanResults?.set(id, {...scanResult, next});
-        }
-    }
-
-    public addActivity(id: string, activity: any): void {  // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
-        const scanResult = this.scanResults?.get(id);
-        if (scanResult) {
-            this.scanResults?.set(id, {...scanResult, activity});
-        }
+            await sleep(1000);
+            resolve();
+        });
     }
 }
 
