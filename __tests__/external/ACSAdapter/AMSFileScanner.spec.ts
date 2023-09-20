@@ -200,4 +200,18 @@ describe("AMSFileScanner", () => {
         expect(sampleScanResult.activity.channelData.fileScan).toEqual(fileScan);
         expect(sampleScanResult.activity.channelData.fileScan[0].status).toEqual(sampleViewStatusResponse.scan.status);
     });
+
+    it("AMSFileScanner.end() should set internal attribute shouldQueueScan to false", () => {
+        (global as any).setTimeout = jest.fn();
+        const amsClient: any = {};
+        const fileScanner = new AMSFileScanner(amsClient);
+
+        const beforeValue = (fileScanner as any).shouldQueueScan;
+        fileScanner.end();
+
+        const afterValue = (fileScanner as any).shouldQueueScan;
+
+        expect(beforeValue).toBe(true);
+        expect(afterValue).toBe(false);
+    });
 });
