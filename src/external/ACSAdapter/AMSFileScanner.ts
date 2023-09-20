@@ -19,22 +19,26 @@ class AMSFileScanner {
     public amsClient: FramedClient;
     public scanResults: Map<string, FileScanResult> | null = null;
     public interval: number = defaultScanInterval;
+    private shouldQueueScan: boolean;
 
     constructor(amsClient: FramedClient, interval: number = defaultScanInterval) {
         this.amsClient = amsClient;
         this.scanResults = new Map<string, FileScanResult>();
         this.interval = interval;
+        this.shouldQueueScan = false;
         this.queueScan();
     }
 
     public async queueScan(): Promise<void> {
+        this.shouldQueueScan = true;
+
         try {
             await this.scanFiles();
         } catch (e) {
             console.error(e);
         } finally {
             await sleep(this.interval);
-            await this.queueScan();
+            this.shouldQueueScan && await this.queueScan();
         }
     }
 
@@ -124,6 +128,10 @@ class AMSFileScanner {
             await sleep(1000);
             resolve();
         });
+    }
+
+    public end(): void {
+        this.shouldQueueScan = false;
     }
 }
 
