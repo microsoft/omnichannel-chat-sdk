@@ -6,7 +6,7 @@ interface ChatAdapterOptionalParams {
         }
     };
     ACSAdapter?: {
-        fileScan: {
+        fileScan?: {
             disabled?: boolean,
             interval?: number
         },
