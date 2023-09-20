@@ -1,4 +1,5 @@
 import AMSFileScanner from '../../../src/external/ACSAdapter/AMSFileScanner';
+import activityUtils from '../../../src/external/ACSAdapter/activityUtils';
 
 describe("AMSFileScanner", () => {
 
@@ -153,5 +154,48 @@ describe("AMSFileScanner", () => {
         expect(sampleScanResult.next).toHaveBeenCalledWith(sampleScanResult.activity);
         expect(sampleScanResult.activity.channelData.fileScan).toEqual(fileScan);
         expect(sampleScanResult.activity.channelData.fileScan[0].status).toEqual("malware");
+    });
+
+    it("AMSFileScanner.scanFileCallback() where file scan status returns 'passed' should update the activity via next(activity)", async () => {
+        (global as any).setTimeout = jest.fn();
+        (global as any).File = jest.fn();
+
+        jest.spyOn(activityUtils, "getDataURL").mockResolvedValue(Promise.resolve(""));
+        jest.spyOn(activityUtils, "getAttachments").mockResolvedValue(Promise.resolve([""]));
+
+        const amsClient: any = {};
+        const sampleViewStatusResponse = {
+            view_location: "view_location",
+            scan: {
+                status: "passed"
+            }
+        };
+
+        amsClient.getViewStatus = jest.fn(() => sampleViewStatusResponse);
+        amsClient.getView = jest.fn();
+
+        const fileScanner = new AMSFileScanner(amsClient);
+        jest.spyOn(fileScanner, "addOrUpdateFile");
+
+        const fileMetadata = {id: "id", type: "type", name: "name", size: 0};
+        const attachment = {contentType: fileMetadata.type, name: fileMetadata.name, thumbnailUrl: undefined};
+        const attachments = [attachment];
+        const attachmentSizes = [fileMetadata.size];
+        const scan = {status: "in progress"};
+        const fileScan = [scan];
+
+        const sampleFileId = "fileId";
+        const sampleActivity = {type: "message", attachments, channelData: {fileScan, attachmentSizes}};
+        const sampleNext = jest.fn();
+        const sampleScanResult = {fileMetadata, scan, activity: sampleActivity, next: sampleNext};
+
+        await fileScanner.scanFileCallback(sampleScanResult, sampleFileId);
+
+        expect(amsClient.getViewStatus).toHaveBeenCalled();
+        expect(fileScanner.addOrUpdateFile).toHaveBeenCalledWith(sampleFileId, sampleScanResult.fileMetadata, sampleViewStatusResponse.scan);
+        expect(amsClient.getView).toHaveBeenCalled();
+        expect(sampleScanResult.next).toHaveBeenCalledWith(sampleScanResult.activity);
+        expect(sampleScanResult.activity.channelData.fileScan).toEqual(fileScan);
+        expect(sampleScanResult.activity.channelData.fileScan[0].status).toEqual("passed");
     });
 });
