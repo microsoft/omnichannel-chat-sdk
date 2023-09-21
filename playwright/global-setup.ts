@@ -2,11 +2,6 @@ import { FullConfig } from '@playwright/test';
 import fetchTestConfig from './utils/fetchTestConfig';
 
 const globalSetup = (config: FullConfig) => {
-    const projectArg = process.argv.find(arg => arg.includes('project'))
-    
-    // Get the project's name after the = sign
-    const projectName = projectArg.split("=")[1];
-    process.env.projectName = projectName;
 
     const testConfig = fetchTestConfig();
 

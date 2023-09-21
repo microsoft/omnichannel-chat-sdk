@@ -6,8 +6,8 @@
   "scripts": {
     "build:babel": "babel ../lib -d dist",
     "build:esbuild": "node esbuild.config.js",
-    "test:integrations": "npx playwright test --project=integrations",
-    "test:performance": "npx playwright test --project=performance"
+    "test:integrations": "set projectName=integrations&& npx playwright test --project=integrations",
+    "test:performance": "set projectName=performance&& npx playwright test --project=performance"
   },
   "author": "Microsoft Corporation",
   "license": "MIT",
@@ -17,8 +17,12 @@
     "@babel/preset-env": "^7.20.2",
     "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
     "@esbuild-plugins/node-modules-polyfill": "^0.1.4",
-    "@playwright/test": "^1.28.1",
+    "@playwright/test": "^1.37.1",
     "esbuild": "^0.15.16",
     "yaml": "^2.2.2"
+  },
+  "dependencies": {
+    "axios": "^1.5.0",
+    "date-fns": "^2.30.0"
   }
 }
