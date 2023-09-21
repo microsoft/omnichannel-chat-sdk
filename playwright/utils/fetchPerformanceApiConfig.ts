@@ -6,8 +6,6 @@ const fetchPerformanceApiConfig = (scenario = ""): object => {
 
     const performanceAPIConfig: any = {};
     performanceAPIConfig.apiUrl = testConfig["DefaultSettings"].apiUrl;
-    performanceAPIConfig.threshold = testConfig["DefaultSettings"].threshold;
-
 
     if (!scenario) {
         return performanceAPIConfig;
@@ -19,7 +17,6 @@ const fetchPerformanceApiConfig = (scenario = ""): object => {
 
     // Overwrite value only if it exists
     performanceAPIConfig.apiUrl = testConfig[scenario]?.apiUrl || performanceAPIConfig.apiUrl;
-    performanceAPIConfig.threshold = testConfig[scenario]?.threshold || performanceAPIConfig.threshold;
 
     return performanceAPIConfig;
 }
