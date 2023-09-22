@@ -49,7 +49,7 @@ enum AMSFileManagerEvent {
     CreateFileMetadataProperty = 'CreateFileMetadataProperty'
 }
 
-export enum AMSDownloadStatus {
+export enum AMSViewScanStatus {
     PASSED = "passed",
     MALWARE = "malware",
     INPROGRESS = "in progress"
@@ -327,7 +327,7 @@ class AMSFileManager {
 
             const {view_location, scan} = response;
 
-            if (this.options.fileScan?.disabled === false && scan && scan?.status !== AMSDownloadStatus.PASSED) {
+            if (this.options.fileScan?.disabled === false && scan && scan?.status !== AMSViewScanStatus.PASSED) {
                 const file = new File([blob], uploadedFile.metadata.fileName, { type: uploadedFile.metadata.contentType });
 
                 const exceptionDetails = {

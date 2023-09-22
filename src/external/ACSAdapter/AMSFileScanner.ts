@@ -1,7 +1,7 @@
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
 import sleep from "../../utils/sleep";
-import { AMSDownloadStatus, defaultScanInterval } from "./AMSFileManager";
+import { AMSViewScanStatus, defaultScanInterval } from "./AMSFileManager";
 import activityUtils from "./activityUtils";
 
 interface FileScanResponse {
@@ -72,14 +72,14 @@ class AMSFileScanner {
     public async scanFileCallback(scanResult: FileScanResult, id: string): Promise<void> {
         const {fileMetadata, next, activity} = scanResult;
 
-        if (scanResult?.scan?.status === AMSDownloadStatus.INPROGRESS) {
+        if (scanResult?.scan?.status === AMSViewScanStatus.INPROGRESS) {
             try {
                 const response: any = await this.amsClient.getViewStatus(fileMetadata); // eslint-disable-line @typescript-eslint/no-explicit-any
                 const {view_location, scan} = response;
 
                 this.addOrUpdateFile(id, scanResult.fileMetadata, scan);
 
-                if (scan.status === AMSDownloadStatus.PASSED && next && activity) {
+                if (scan.status === AMSViewScanStatus.PASSED && next && activity) {
                     let blob: any; // eslint-disable-line @typescript-eslint/no-explicit-any
                     try {
                         blob = await this.amsClient.getView(fileMetadata, view_location); // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -108,7 +108,7 @@ class AMSFileScanner {
                     next(activity); // Send updated activity to webchat
                 }
 
-                if (scan.status === AMSDownloadStatus.MALWARE && next && activity) {
+                if (scan.status === AMSViewScanStatus.MALWARE && next && activity) {
                     const index = activity.attachments.findIndex((attachment: any) => (attachment.name === fileMetadata.name)); // eslint-disable-line @typescript-eslint/no-explicit-any
                     activity.channelData.fileScan[index] = scan;
                     next(activity);
