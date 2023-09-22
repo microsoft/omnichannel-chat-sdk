@@ -116,6 +116,8 @@ class AMSFileScanner {
             } catch (e) {
                 console.error(e);
             }
+
+            await sleep(1000);
         }
     }
 
@@ -125,7 +127,6 @@ class AMSFileScanner {
         // eslint-disable-next-line no-async-promise-executor
         return new Promise(async (resolve) => {
             this.scanResults?.forEach(async (scanResult, id) => {await this.scanFileCallback(scanResult, id)});
-            await sleep(1000);
             resolve();
         });
     }
