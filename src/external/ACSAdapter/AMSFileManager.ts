@@ -55,7 +55,7 @@ export enum AMSViewScanStatus {
     INPROGRESS = "in progress"
 }
 
-export const defaultScanInterval = 7 * 1000;
+export const defaultScanPollingInterval = 7 * 1000;
 
 class AMSFileManager {
     private logger: ACSAdapterLogger | null;
@@ -69,7 +69,7 @@ class AMSFileManager {
         this.options = options;
 
         if (this.options.fileScan?.disabled === false) {
-            this.fileScanner = new AMSFileScanner(this.amsClient, this.options.fileScan?.interval || defaultScanInterval);
+            this.fileScanner = new AMSFileScanner(this.amsClient, this.options.fileScan?.pollingInterval || defaultScanPollingInterval);
         }
     }
 
