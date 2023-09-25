@@ -96,8 +96,6 @@ class AMSFileScanner {
     }
 
     public scanFiles(): Promise<void> {
-        this.scanResults?.forEach(async (scanResult, id) => {await this.scanFileCallback(scanResult, id)});
-
         // eslint-disable-next-line no-async-promise-executor
         return new Promise(async (resolve) => {
             this.scanResults?.forEach(async (scanResult, id) => {await this.scanFileCallback(scanResult, id)});
