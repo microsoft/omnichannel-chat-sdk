@@ -185,12 +185,15 @@ describe("AMSFileScanner", () => {
     });
 
     it("AMSFileScanner.scanFileCallback() where file scan status returns 'passed' should update the activity via next(activity)", async () => {
+        const fileMetadata = {id: "id", type: "type", name: "name", size: 0};
+        const attachment = {contentType: fileMetadata.type, name: fileMetadata.name, thumbnailUrl: undefined};
+
         (global as any).setTimeout = jest.fn();
-        (global as any).File = jest.fn();
+        (global as any).File = jest.fn(() => fileMetadata);
         WebUtils.sleep = jest.fn();
 
         jest.spyOn(activityUtils, "getDataURL").mockResolvedValue(Promise.resolve(""));
-        jest.spyOn(activityUtils, "getAttachments").mockResolvedValue(Promise.resolve([""]));
+        jest.spyOn(activityUtils, "getAttachments").mockResolvedValue(Promise.resolve([attachment]));
 
         const amsClient: any = {};
         const sampleViewStatusResponse = {
@@ -208,8 +211,6 @@ describe("AMSFileScanner", () => {
 
         jest.spyOn(fileScanner, "addOrUpdateFile");
 
-        const fileMetadata = {id: "id", type: "type", name: "name", size: 0};
-        const attachment = {contentType: fileMetadata.type, name: fileMetadata.name, thumbnailUrl: undefined};
         const attachments = [attachment];
         const attachmentSizes = [fileMetadata.size];
         const scan = {status: "in progress"};
