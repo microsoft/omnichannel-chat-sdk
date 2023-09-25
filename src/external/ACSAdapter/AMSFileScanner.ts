@@ -81,24 +81,7 @@ class AMSFileScanner {
                 this.addOrUpdateFile(id, scanResult.fileMetadata, scan);
 
                 if (scan.status === AMSViewScanStatus.PASSED && next && activity) {
-                    const blob = await this.retrieveFileBlob(fileMetadata, view_location);
-                    const file = new File([blob], fileMetadata.name as string, { type: fileMetadata.type});
-
-                    await this.addAttachmentToActivity(activity, file);
-
-                    const index = activity.attachments.findIndex((attachment: any) => (attachment.name === file.name)); // eslint-disable-line @typescript-eslint/no-explicit-any
-                    activity.channelData.fileScan[index] = scan;
-
-                    const hasMultipleAttachments = index > 0;
-                    if (hasMultipleAttachments) {
-                        const {metadata: {amsreferences}} = activity.channelData;
-                        const fileIds = JSON.parse(amsreferences);
-                        fileIds.forEach((fileId: string) => {
-                            this.addActivity(fileId, activity);
-                        });
-                    }
-
-                    next(activity); // Send updated activity to webchat
+                   await this.renderAttachmentActivity(scanResult, view_location);
                 }
 
                 if (scan.status === AMSViewScanStatus.MALWARE && next && activity) {
@@ -144,6 +127,28 @@ class AMSFileScanner {
         const index = activity.attachments.findIndex((attachment: any) => (attachment.name === file.name)); // eslint-disable-line @typescript-eslint/no-explicit-any
         activity.attachments[index] = attachmentData[0];
         activity.channelData.attachmentSizes[index] = attachmentSizes[0];
+    }
+
+    public async renderAttachmentActivity(scanResult: FileScanResult, view_location: any): Promise<void> { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+        const {fileMetadata, next, activity} = scanResult;
+        const blob = await this.retrieveFileBlob(fileMetadata, view_location);
+        const file = new File([blob], fileMetadata.name as string, { type: fileMetadata.type});
+
+        await this.addAttachmentToActivity(activity, file);
+
+        const index = activity.attachments.findIndex((attachment: any) => (attachment.name === file.name)); // eslint-disable-line @typescript-eslint/no-explicit-any
+        activity.channelData.fileScan[index] = {status: AMSViewScanStatus.PASSED};
+
+        const hasMultipleAttachments = index > 0;
+        if (hasMultipleAttachments) {
+            const {metadata: {amsreferences}} = activity.channelData;
+            const fileIds = JSON.parse(amsreferences);
+            fileIds.forEach((fileId: string) => {
+                this.addActivity(fileId, activity);
+            });
+        }
+
+        next(activity); // Send updated activity to webchat
     }
 
     public async renderMalwareActivity(scanResult: FileScanResult): Promise<void> { // eslint-disable-line @typescript-eslint/no-explicit-any
