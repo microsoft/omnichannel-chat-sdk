@@ -102,9 +102,7 @@ class AMSFileScanner {
                 }
 
                 if (scan.status === AMSViewScanStatus.MALWARE && next && activity) {
-                    const index = activity.attachments.findIndex((attachment: any) => (attachment.name === fileMetadata.name)); // eslint-disable-line @typescript-eslint/no-explicit-any
-                    activity.channelData.fileScan[index] = scan;
-                    next(activity);
+                    await this.renderMalwareActivity(scanResult);
                 }
             } catch (e) {
                 console.error(e);
@@ -146,6 +144,13 @@ class AMSFileScanner {
         const index = activity.attachments.findIndex((attachment: any) => (attachment.name === file.name)); // eslint-disable-line @typescript-eslint/no-explicit-any
         activity.attachments[index] = attachmentData[0];
         activity.channelData.attachmentSizes[index] = attachmentSizes[0];
+    }
+
+    public async renderMalwareActivity(scanResult: FileScanResult): Promise<void> { // eslint-disable-line @typescript-eslint/no-explicit-any
+        const {fileMetadata, next, activity} = scanResult;
+        const index = activity.attachments.findIndex((attachment: any) => (attachment.name === fileMetadata.name)); // eslint-disable-line @typescript-eslint/no-explicit-any
+        activity.channelData.fileScan[index] = {status: AMSViewScanStatus.MALWARE};
+        next(activity);
     }
 }
 
