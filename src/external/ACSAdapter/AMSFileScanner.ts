@@ -1,7 +1,7 @@
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
 import WebUtils from "../../utils/WebUtils";
-import { AMSViewScanStatus, defaultScanPollingInterval } from "./AMSFileManager";
+import { AMSViewScanStatus } from "./AMSFileManager";
 import activityUtils from "./activityUtils";
 
 interface FileScanResponse {
@@ -15,19 +15,27 @@ interface FileScanResult {
     activity?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
+const defaultScanPollingInterval = 7 * 1000;
+const defaultScanStatusRetrievalDelay = 1000;
+
+interface AMSFileScannerOptions {
+    pollingInterval?: number;
+    scanStatusRetrievalDelay?: number;
+}
+
 class AMSFileScanner {
     public amsClient: FramedClient;
     public scanResults: Map<string, FileScanResult> | null = null;
-    public scanPollingInterval: number = defaultScanPollingInterval;
     private shouldQueueScan: boolean;
     private test: boolean;
+    private options: AMSFileScannerOptions;
 
-    constructor(amsClient: FramedClient, scanPollingInterval: number = defaultScanPollingInterval) {
+    constructor(amsClient: FramedClient, options: AMSFileScannerOptions = {}) {
         this.amsClient = amsClient;
         this.scanResults = new Map<string, FileScanResult>();
-        this.scanPollingInterval = scanPollingInterval;
         this.shouldQueueScan = false;
         this.test = false;
+        this.options = options;
         this.queueScan();
     }
 
@@ -38,7 +46,7 @@ class AMSFileScanner {
         } catch (e) {
             console.error(e);
         } finally {
-            await WebUtils.sleep(this.scanPollingInterval);
+            await WebUtils.sleep(this.options?.pollingInterval || defaultScanPollingInterval);
             this.shouldQueueScan && !this.test && await this.queueScan();
         }
     }
@@ -91,7 +99,7 @@ class AMSFileScanner {
                 console.error(e);
             }
 
-            await WebUtils.sleep(1000);
+            await WebUtils.sleep(this.options?.scanStatusRetrievalDelay || defaultScanStatusRetrievalDelay);
         }
     }
 
