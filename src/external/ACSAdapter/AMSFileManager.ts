@@ -1,5 +1,6 @@
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
 import { ACSAdapterLogger } from "../../utils/loggers";
+import AMSFileScanner from "./AMSFileScanner";
 
 type FileMetadata = Record<string, string>;
 
@@ -48,13 +49,27 @@ enum AMSFileManagerEvent {
     CreateFileMetadataProperty = 'CreateFileMetadataProperty'
 }
 
+export enum AMSViewScanStatus {
+    PASSED = "passed",
+    MALWARE = "malware",
+    INPROGRESS = "in progress"
+}
+
 class AMSFileManager {
     private logger: ACSAdapterLogger | null;
     private amsClient: FramedClient;
+    private options: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    public fileScanner: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-    public constructor(amsClient: FramedClient, logger: ACSAdapterLogger | null = null) {
+    public constructor(amsClient: FramedClient, logger: ACSAdapterLogger | null = null, options: any = {}) {  // eslint-disable-line @typescript-eslint/no-explicit-any
         this.logger = logger;
         this.amsClient = amsClient;
+        this.options = options;
+
+        if (this.options.fileScan?.disabled === false) {
+            const options = {...this.options.fileScan};
+            this.fileScanner = new AMSFileScanner(this.amsClient, options);
+        }
     }
 
     public async uploadFiles(files: IFileUploadRequest[]): Promise<IUploadedFile[]> {
@@ -307,9 +322,25 @@ class AMSFileManager {
                 return undefined;
             }
 
-            const {view_location} = response;
-
             let blob: any;  // eslint-disable-line @typescript-eslint/no-explicit-any
+
+            const {view_location, scan} = response;
+
+            if (this.options.fileScan?.disabled === false && scan && scan?.status !== AMSViewScanStatus.PASSED) {
+                const file = new File([blob], uploadedFile.metadata.fileName, { type: uploadedFile.metadata.contentType });
+
+                const exceptionDetails = {
+                    response: "InvalidFileScanResult"
+                };
+
+                this.fileScanner.addOrUpdateFile(fileMetadata.id, fileMetadata, scan);
+
+                this.logger?.failScenario(AMSFileManagerEvent.AMSDownload, {
+                    ExceptionDetails: JSON.stringify(exceptionDetails)
+                });
+
+                return file;
+            }
 
             try {
                 blob = await this.amsClient.getView(fileMetadata, view_location);  // eslint-disable-line @typescript-eslint/no-explicit-any
