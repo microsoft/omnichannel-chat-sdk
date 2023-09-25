@@ -1,6 +1,6 @@
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
-import sleep from "../../utils/sleep";
+import WebUtils from "../../utils/WebUtils";
 import { AMSViewScanStatus, defaultScanPollingInterval } from "./AMSFileManager";
 import activityUtils from "./activityUtils";
 
@@ -20,25 +20,26 @@ class AMSFileScanner {
     public scanResults: Map<string, FileScanResult> | null = null;
     public scanPollingInterval: number = defaultScanPollingInterval;
     private shouldQueueScan: boolean;
+    private test: boolean;
 
     constructor(amsClient: FramedClient, scanPollingInterval: number = defaultScanPollingInterval) {
         this.amsClient = amsClient;
         this.scanResults = new Map<string, FileScanResult>();
         this.scanPollingInterval = scanPollingInterval;
         this.shouldQueueScan = false;
+        this.test = false;
         this.queueScan();
     }
 
     public async queueScan(): Promise<void> {
         this.shouldQueueScan = true;
-
         try {
             await this.scanFiles();
         } catch (e) {
             console.error(e);
         } finally {
-            await sleep(this.scanPollingInterval);
-            this.shouldQueueScan && await this.queueScan();
+            await WebUtils.sleep(this.scanPollingInterval);
+            this.shouldQueueScan && !this.test && await this.queueScan();
         }
     }
 
@@ -110,6 +111,8 @@ class AMSFileScanner {
             } catch (e) {
                 console.error(e);
             }
+
+            await WebUtils.sleep(1000);
         }
     }
 
@@ -119,7 +122,6 @@ class AMSFileScanner {
         // eslint-disable-next-line no-async-promise-executor
         return new Promise(async (resolve) => {
             this.scanResults?.forEach(async (scanResult, id) => {await this.scanFileCallback(scanResult, id)});
-            await sleep(1000);
             resolve();
         });
     }

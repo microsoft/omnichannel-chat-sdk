@@ -1,33 +1,45 @@
 import AMSFileScanner from '../../../src/external/ACSAdapter/AMSFileScanner';
 import activityUtils from '../../../src/external/ACSAdapter/activityUtils';
+import WebUtils from '../../../src/utils/WebUtils';
 
 describe("AMSFileScanner", () => {
 
-    it("AMSFileScanner initialization should call setTimeout()", () => {
+    it("AMSFileScanner initialization should call AMSFileScanner.queueScan()", () => {
         (global as any).setTimeout = jest.fn();
+        WebUtils.sleep = jest.fn();
+
+        jest.spyOn(AMSFileScanner.prototype, 'queueScan');
 
         const amsClient: any = {};
-        new AMSFileScanner(amsClient);
+        const fileScanner = new AMSFileScanner(amsClient);
+        (fileScanner as any).shouldQueueScan = false;
 
-        expect((global as any).setTimeout).toHaveBeenCalled();
+        expect(AMSFileScanner.prototype.queueScan).toHaveBeenCalled();
     });
 
     it("AMSFileScanner.queueScan() should call AMSFileScanner.scanFiles()", async () => {
         (global as any).setTimeout = jest.fn();
+        WebUtils.sleep = jest.fn();
+
+        jest.spyOn(AMSFileScanner.prototype, 'queueScan');
+
         const amsClient: any = {};
         const fileScanner = new AMSFileScanner(amsClient);
+        (fileScanner as any).test = true;
 
         fileScanner.scanFiles = jest.fn();
-        fileScanner.queueScan();
+        await fileScanner.queueScan();
 
-        expect((global as any).setTimeout).toHaveBeenCalled();
         expect(fileScanner.scanFiles).toHaveBeenCalledTimes(1);
     });
 
     it("AMSFileScanner.retrieveFileScanResult() of an existing scan result should return the scan result", async () => {
         (global as any).setTimeout = jest.fn();
+        WebUtils.sleep = jest.fn();
+
         const amsClient: any = {};
         const fileScanner = new AMSFileScanner(amsClient);
+        (fileScanner as any).test = true;
 
         fileScanner.scanFiles = jest.fn();
 
@@ -41,8 +53,11 @@ describe("AMSFileScanner", () => {
 
     it("AMSFileScanner.addOrUpdateFile() should add a new scan result if not existing", async () => {
         (global as any).setTimeout = jest.fn();
+        WebUtils.sleep = jest.fn();
+
         const amsClient: any = {};
         const fileScanner = new AMSFileScanner(amsClient);
+        (fileScanner as any).test = true;
 
         fileScanner.scanFiles = jest.fn();
 
@@ -59,8 +74,11 @@ describe("AMSFileScanner", () => {
 
     it("AMSFileScanner.addOrUpdateFile() should update the scan result if existing", async () => {
         (global as any).setTimeout = jest.fn();
+        WebUtils.sleep = jest.fn();
+
         const amsClient: any = {};
         const fileScanner = new AMSFileScanner(amsClient);
+        (fileScanner as any).test = true;
 
         fileScanner.scanFiles = jest.fn();
 
@@ -82,8 +100,11 @@ describe("AMSFileScanner", () => {
 
     it("AMSFileScanner.addNext() should fill the next property of the scan result", async () => {
         (global as any).setTimeout = jest.fn();
+        WebUtils.sleep = jest.fn();
+
         const amsClient: any = {};
         const fileScanner = new AMSFileScanner(amsClient);
+        (fileScanner as any).test = true;
 
         fileScanner.scanFiles = jest.fn();
 
@@ -104,8 +125,11 @@ describe("AMSFileScanner", () => {
 
     it("AMSFileScanner.addActivity() should fill the activity property of the scan result", async () => {
         (global as any).setTimeout = jest.fn();
+        WebUtils.sleep = jest.fn();
+
         const amsClient: any = {};
         const fileScanner = new AMSFileScanner(amsClient);
+        (fileScanner as any).test = true;
 
         fileScanner.scanFiles = jest.fn();
 
@@ -126,6 +150,7 @@ describe("AMSFileScanner", () => {
 
     it("AMSFileScanner.scanFileCallback() where file scan status returns 'malware' should update the activity via next(activity)", async () => {
         (global as any).setTimeout = jest.fn();
+        WebUtils.sleep = jest.fn();
 
         const amsClient: any = {};
         const sampleViewStatusResponse = {
@@ -138,6 +163,7 @@ describe("AMSFileScanner", () => {
         amsClient.getViewStatus = jest.fn(() => sampleViewStatusResponse);
 
         const fileScanner = new AMSFileScanner(amsClient);
+        (fileScanner as any).test = true;
 
         const fileMetadata = {id: "id", type: "type", name: "name", size: 0};
         const attachment = {contentType: fileMetadata.type, name: fileMetadata.name, thumbnailUrl: undefined};
@@ -161,6 +187,7 @@ describe("AMSFileScanner", () => {
     it("AMSFileScanner.scanFileCallback() where file scan status returns 'passed' should update the activity via next(activity)", async () => {
         (global as any).setTimeout = jest.fn();
         (global as any).File = jest.fn();
+        WebUtils.sleep = jest.fn();
 
         jest.spyOn(activityUtils, "getDataURL").mockResolvedValue(Promise.resolve(""));
         jest.spyOn(activityUtils, "getAttachments").mockResolvedValue(Promise.resolve([""]));
@@ -177,6 +204,8 @@ describe("AMSFileScanner", () => {
         amsClient.getView = jest.fn();
 
         const fileScanner = new AMSFileScanner(amsClient);
+        (fileScanner as any).test = true;
+
         jest.spyOn(fileScanner, "addOrUpdateFile");
 
         const fileMetadata = {id: "id", type: "type", name: "name", size: 0};
@@ -203,8 +232,11 @@ describe("AMSFileScanner", () => {
 
     it("AMSFileScanner.end() should set internal attribute shouldQueueScan to false", () => {
         (global as any).setTimeout = jest.fn();
+        WebUtils.sleep = jest.fn();
+
         const amsClient: any = {};
         const fileScanner = new AMSFileScanner(amsClient);
+        (fileScanner as any).test = true;
 
         const beforeValue = (fileScanner as any).shouldQueueScan;
         fileScanner.end();
