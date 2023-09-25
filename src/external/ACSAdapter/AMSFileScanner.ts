@@ -71,9 +71,9 @@ class AMSFileScanner {
     }
 
     public async scanFileCallback(scanResult: FileScanResult, id: string): Promise<void> {
-        const {fileMetadata, next, activity} = scanResult;
+        const {fileMetadata, next, activity, scan} = scanResult;
 
-        if (scanResult?.scan?.status === AMSViewScanStatus.INPROGRESS) {
+        if (scan?.status === AMSViewScanStatus.INPROGRESS) {
             try {
                 const response: any = await this.amsClient.getViewStatus(fileMetadata); // eslint-disable-line @typescript-eslint/no-explicit-any
                 const {view_location, scan} = response;
