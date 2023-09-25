@@ -83,13 +83,11 @@ class AMSFileScanner {
                 if (scan.status === AMSViewScanStatus.PASSED && next && activity) {
                     const blob = await this.retrieveFileBlob(fileMetadata, view_location);
                     const file = new File([blob], fileMetadata.name as string, { type: fileMetadata.type});
-                    const attachmentData = await activityUtils.getAttachments([file]);
-                    const attachmentSizes = await activityUtils.getAttachmentSizes([file]);
 
-                    const index = activity.attachments.findIndex((attachment: any) => (attachment.name === fileMetadata.name)); // eslint-disable-line @typescript-eslint/no-explicit-any
+                    await this.addAttachmentToActivity(activity, file);
+
+                    const index = activity.attachments.findIndex((attachment: any) => (attachment.name === file.name)); // eslint-disable-line @typescript-eslint/no-explicit-any
                     activity.channelData.fileScan[index] = scan;
-                    activity.attachments[index] = attachmentData[0];
-                    activity.channelData.attachmentSizes[index] = attachmentSizes[0];
 
                     const hasMultipleAttachments = index > 0;
                     if (hasMultipleAttachments) {
@@ -140,6 +138,14 @@ class AMSFileScanner {
         }
 
         return blob;
+    }
+
+    private async addAttachmentToActivity(activity: any, file: File) { // eslint-disable-line @typescript-eslint/no-explicit-any
+        const attachmentData = await activityUtils.getAttachments([file]);
+        const attachmentSizes = await activityUtils.getAttachmentSizes([file]);
+        const index = activity.attachments.findIndex((attachment: any) => (attachment.name === file.name)); // eslint-disable-line @typescript-eslint/no-explicit-any
+        activity.attachments[index] = attachmentData[0];
+        activity.channelData.attachmentSizes[index] = attachmentSizes[0];
     }
 }
 
