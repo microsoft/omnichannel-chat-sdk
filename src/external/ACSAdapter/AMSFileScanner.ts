@@ -80,13 +80,7 @@ class AMSFileScanner {
                 this.addOrUpdateFile(id, scanResult.fileMetadata, scan);
 
                 if (scan.status === AMSViewScanStatus.PASSED && next && activity) {
-                    let blob: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-                    try {
-                        blob = await this.amsClient.getView(fileMetadata, view_location); // eslint-disable-line @typescript-eslint/no-explicit-any
-                    } catch (error) {
-                        console.error(error);
-                    }
-
+                    const blob = await this.retrieveFileBlob(fileMetadata, view_location);
                     const file = new File([blob], fileMetadata.name as string, { type: fileMetadata.type});
                     const attachmentData = await activityUtils.getAttachments([file]);
                     const attachmentSizes = await activityUtils.getAttachmentSizes([file]);
@@ -116,8 +110,6 @@ class AMSFileScanner {
             } catch (e) {
                 console.error(e);
             }
-
-            await sleep(1000);
         }
     }
 
@@ -127,12 +119,25 @@ class AMSFileScanner {
         // eslint-disable-next-line no-async-promise-executor
         return new Promise(async (resolve) => {
             this.scanResults?.forEach(async (scanResult, id) => {await this.scanFileCallback(scanResult, id)});
+            await sleep(1000);
             resolve();
         });
     }
 
     public end(): void {
         this.shouldQueueScan = false;
+    }
+
+    private async retrieveFileBlob(fileMetadata: FileMetadata, view_location: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+        let blob: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+        try {
+            blob = await this.amsClient.getView(fileMetadata, view_location); // eslint-disable-line @typescript-eslint/no-explicit-any
+        } catch (error) {
+            console.error(error);
+        }
+
+        return blob;
     }
 }
 
