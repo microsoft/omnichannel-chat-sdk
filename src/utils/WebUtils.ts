@@ -50,10 +50,12 @@ const removeElementById = (id: string): void => {
 
 export default {
   loadScript,
-  removeElementById
+  removeElementById,
+  sleep
 }
 
 export {
   loadScript,
-  removeElementById
+  removeElementById,
+  sleep
 }
