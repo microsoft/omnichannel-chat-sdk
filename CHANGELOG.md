@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Added
+- Add `Attachment File Scan` to `ChatSDK.createChatAdapter()`
 
 ## [1.4.7] - 2023-09-13
 ### Changed
