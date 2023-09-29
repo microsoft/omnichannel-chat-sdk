@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+
+## [1.5.0] - 2023-09-29
 ### Added
 - Add `Attachment File Scan` to `ChatSDK.createChatAdapter()`
 
@@ -12,7 +14,7 @@ All notable changes to this project will be documented in this file.
 ## [1.4.6] - 2023-08-15
 ### Fixed
 - Fix `tokenRefresher` to update `chatToken` properly on expiry through reinitialization of AMSClient
-  
+
 ## [1.4.5] - 2023-08-02
 ### Changed
 - Upgraded ACSAdapter to version beta.20
