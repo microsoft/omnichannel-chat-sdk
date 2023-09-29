@@ -722,6 +722,8 @@ const store = createStore(
 ### Escalation to Voice & Video
 > :warning: Currently supported on web only
 
+> :warning: Please ensure voice & video call is stopped before leveraging endChat SDK method
+
 > See https://docs.microsoft.com/en-us/dynamics365/customer-service/call-options-visual-engagement on how to set up calling options
 
 ```ts
