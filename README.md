@@ -455,6 +455,8 @@ const chatAdapter = await chatSDK.createChatAdapter();
 
 > :warning: Currently supported on web only
 
+> :warning: Please ensure voice & video call is stopped before leveraging endChat SDK method
+
 It fetches the SDK for Escalation to Voice & Video.
 
 ```ts
