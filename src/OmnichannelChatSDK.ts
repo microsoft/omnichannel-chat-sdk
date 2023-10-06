@@ -255,33 +255,34 @@ class OmnichannelChatSDK {
     }
 
 
-    public async getChatReconnectContextForAuth(redirectUrl?:string|null): Promise<ChatReconnectContext> {
+    public async getChatReconnectContextForAuth(): Promise<ChatReconnectContext> {
+
+        this.scenarioMarker.startScenario(TelemetryEvent.GetReconnectableChatContext, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string
+        })
 
         const context: ChatReconnectContext = {
             reconnectId: null,
-            redirectURL: redirectUrl? redirectUrl : null
+            redirectURL: null
         }
 
         try {
-
-            console.log("ELOPEZANAYA :: SDK :: redirectURL ::"+ redirectUrl);
-            console.log("ELOPEZANAYA :: SDK :: context.redirectURL ::"+ context?.redirectURL);
-
             const reconnectableChatsParams: IReconnectableChatsParams = {
                 authenticatedUserToken: this.authenticatedUserToken as string
             }
 
             const reconnectableChatsResponse = await this.OCClient.getReconnectableChats(reconnectableChatsParams);
-            console.log("ELOPEZANAYA : SDK : reconnectableChatsResponse : ", JSON.stringify(reconnectableChatsResponse));
 
             if (reconnectableChatsResponse && reconnectableChatsResponse.reconnectid) {
                 context.reconnectId = reconnectableChatsResponse.reconnectid as string
             }
 
-            this.scenarioMarker.completeScenario(TelemetryEvent.GetChatReconnectContext, {
+            this.scenarioMarker.completeScenario(TelemetryEvent.GetReconnectableChatContext, {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string
             })
+
         } catch (error) {
             const exceptionDetails = {
                 response: "OCClientGetReconnectableChatsFailed"
@@ -292,45 +293,41 @@ class OmnichannelChatSDK {
                 ExceptionDetails: JSON.stringify(exceptionDetails)
             }
             if (isClientIdNotFoundErrorMessage(error)) {
-                exceptionThrowers.throwAuthContactIdNotFoundFailure(error, this.scenarioMarker, TelemetryEvent.GetChatReconnectContext, telemetryData);
+                exceptionThrowers.throwAuthContactIdNotFoundFailure(error, this.scenarioMarker, TelemetryEvent.GetReconnectableChatContext, telemetryData);
             }
 
-            this.scenarioMarker.failScenario(TelemetryEvent.GetChatReconnectContext, telemetryData);
-            console.error(`OmnichannelChatSDK/GetChatReconnectContext/error ${error}`);
+            this.scenarioMarker.failScenario(TelemetryEvent.GetReconnectableChatContext, telemetryData);
+            console.error(`OmnichannelChatSDK/GetReconnectableChatContext/error ${error}`);
         }
 
         return context;
-
     }
 
     public async getChatReconnectContextAvailability(optionalParams: ChatReconnectOptionalParams = {}): Promise<ChatReconnectContext> {
+
+        this.scenarioMarker.startScenario(TelemetryEvent.GetReconnectAvailabilityContext, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string
+        })
 
         const context: ChatReconnectContext = {
             reconnectId: null,
             redirectURL: null
         }
-
+        //Only when exist a recconecId as part of the URL params
         if (optionalParams.reconnectId) {
             try {
                 const reconnectAvailabilityResponse = await this.OCClient.getReconnectAvailability(optionalParams.reconnectId);
-
-                console.log("ELOPEZANAYA : SDK : reconnectAvailabilityResponse : ", JSON.stringify(reconnectAvailabilityResponse)); 
+                // isReconnectAvailable , indicates if the chat is still valid, or the token has expired
                 if (reconnectAvailabilityResponse && !reconnectAvailabilityResponse.isReconnectAvailable) {
-                   console.log("ELOPEZANAYA :: business time");
                     if (reconnectAvailabilityResponse.reconnectRedirectionURL) {
-                        console.log("ELOPEZANAYA :: SDK :: redirectURL :   "+ reconnectAvailabilityResponse.reconnectRedirectionURL);
                         context.redirectURL = reconnectAvailabilityResponse.reconnectRedirectionURL as string;
-                        console.log("ELOPEZANAYA context =>" + context.redirectURL);
-                    }else{
-                        console.log("WHAAAAT");
                     }
-
-
                 } else {
                     context.reconnectId = optionalParams.reconnectId as string;
                 }
 
-                this.scenarioMarker.completeScenario(TelemetryEvent.GetChatReconnectContext, {
+                this.scenarioMarker.completeScenario(TelemetryEvent.GetReconnectAvailabilityContext, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string
                 })
@@ -339,47 +336,51 @@ class OmnichannelChatSDK {
                     response: "OCClientGetReconnectAvailabilityFailed"
                 }
 
-                this.scenarioMarker.failScenario(TelemetryEvent.GetChatReconnectContext, {
+                this.scenarioMarker.failScenario(TelemetryEvent.GetReconnectAvailabilityContext, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string,
                     ExceptionDetails: JSON.stringify(exceptionDetails)
                 });
 
-                console.error(`OmnichannelChatSDK/GetChatReconnectContext/error ${error}`);
+                console.error(`OmnichannelChatSDK/GetReconnectAvailabilityContext/error ${error}`);
             }
         }
-
-        console.log("ELOPEZANAYA :: return :"+ context.redirectURL);
+        //here the context contains recconnectionId if valid, or redirectionURL if not valid
         return context;
-
     }
 
     public async getChatReconnectContext(optionalParams: ChatReconnectOptionalParams = {}): Promise<ChatReconnectContext> {
+       
         this.scenarioMarker.startScenario(TelemetryEvent.GetChatReconnectContext, {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
         })
 
-        let availabilityContext : ChatReconnectContext = {
+        let context : ChatReconnectContext = {
             reconnectId: null,
             redirectURL: null
         }
 
-        availabilityContext = await this.getChatReconnectContextAvailability(optionalParams);
+        // if necessary to make this call, to validate if the token is valid.
+        context = await this.getChatReconnectContextAvailability(optionalParams);
 
-        console.log("ELOPEZANAYA : SDK : context availability : ", JSON.stringify(availabilityContext));
+        // if redirectURL is present, it means the token is not longer valid.
+        if (context.redirectURL && context.redirectURL.length > 0) {
+            return context;
+        }
 
-        if ( this.authenticatedUserToken) {
-            console.log("ELOPEZANAYA :: SDK :: redirect passing ::"+ availabilityContext.redirectURL);
-            const result = await this.getChatReconnectContextForAuth(availabilityContext.redirectURL);
-            console.log("ELOPEZANAYA : SDK : redirectURL : ", JSON.stringify(result));
-            return result;
+        // at this point the token is valid and we can check for active session for auth sessions
+        if (this.authenticatedUserToken) {
+            context = await this.getChatReconnectContextForAuth();
         } 
 
-        console.log("ELOPEZANAYA :: SDK : return context : ", JSON.stringify(availabilityContext));
-        return availabilityContext;
+        this.scenarioMarker.completeScenario(TelemetryEvent.GetChatReconnectContext, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string
+        })
 
-    }
+        return context;
+}
 
     public async startChat(optionalParams: StartChatOptionalParams = {}): Promise<void> {
         this.scenarioMarker.startScenario(TelemetryEvent.StartChat, {
