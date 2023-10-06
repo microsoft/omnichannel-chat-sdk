@@ -3265,6 +3265,48 @@ describe('Omnichannel Chat SDK', () => {
             expect(context.reconnectId).toBe(mockedResponse.reconnectid);
         });
 
+
+        it('ChatSDK.getChatReconnectContext() with authenticatedUserToken should call OCClient.getReconnectableChats() & return redirectURL due to expired token', async () => {
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                },
+                chatReconnect: {
+                    disable: false,
+                }
+            };
+            const params = {
+                reconnectId: 'reconnectId'
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.isChatReconnect = true;
+            chatSDK.authenticatedUserToken = 'token';
+
+            await chatSDK.initialize();
+  
+            const mockedResponse = {
+                reconnectid: 'reconnectid'
+            };
+
+            const mockedResponseAvailability = {
+                reconnectid: null,
+                reconnectRedirectionURL: "http://microsoft.com"
+            };
+
+            jest.spyOn(chatSDK.OCClient, 'getReconnectAvailability').mockResolvedValue(Promise.resolve(mockedResponseAvailability));
+            jest.spyOn(chatSDK.OCClient, 'getReconnectableChats').mockResolvedValue(Promise.resolve(mockedResponse));
+
+            const context = await chatSDK.getChatReconnectContext(params);
+
+            expect(chatSDK.OCClient.getReconnectAvailability).toHaveBeenCalledTimes(1);
+            expect(chatSDK.OCClient.getReconnectableChats).toHaveBeenCalledTimes(1);
+            expect(context.reconnectId).toBe(mockedResponse.reconnectid);
+            expect(context.redirectURL).toBe(mockedResponseAvailability.reconnectRedirectionURL);
+        });
+        
+
         it('ChatSDK.getChatReconnectContext() should pass reconnectId to OCClient.getReconnectAvailability() & return reconnectId if valid & return redirectUrl with "null"', async () => {
             const chatSDKConfig = {
                 telemetry: {
@@ -3356,6 +3398,7 @@ describe('Omnichannel Chat SDK', () => {
 
             expect(chatSDK.OCClient.getReconnectableChats).toHaveBeenCalledTimes(1);
         });
+        
 
         it('ChatSDK.getChatReconnectContext() should fail if OCClient.getReconnectAvailability() fails', async () => {
             const chatSDKConfig = {

@@ -255,20 +255,24 @@ class OmnichannelChatSDK {
     }
 
 
-    public async getChatReconnectContextForAuth(): Promise<ChatReconnectContext> {
+    public async getChatReconnectContextForAuth(redirectUrl?:string|null): Promise<ChatReconnectContext> {
 
         const context: ChatReconnectContext = {
             reconnectId: null,
-            redirectURL: null
+            redirectURL: redirectUrl? redirectUrl : null
         }
 
         try {
+
+            console.log("ELOPEZANAYA :: SDK :: redirectURL ::"+ redirectUrl);
+            console.log("ELOPEZANAYA :: SDK :: context.redirectURL ::"+ context?.redirectURL);
 
             const reconnectableChatsParams: IReconnectableChatsParams = {
                 authenticatedUserToken: this.authenticatedUserToken as string
             }
 
             const reconnectableChatsResponse = await this.OCClient.getReconnectableChats(reconnectableChatsParams);
+            console.log("ELOPEZANAYA : SDK : reconnectableChatsResponse : ", JSON.stringify(reconnectableChatsResponse));
 
             if (reconnectableChatsResponse && reconnectableChatsResponse.reconnectid) {
                 context.reconnectId = reconnectableChatsResponse.reconnectid as string
@@ -310,10 +314,18 @@ class OmnichannelChatSDK {
             try {
                 const reconnectAvailabilityResponse = await this.OCClient.getReconnectAvailability(optionalParams.reconnectId);
 
+                console.log("ELOPEZANAYA : SDK : reconnectAvailabilityResponse : ", JSON.stringify(reconnectAvailabilityResponse)); 
                 if (reconnectAvailabilityResponse && !reconnectAvailabilityResponse.isReconnectAvailable) {
+                   console.log("ELOPEZANAYA :: business time");
                     if (reconnectAvailabilityResponse.reconnectRedirectionURL) {
+                        console.log("ELOPEZANAYA :: SDK :: redirectURL :   "+ reconnectAvailabilityResponse.reconnectRedirectionURL);
                         context.redirectURL = reconnectAvailabilityResponse.reconnectRedirectionURL as string;
+                        console.log("ELOPEZANAYA context =>" + context.redirectURL);
+                    }else{
+                        console.log("WHAAAAT");
                     }
+
+
                 } else {
                     context.reconnectId = optionalParams.reconnectId as string;
                 }
@@ -337,6 +349,7 @@ class OmnichannelChatSDK {
             }
         }
 
+        console.log("ELOPEZANAYA :: return :"+ context.redirectURL);
         return context;
 
     }
@@ -347,26 +360,24 @@ class OmnichannelChatSDK {
             ChatId: this.chatToken.chatId as string
         })
 
-        let avialbilityContext : ChatReconnectContext = {
+        let availabilityContext : ChatReconnectContext = {
             reconnectId: null,
             redirectURL: null
         }
 
-        avialbilityContext = await this.getChatReconnectContextAvailability(optionalParams);
+        availabilityContext = await this.getChatReconnectContextAvailability(optionalParams);
 
-        console.log("ELOPEZANAYA : SDK : context availability : ", JSON.stringify(avialbilityContext));
+        console.log("ELOPEZANAYA : SDK : context availability : ", JSON.stringify(availabilityContext));
 
         if ( this.authenticatedUserToken) {
-            const result = await this.getChatReconnectContextForAuth();
+            console.log("ELOPEZANAYA :: SDK :: redirect passing ::"+ availabilityContext.redirectURL);
+            const result = await this.getChatReconnectContextForAuth(availabilityContext.redirectURL);
             console.log("ELOPEZANAYA : SDK : redirectURL : ", JSON.stringify(result));
-            if (result.redirectURL == null ){
-                result.redirectURL = avialbilityContext.redirectURL;
-            }
             return result;
         } 
 
-        console.log("ELOPEZANAYA :: SDK : return context : ", JSON.stringify(avialbilityContext));
-        return avialbilityContext;
+        console.log("ELOPEZANAYA :: SDK : return context : ", JSON.stringify(availabilityContext));
+        return availabilityContext;
 
     }
 
