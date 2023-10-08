@@ -3306,7 +3306,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(context.redirectURL).toBe(mockedResponseAvailability.reconnectRedirectionURL);
         });
         
-        it('ChatSDK.getChatReconnectContext() with authenticatedUserToken should call OCClient.getReconnectableChats() & return redirectURL empty and return valid session', async () => {
+        it('ChatSDK.getChatReconnectContext() with authenticatedUserToken should call OCClient.getReconnectableChats(), return redirectURL empty and return valid session', async () => {
             const chatSDKConfig = {
                 telemetry: {
                     disable: true
