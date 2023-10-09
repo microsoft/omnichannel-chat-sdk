@@ -36,8 +36,8 @@ enum TelemetryEvent {
     GetPostChatSurveyContext = "GetPostChatSurveyContext",
     GetAgentAvailability = "GetAgentAvailability",
     GetGeolocation = "GetGeolocation",
-    GetReconnectAvailabilityContext = "GetReconnectAvailabilityContext",
-    GetReconnectableChatContext = "GetReconnectableChatContext"
+    GetChatReconnectContextWithReconnectId = "GetChatReconnectContextWithReconnectId",
+    GetChatReconnectContextWithAuthToken = "GetChatReconnectContextWithAuthToken"
 
 }
 

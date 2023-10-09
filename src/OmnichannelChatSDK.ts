@@ -255,9 +255,9 @@ class OmnichannelChatSDK {
     }
 
 
-    private async getChatReconnectContextForAuth(): Promise<ChatReconnectContext> {
+    private async getChatReconnectContextWithAuthToken(): Promise<ChatReconnectContext> {
 
-        this.scenarioMarker.startScenario(TelemetryEvent.GetReconnectableChatContext, {
+        this.scenarioMarker.startScenario(TelemetryEvent.GetChatReconnectContextWithAuthToken, {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
         })
@@ -278,7 +278,7 @@ class OmnichannelChatSDK {
                 context.reconnectId = reconnectableChatsResponse.reconnectid as string
             }
 
-            this.scenarioMarker.completeScenario(TelemetryEvent.GetReconnectableChatContext, {
+            this.scenarioMarker.completeScenario(TelemetryEvent.GetChatReconnectContextWithAuthToken, {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string
             })
@@ -293,19 +293,19 @@ class OmnichannelChatSDK {
                 ExceptionDetails: JSON.stringify(exceptionDetails)
             }
             if (isClientIdNotFoundErrorMessage(error)) {
-                exceptionThrowers.throwAuthContactIdNotFoundFailure(error, this.scenarioMarker, TelemetryEvent.GetReconnectableChatContext, telemetryData);
+                exceptionThrowers.throwAuthContactIdNotFoundFailure(error, this.scenarioMarker, TelemetryEvent.GetChatReconnectContextWithAuthToken, telemetryData);
             }
 
-            this.scenarioMarker.failScenario(TelemetryEvent.GetReconnectableChatContext, telemetryData);
-            console.error(`OmnichannelChatSDK/GetReconnectableChatContext/error ${error}`);
+            this.scenarioMarker.failScenario(TelemetryEvent.GetChatReconnectContextWithAuthToken, telemetryData);
+            console.error(`OmnichannelChatSDK/GetChatReconnectContextWithAuthToken/error ${error}`);
         }
 
         return context;
     }
 
-    private async getChatReconnectContextAvailability(optionalParams: ChatReconnectOptionalParams = {}): Promise<ChatReconnectContext> {
+    private async getChatReconnectContextWithReconnectId(optionalParams: ChatReconnectOptionalParams = {}): Promise<ChatReconnectContext> {
 
-        this.scenarioMarker.startScenario(TelemetryEvent.GetReconnectAvailabilityContext, {
+        this.scenarioMarker.startScenario(TelemetryEvent.GetChatReconnectContextWithReconnectId, {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
         })
@@ -327,7 +327,7 @@ class OmnichannelChatSDK {
                     context.reconnectId = optionalParams.reconnectId as string;
                 }
 
-                this.scenarioMarker.completeScenario(TelemetryEvent.GetReconnectAvailabilityContext, {
+                this.scenarioMarker.completeScenario(TelemetryEvent.GetChatReconnectContextWithReconnectId, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string
                 })
@@ -336,13 +336,13 @@ class OmnichannelChatSDK {
                     response: "OCClientGetReconnectAvailabilityFailed"
                 }
 
-                this.scenarioMarker.failScenario(TelemetryEvent.GetReconnectAvailabilityContext, {
+                this.scenarioMarker.failScenario(TelemetryEvent.GetChatReconnectContextWithReconnectId, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string,
                     ExceptionDetails: JSON.stringify(exceptionDetails)
                 });
 
-                console.error(`OmnichannelChatSDK/GetReconnectAvailabilityContext/error ${error}`);
+                console.error(`OmnichannelChatSDK/GetChatReconnectContextWithReconnectId/error ${error}`);
             }
         }
         //here the context contains recconnectionId if valid, or redirectionURL if not valid
@@ -350,19 +350,19 @@ class OmnichannelChatSDK {
     }
 
     public async getChatReconnectContext(optionalParams: ChatReconnectOptionalParams = {}): Promise<ChatReconnectContext> {
-       
+
         this.scenarioMarker.startScenario(TelemetryEvent.GetChatReconnectContext, {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
         })
 
-        let context : ChatReconnectContext = {
+        let context: ChatReconnectContext = {
             reconnectId: null,
             redirectURL: null
         }
 
         // if necessary to make this call, to validate if the token is valid.
-        context = await this.getChatReconnectContextAvailability(optionalParams);
+        context = await this.getChatReconnectContextWithReconnectId(optionalParams);
 
         // if redirectURL is present, it means the token is not longer valid.
         if (context.redirectURL && context.redirectURL.length > 0) {
@@ -371,8 +371,8 @@ class OmnichannelChatSDK {
 
         // at this point the token is valid and we can check for active session for auth sessions
         if (this.authenticatedUserToken) {
-            context = await this.getChatReconnectContextForAuth();
-        } 
+            context = await this.getChatReconnectContextWithAuthToken();
+        }
 
         this.scenarioMarker.completeScenario(TelemetryEvent.GetChatReconnectContext, {
             RequestId: this.requestId,
@@ -380,7 +380,7 @@ class OmnichannelChatSDK {
         })
 
         return context;
-}
+    }
 
     public async startChat(optionalParams: StartChatOptionalParams = {}): Promise<void> {
         this.scenarioMarker.startScenario(TelemetryEvent.StartChat, {
