@@ -255,7 +255,7 @@ class OmnichannelChatSDK {
     }
 
 
-    public async getChatReconnectContextForAuth(): Promise<ChatReconnectContext> {
+    private async getChatReconnectContextForAuth(): Promise<ChatReconnectContext> {
 
         this.scenarioMarker.startScenario(TelemetryEvent.GetReconnectableChatContext, {
             RequestId: this.requestId,
@@ -303,7 +303,7 @@ class OmnichannelChatSDK {
         return context;
     }
 
-    public async getChatReconnectContextAvailability(optionalParams: ChatReconnectOptionalParams = {}): Promise<ChatReconnectContext> {
+    private async getChatReconnectContextAvailability(optionalParams: ChatReconnectOptionalParams = {}): Promise<ChatReconnectContext> {
 
         this.scenarioMarker.startScenario(TelemetryEvent.GetReconnectAvailabilityContext, {
             RequestId: this.requestId,
