@@ -3331,8 +3331,8 @@ describe('Omnichannel Chat SDK', () => {
             };
 
             const mockedResponseAvailability = {
-                reconnectid: null,
-                reconnectRedirectionURL: "http://microsoft.com"
+                reconnectid: "12345",
+
             };
 
             jest.spyOn(chatSDK.OCClient, 'getReconnectAvailability').mockResolvedValue(Promise.resolve(mockedResponseAvailability));
@@ -3343,7 +3343,6 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.getReconnectAvailability).toHaveBeenCalledTimes(1);
             expect(chatSDK.OCClient.getReconnectableChats).toHaveBeenCalledTimes(1);
             expect(context.reconnectId).toBe(mockedResponse.reconnectid);
-            expect(context.redirectURL).toBe(mockedResponseAvailability.reconnectRedirectionURL);
         });
         
 
