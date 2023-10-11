@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Fixed
+- Modify `getChatReconnectContext` to return redirection URL when reconnection ID is not longer Valid for Auth Chats.
 
 ## [1.5.0] - 2023-09-29
 ### Added
