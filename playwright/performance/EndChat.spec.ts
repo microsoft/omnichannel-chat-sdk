@@ -2,7 +2,7 @@ import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
 import { test, expect } from '@playwright/test';
 import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
-import { createPerformanceData, PerformanceTestResult, performanceData, ThresholdByScenario } from '../utils/PerformanceHandler';
+import { createPerformanceData, performanceTestResult, performanceData, ThresholdByScenario } from '../utils/PerformanceHandler';
 
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChat');
@@ -15,7 +15,7 @@ test.afterEach(() => {
 });
 
 test.afterAll(async () => {
-    await PerformanceTestResult(performanceTestData);
+    await performanceTestResult(performanceTestData);
 });
 
 test.describe('Performance @Performance', () => {

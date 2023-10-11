@@ -1,22 +1,23 @@
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
 import { test, expect } from '@playwright/test';
-import { createPerformanceData, PerformanceTestResult, performanceData, ThresholdByScenario } from '../utils/PerformanceHandler';
+import { createPerformanceData, performanceTestResult, performanceData, ThresholdByScenario } from '../utils/PerformanceHandler';
 
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChatWithAttachments');
 
 let performanceDataTest: performanceData;
 let performanceTestData: performanceData[] = [];
+
 test.afterEach(() => {
     performanceTestData.push(performanceDataTest);
 });
 
 test.afterAll(async () => {
-    await PerformanceTestResult(performanceTestData);
+    await performanceTestResult(performanceTestData);
 });
 
-test.describe.skip('Performance @Performance ', () => {
+test.describe('Performance @Performance ', () => {
     test('ChatSDK.downloadFileAttachment()', async ({ page }) => {
         await page.goto(testPage);
 

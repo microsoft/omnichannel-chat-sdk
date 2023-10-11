@@ -7,9 +7,10 @@ interface PerformanceData {
     DateofRun: string;
     Threshold: number;
     ExecutionTime: number;
+    ScenarioType: string;
 }
 
-export async function PerformanceTestResult(performanceTestData) {
+export async function performanceTestResult(performanceTestData) {
     try {
         const perfApiUrl = fetchApiUrl('DefaultSettings');
         const apiUrl = perfApiUrl.apiUrl;
@@ -28,6 +29,7 @@ export async function PerformanceTestResult(performanceTestData) {
 
 export function createPerformanceData(Sceanrio: string, executionTime: number, threshold: number): PerformanceData {
 
+    const type = "ChatSDK";
     const currentDate = new Date();
     const formattedDate = format(currentDate, 'yyyy-MM-dd hh:mm a');
 
@@ -36,6 +38,7 @@ export function createPerformanceData(Sceanrio: string, executionTime: number, t
         "DateofRun": formattedDate,
         "Threshold": threshold,
         "ExecutionTime": executionTime,
+        "ScenarioType": type
     };
 
     console.log("Performance data created", data);
