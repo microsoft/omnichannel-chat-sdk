@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Changed
+- Disable `tokenRefresher` temporarily
 
 ## [1.5.1] - 2023-10-11
 ### Fixed
