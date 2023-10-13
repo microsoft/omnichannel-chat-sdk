@@ -533,17 +533,17 @@ class OmnichannelChatSDK {
                     pollingInterval: 30000
                 };
 
-                const tokenRefresher = async (): Promise<string> => {
-                    await this.getChatToken(false, { refreshToken: true });
-                    await this.AMSClient?.initialize({ chatToken: this.chatToken as OmnichannelChatToken });
-                    return this.chatToken.token as string;
-                };
+                // Temporarily disable token refresh mechanism
+                // const tokenRefresher = async (): Promise<string> => {
+                //     await this.getChatToken(false, { refreshToken: true });
+                //     await this.AMSClient?.initialize({ chatToken: this.chatToken as OmnichannelChatToken });
+                //     return this.chatToken.token as string;
+                // };
 
                 try {
                     await this.ACSClient?.initialize({
                         token: chatAdapterConfig.token as string,
                         environmentUrl: chatAdapterConfig.environmentUrl,
-                        tokenRefresher
                     });
                 } catch (error) {
                     const telemetryData = {
