@@ -1,6 +1,6 @@
 import { ariaTelemetryKey } from '../config/settings';
 import { AWTEventPriority } from '../external/aria/common/Enums';
-import { AWTLogManager, AWTLogger, AWTEventData } from '../external/aria/webjs/AriaSDK';
+import { AWTLogManager, AWTLogger, AWTEventData, AWTLogConfiguration } from '../external/aria/webjs/AriaSDK';
 import LogLevel from '../telemetry/LogLevel';
 import ScenarioType from '../telemetry/ScenarioType';
 import { ic3ClientVersion, webChatACSAdapterVersion } from '../config/settings';
@@ -129,16 +129,29 @@ enum Renderer {
     ReactNative = 'ReactNative'
 }
 
+const defaultAriaconfig = {
+    collectorUri: 'https://browser.pipe.aria.microsoft.com/Collector/3.0/',
+    cacheMemorySizeLimitInNumberOfEvents: 10000,
+    disableCookiesUsage: false,
+    canSendStatEvent: function (eventName: string) { return true; }, // eslint-disable-line @typescript-eslint/no-unused-vars
+    clockSkewRefreshDurationInMins: 0
+};
+
 class AriaTelemetry {
     private static _logger: AWTLogger;
     private static _debug = false;
     private static _CDNPackagesInfo: CDNPackagesInfo;
     private static _disable = false;
+    private static _key = ariaTelemetryKey;
+    private static _configuration = {};
 
-    public static initialize(key: string): void {
+    public static initialize(key: string, configuration: AWTLogConfiguration = defaultAriaconfig): void {
         /* istanbul ignore next */
         this._debug && console.log(`[AriaTelemetry][logger][initialize][custom]`);
-        AriaTelemetry._logger = AWTLogManager.initialize(key);
+
+        AriaTelemetry._key = key;
+        AriaTelemetry._configuration = {...defaultAriaconfig, ...configuration};
+        AriaTelemetry._logger = AWTLogManager.initialize(key, configuration);
     }
 
     /* istanbul ignore next */
@@ -638,7 +651,7 @@ class AriaTelemetry {
         if (!AriaTelemetry._logger) {
             /* istanbul ignore next */
             this._debug && console.log(`[AriaTelemetry][logger][initialize]`);
-            AriaTelemetry._logger = AWTLogManager.initialize(ariaTelemetryKey);
+            AriaTelemetry._logger = AWTLogManager.initialize(AriaTelemetry._key, AriaTelemetry._configuration);
         }
         return AriaTelemetry._logger;
     }
