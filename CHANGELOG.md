@@ -3,6 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Fixed
+- Fix `ChatSDK.emailLiveChatTranscript()` calling `OCClient.emailTranscript()` without waiting until its completion
 - Fix `EU` orgs telemetry to flow to the proper `EU` location
 
 ## [1.5.2] - 2023-10-14
