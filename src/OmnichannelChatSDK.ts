@@ -89,6 +89,7 @@ import { getLocationInfo } from "./utils/location";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 import GetChatTokenOptionalParams from "./core/GetChatTokenOptionalParams";
+import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -172,6 +173,9 @@ class OmnichannelChatSDK {
         validateSDKConfig(chatSDKConfig);
 
         this.chatSDKConfig.telemetry?.disable && this.telemetry?.disable();
+
+        const collectorUri = retrieveCollectorUri(this.omnichannelConfig.orgUrl);
+        this.telemetry.setCollectorUri(collectorUri);
 
         if (this.chatSDKConfig.telemetry?.ariaTelemetryKey) {
             this.telemetry.initialize(this.chatSDKConfig.telemetry.ariaTelemetryKey);
