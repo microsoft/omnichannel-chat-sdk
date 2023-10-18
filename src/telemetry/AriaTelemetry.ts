@@ -143,6 +143,7 @@ class AriaTelemetry {
     private static _CDNPackagesInfo: CDNPackagesInfo;
     private static _disable = false;
     private static _key = ariaTelemetryKey;
+    private static _collectorUri = defaultAriaconfig.collectorUri;
     private static _configuration = {};
 
     public static initialize(key: string, configuration: AWTLogConfiguration = defaultAriaconfig): void {
@@ -150,7 +151,7 @@ class AriaTelemetry {
         this._debug && console.log(`[AriaTelemetry][logger][initialize][custom]`);
 
         AriaTelemetry._key = key;
-        AriaTelemetry._configuration = {...defaultAriaconfig, ...configuration};
+        AriaTelemetry._configuration = {...defaultAriaconfig, ...configuration, ...{collectorUri: AriaTelemetry._collectorUri}};
         AriaTelemetry._logger = AWTLogManager.initialize(key, configuration);
     }
 
@@ -163,6 +164,11 @@ class AriaTelemetry {
         /* istanbul ignore next */
         this._debug && console.log(`[AriaTelemetry][disable]`);
         AriaTelemetry._disable = true;
+    }
+
+    public static setCollectorUri(collectorUri: string): void {
+        AriaTelemetry._collectorUri = collectorUri;
+        AriaTelemetry._configuration = {...defaultAriaconfig, ...AriaTelemetry._configuration, ...{collectorUri: AriaTelemetry._collectorUri}};
     }
 
     public static setCDNPackages(packages: CDNPackagesInfo): void {
@@ -651,7 +657,7 @@ class AriaTelemetry {
         if (!AriaTelemetry._logger) {
             /* istanbul ignore next */
             this._debug && console.log(`[AriaTelemetry][logger][initialize]`);
-            AriaTelemetry._logger = AWTLogManager.initialize(AriaTelemetry._key, AriaTelemetry._configuration);
+            AriaTelemetry._logger = AWTLogManager.initialize(ariaTelemetryKey, AriaTelemetry._configuration);
         }
         return AriaTelemetry._logger;
     }
