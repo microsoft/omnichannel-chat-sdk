@@ -1481,7 +1481,7 @@ class OmnichannelChatSDK {
                 CustomerLocale: body.locale || getLocaleStringFromId(this.localeId)
             };
 
-            const emailResponse = this.OCClient.emailTranscript(
+            const emailResponse = await this.OCClient.emailTranscript(
                 this.requestId,
                 this.chatToken.token,
                 emailRequestBody,
