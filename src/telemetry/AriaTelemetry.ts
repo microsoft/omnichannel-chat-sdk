@@ -152,7 +152,7 @@ class AriaTelemetry {
 
         AriaTelemetry._key = key;
         AriaTelemetry._configuration = {...defaultAriaconfig, ...configuration, ...{collectorUri: AriaTelemetry._collectorUri}};
-        AriaTelemetry._logger = AWTLogManager.initialize(key, configuration);
+        AriaTelemetry._logger = AWTLogManager.initialize(key, AriaTelemetry._configuration);
     }
 
     /* istanbul ignore next */
