@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+
+## [1.5.4] - 2023-10-20
 ### Fixed
 - Fix `AriaTelemetry._configuration` not being passed to `AriaTelemetry._logger`
 
