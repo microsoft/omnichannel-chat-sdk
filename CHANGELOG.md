@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Added
+- Add ability to pass custom `ariaCollectorUri`
+
+### Fixed
+- Add missing `PACS` URL for `EUDomainNames`
 
 ## [1.5.4] - 2023-10-20
 ### Fixed
