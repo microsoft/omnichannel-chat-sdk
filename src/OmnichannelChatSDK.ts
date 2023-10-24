@@ -177,6 +177,10 @@ class OmnichannelChatSDK {
         const collectorUri = retrieveCollectorUri(this.omnichannelConfig.orgUrl);
         this.telemetry.setCollectorUri(collectorUri);
 
+        if (this.chatSDKConfig.telemetry?.ariaCollectorUri) {
+            this.telemetry.setCollectorUri(this.chatSDKConfig.telemetry?.ariaCollectorUri);
+        }
+
         if (this.chatSDKConfig.telemetry?.ariaTelemetryKey) {
             this.telemetry.initialize(this.chatSDKConfig.telemetry.ariaTelemetryKey);
         }
