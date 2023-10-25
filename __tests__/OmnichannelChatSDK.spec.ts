@@ -342,8 +342,8 @@ describe('Omnichannel Chat SDK', () => {
 
             expect(AriaTelemetry.initialize).toHaveBeenCalledTimes(1);
             expect(chatSDK.chatSDKConfig.telemetry.ariaCollectorUri).toBe(chatSDKConfig.telemetry.ariaCollectorUri);
-            expect(AriaTelemetry.setCollectorUri).toHaveBeenCalledTimes(2);
-            expect(fn.mock.calls[1][0]).toBe(chatSDKConfig.telemetry.ariaCollectorUri);
+            expect(AriaTelemetry.setCollectorUri).toHaveBeenCalledTimes(1);
+            expect(fn.mock.calls[0][0]).toBe(chatSDKConfig.telemetry.ariaCollectorUri);
         });
 
         it('ChatSDK should be able to pick up the default persistent chat config if not set', () => {
