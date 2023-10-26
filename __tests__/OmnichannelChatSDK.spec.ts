@@ -329,6 +329,23 @@ describe('Omnichannel Chat SDK', () => {
             expect(fn.mock.calls[0][0]).toBe(chatSDKConfig.telemetry.ariaTelemetryKey);
         });
 
+        it('ChatSDK should be able to pick up custom ariaCollectorUri if set', () => {
+            const chatSDKConfig = {
+                telemetry: {
+                    ariaCollectorUri: 'custom'
+                }
+            };
+
+            const fn = jest.spyOn(AriaTelemetry, 'setCollectorUri');
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfigGlobal, chatSDKConfig);
+
+            expect(AriaTelemetry.initialize).toHaveBeenCalledTimes(1);
+            expect(chatSDK.chatSDKConfig.telemetry.ariaCollectorUri).toBe(chatSDKConfig.telemetry.ariaCollectorUri);
+            expect(AriaTelemetry.setCollectorUri).toHaveBeenCalledTimes(1);
+            expect(fn.mock.calls[0][0]).toBe(chatSDKConfig.telemetry.ariaCollectorUri);
+        });
+
         it('ChatSDK should be able to pick up the default persistent chat config if not set', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfigGlobal);
 
@@ -3287,7 +3304,7 @@ describe('Omnichannel Chat SDK', () => {
             chatSDK.authenticatedUserToken = 'token';
 
             await chatSDK.initialize();
-  
+
             const mockedResponse = {
                 reconnectid: 'reconnectid'
             };
@@ -3308,7 +3325,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(context.reconnectId).toBe(mockedResponseAvailability.reconnectid);
             expect(context.redirectURL).toBe(mockedResponseAvailability.reconnectRedirectionURL);
         });
-        
+
         it('ChatSDK.getChatReconnectContext() with authenticatedUserToken should call OCClient.getReconnectableChats(), return redirectURL empty and return valid session', async () => {
             const chatSDKConfig = {
                 telemetry: {
@@ -3328,7 +3345,7 @@ describe('Omnichannel Chat SDK', () => {
             chatSDK.authenticatedUserToken = 'token';
 
             await chatSDK.initialize();
-  
+
             const mockedResponse = {
                 reconnectid: 'reconnectid'
             };
@@ -3347,7 +3364,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.getReconnectableChats).toHaveBeenCalledTimes(1);
             expect(context.reconnectId).toBe(mockedResponse.reconnectid);
         });
-        
+
 
         it('ChatSDK.getChatReconnectContext() should pass reconnectId to OCClient.getReconnectAvailability() & return reconnectId if valid & return redirectUrl with "null"', async () => {
             const chatSDKConfig = {
@@ -3440,7 +3457,7 @@ describe('Omnichannel Chat SDK', () => {
 
             expect(chatSDK.OCClient.getReconnectableChats).toHaveBeenCalledTimes(1);
         });
-        
+
 
         it('ChatSDK.getChatReconnectContext() should fail if OCClient.getReconnectAvailability() fails', async () => {
             const chatSDKConfig = {

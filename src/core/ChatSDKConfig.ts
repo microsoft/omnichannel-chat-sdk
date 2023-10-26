@@ -8,7 +8,8 @@ interface DataMaskingSDKConfig {
 
 interface TelemetrySDKConfig {
     disable: boolean,
-    ariaTelemetryKey?: string
+    ariaTelemetryKey?: string,
+    ariaCollectorUri?: string
 }
 
 interface PersistentChatConfig {
