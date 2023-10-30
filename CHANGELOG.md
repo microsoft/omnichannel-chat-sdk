@@ -2,6 +2,28 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Added
+- Add ability to pass custom `ariaCollectorUri`
+
+### Fixed
+- Add missing `PACS` URL for `EUDomainNames`
+
+## [1.5.4] - 2023-10-20
+### Fixed
+- Fix `AriaTelemetry._configuration` not being passed to `AriaTelemetry._logger`
+
+## [1.5.3] - 2023-10-18
+### Fixed
+- Fix `ChatSDK.emailLiveChatTranscript()` calling `OCClient.emailTranscript()` without waiting until its completion
+- Fix `EU` orgs telemetry to flow to the proper `EU` location
+
+## [1.5.2] - 2023-10-14
+### Changed
+- Disable `tokenRefresher` temporarily
+
+## [1.5.1] - 2023-10-11
+### Fixed
+- Modify `getChatReconnectContext` to return redirection URL when reconnection ID is not longer Valid for Auth Chats.
 
 ## [1.5.0] - 2023-09-29
 ### Added
