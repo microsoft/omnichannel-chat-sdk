@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Add missing `PACS` URL for `EUDomainNames`
+- Fixed an issue where startChat failed due to optionalParam being null
 
 ## [1.5.4] - 2023-10-20
 ### Fixed
