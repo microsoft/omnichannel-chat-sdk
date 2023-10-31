@@ -1783,9 +1783,9 @@ class OmnichannelChatSDK {
     private populateInitChatOptionalParam = (requestOptionalParams: ISessionInitOptionalParams | IGetQueueAvailabilityOptionalParams, optionalParams: StartChatOptionalParams | GetAgentAvailabilityOptionalParams, telemetryEvent: TelemetryEvent) => {
         requestOptionalParams.initContext!.locale = getLocaleStringFromId(this.localeId);
 
-        if (optionalParams.customContext) {
+        if (optionalParams?.customContext) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const context: any = optionalParams.customContext;
+            const context: any = optionalParams?.customContext;
             if (typeof context === "object") {
                 for (const key in context) {
                     if (context[key].value === null || context[key].value === undefined || context[key].value === "") {
@@ -1793,7 +1793,7 @@ class OmnichannelChatSDK {
                     }
                 }
             }
-            (requestOptionalParams.initContext! as any).customContextData = optionalParams.customContext; // eslint-disable-line @typescript-eslint/no-explicit-any
+            (requestOptionalParams.initContext! as any).customContextData = optionalParams?.customContext; // eslint-disable-line @typescript-eslint/no-explicit-any
         }
 
         if (optionalParams.browser) {
