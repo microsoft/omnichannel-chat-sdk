@@ -83,7 +83,7 @@ export class VoiceVideoCallingProxy {
             this.logger = params.logger;
         }
 
-        this.proxyInstance.load(params);
+        this.proxyInstance.load(params?.logger);
     }
 
     public isInitialized(): boolean {
