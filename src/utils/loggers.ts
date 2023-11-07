@@ -444,6 +444,11 @@ export class CallingSDKLogger {
         this.telemetry = telemetry;
     }
 
+    public logScenarioOperation(operationName: string, startTime: number, endTime: number, isSuccess: boolean, retryCount: number, data?: object): void {
+        // empty on purpose.
+        return;
+    }
+
     public logCallingSdkTelemetryEvent(logLevel: LogLevel, event: ICallingSDKLogData): void {
         /* istanbul ignore next */
         this.debug && console.log(`[CallingSDKLogger][logClientSdkTelemetryEvent][${logLevel}]`);
