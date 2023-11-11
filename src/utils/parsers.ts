@@ -1,11 +1,11 @@
-const parseProperty = (property: string | boolean): string => {
+const parseLowerCaseString = (property: string | boolean): string => {
     return String(property).toLowerCase();
 }
 
 export default {
-    parseProperty
+    parseLowerCaseString
 };
 
 export {
-    parseProperty
+    parseLowerCaseString
 };
