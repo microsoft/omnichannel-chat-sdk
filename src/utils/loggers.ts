@@ -143,6 +143,7 @@ export class OCSDKLogger {
 
         const additionalProperties: AWTEventData["properties"] = {
             ...event,
+            RequestPayload: event.RequestPayload? JSON.stringify(event.RequestPayload): '',
             ExceptionDetails: event.ExceptionDetails? JSON.stringify(event.ExceptionDetails): '',
         };
 

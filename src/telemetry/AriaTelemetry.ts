@@ -69,6 +69,10 @@ interface OCSDKContract {
     Event?: string;
     ExceptionDetails?: string;
     ElapsedTimeInMilliseconds?: string;
+    RequestPayload?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    RequestPath?: string;
+    RequestMethod?: string;
+    ResponseStatusCode?: string;
     OCSDKVersion: string;
 }
 
@@ -780,6 +784,10 @@ class AriaTelemetry {
             Event: '',
             ExceptionDetails: '',
             ElapsedTimeInMilliseconds: '',
+            RequestPayload: '',
+            RequestPath: '',
+            RequestMethod: '',
+            ResponseStatusCode: '',
             OCSDKVersion: require('@microsoft/ocsdk/package.json').version // eslint-disable-line @typescript-eslint/no-var-requires
         }
     }
