@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 ### Added
 - Add `RequestPayload`, `RequestPath`, `RequestMethod`, `ResponseStatusCode` telemetry base property to `OCSDKContract`
+- Update Jest configuration and tests to support new libraries
 
 ### Security
 - Uptake [@microsoft/omnichannel-ic3core@0.1.3](https://www.npmjs.com/package/@microsoft/omnichannel-ic3core/v/0.1.3)
