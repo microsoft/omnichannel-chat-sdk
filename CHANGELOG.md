@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Added
+- Add `RequestPayload`, `RequestPath`, `RequestMethod`, `ResponseStatusCode` telemetry base property to `OCSDKContract`
+
+### Changed
+- Use `parseLowerCaseString()` on chat config properties to protect text case change
 
 ## [1.5.5] - 2023-10-31
 ### Added

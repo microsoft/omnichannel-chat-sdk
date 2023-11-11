@@ -90,6 +90,7 @@ import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 import GetChatTokenOptionalParams from "./core/GetChatTokenOptionalParams";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
+import { parseLowerCaseString } from "./utils/parsers";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -505,7 +506,7 @@ class OmnichannelChatSDK {
             sessionInitOptionalParams.reconnectId = this.reconnectId as string;
         }
 
-        if (this.liveChatConfig?.LiveWSAndLiveChatEngJoin?.msdyn_requestvisitorlocation === "true") {
+        if (parseLowerCaseString(this.liveChatConfig?.LiveWSAndLiveChatEngJoin?.msdyn_requestvisitorlocation) === "true") {
             const location = await getLocationInfo(this.scenarioMarker, this.chatToken.chatId as string, this.requestId);
             sessionInitOptionalParams.initContext!.latitude = location.latitude;
             sessionInitOptionalParams.initContext!.longitude = location.longitude;
@@ -1647,9 +1648,9 @@ class OmnichannelChatSDK {
             const { LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin } = chatConfig;
             const { msdyn_postconversationsurveyenable, msfp_sourcesurveyidentifier, msfp_botsourcesurveyidentifier, postConversationSurveyOwnerId, postConversationBotSurveyOwnerId } = liveWSAndLiveChatEngJoin;
 
-            if (msdyn_postconversationsurveyenable === "true") {
+            if (parseLowerCaseString(msdyn_postconversationsurveyenable) === "true") {
                 const liveWorkItemDetails = await this.getConversationDetails();
-                const participantJoined = liveWorkItemDetails?.canRenderPostChat === "True";
+                const participantJoined = parseLowerCaseString(liveWorkItemDetails?.canRenderPostChat as string) === "true";
                 const participantType = liveWorkItemDetails?.participantType;
 
                 conversationId = liveWorkItemDetails?.conversationId;
@@ -1957,8 +1958,8 @@ class OmnichannelChatSDK {
         }
 
         const { PreChatSurvey: preChatSurvey, msdyn_prechatenabled, msdyn_callingoptions, msdyn_conversationmode, msdyn_enablechatreconnect } = liveWSAndLiveChatEngJoin;
-        const isPreChatEnabled = msdyn_prechatenabled === true || msdyn_prechatenabled == "true";
-        const isChatReconnectEnabled = msdyn_enablechatreconnect === true || msdyn_enablechatreconnect == "true";
+        const isPreChatEnabled = parseLowerCaseString(msdyn_prechatenabled) === "true";
+        const isChatReconnectEnabled = parseLowerCaseString(msdyn_enablechatreconnect) === "true";
 
         if (msdyn_conversationmode?.toString() === ConversationMode.PersistentChat.toString()) {
             this.isPersistentChat = true;
