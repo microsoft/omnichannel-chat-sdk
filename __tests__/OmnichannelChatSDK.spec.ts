@@ -886,8 +886,8 @@ describe('Omnichannel Chat SDK', () => {
 
             await chatSDK.initialize();
 
-            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockRejectedValue(new Error("Async error message"));
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(new Error("Async error message"));
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockRejectedValue(Promise.resolve());
 
             try {
                 await chatSDK.startChat();
