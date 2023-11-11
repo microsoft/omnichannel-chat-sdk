@@ -445,7 +445,7 @@ export class CallingSDKLogger {
         this.telemetry = telemetry;
     }
 
-    public logScenarioOperation(operationName: string, startTime: number, endTime: number, isSuccess: boolean, retryCount: number, data?: object): void {
+    public logScenarioOperation(operationName: string, startTime: number, endTime: number, isSuccess: boolean, retryCount: number, data?: object): void { // eslint-disable-line @typescript-eslint/no-unused-vars
         // empty on purpose.
         return;
     }
