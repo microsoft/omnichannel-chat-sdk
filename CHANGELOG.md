@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Add `RequestPayload`, `RequestPath`, `RequestMethod`, `ResponseStatusCode` telemetry base property to `OCSDKContract`
 
+### Security
+- Uptake [@microsoft/omnichannel-ic3core@0.1.3](https://www.npmjs.com/package/@microsoft/omnichannel-ic3core/v/0.1.3)
+
+-Uptake [@microsoft/ocsdk@0.4.1](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.4.1)
+
 ### Changed
 - Use `parseLowerCaseString()` on chat config properties to protect text case change
 
