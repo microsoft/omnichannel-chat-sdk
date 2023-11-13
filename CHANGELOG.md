@@ -1,7 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+## Unreleased
 
-## [Unreleased]
+## [1.5.6]
 ### Added
 - Add `RequestPayload`, `RequestPath`, `RequestMethod`, `ResponseStatusCode` telemetry base property to `OCSDKContract`
 - Update Jest configuration and tests to support new libraries
