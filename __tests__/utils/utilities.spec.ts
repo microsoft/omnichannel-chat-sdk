@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 const { MessageType } = require("../../src");
 const utilities = require('../../src/utils/utilities');
 
@@ -33,12 +34,9 @@ describe('Utilities', () => {
             properties: {}
         }
 
-        try {
             const result = utilities.isSystemMessage(message);
             expect(result).toBeDefined();
-        } catch {
 
-        }
     });
 
     it('utilities.isCustomerMessage() should return true if sender id contains "contacts/8:"', () => {
