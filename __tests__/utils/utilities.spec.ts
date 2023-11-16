@@ -101,4 +101,30 @@ describe('Utilities', () => {
 
         expect(utilities.isClientIdNotFoundErrorMessage(error)).toBe(false);
     });
+
+    it('utilities.isInvalidAuthentication() should return true if error has 401 status code', () => {
+        const error = {
+            response: {
+                status: 401,
+                headers: {
+                    message: "test"
+                }
+            }
+        }
+
+        expect(utilities.isInvalidAuthentication(error)).toBe(true);
+    });
+
+    it('utilities.isInvalidAuthentication() should return false if error has other error code', () => {
+        const error = {
+            response: {
+                status: 403,
+                headers: {
+                    message: "test"
+                }
+            }
+        }
+
+        expect(utilities.isInvalidAuthentication(error)).toBe(false);
+    });
 });

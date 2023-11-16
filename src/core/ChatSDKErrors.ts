@@ -47,7 +47,9 @@ enum ChatSDKErrors {
     /** Failure on retrieving conversation details */
     ConversationDetailsRetrievalFailure = "ConversationDetailsRetrievalFailure",
     /** Failure on finding the contact id related to the auth code */
-    AuthContactIdNotFoundFailure = "AuthContactIdNotFoundFailure"
+    AuthContactIdNotFoundFailure = "AuthContactIdNotFoundFailure",
+    /** Failure from getChatToken returning 401 */
+    InvalidAuthentication = "InvalidAuthentication"
 }
 
 export default ChatSDKErrors;

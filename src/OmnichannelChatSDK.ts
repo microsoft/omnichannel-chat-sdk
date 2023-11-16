@@ -6,7 +6,7 @@ import { ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/commu
 import { SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
 import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
 import { defaultLocaleId, getLocaleStringFromId } from "./utils/locale";
-import { isClientIdNotFoundErrorMessage, isCustomerMessage } from "./utils/utilities";
+import { isClientIdNotFoundErrorMessage, isCustomerMessage, isInvalidAuthentication } from "./utils/utilities";
 import { loadScript, removeElementById } from "./utils/WebUtils";
 import platform, { isBrowser } from "./utils/platform";
 import validateSDKConfig, { defaultChatSDKConfig } from "./validators/SDKConfigValidators";
@@ -900,8 +900,15 @@ class OmnichannelChatSDK {
                     ChatId: this.chatToken?.chatId as string,
                 };
 
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                if ((error as any)?.isAxiosError && (error as any).response?.headers?.errorcode?.toString() === OmnichannelErrorCodes.WidgetUseOutsideOperatingHour.toString()) {
+                    exceptionThrowers.throwWidgetUseOutsideOperatingHour(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
+                }
+
                 if (isClientIdNotFoundErrorMessage(error)) {
                     exceptionThrowers.throwAuthContactIdNotFoundFailure(error, this.scenarioMarker, TelemetryEvent.GetChatToken, telemetryData);
+                } else if (isInvalidAuthentication(error)) {
+                    exceptionThrowers.throwInvalidAuthentication(error, this.scenarioMarker, TelemetryEvent.GetChatToken, telemetryData);
                 } else {
                     exceptionThrowers.throwChatTokenRetrievalFailure(error, this.scenarioMarker, TelemetryEvent.GetChatToken, telemetryData);
                 }

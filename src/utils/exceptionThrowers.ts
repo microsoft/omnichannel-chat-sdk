@@ -125,6 +125,10 @@ export const throwAuthContactIdNotFoundFailure = (e: unknown, scenarioMarker: Sc
     throwChatSDKError(ChatSDKErrors.AuthContactIdNotFoundFailure, e, scenarioMarker, telemetryEvent, telemetryData);
 }
 
+export const throwInvalidAuthentication = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
+    throwChatSDKError(ChatSDKErrors.InvalidAuthentication, e, scenarioMarker, telemetryEvent, telemetryData);
+}
+
 export default {
     throwChatSDKError,
     throwScriptLoadFailure,
@@ -147,5 +151,6 @@ export default {
     throwMessagingClientConversationJoinFailure,
     throwChatAdapterInitializationFailure,
     throwLiveChatTranscriptRetrievalFailure,
-    throwAuthContactIdNotFoundFailure
+    throwAuthContactIdNotFoundFailure,
+    throwInvalidAuthentication
 }

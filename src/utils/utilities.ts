@@ -27,3 +27,7 @@ export const isClientIdNotFoundErrorMessage = (e: any): boolean => {
     return e?.response?.status === 401
         && e?.response?.headers?.message === "UserId not found";
 }
+
+export const isInvalidAuthentication = (e: any): boolean => {
+    return e?.response?.status === 401;
+}
