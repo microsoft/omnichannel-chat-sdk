@@ -900,11 +900,6 @@ class OmnichannelChatSDK {
                     ChatId: this.chatToken?.chatId as string,
                 };
 
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                if ((error as any)?.isAxiosError && (error as any).response?.headers?.errorcode?.toString() === OmnichannelErrorCodes.WidgetUseOutsideOperatingHour.toString()) {
-                    exceptionThrowers.throwWidgetUseOutsideOperatingHour(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
-                }
-
                 if (isClientIdNotFoundErrorMessage(error)) {
                     exceptionThrowers.throwAuthContactIdNotFoundFailure(error, this.scenarioMarker, TelemetryEvent.GetChatToken, telemetryData);
                 } else if (isInvalidAuthentication(error)) {
