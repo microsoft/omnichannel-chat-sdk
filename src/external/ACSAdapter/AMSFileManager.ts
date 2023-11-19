@@ -247,7 +247,7 @@ class AMSFileManager {
                     ExceptionDetails: JSON.stringify(exceptionDetails)
                 });
 
-                return undefined;
+                throw error;
             }
 
             const file = new File([blob as Blob], fileToUpload.name, { type: fileToUpload.contentType });
@@ -265,12 +265,13 @@ class AMSFileManager {
                     ExceptionDetails: JSON.stringify(exceptionDetails)
                 });
 
-                return undefined;
+                throw error;
             }
 
             try {
                 await this.amsClient.uploadDocument(response.id, file);
             } catch (error) {
+                console.log("HAHA failed");
                 const exceptionDetails = {
                     response: 'AMSUploadDocumentFailure',
                     errorObject: `${error}`
@@ -280,7 +281,7 @@ class AMSFileManager {
                     ExceptionDetails: JSON.stringify(exceptionDetails)
                 });
 
-                return undefined;
+                throw error;
             }
 
             this.logger?.completeScenario(AMSFileManagerEvent.AMSUpload);
