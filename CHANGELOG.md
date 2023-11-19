@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 ## Unreleased
 
+### Changed
+- Uptake [@microsoft/omnichannel-amsclient@0.1.6](https://www.npmjs.com/package/@microsoft/omnichannel-amsclient/v/0.1.6)
+
 ## [1.5.6]
 ### Added
 - Add `RequestPayload`, `RequestPath`, `RequestMethod`, `ResponseStatusCode` telemetry base property to `OCSDKContract`
