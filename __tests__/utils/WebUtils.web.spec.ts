@@ -2,6 +2,7 @@
  * @jest-environment jsdom
  */
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const WebUtils = require('../../src/utils/WebUtils');
 
 describe('WebUtils', () => {
