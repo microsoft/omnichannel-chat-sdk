@@ -271,7 +271,6 @@ class AMSFileManager {
             try {
                 await this.amsClient.uploadDocument(response.id, file);
             } catch (error) {
-                console.log("HAHA failed");
                 const exceptionDetails = {
                     response: 'AMSUploadDocumentFailure',
                     errorObject: `${error}`
