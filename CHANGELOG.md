@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 
 ### Added
-- Add `InvalidAuthentication` to `ExceptionThrower`
+- Throw `InvalidAuthentication` if `OCClient.getChatToken()` fails with `401` status
 
 ## [1.5.7] - 2023-11-20
 ### Changed
