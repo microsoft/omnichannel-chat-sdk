@@ -247,7 +247,7 @@ class AMSFileManager {
                     ExceptionDetails: JSON.stringify(exceptionDetails)
                 });
 
-                return undefined;
+                throw error;
             }
 
             const file = new File([blob as Blob], fileToUpload.name, { type: fileToUpload.contentType });
@@ -265,7 +265,7 @@ class AMSFileManager {
                     ExceptionDetails: JSON.stringify(exceptionDetails)
                 });
 
-                return undefined;
+                throw error;
             }
 
             try {
@@ -280,7 +280,7 @@ class AMSFileManager {
                     ExceptionDetails: JSON.stringify(exceptionDetails)
                 });
 
-                return undefined;
+                throw error;
             }
 
             this.logger?.completeScenario(AMSFileManagerEvent.AMSUpload);
