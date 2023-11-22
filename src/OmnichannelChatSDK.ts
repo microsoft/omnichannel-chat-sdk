@@ -902,7 +902,7 @@ class OmnichannelChatSDK {
 
                 if (isClientIdNotFoundErrorMessage(error)) {
                     exceptionThrowers.throwAuthContactIdNotFoundFailure(error, this.scenarioMarker, TelemetryEvent.GetChatToken, telemetryData);
-                } else if (isInvalidAuthentication(error)) {
+                } else if ((error as any)?.isAxiosError && isInvalidAuthentication(error)) {
                     exceptionThrowers.throwInvalidAuthentication(error, this.scenarioMarker, TelemetryEvent.GetChatToken, telemetryData);
                 } else {
                     exceptionThrowers.throwChatTokenRetrievalFailure(error, this.scenarioMarker, TelemetryEvent.GetChatToken, telemetryData);
