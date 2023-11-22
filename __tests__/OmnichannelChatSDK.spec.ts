@@ -898,7 +898,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(0);
         });
 
-        it('ChatSDK.startChat() should not call OCClient.sessionInit() if OCClient.getChatToken() fails with 401 InvalidAuthentication', async () => {
+        it('ChatSDK.startChat() should fail with "InvalidAuthentication" if OCClient.getChatToken() fails with 401', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
