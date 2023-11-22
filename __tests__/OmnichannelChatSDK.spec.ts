@@ -898,6 +898,30 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(0);
         });
 
+        it('ChatSDK.startChat() should not call OCClient.sessionInit() if OCClient.getChatToken() fails with 401 InvalidAuthentication', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const axiosErrorObject: any = {};
+            axiosErrorObject.isAxiosError = true;
+            axiosErrorObject.response = {};
+            axiosErrorObject.response.status = 401;
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockRejectedValue(axiosErrorObject);
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockRejectedValue(Promise.resolve());
+
+            try {
+                await chatSDK.startChat();
+            } catch (e) {
+                expect(e.message).toBe("InvalidAuthentication");
+            }
+
+            expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(0);
+        });
+
         it('ChatSDK.startChat() should throw a \'WidgetUseOutsideOperatingHour\' error if OCClient.sessionInit() fails with \'705\' error code', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
