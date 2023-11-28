@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Utilities to throw exception on failures in ChatSDK.
  *
@@ -36,7 +37,15 @@ export const throwChatSDKError = (chatSDKError: ChatSDKErrors, e: unknown, scena
         console.error(message);
     }
 
-    throw new Error(exceptionDetails.response);
+    const errorObject = {
+        message: exceptionDetails.response
+    };
+    
+    if ((e as any)?.response?.status) {
+        (errorObject as any).status = (e as any).response.status;
+    }
+
+    throw errorObject;
 }
 
 export const throwScriptLoadFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
