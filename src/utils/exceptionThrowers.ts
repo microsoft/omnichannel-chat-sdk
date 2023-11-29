@@ -41,8 +41,8 @@ export const throwChatSDKError = (chatSDKError: ChatSDKErrors, e: unknown, scena
         message: exceptionDetails.response
     };
     
-    if ((e as any)?.response?.status) {
-        (errorObject as any).status = (e as any).response.status;
+    if ((e as any)?.isAxiosError && (e as any)?.response?.status) {
+        (errorObject as any).httpResponseStatusCode = (e as any).response.status;
     }
 
     throw errorObject;
