@@ -18,6 +18,20 @@ import ChatSDKExceptionDetails from "../core/ChatSDKExceptionDetails";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
 
+class CustomChatSDKError {
+    public message: string;
+    public httpResponseStatusCode: number | undefined;
+
+    constructor(message: string, httpResponseStatusCode?: number) {
+        this.message = message;
+        this.httpResponseStatusCode = httpResponseStatusCode;
+    }
+
+    toString(): string {
+        return this.message;
+    }
+}
+
 export const throwChatSDKError = (chatSDKError: ChatSDKErrors, e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string} = {}, message = ""): void => {
     const exceptionDetails: ChatSDKExceptionDetails = {
         response: chatSDKError
@@ -37,15 +51,10 @@ export const throwChatSDKError = (chatSDKError: ChatSDKErrors, e: unknown, scena
         console.error(message);
     }
 
-    const errorObject = {
-        message: exceptionDetails.response
-    };
-    
-    if ((e as any)?.isAxiosError && (e as any)?.response?.status) {
-        (errorObject as any).httpResponseStatusCode = (e as any).response.status;
-    }
-
-    throw errorObject;
+    throw new CustomChatSDKError(
+        exceptionDetails.response,
+        ((e as any)?.isAxiosError && (e as any)?.response?.status) ? (e as any)?.response?.status : undefined
+    );
 }
 
 export const throwScriptLoadFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
