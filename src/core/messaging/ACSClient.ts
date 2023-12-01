@@ -166,7 +166,6 @@ export class ACSConversation {
     }
 
     public async registerOnNewMessage(onNewMessageCallback: CallableFunction): Promise<void> {
-        console.log("ADAD registerOnNewMessage method");
         this.logger?.startScenario(ACSClientEvent.RegisterOnNewMessage);
 
         let isReceivingNotifications = false;
@@ -174,19 +173,14 @@ export class ACSConversation {
 
         try {
             const pollForMessages = async (delay: number) => {
-                console.log("ADAD pollForMessages");
                 if (isReceivingNotifications) {
                     return;
                 }
 
                 try {
                     const messages = await this.getMessages();
-                    console.log("ADAD messages", messages);
                     for (const message of messages.reverse()) {
-                        console.log("ADAD message", message);
                         const {id, sender} = message;
-                        console.log("ADAD id", id);
-                        console.log("ADAD sender", sender);
                         const customerMessageCondition = sender.displayName === ACSParticipantDisplayName.Customer;
 
                         // Filter out customer messages
@@ -213,12 +207,9 @@ export class ACSConversation {
             await pollForMessages(this.sessionInfo?.pollingInterval as number);
 
             const listener = (event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
-                console.log("ADAD listener event", event);
                 isReceivingNotifications = true;
 
                 const {id, version, sender} = event;
-                console.log("ADAD id", id);
-                console.log("ADAD sender", sender);
 
                 const customerMessageCondition = ((sender as CommunicationUserIdentifier).communicationUserId === (this.sessionInfo?.id as string))
 
@@ -227,14 +218,11 @@ export class ACSConversation {
                     return;
                 }
 
-                console.log("ADAD postedMessageIds", postedMessageIds);
-
                 // Filter out duplicate messages
                 if (postedMessageIds.has(id) && postedMessageIds.has(version)) {
                     return;
                 }
 
-                console.log("ADAD event.message", event.message);
                 if (event.message) {
                     Object.assign(event, {content: event.message});
                 }

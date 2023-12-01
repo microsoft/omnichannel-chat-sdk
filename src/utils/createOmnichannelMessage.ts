@@ -17,8 +17,6 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
 
     if (optionalParams.liveChatVersion === LiveChatVersion.V2) {
         const {id, content, metadata, sender, senderDisplayName, createdOn, editedOn} = message as any;  // eslint-disable-line  @typescript-eslint/no-explicit-any
-        console.log("ADAD createdOn", createdOn);
-        console.log("ADAD editedOn", editedOn);
 
         omnichannelMessage.id = id;
         omnichannelMessage.messageid = undefined;

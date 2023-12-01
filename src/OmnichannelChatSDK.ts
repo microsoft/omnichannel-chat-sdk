@@ -1053,7 +1053,6 @@ class OmnichannelChatSDK {
     }
 
     public async onNewMessage(onNewMessageCallback: CallableFunction, optionalParams: OnNewMessageOptionalParams | unknown = {}): Promise<void> {
-        console.log("ADAD onNewMessage method");
         this.scenarioMarker.startScenario(TelemetryEvent.OnNewMessage, {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
@@ -1065,11 +1064,8 @@ class OmnichannelChatSDK {
             if ((optionalParams as OnNewMessageOptionalParams).rehydrate) {
                 this.debug && console.log('[OmnichannelChatSDK][onNewMessage] rehydrate');
                 const messages = await this.getMessages() as OmnichannelMessage[];
-                console.log("ADAD messages", messages);
                 for (const message of messages.reverse()) {
-                    console.log("ADAD message", message);
                     const { id } = message;
-                    console.log("ADAD id", id);
                     if (postedMessages.has(id)) {
                         continue;
                     }
@@ -1081,17 +1077,13 @@ class OmnichannelChatSDK {
 
             try {
                 (this.conversation as ACSConversation)?.registerOnNewMessage((event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
-                    console.log("ADAD event onNewMessageCallback", event);
                     const { id } = event;
 
                     const omnichannelMessage = createOmnichannelMessage(event, {
                         liveChatVersion: this.liveChatVersion,
                         debug: this.debug
                     });
-                    console.log("ADAD omnichannelMessage onNewMessageCallback", omnichannelMessage);
 
-                    console.log("ADAD postedMessages", postedMessages);
-                    console.log("ADAD id", id);
                     if (!postedMessages.has(id)) {
                         onNewMessageCallback(omnichannelMessage);
                         postedMessages.add(id);
