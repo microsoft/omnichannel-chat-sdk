@@ -3,7 +3,7 @@ import ACSClientConfig from "./ACSClientConfig";
 import { ACSClientLogger } from "../../utils/loggers";
 import ACSParticipantDisplayName from "./ACSParticipantDisplayName";
 import ACSSessionInfo from "./ACSSessionInfo";
-import { ChatClient, ChatParticipant, ChatThreadClient, ChatMessage } from "@azure/communication-chat";
+import { ChatClient, ChatParticipant, ChatThreadClient, ChatMessage, ChatMessageEditedEvent } from "@azure/communication-chat";
 import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
 import { ChatMessageReceivedEvent, ParticipantsRemovedEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
 import ChatSDKMessage from "./ChatSDKMessage";
@@ -166,6 +166,7 @@ export class ACSConversation {
     }
 
     public async registerOnNewMessage(onNewMessageCallback: CallableFunction): Promise<void> {
+        console.log("ADAD registerOnNewMessage method");
         this.logger?.startScenario(ACSClientEvent.RegisterOnNewMessage);
 
         let isReceivingNotifications = false;
@@ -173,14 +174,19 @@ export class ACSConversation {
 
         try {
             const pollForMessages = async (delay: number) => {
+                console.log("ADAD pollForMessages");
                 if (isReceivingNotifications) {
                     return;
                 }
 
                 try {
                     const messages = await this.getMessages();
+                    console.log("ADAD messages", messages);
                     for (const message of messages.reverse()) {
+                        console.log("ADAD message", message);
                         const {id, sender} = message;
+                        console.log("ADAD id", id);
+                        console.log("ADAD sender", sender);
                         const customerMessageCondition = sender.displayName === ACSParticipantDisplayName.Customer;
 
                         // Filter out customer messages
@@ -206,10 +212,13 @@ export class ACSConversation {
             // Poll messages until WS established connection
             await pollForMessages(this.sessionInfo?.pollingInterval as number);
 
-            const listener = (event: ChatMessageReceivedEvent) => {
+            const listener = (event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
+                console.log("ADAD listener event", event);
                 isReceivingNotifications = true;
 
-                const {id, sender} = event;
+                const {id, version, sender} = event;
+                console.log("ADAD id", id);
+                console.log("ADAD sender", sender);
 
                 const customerMessageCondition = ((sender as CommunicationUserIdentifier).communicationUserId === (this.sessionInfo?.id as string))
 
@@ -218,11 +227,14 @@ export class ACSConversation {
                     return;
                 }
 
+                console.log("ADAD postedMessageIds", postedMessageIds);
+
                 // Filter out duplicate messages
-                if (postedMessageIds.has(id)) {
+                if (postedMessageIds.has(id) && postedMessageIds.has(version)) {
                     return;
                 }
 
+                console.log("ADAD event.message", event.message);
                 if (event.message) {
                     Object.assign(event, {content: event.message});
                 }
@@ -232,7 +244,9 @@ export class ACSConversation {
             }
 
             this.chatClient?.on("chatMessageReceived", listener);
+            this.chatClient?.on("chatMessageEdited", listener);
             this.trackListener("chatMessageReceived", listener);
+            this.trackListener("chatMessageEdited", listener);
             this.logger?.completeScenario(ACSClientEvent.RegisterOnNewMessage);
         } catch (error) {
             const exceptionDetails = {
