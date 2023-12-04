@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 ## Unreleased
+
+## [1.6.0] - 2023-12-04
 ### Changed
 - Added "httpResponseStatusCode" attribute in the error object thrown
 
