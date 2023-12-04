@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 ## Unreleased
+### Fixed
+- Subscribe to `chatMessageEdited` events within `onNewMessage()` for queue position message updates
 
 ## [1.6.0] - 2023-12-04
 ### Changed

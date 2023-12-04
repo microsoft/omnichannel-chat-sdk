@@ -2,7 +2,7 @@
 
 import { ACSAdapterLogger, ACSClientLogger, AMSClientLogger, CallingSDKLogger, IC3ClientLogger, OCSDKLogger, createACSAdapterLogger, createACSClientLogger, createAMSClientLogger, createCallingSDKLogger, createIC3ClientLogger, createOCSDKLogger } from "./utils/loggers";
 import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
-import { ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
+import { ChatMessageReceivedEvent, ChatMessageEditedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import { SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
 import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
 import { defaultLocaleId, getLocaleStringFromId } from "./utils/locale";
@@ -1076,7 +1076,7 @@ class OmnichannelChatSDK {
             }
 
             try {
-                (this.conversation as ACSConversation)?.registerOnNewMessage((event: ChatMessageReceivedEvent) => {
+                (this.conversation as ACSConversation)?.registerOnNewMessage((event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
                     const { id } = event;
 
                     const omnichannelMessage = createOmnichannelMessage(event, {
