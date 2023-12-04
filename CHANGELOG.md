@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 ## Unreleased
 ### Fixed
-- Fix queue position message edits being recognized in chatSDK `onNewMessage()`
+- Subscribe to `chatMessageEdited` events within `onNewMessage()` for queue position message updates
 
 ## [1.6.0] - 2023-12-04
 ### Changed
