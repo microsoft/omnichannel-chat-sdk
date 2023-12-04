@@ -212,7 +212,7 @@ export class ACSConversation {
                 const {id, sender} = event;
 
                 const customerMessageCondition = ((sender as CommunicationUserIdentifier).communicationUserId === (this.sessionInfo?.id as string));
-                const isChatMessageEditedEvent = event.hasOwnProperty('editedOn');
+                const isChatMessageEditedEvent = Object.keys(event).includes("editedOn");
 
                 // Filter out customer messages
                 if (customerMessageCondition) {
