@@ -2,7 +2,7 @@
 
 import { ACSAdapterLogger, ACSClientLogger, AMSClientLogger, CallingSDKLogger, IC3ClientLogger, OCSDKLogger, createACSAdapterLogger, createACSClientLogger, createAMSClientLogger, createCallingSDKLogger, createIC3ClientLogger, createOCSDKLogger } from "./utils/loggers";
 import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
-import { ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
+import { ChatMessageReceivedEvent, ChatMessageEditedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import { SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
 import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
 import { defaultLocaleId, getLocaleStringFromId } from "./utils/locale";
@@ -17,7 +17,7 @@ import AuthSettings from "./core/AuthSettings";
 import CallingOptionsOptionSetNumber from "./core/CallingOptionsOptionSetNumber";
 import ChatAdapterOptionalParams from "./core/messaging/ChatAdapterOptionalParams";
 import ChatAdapterProtocols from "./core/messaging/ChatAdapterProtocols";
-import { ChatClient, ChatMessageEditedEvent } from "@azure/communication-chat";
+import { ChatClient } from "@azure/communication-chat";
 import ChatConfig from "./core/ChatConfig";
 import ChatReconnectContext from "./core/ChatReconnectContext";
 import ChatReconnectOptionalParams from "./core/ChatReconnectOptionalParams";
