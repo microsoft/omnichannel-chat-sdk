@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Utilities to throw exception on failures in ChatSDK.
  *
@@ -53,6 +52,7 @@ export const throwChatSDKError = (chatSDKError: ChatSDKErrors, e: unknown, scena
 
     throw new CustomChatSDKError(
         exceptionDetails.response,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ((e as any)?.isAxiosError && (e as any)?.response?.status) ? (e as any)?.response?.status : undefined
     );
 }
