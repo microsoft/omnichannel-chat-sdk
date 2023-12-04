@@ -1,9 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 ## Unreleased
-
 ### Fixed
 - Fix queue position message edits being recognized in chatSDK `onNewMessage()`
+
+## [1.6.0] - 2023-12-04
+### Changed
+- Added "httpResponseStatusCode" attribute in the error object thrown
 
 ## [1.5.7] - 2023-11-20
 ### Changed
