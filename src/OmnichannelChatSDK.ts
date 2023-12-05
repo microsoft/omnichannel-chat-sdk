@@ -22,7 +22,7 @@ import ChatConfig from "./core/ChatConfig";
 import ChatReconnectContext from "./core/ChatReconnectContext";
 import ChatReconnectOptionalParams from "./core/ChatReconnectOptionalParams";
 import ChatSDKConfig from "./core/ChatSDKConfig";
-import ChatSDKErrors from "./core/ChatSDKErrors";
+import { ChatSDKErrorName } from "./core/ChatSDKError";
 import ChatSDKExceptionDetails from "./core/ChatSDKExceptionDetails";
 import ChatSDKMessage from "./core/messaging/ChatSDKMessage";
 import ChatTranscriptBody from "./core/ChatTranscriptBody";
@@ -239,7 +239,7 @@ class OmnichannelChatSDK {
 
         const supportedLiveChatVersions = [LiveChatVersion.V1, LiveChatVersion.V2];
         if (!supportedLiveChatVersions.includes(this.liveChatVersion)) {
-            exceptionThrowers.throwUnsupportedLiveChatVersionFailure(new Error(ChatSDKErrors.UnsupportedLiveChatVersion), this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
+            exceptionThrowers.throwUnsupportedLiveChatVersionFailure(new Error(ChatSDKErrorName.UnsupportedLiveChatVersion), this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
 
         try {

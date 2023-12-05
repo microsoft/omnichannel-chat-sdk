@@ -11,7 +11,7 @@ import * as settings from '../src/config/settings';
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
 import AriaTelemetry from "../src/telemetry/AriaTelemetry";
 import CallingOptionsOptionSetNumber from "../src/core/CallingOptionsOptionSetNumber";
-import ChatSDKErrors from "../src/core/ChatSDKErrors";
+import { ChatSDKErrorName } from "../src/core/ChatSDKError";
 import WebUtils from "../src/utils/WebUtils";
 import libraries from "../src/utils/libraries";
 import platform from "../src/utils/platform";
@@ -94,7 +94,7 @@ describe('Omnichannel Chat SDK (Web)', () => {
         try {
             await chatSDK.startChat(optionalParams);
         } catch (error) {
-            expect(error.message).toEqual(ChatSDKErrors.UnsupportedPlatform);
+            expect(error.message).toEqual(ChatSDKErrorName.UnsupportedPlatform);
             expect(console.error).toHaveBeenCalledWith("sendDefaultInitContext is only supported on browser");
         }
     });
