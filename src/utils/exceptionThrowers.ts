@@ -17,7 +17,7 @@ import ChatSDKExceptionDetails from "../core/ChatSDKExceptionDetails";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
 
-class CustomChatSDKError {
+export class CustomChatSDKError {
     public message: string;
     public httpResponseStatusCode: number | undefined;
 

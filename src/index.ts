@@ -12,6 +12,7 @@ import MessageType from "@microsoft/omnichannel-ic3core/lib/model/MessageType";
 import OmnichannelChatSDK from "./OmnichannelChatSDK";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import ChatSDKErrors from "./core/ChatSDKErrors";
+import { CustomChatSDKError } from "./utils/exceptionThrowers";
 
 export {
     OmnichannelChatSDK,
@@ -20,6 +21,7 @@ export {
     uuidv4,
     ChatSDKMessage,
     ChatSDKErrors,
+    CustomChatSDKError,
     IRawMessage,
     MessageContentType,
     DeliveryMode,
