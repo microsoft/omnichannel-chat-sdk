@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Exported `ChatSDKErrors` for downstream component to use
 
+### Fixed
+- Subscribe to `chatMessageEdited` events within `onNewMessage()` for queue position message updates
+
 ## [1.6.0] - 2023-12-04
 ### Changed
 - Added "httpResponseStatusCode" attribute in the error object thrown
