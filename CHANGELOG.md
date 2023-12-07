@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Subscribe to `chatMessageEdited` events within `onNewMessage()` for queue position message updates
 
+### Changed
+- Uptake [@microsoft/ocsdk@0.4.2](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.4.2)
+
 ## [1.6.0] - 2023-12-04
 ### Changed
 - Added "httpResponseStatusCode" attribute in the error object thrown
