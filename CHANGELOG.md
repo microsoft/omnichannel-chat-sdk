@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 ## Unreleased
+
+## [1.6.1] - 2023-12-07
 ### Added
 - Exported `ChatSDKErrorName` and `ChatSDKError` for downstream component to use
 
