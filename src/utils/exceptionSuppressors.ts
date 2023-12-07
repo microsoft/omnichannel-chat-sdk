@@ -10,12 +10,12 @@
  * Stack trace should only be logged and not printed.
  */
 
-import ChatSDKErrors from "../core/ChatSDKErrors";
+import { ChatSDKErrorName } from "../core/ChatSDKError";
 import ChatSDKExceptionDetails from "../core/ChatSDKExceptionDetails";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
 
-export const suppressChatSDKError = (chatSDKError: ChatSDKErrors, e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string} = {}, message = ""): void => {
+export const suppressChatSDKError = (chatSDKError: ChatSDKErrorName, e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string} = {}, message = ""): void => {
     const exceptionDetails: ChatSDKExceptionDetails = {
         response: chatSDKError
     };
@@ -36,7 +36,7 @@ export const suppressChatSDKError = (chatSDKError: ChatSDKErrors, e: unknown, sc
 }
 
 export const suppressConversationDetailsRetrievalFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string} = {}): void => {
-    suppressChatSDKError(ChatSDKErrors.ConversationDetailsRetrievalFailure, e, scenarioMarker, telemetryEvent, telemetryData);
+    suppressChatSDKError(ChatSDKErrorName.ConversationDetailsRetrievalFailure, e, scenarioMarker, telemetryEvent, telemetryData);
 }
 
 export default {

@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
-## [Unreleased]
+## Unreleased
+### Added
+- Exported `ChatSDKErrorName` and `ChatSDKError` for downstream component to use
+
 ### Fixed
 - Subscribe to `chatMessageEdited` events within `onNewMessage()` for queue position message updates
 
