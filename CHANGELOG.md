@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 ## [Unreleased]
+
+## [1.6.2] - 2023-12-12
 ### Fixed
 - Add `supportedImagesMimeTypes` to support `MIME` types `image/heic` & `image/webp` as images
 
