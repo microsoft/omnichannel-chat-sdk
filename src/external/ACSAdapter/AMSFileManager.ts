@@ -1,6 +1,7 @@
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
 import { ACSAdapterLogger } from "../../utils/loggers";
 import AMSFileScanner from "./AMSFileScanner";
+import OmnichannelChatToken from "@microsoft/omnichannel-amsclient/lib/OmnichannelChatToken";
 
 type FileMetadata = Record<string, string>;
 
@@ -62,12 +63,14 @@ class AMSFileManager {
     private amsClient: FramedClient;
     private options: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private supportedImagesMimeTypes = supportedImagesMimeTypes;
+    private omnichannelChatToken: OmnichannelChatToken | null;
     public fileScanner: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
     public constructor(amsClient: FramedClient, logger: ACSAdapterLogger | null = null, options: any = {}) {  // eslint-disable-line @typescript-eslint/no-explicit-any
         this.logger = logger;
         this.amsClient = amsClient;
         this.options = options;
+        this.omnichannelChatToken = null;
 
         if (this.options.fileScan?.disabled === false) {
             const options = {...this.options.fileScan};
@@ -257,7 +260,7 @@ class AMSFileManager {
 
             let response: any;  // eslint-disable-line @typescript-eslint/no-explicit-any
             try {
-                response = await this.amsClient.createObject((this.amsClient as any).chatToken.chatId, file, null, this.supportedImagesMimeTypes);  // eslint-disable-line @typescript-eslint/no-explicit-any
+                response = await this.amsClient.createObject((this.amsClient as any).chatToken.chatId, file, this.omnichannelChatToken, this.supportedImagesMimeTypes);  // eslint-disable-line @typescript-eslint/no-explicit-any
             } catch (error) {
                 const exceptionDetails = {
                     response: 'AMSCreateObjectFailure',
@@ -272,7 +275,7 @@ class AMSFileManager {
             }
 
             try {
-                await this.amsClient.uploadDocument(response.id, file, null, this.supportedImagesMimeTypes);
+                await this.amsClient.uploadDocument(response.id, file, this.omnichannelChatToken, this.supportedImagesMimeTypes);
             } catch (error) {
                 const exceptionDetails = {
                     response: 'AMSUploadDocumentFailure',
@@ -311,7 +314,7 @@ class AMSFileManager {
             let response: any;  // eslint-disable-line @typescript-eslint/no-explicit-any
 
             try {
-                response = await this.amsClient.getViewStatus(fileMetadata, null, this.supportedImagesMimeTypes);  // eslint-disable-line @typescript-eslint/no-explicit-any
+                response = await this.amsClient.getViewStatus(fileMetadata, this.omnichannelChatToken, this.supportedImagesMimeTypes);  // eslint-disable-line @typescript-eslint/no-explicit-any
             } catch (error) {
                 const exceptionDetails = {
                     response: 'AMSGetViewStatusFailure',
@@ -346,7 +349,7 @@ class AMSFileManager {
             }
 
             try {
-                blob = await this.amsClient.getView(fileMetadata, view_location, null, this.supportedImagesMimeTypes);  // eslint-disable-line @typescript-eslint/no-explicit-any
+                blob = await this.amsClient.getView(fileMetadata, view_location, this.omnichannelChatToken, this.supportedImagesMimeTypes);  // eslint-disable-line @typescript-eslint/no-explicit-any
             } catch (error) {
                 const exceptionDetails = {
                     response: 'AMSGetViewFailure',
