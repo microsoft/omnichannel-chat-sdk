@@ -55,10 +55,13 @@ export enum AMSViewScanStatus {
     INPROGRESS = "in progress"
 }
 
+const supportedImagesMimeTypes = ["image/jpeg", "image/png", "image/gif", "image/heic", "image/webp"];
+
 class AMSFileManager {
     private logger: ACSAdapterLogger | null;
     private amsClient: FramedClient;
     private options: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    private supportedImagesMimeTypes = supportedImagesMimeTypes;
     public fileScanner: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
     public constructor(amsClient: FramedClient, logger: ACSAdapterLogger | null = null, options: any = {}) {  // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -254,7 +257,7 @@ class AMSFileManager {
 
             let response: any;  // eslint-disable-line @typescript-eslint/no-explicit-any
             try {
-                response = await this.amsClient.createObject((this.amsClient as any).chatToken.chatId, file);  // eslint-disable-line @typescript-eslint/no-explicit-any
+                response = await this.amsClient.createObject((this.amsClient as any).chatToken.chatId, file, null, this.supportedImagesMimeTypes);  // eslint-disable-line @typescript-eslint/no-explicit-any
             } catch (error) {
                 const exceptionDetails = {
                     response: 'AMSCreateObjectFailure',
@@ -269,7 +272,7 @@ class AMSFileManager {
             }
 
             try {
-                await this.amsClient.uploadDocument(response.id, file);
+                await this.amsClient.uploadDocument(response.id, file, null, this.supportedImagesMimeTypes);
             } catch (error) {
                 const exceptionDetails = {
                     response: 'AMSUploadDocumentFailure',
@@ -308,7 +311,7 @@ class AMSFileManager {
             let response: any;  // eslint-disable-line @typescript-eslint/no-explicit-any
 
             try {
-                response = await this.amsClient.getViewStatus(fileMetadata);  // eslint-disable-line @typescript-eslint/no-explicit-any
+                response = await this.amsClient.getViewStatus(fileMetadata, null, this.supportedImagesMimeTypes);  // eslint-disable-line @typescript-eslint/no-explicit-any
             } catch (error) {
                 const exceptionDetails = {
                     response: 'AMSGetViewStatusFailure',
@@ -343,7 +346,7 @@ class AMSFileManager {
             }
 
             try {
-                blob = await this.amsClient.getView(fileMetadata, view_location);  // eslint-disable-line @typescript-eslint/no-explicit-any
+                blob = await this.amsClient.getView(fileMetadata, view_location, null, this.supportedImagesMimeTypes);  // eslint-disable-line @typescript-eslint/no-explicit-any
             } catch (error) {
                 const exceptionDetails = {
                     response: 'AMSGetViewFailure',
