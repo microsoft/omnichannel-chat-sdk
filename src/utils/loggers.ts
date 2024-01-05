@@ -143,6 +143,7 @@ export class OCSDKLogger {
 
         const additionalProperties: AWTEventData["properties"] = {
             ...event,
+            RequestPayload: event.RequestPayload? JSON.stringify(event.RequestPayload): '',
             ExceptionDetails: event.ExceptionDetails? JSON.stringify(event.ExceptionDetails): '',
         };
 
@@ -442,6 +443,11 @@ export class CallingSDKLogger {
         /* istanbul ignore next */
         this.debug && console.log(`[CallingSDKLogger][useTelemetry]`);
         this.telemetry = telemetry;
+    }
+
+    public logScenarioOperation(operationName: string, startTime: number, endTime: number, isSuccess: boolean, retryCount: number, data?: object): void { // eslint-disable-line @typescript-eslint/no-unused-vars
+        // empty on purpose.
+        return;
     }
 
     public logCallingSdkTelemetryEvent(logLevel: LogLevel, event: ICallingSDKLogData): void {

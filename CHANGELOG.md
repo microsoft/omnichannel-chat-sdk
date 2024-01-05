@@ -1,12 +1,48 @@
 # Changelog
 All notable changes to this project will be documented in this file.
-
 ## [Unreleased]
+
+## [1.6.2] - 2023-12-12
+### Fixed
+- Add `supportedImagesMimeTypes` to support `MIME` types `image/heic` & `image/webp` as images
+
+## [1.6.1] - 2023-12-07
+### Added
+- Exported `ChatSDKErrorName` and `ChatSDKError` for downstream component to use
+
+### Fixed
+- Subscribe to `chatMessageEdited` events within `onNewMessage()` for queue position message updates
+
+### Changed
+- Uptake [@microsoft/ocsdk@0.4.2](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.4.2)
+
+## [1.6.0] - 2023-12-04
+### Changed
+- Added "httpResponseStatusCode" attribute in the error object thrown
+
+## [1.5.7] - 2023-11-20
+### Changed
+- Uptake [@microsoft/omnichannel-amsclient@0.1.6](https://www.npmjs.com/package/@microsoft/omnichannel-amsclient/v/0.1.6)
+
+## [1.5.6] - 2023-11-13
+### Added
+- Add `RequestPayload`, `RequestPath`, `RequestMethod`, `ResponseStatusCode` telemetry base property to `OCSDKContract`
+- Update Jest configuration and tests to support new libraries
+
+### Security
+- Uptake [@microsoft/omnichannel-ic3core@0.1.3](https://www.npmjs.com/package/@microsoft/omnichannel-ic3core/v/0.1.3)
+- Uptake [@microsoft/ocsdk@0.4.1](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.4.1)
+
+### Changed
+- Use `parseLowerCaseString()` on chat config properties to protect text case change
+
+## [1.5.5] - 2023-10-31
 ### Added
 - Add ability to pass custom `ariaCollectorUri`
 
 ### Fixed
 - Add missing `PACS` URL for `EUDomainNames`
+- Fixed an issue where startChat failed due to optionalParam being null
 
 ## [1.5.4] - 2023-10-20
 ### Fixed

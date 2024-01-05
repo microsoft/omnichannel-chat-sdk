@@ -2,7 +2,7 @@
 
 import { ACSAdapterLogger, ACSClientLogger, AMSClientLogger, CallingSDKLogger, IC3ClientLogger, OCSDKLogger, createACSAdapterLogger, createACSClientLogger, createAMSClientLogger, createCallingSDKLogger, createIC3ClientLogger, createOCSDKLogger } from "./utils/loggers";
 import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
-import { ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
+import { ChatMessageReceivedEvent, ChatMessageEditedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import { SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
 import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
 import { defaultLocaleId, getLocaleStringFromId } from "./utils/locale";
@@ -22,7 +22,7 @@ import ChatConfig from "./core/ChatConfig";
 import ChatReconnectContext from "./core/ChatReconnectContext";
 import ChatReconnectOptionalParams from "./core/ChatReconnectOptionalParams";
 import ChatSDKConfig from "./core/ChatSDKConfig";
-import ChatSDKErrors from "./core/ChatSDKErrors";
+import { ChatSDKErrorName } from "./core/ChatSDKError";
 import ChatSDKExceptionDetails from "./core/ChatSDKExceptionDetails";
 import ChatSDKMessage from "./core/messaging/ChatSDKMessage";
 import ChatTranscriptBody from "./core/ChatTranscriptBody";
@@ -90,6 +90,7 @@ import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 import GetChatTokenOptionalParams from "./core/GetChatTokenOptionalParams";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
+import { parseLowerCaseString } from "./utils/parsers";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -238,7 +239,7 @@ class OmnichannelChatSDK {
 
         const supportedLiveChatVersions = [LiveChatVersion.V1, LiveChatVersion.V2];
         if (!supportedLiveChatVersions.includes(this.liveChatVersion)) {
-            exceptionThrowers.throwUnsupportedLiveChatVersionFailure(new Error(ChatSDKErrors.UnsupportedLiveChatVersion), this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
+            exceptionThrowers.throwUnsupportedLiveChatVersionFailure(new Error(ChatSDKErrorName.UnsupportedLiveChatVersion), this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
 
         try {
@@ -505,7 +506,7 @@ class OmnichannelChatSDK {
             sessionInitOptionalParams.reconnectId = this.reconnectId as string;
         }
 
-        if (this.liveChatConfig?.LiveWSAndLiveChatEngJoin?.msdyn_requestvisitorlocation === "true") {
+        if (parseLowerCaseString(this.liveChatConfig?.LiveWSAndLiveChatEngJoin?.msdyn_requestvisitorlocation) === "true") {
             const location = await getLocationInfo(this.scenarioMarker, this.chatToken.chatId as string, this.requestId);
             sessionInitOptionalParams.initContext!.latitude = location.latitude;
             sessionInitOptionalParams.initContext!.longitude = location.longitude;
@@ -1075,7 +1076,7 @@ class OmnichannelChatSDK {
             }
 
             try {
-                (this.conversation as ACSConversation)?.registerOnNewMessage((event: ChatMessageReceivedEvent) => {
+                (this.conversation as ACSConversation)?.registerOnNewMessage((event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
                     const { id } = event;
 
                     const omnichannelMessage = createOmnichannelMessage(event, {
@@ -1647,9 +1648,9 @@ class OmnichannelChatSDK {
             const { LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin } = chatConfig;
             const { msdyn_postconversationsurveyenable, msfp_sourcesurveyidentifier, msfp_botsourcesurveyidentifier, postConversationSurveyOwnerId, postConversationBotSurveyOwnerId } = liveWSAndLiveChatEngJoin;
 
-            if (msdyn_postconversationsurveyenable === "true") {
+            if (parseLowerCaseString(msdyn_postconversationsurveyenable) === "true") {
                 const liveWorkItemDetails = await this.getConversationDetails();
-                const participantJoined = liveWorkItemDetails?.canRenderPostChat === "True";
+                const participantJoined = parseLowerCaseString(liveWorkItemDetails?.canRenderPostChat as string) === "true";
                 const participantType = liveWorkItemDetails?.participantType;
 
                 conversationId = liveWorkItemDetails?.conversationId;
@@ -1783,9 +1784,9 @@ class OmnichannelChatSDK {
     private populateInitChatOptionalParam = (requestOptionalParams: ISessionInitOptionalParams | IGetQueueAvailabilityOptionalParams, optionalParams: StartChatOptionalParams | GetAgentAvailabilityOptionalParams, telemetryEvent: TelemetryEvent) => {
         requestOptionalParams.initContext!.locale = getLocaleStringFromId(this.localeId);
 
-        if (optionalParams.customContext) {
+        if (optionalParams?.customContext) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const context: any = optionalParams.customContext;
+            const context: any = optionalParams?.customContext;
             if (typeof context === "object") {
                 for (const key in context) {
                     if (context[key].value === null || context[key].value === undefined || context[key].value === "") {
@@ -1793,7 +1794,7 @@ class OmnichannelChatSDK {
                     }
                 }
             }
-            (requestOptionalParams.initContext! as any).customContextData = optionalParams.customContext; // eslint-disable-line @typescript-eslint/no-explicit-any
+            (requestOptionalParams.initContext! as any).customContextData = optionalParams?.customContext; // eslint-disable-line @typescript-eslint/no-explicit-any
         }
 
         if (optionalParams.browser) {
@@ -1957,8 +1958,8 @@ class OmnichannelChatSDK {
         }
 
         const { PreChatSurvey: preChatSurvey, msdyn_prechatenabled, msdyn_callingoptions, msdyn_conversationmode, msdyn_enablechatreconnect } = liveWSAndLiveChatEngJoin;
-        const isPreChatEnabled = msdyn_prechatenabled === true || msdyn_prechatenabled == "true";
-        const isChatReconnectEnabled = msdyn_enablechatreconnect === true || msdyn_enablechatreconnect == "true";
+        const isPreChatEnabled = parseLowerCaseString(msdyn_prechatenabled) === "true";
+        const isChatReconnectEnabled = parseLowerCaseString(msdyn_enablechatreconnect) === "true";
 
         if (msdyn_conversationmode?.toString() === ConversationMode.PersistentChat.toString()) {
             this.isPersistentChat = true;

@@ -5,7 +5,7 @@ import ACSParticipantDisplayName from "./ACSParticipantDisplayName";
 import ACSSessionInfo from "./ACSSessionInfo";
 import { ChatClient, ChatParticipant, ChatThreadClient, ChatMessage } from "@azure/communication-chat";
 import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
-import { ChatMessageReceivedEvent, ParticipantsRemovedEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
+import { ChatMessageReceivedEvent, ChatMessageEditedEvent, ParticipantsRemovedEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
 import ChatSDKMessage from "./ChatSDKMessage";
 import createOmnichannelMessage from "../../utils/createOmnichannelMessage";
 import { defaultMessageTags } from "./MessageTags";
@@ -206,12 +206,13 @@ export class ACSConversation {
             // Poll messages until WS established connection
             await pollForMessages(this.sessionInfo?.pollingInterval as number);
 
-            const listener = (event: ChatMessageReceivedEvent) => {
+            const listener = (event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
                 isReceivingNotifications = true;
 
                 const {id, sender} = event;
 
-                const customerMessageCondition = ((sender as CommunicationUserIdentifier).communicationUserId === (this.sessionInfo?.id as string))
+                const customerMessageCondition = ((sender as CommunicationUserIdentifier).communicationUserId === (this.sessionInfo?.id as string));
+                const isChatMessageEditedEvent = Object.keys(event).includes("editedOn");
 
                 // Filter out customer messages
                 if (customerMessageCondition) {
@@ -219,7 +220,7 @@ export class ACSConversation {
                 }
 
                 // Filter out duplicate messages
-                if (postedMessageIds.has(id)) {
+                if (postedMessageIds.has(id) && !isChatMessageEditedEvent) {
                     return;
                 }
 
@@ -232,7 +233,9 @@ export class ACSConversation {
             }
 
             this.chatClient?.on("chatMessageReceived", listener);
+            this.chatClient?.on("chatMessageEdited", listener);
             this.trackListener("chatMessageReceived", listener);
+            this.trackListener("chatMessageEdited", listener);
             this.logger?.completeScenario(ACSClientEvent.RegisterOnNewMessage);
         } catch (error) {
             const exceptionDetails = {
