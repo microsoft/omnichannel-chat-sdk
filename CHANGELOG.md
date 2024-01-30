@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 ## [Unreleased]
+
+## [1.6.3] - 2024-01-30
 ### Changed
 - Reduce number of `config` calls on loading `Escalation to Voice & Video` library by retrieving the config from runtime cache
 
