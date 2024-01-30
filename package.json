@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/omnichannel-chat-sdk",
-  "version": "1.6.3-0",
+  "version": "1.6.4-0",
   "description": "Microsoft Omnichannel Chat SDK",
   "files": [
     "lib/**/*"
