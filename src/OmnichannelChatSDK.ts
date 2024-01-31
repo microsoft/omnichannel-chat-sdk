@@ -1593,7 +1593,7 @@ class OmnichannelChatSDK {
             exceptionThrowers.throwFeatureDisabled(this.scenarioMarker, TelemetryEvent.GetVoiceVideoCalling, message);
         }
 
-        const chatConfig = await this.getChatConfig();
+        const chatConfig = await this.getLiveChatConfig();
         const { LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin } = chatConfig;
         const { msdyn_widgetsnippet } = liveWSAndLiveChatEngJoin;
 
