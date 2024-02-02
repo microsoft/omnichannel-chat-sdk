@@ -1973,7 +1973,7 @@ class OmnichannelChatSDK {
             this.preChatSurvey = preChatSurvey;
         }
 
-        if (this.authSettings) {
+        if (this.authSettings && this.chatSDKConfig.getAuthToken) {
             await this.setAuthTokenProvider(this.chatSDKConfig.getAuthToken);
         }
 
