@@ -702,6 +702,31 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.setAuthTokenProvider).toHaveBeenCalledTimes(0);
         });
 
+        it('Authenticated Chat without chatSDKConfig.getAuthToken() initially set should throw \'GetAuthTokenNotFound\' error on ChatSDK.startChat()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.authSettings = {};
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK, 'setAuthTokenProvider');
+            jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+            const expectedResponse = 'GetAuthTokenNotFound';
+
+            try {
+                await chatSDK.startChat();
+            } catch (e) {
+                expect(e.message).toBe(expectedResponse);
+            }
+
+            const exceptionDetails = JSON.parse(chatSDK.scenarioMarker.failScenario.mock.calls[0][1].ExceptionDetails);
+
+            expect(chatSDK.setAuthTokenProvider).toHaveBeenCalledTimes(1);
+            expect(chatSDK.scenarioMarker.failScenario).toHaveBeenCalledTimes(1);
+            expect(exceptionDetails.response).toBe(expectedResponse);
+        });
+
         it('Authenticated Chat with liveChatContext should call OCClient.validateAuthChatRecord()', async () => {
             const chatSDKConfig = {
                 getAuthToken: async () => {

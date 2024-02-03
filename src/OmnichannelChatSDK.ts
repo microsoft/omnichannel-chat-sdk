@@ -76,6 +76,7 @@ import PluggableLogger from "@microsoft/omnichannel-amsclient/lib/PluggableLogge
 import PostChatContext from "./core/PostChatContext";
 import ProtocolType from "@microsoft/omnichannel-ic3core/lib/interfaces/ProtocoleType";
 import ScenarioMarker from "./telemetry/ScenarioMarker";
+import SetAuthTokenProviderOptionalParams from "./core/SetAuthTokenProviderOptionalParams";
 import StartChatOptionalParams from "./core/StartChatOptionalParams";
 import TelemetryEvent from "./telemetry/TelemetryEvent";
 import createAMSClient from "@microsoft/omnichannel-amsclient";
@@ -459,7 +460,7 @@ class OmnichannelChatSDK {
 
         if (this.authSettings) {
             if (!this.authenticatedUserToken) {
-                await this.setAuthTokenProvider(this.chatSDKConfig.getAuthToken);
+                await this.setAuthTokenProvider(this.chatSDKConfig.getAuthToken, {throwError: true});
             }
 
             if (optionalParams.liveChatContext && Object.keys(optionalParams.liveChatContext).length > 0) {
@@ -1974,7 +1975,7 @@ class OmnichannelChatSDK {
         }
 
         if (this.authSettings && this.chatSDKConfig.getAuthToken) {
-            await this.setAuthTokenProvider(this.chatSDKConfig.getAuthToken);
+            await this.setAuthTokenProvider(this.chatSDKConfig.getAuthToken, {throwError: false}); // throwError set to 'false` for backward compatibility
         }
 
         if (this.preChatSurvey) {
@@ -2029,7 +2030,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    private async setAuthTokenProvider(provider: ChatSDKConfig["getAuthToken"]) {
+    private async setAuthTokenProvider(provider: ChatSDKConfig["getAuthToken"], optionalParams: SetAuthTokenProviderOptionalParams = {}) {
         this.scenarioMarker.startScenario(TelemetryEvent.GetAuthToken);
 
         this.chatSDKConfig.getAuthToken = provider;
@@ -2048,6 +2049,10 @@ class OmnichannelChatSDK {
                     this.scenarioMarker.failScenario(TelemetryEvent.GetAuthToken, {
                         ExceptionDetails: JSON.stringify(exceptionDetails)
                     });
+
+                    if (optionalParams?.throwError) {
+                        throw Error(exceptionDetails.response);
+                    }
                 }
             } catch {
                 const exceptionDetails = {
@@ -2057,6 +2062,10 @@ class OmnichannelChatSDK {
                 this.scenarioMarker.failScenario(TelemetryEvent.GetAuthToken, {
                     ExceptionDetails: JSON.stringify(exceptionDetails)
                 });
+
+                if (optionalParams?.throwError) {
+                    throw Error(exceptionDetails.response);
+                }
             }
         } else {
             const exceptionDetails = {
@@ -2066,6 +2075,10 @@ class OmnichannelChatSDK {
             this.scenarioMarker.failScenario(TelemetryEvent.GetAuthToken, {
                 ExceptionDetails: JSON.stringify(exceptionDetails)
             });
+
+            if (optionalParams?.throwError) {
+                throw Error(exceptionDetails.response);
+            }
         }
     }
 }
