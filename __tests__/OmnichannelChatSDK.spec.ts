@@ -615,7 +615,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.setAuthTokenProvider).toHaveBeenCalledTimes(1);
         });
 
-        it('Authenticated Chat without chatSDKConfig.getAuthToken() set should fail silently with \'UndefinedAuthToken\'', async () => {
+        it('Authenticated Chat with chatSDKConfig.getAuthToken() returning \'undefined\' as token should fail silently with \'UndefinedAuthToken\'', async () => {
             const chatSDKConfig = {
                 getAuthToken: async () => {
                     return undefined
@@ -648,7 +648,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(exceptionDetails.response).toBe(expectedResponse);
         });
 
-        it('Authenticated Chat without chatSDKConfig.getAuthToken() set should fail silently with \'GetAuthTokenFailed\'', async () => {
+        it('Authenticated Chat with chatSDKConfig.getAuthToken() failing should fail silently with \'GetAuthTokenFailed\'', async () => {
             const chatSDKConfig = {
                 getAuthToken: async () => {
                     throw Error("Operation Failed")
