@@ -2054,10 +2054,14 @@ class OmnichannelChatSDK {
                         throw Error(exceptionDetails.response);
                     }
                 }
-            } catch {
+            } catch (error) {
                 const exceptionDetails = {
                     response: "GetAuthTokenFailed"
                 };
+
+                if ((error as Error).message == "UndefinedAuthToken") {
+                    exceptionDetails.response = (error as Error).message;
+                }
 
                 this.scenarioMarker.failScenario(TelemetryEvent.GetAuthToken, {
                     ExceptionDetails: JSON.stringify(exceptionDetails)
