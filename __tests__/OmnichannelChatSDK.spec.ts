@@ -727,6 +727,36 @@ describe('Omnichannel Chat SDK', () => {
             expect(exceptionDetails.response).toBe(expectedResponse);
         });
 
+        it('Authenticated Chat without chatSDKConfig.getAuthToken() initially set should throw \'UndefinedAuthToken\' error on ChatSDK.startChat() if auth token is undefined', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.authSettings = {};
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK, 'setAuthTokenProvider');
+            jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+            const expectedResponse = 'UndefinedAuthToken';
+
+            const authTokenProvider = async () => undefined;
+            await chatSDK.setAuthTokenProvider(authTokenProvider);
+
+            try {
+                await chatSDK.startChat();
+            } catch (e) {
+                expect(e.message).toBe(expectedResponse);
+            }
+
+            console.log(chatSDK.scenarioMarker.failScenario.mock.calls);
+
+            const exceptionDetails = JSON.parse(chatSDK.scenarioMarker.failScenario.mock.calls[0][1].ExceptionDetails);
+
+            expect(chatSDK.setAuthTokenProvider).toHaveBeenCalledTimes(2); // Returning two times because 1st setAuthTokenProvider() call returns undefined token, then startChat() would retry if token is undefined
+            expect(chatSDK.scenarioMarker.failScenario).toHaveBeenCalledTimes(1);
+            expect(exceptionDetails.response).toBe(expectedResponse);
+        });
+
         it('Authenticated Chat with liveChatContext should call OCClient.validateAuthChatRecord()', async () => {
             const chatSDKConfig = {
                 getAuthToken: async () => {
