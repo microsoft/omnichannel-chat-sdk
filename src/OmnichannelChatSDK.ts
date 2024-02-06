@@ -2046,13 +2046,14 @@ class OmnichannelChatSDK {
                         response: "UndefinedAuthToken"
                     };
 
-                    this.scenarioMarker.failScenario(TelemetryEvent.GetAuthToken, {
-                        ExceptionDetails: JSON.stringify(exceptionDetails)
-                    });
-
                     if (optionalParams?.throwError) {
                         throw Error(exceptionDetails.response);
                     }
+
+                    // Fail scenario only if error is not thrown then bubbled up
+                    this.scenarioMarker.failScenario(TelemetryEvent.GetAuthToken, {
+                        ExceptionDetails: JSON.stringify(exceptionDetails)
+                    });
                 }
             } catch (error) {
                 const exceptionDetails = {
