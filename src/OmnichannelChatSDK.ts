@@ -2043,7 +2043,7 @@ class OmnichannelChatSDK {
                     this.scenarioMarker.completeScenario(TelemetryEvent.GetAuthToken);
                 } else {
                     const exceptionDetails = {
-                        response: "UndefinedAuthToken"
+                        response: ChatSDKErrorName.UndefinedAuthToken
                     };
 
                     if (optionalParams?.throwError) {
@@ -2057,10 +2057,10 @@ class OmnichannelChatSDK {
                 }
             } catch (error) {
                 const exceptionDetails = {
-                    response: "GetAuthTokenFailed"
+                    response: ChatSDKErrorName.GetAuthTokenFailed as string
                 };
 
-                if ((error as Error).message == "UndefinedAuthToken") {
+                if ((error as Error).message == ChatSDKErrorName.UndefinedAuthToken) {
                     exceptionDetails.response = (error as Error).message;
                 }
 
@@ -2074,7 +2074,7 @@ class OmnichannelChatSDK {
             }
         } else {
             const exceptionDetails = {
-                response: "GetAuthTokenNotFound"
+                response: ChatSDKErrorName.GetAuthTokenNotFound
             };
 
             this.scenarioMarker.failScenario(TelemetryEvent.GetAuthToken, {
