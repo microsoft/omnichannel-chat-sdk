@@ -47,7 +47,13 @@ export enum ChatSDKErrorName {
     /** Failure on retrieving conversation details */
     ConversationDetailsRetrievalFailure = "ConversationDetailsRetrievalFailure",
     /** Failure on finding the contact id related to the auth code */
-    AuthContactIdNotFoundFailure = "AuthContactIdNotFoundFailure"
+    AuthContactIdNotFoundFailure = "AuthContactIdNotFoundFailure",
+    /** AuthTokenProvider is not implemented */
+    GetAuthTokenNotFound = "GetAuthTokenNotFound",
+    /** Failure on retrieving AuthToken from AuthTokenProvider */
+    GetAuthTokenFailed = "GetAuthTokenFailed",
+    /** AuthToken is undefined */
+    UndefinedAuthToken = "UndefinedAuthToken"
 }
 
 export class ChatSDKError {
