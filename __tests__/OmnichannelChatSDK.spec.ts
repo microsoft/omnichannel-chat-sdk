@@ -727,7 +727,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(exceptionDetails.response).toBe(expectedResponse);
         });
 
-        it('Authenticated Chat without chatSDKConfig.getAuthToken() initially set should throw \'UndefinedAuthToken\' error on ChatSDK.startChat() if we failed to retrieve auth token', async () => {
+        it('Authenticated Chat without chatSDKConfig.getAuthToken() initially set should throw \'UndefinedAuthToken\' error on ChatSDK.startChat() if auth token is undefined', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.authSettings = {};
@@ -757,7 +757,7 @@ describe('Omnichannel Chat SDK', () => {
             expect(exceptionDetails.response).toBe(expectedResponse);
         });
 
-        it('Authenticated Chat without chatSDKConfig.getAuthToken() initially set should throw \'GetAuthTokenFailed\' error on ChatSDK.startChat() if auth token is undefined', async () => {
+        it('Authenticated Chat without chatSDKConfig.getAuthToken() initially set should throw \'GetAuthTokenFailed\' error on ChatSDK.startChat() if we failed to retrieve auth token', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.authSettings = {};
