@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 ## [Unreleased]
+### Changed
+- Throw exception when `ChatSDK.startChat()` fails with `ChatSDKConfig.getAuthToken()` failures
 
 ## [1.6.3] - 2024-01-30
 ### Changed
