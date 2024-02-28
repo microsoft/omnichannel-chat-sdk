@@ -14,10 +14,9 @@
     "@babel/cli": "^7.19.3",
     "@babel/core": "^7.20.2",
     "@babel/preset-env": "^7.20.2",
-    "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
-    "@esbuild-plugins/node-modules-polyfill": "^0.1.4",
     "@playwright/test": "^1.28.1",
     "esbuild": "^0.15.16",
+    "esbuild-plugin-polyfill-node": "^0.3.0",
     "yaml": "^2.2.2"
   }
 }
