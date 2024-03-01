@@ -152,7 +152,7 @@ describe('ACSClient', () => {
         expect(messages).toBeDefined();
     });
 
-    it('ACSClient.conversation.registerOnNewMessage() should call ChatThreadClient.getMessages() & register to "chatMessageReceived" event', async () => {
+    it('ACSClient.conversation.registerOnNewMessage() should call ChatThreadClient.getMessages() & register to "chatMessageReceived" and "chatMessageEdited" events', async () => {
         const client: any = new ACSClient();
         const config = {
             token: 'token',
@@ -191,10 +191,12 @@ describe('ACSClient', () => {
         (global as any).setTimeout = jest.fn();
         await conversation.registerOnNewMessage(() => {});
 
-        const event = "chatMessageReceived";
+        const chatMessageReceivedEvent = "chatMessageReceived";
+        const chatMessageEditedEvent = "chatMessageEdited";
         expect(conversation.getMessages).toHaveBeenCalledTimes(1);
-        expect(client.chatClient.on).toHaveBeenCalledTimes(1);
-        expect(client.chatClient.on.mock.calls[0][0]).toEqual(event);
+        expect(client.chatClient.on).toHaveBeenCalledTimes(2);
+        expect(client.chatClient.on.mock.calls[0][0]).toEqual(chatMessageReceivedEvent);
+        expect(client.chatClient.on.mock.calls[1][0]).toEqual(chatMessageEditedEvent);
     });
 
     it('ACSClient.conversation.registerOnThreadUpdate() should register to "participantsRemoved" event', async () => {

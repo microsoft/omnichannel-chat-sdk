@@ -12,12 +12,12 @@
  * Stack trace should only be logged and not printed.
  */
 
-import ChatSDKErrors from "../core/ChatSDKErrors";
+import { ChatSDKErrorName, ChatSDKError } from "../core/ChatSDKError";
 import ChatSDKExceptionDetails from "../core/ChatSDKExceptionDetails";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
 
-export const throwChatSDKError = (chatSDKError: ChatSDKErrors, e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string} = {}, message = ""): void => {
+export const throwChatSDKError = (chatSDKError: ChatSDKErrorName, e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string} = {}, message = ""): void => {
     const exceptionDetails: ChatSDKExceptionDetails = {
         response: chatSDKError
     };
@@ -36,93 +36,97 @@ export const throwChatSDKError = (chatSDKError: ChatSDKErrors, e: unknown, scena
         console.error(message);
     }
 
-    throw new Error(exceptionDetails.response);
+    throw new ChatSDKError(
+        chatSDKError,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ((e as any)?.isAxiosError && (e as any)?.response?.status) ? (e as any)?.response?.status : undefined
+    );
 }
 
 export const throwScriptLoadFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
-    throwChatSDKError(ChatSDKErrors.ScriptLoadFailure, e, scenarioMarker, telemetryEvent);
+    throwChatSDKError(ChatSDKErrorName.ScriptLoadFailure, e, scenarioMarker, telemetryEvent);
 };
 
 export const throwUnsupportedPlatform = (scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, message: string, telemetryData: {[key: string]: string} = {}): void => {
-    throwChatSDKError(ChatSDKErrors.UnsupportedPlatform, undefined, scenarioMarker, telemetryEvent, telemetryData, message);
+    throwChatSDKError(ChatSDKErrorName.UnsupportedPlatform, undefined, scenarioMarker, telemetryEvent, telemetryData, message);
 };
 
 export const throwFeatureDisabled = (scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, message: string): void => {
-    throwChatSDKError(ChatSDKErrors.FeatureDisabled, undefined, scenarioMarker, telemetryEvent, {}, message);
+    throwChatSDKError(ChatSDKErrorName.FeatureDisabled, undefined, scenarioMarker, telemetryEvent, {}, message);
 };
 
 export const throwOmnichannelClientInitializationFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
-    throwChatSDKError(ChatSDKErrors.OmnichannelClientInitializationFailure, e, scenarioMarker, telemetryEvent);
+    throwChatSDKError(ChatSDKErrorName.OmnichannelClientInitializationFailure, e, scenarioMarker, telemetryEvent);
 };
 
 export const throwChatConfigRetrievalFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
-    throwChatSDKError(ChatSDKErrors.ChatConfigRetrievalFailure, e, scenarioMarker, telemetryEvent);
+    throwChatSDKError(ChatSDKErrorName.ChatConfigRetrievalFailure, e, scenarioMarker, telemetryEvent);
 };
 
 export const throwUnsupportedLiveChatVersionFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
-    throwChatSDKError(ChatSDKErrors.UnsupportedLiveChatVersion, e, scenarioMarker, telemetryEvent)
+    throwChatSDKError(ChatSDKErrorName.UnsupportedLiveChatVersion, e, scenarioMarker, telemetryEvent)
 };
 
 export const throwMessagingClientCreationFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
-    throwChatSDKError(ChatSDKErrors.MessagingClientCreationFailure, e, scenarioMarker, telemetryEvent)
+    throwChatSDKError(ChatSDKErrorName.MessagingClientCreationFailure, e, scenarioMarker, telemetryEvent)
 };
 
 export const throwUninitializedChatSDK = (scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
-    throwChatSDKError(ChatSDKErrors.UninitializedChatSDK, undefined, scenarioMarker, telemetryEvent)
+    throwChatSDKError(ChatSDKErrorName.UninitializedChatSDK, undefined, scenarioMarker, telemetryEvent)
 };
 
 export const throwChatTokenRetrievalFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    throwChatSDKError(ChatSDKErrors.ChatTokenRetrievalFailure, e, scenarioMarker, telemetryEvent, telemetryData);
+    throwChatSDKError(ChatSDKErrorName.ChatTokenRetrievalFailure, e, scenarioMarker, telemetryEvent, telemetryData);
 }
 
 export const throwInvalidConversation = (scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
     const message = `Conversation not found`;
-    throwChatSDKError(ChatSDKErrors.InvalidConversation, undefined, scenarioMarker, telemetryEvent, telemetryData, message);
+    throwChatSDKError(ChatSDKErrorName.InvalidConversation, undefined, scenarioMarker, telemetryEvent, telemetryData, message);
 };
 
 export const throwClosedConversation = (scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    throwChatSDKError(ChatSDKErrors.ClosedConversation, undefined, scenarioMarker, telemetryEvent, telemetryData);
+    throwChatSDKError(ChatSDKErrorName.ClosedConversation, undefined, scenarioMarker, telemetryEvent, telemetryData);
 };
 
 export const throwAuthenticatedChatConversationRetrievalFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    throwChatSDKError(ChatSDKErrors.AuthenticatedChatConversationRetrievalFailure, e, scenarioMarker, telemetryEvent, telemetryData);
+    throwChatSDKError(ChatSDKErrorName.AuthenticatedChatConversationRetrievalFailure, e, scenarioMarker, telemetryEvent, telemetryData);
 };
 
 export const throwPersistentChatConversationRetrievalFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    throwChatSDKError(ChatSDKErrors.PersistentChatConversationRetrievalFailure, e, scenarioMarker, telemetryEvent, telemetryData);
+    throwChatSDKError(ChatSDKErrorName.PersistentChatConversationRetrievalFailure, e, scenarioMarker, telemetryEvent, telemetryData);
 };
 
 export const throwWidgetUseOutsideOperatingHour = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
     const message = 'Widget used outside of operating hours';
-    throwChatSDKError(ChatSDKErrors.WidgetUseOutsideOperatingHour, e, scenarioMarker, telemetryEvent, telemetryData, message);
+    throwChatSDKError(ChatSDKErrorName.WidgetUseOutsideOperatingHour, e, scenarioMarker, telemetryEvent, telemetryData, message);
 };
 
 export const throwConversationInitializationFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    throwChatSDKError(ChatSDKErrors.ConversationInitializationFailure, e, scenarioMarker, telemetryEvent, telemetryData);
+    throwChatSDKError(ChatSDKErrorName.ConversationInitializationFailure, e, scenarioMarker, telemetryEvent, telemetryData);
 };
 
 export const throwConversationClosureFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    throwChatSDKError(ChatSDKErrors.ConversationClosureFailure, e, scenarioMarker, telemetryEvent, telemetryData);
+    throwChatSDKError(ChatSDKErrorName.ConversationClosureFailure, e, scenarioMarker, telemetryEvent, telemetryData);
 };
 
 export const throwMessagingClientInitializationFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    throwChatSDKError(ChatSDKErrors.MessagingClientInitializationFailure, e, scenarioMarker, telemetryEvent, telemetryData);
+    throwChatSDKError(ChatSDKErrorName.MessagingClientInitializationFailure, e, scenarioMarker, telemetryEvent, telemetryData);
 };
 
 export const throwMessagingClientConversationJoinFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    throwChatSDKError(ChatSDKErrors.MessagingClientConversationJoinFailure, e, scenarioMarker, telemetryEvent, telemetryData);
+    throwChatSDKError(ChatSDKErrorName.MessagingClientConversationJoinFailure, e, scenarioMarker, telemetryEvent, telemetryData);
 };
 
 export const throwChatAdapterInitializationFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
-    throwChatSDKError(ChatSDKErrors.ChatAdapterInitializationFailure, e, scenarioMarker, telemetryEvent);
+    throwChatSDKError(ChatSDKErrorName.ChatAdapterInitializationFailure, e, scenarioMarker, telemetryEvent);
 };
 
 export const throwLiveChatTranscriptRetrievalFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    throwChatSDKError(ChatSDKErrors.LiveChatTranscriptRetrievalFailure, e, scenarioMarker, telemetryEvent, telemetryData);
+    throwChatSDKError(ChatSDKErrorName.LiveChatTranscriptRetrievalFailure, e, scenarioMarker, telemetryEvent, telemetryData);
 }
 
 export const throwAuthContactIdNotFoundFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
-    throwChatSDKError(ChatSDKErrors.AuthContactIdNotFoundFailure, e, scenarioMarker, telemetryEvent, telemetryData);
+    throwChatSDKError(ChatSDKErrorName.AuthContactIdNotFoundFailure, e, scenarioMarker, telemetryEvent, telemetryData);
 }
 
 export default {

@@ -1,10 +1,85 @@
 # Changelog
 All notable changes to this project will be documented in this file.
-
 ## [Unreleased]
+### Changed
+- Throw exception when `ChatSDK.startChat()` fails with `ChatSDKConfig.getAuthToken()` failures
+
+## [1.6.3] - 2024-01-30
+### Changed
+- Reduce number of `config` calls on loading `Escalation to Voice & Video` library by retrieving the config from runtime cache
+
+## [1.6.2] - 2023-12-12
+### Fixed
+- Add `supportedImagesMimeTypes` to support `MIME` types `image/heic` & `image/webp` as images
+
+## [1.6.1] - 2023-12-07
+### Added
+- Exported `ChatSDKErrorName` and `ChatSDKError` for downstream component to use
+
+### Fixed
+- Subscribe to `chatMessageEdited` events within `onNewMessage()` for queue position message updates
+
+### Changed
+- Uptake [@microsoft/ocsdk@0.4.2](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.4.2)
+
+## [1.6.0] - 2023-12-04
+### Changed
+- Added "httpResponseStatusCode" attribute in the error object thrown
+
+## [1.5.7] - 2023-11-20
+### Changed
+- Uptake [@microsoft/omnichannel-amsclient@0.1.6](https://www.npmjs.com/package/@microsoft/omnichannel-amsclient/v/0.1.6)
+
+## [1.5.6] - 2023-11-13
+### Added
+- Add `RequestPayload`, `RequestPath`, `RequestMethod`, `ResponseStatusCode` telemetry base property to `OCSDKContract`
+- Update Jest configuration and tests to support new libraries
+
+### Security
+- Uptake [@microsoft/omnichannel-ic3core@0.1.3](https://www.npmjs.com/package/@microsoft/omnichannel-ic3core/v/0.1.3)
+- Uptake [@microsoft/ocsdk@0.4.1](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.4.1)
+
+### Changed
+- Use `parseLowerCaseString()` on chat config properties to protect text case change
+
+## [1.5.5] - 2023-10-31
+### Added
+- Add ability to pass custom `ariaCollectorUri`
+
+### Fixed
+- Add missing `PACS` URL for `EUDomainNames`
+- Fixed an issue where startChat failed due to optionalParam being null
+
+## [1.5.4] - 2023-10-20
+### Fixed
+- Fix `AriaTelemetry._configuration` not being passed to `AriaTelemetry._logger`
+
+## [1.5.3] - 2023-10-18
+### Fixed
+- Fix `ChatSDK.emailLiveChatTranscript()` calling `OCClient.emailTranscript()` without waiting until its completion
+- Fix `EU` orgs telemetry to flow to the proper `EU` location
+
+## [1.5.2] - 2023-10-14
+### Changed
+- Disable `tokenRefresher` temporarily
+
+## [1.5.1] - 2023-10-11
+### Fixed
+- Modify `getChatReconnectContext` to return redirection URL when reconnection ID is not longer Valid for Auth Chats.
+
+## [1.5.0] - 2023-09-29
+### Added
+- Add `Attachment File Scan` to `ChatSDK.createChatAdapter()`
+
+## [1.4.7] - 2023-09-13
+### Changed
+- Supporting getAgentAvailable SDK method for unauthenticated chat widget
+
+## [1.4.6] - 2023-08-15
+### Fixed
+- Fix `tokenRefresher` to update `chatToken` properly on expiry through reinitialization of AMSClient
 
 ## [1.4.5] - 2023-08-02
-
 ### Changed
 - Upgraded ACSAdapter to version beta.20
 

@@ -25,11 +25,11 @@ export const getLocationInfo = async (scenarioMarker: ScenarioMarker, chatId: st
         });
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => { // eslint-disable-line @typescript-eslint/no-unused-vars
         scenarioMarker.startScenario(TelemetryEvent.GetGeolocation, {
             RequestId: requestId
         });
-    
+
         const location: Location = {
             latitude: "",
             longitude: ""

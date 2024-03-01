@@ -8,5 +8,8 @@ module.exports = {
   coveragePathIgnorePatterns: [
     "external/aria/"
   ],
+  moduleNameMapper: {
+    '^axios$': require.resolve('axios'),
+  },
   setupFiles: ["./jestSetup.js"]
 };

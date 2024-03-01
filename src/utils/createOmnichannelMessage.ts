@@ -1,5 +1,5 @@
 import { ChatMessage } from "@azure/communication-chat";
-import { ChatMessageReceivedEvent } from '@azure/communication-signaling';
+import { ChatMessageReceivedEvent, ChatMessageEditedEvent } from '@azure/communication-signaling';
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
 import LiveChatVersion from '../core/LiveChatVersion';
 import OmnichannelMessage, { IFileMetadata, IPerson, MessageType, PersonType } from "../core/messaging/OmnichannelMessage";
@@ -9,14 +9,14 @@ interface CreateOmnichannelMessageOptionalParams {
     debug?: boolean;
 }
 
-const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEvent | ChatMessage, optionalParams: CreateOmnichannelMessageOptionalParams): OmnichannelMessage => {
+const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEvent | ChatMessageEditedEvent | ChatMessage, optionalParams: CreateOmnichannelMessageOptionalParams): OmnichannelMessage => {
     let omnichannelMessage = {} as OmnichannelMessage;
     omnichannelMessage.liveChatVersion = optionalParams.liveChatVersion || LiveChatVersion.V1;
 
     optionalParams.debug && console.log(message);
 
     if (optionalParams.liveChatVersion === LiveChatVersion.V2) {
-        const {id, content, metadata, sender, senderDisplayName, createdOn} = message as any;  // eslint-disable-line  @typescript-eslint/no-explicit-any
+        const {id, content, metadata, sender, senderDisplayName, createdOn, editedOn} = message as any;  // eslint-disable-line  @typescript-eslint/no-explicit-any
 
         omnichannelMessage.id = id;
         omnichannelMessage.messageid = undefined;
@@ -27,7 +27,7 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
         omnichannelMessage.content = content || '';
         omnichannelMessage.properties.tags = metadata && metadata.tags? metadata.tags : [];
         omnichannelMessage.tags = metadata && metadata.tags? metadata.tags.replace(/\"/g, "").split(",").filter((tag: string) => tag.length > 0): [];   // eslint-disable-line no-useless-escape
-        omnichannelMessage.timestamp = createdOn;
+        omnichannelMessage.timestamp = editedOn ?? createdOn;
         omnichannelMessage.messageType = MessageType.UserMessage; // Backward compatibility
         omnichannelMessage.sender = {
             id: sender.communicationUserId,

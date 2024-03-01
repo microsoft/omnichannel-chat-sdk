@@ -19,6 +19,7 @@
     "@esbuild-plugins/node-modules-polyfill": "^0.1.4",
     "@playwright/test": "^1.37.1",
     "esbuild": "^0.15.16",
+    "esbuild-plugin-polyfill-node": "^0.3.0",
     "yaml": "^2.2.2"
   },
   "dependencies": {
