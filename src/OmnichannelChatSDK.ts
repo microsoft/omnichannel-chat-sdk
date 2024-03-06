@@ -689,6 +689,11 @@ class OmnichannelChatSDK {
                 this.IC3Client = null;
             }
 
+            if (this.OCClient.sessionId) {
+                this.OCClient.sessionId = null;
+                this.sessionId = null;
+            }
+
             this.ic3ClientLogger?.setRequestId(this.requestId);
             this.ic3ClientLogger?.setChatId('');
 
