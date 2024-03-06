@@ -437,6 +437,7 @@ class OmnichannelChatSDK {
         if (optionalParams.liveChatContext && Object.keys(optionalParams.liveChatContext).length > 0 && !this.reconnectId) {
             this.chatToken = optionalParams.liveChatContext.chatToken || {};
             this.requestId = optionalParams.liveChatContext.requestId || uuidv4();
+            this.sessionId = optionalParams.liveChatContext.sessionId || null;
 
             // Validate conversation
             const conversationDetails = await this.getConversationDetails();
