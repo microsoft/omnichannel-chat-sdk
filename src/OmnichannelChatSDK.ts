@@ -28,6 +28,7 @@ import ChatSDKMessage from "./core/messaging/ChatSDKMessage";
 import ChatTranscriptBody from "./core/ChatTranscriptBody";
 import ConversationMode from "./core/ConversationMode";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
+import EmailLiveChatTranscriptOptionaParams from "./core/EmailLiveChatTranscriptOptionalParams";
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/FileSharingProtocolType";
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
@@ -1468,12 +1469,22 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async emailLiveChatTranscript(body: ChatTranscriptBody): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+    public async emailLiveChatTranscript(body: ChatTranscriptBody, optionalParams: EmailLiveChatTranscriptOptionaParams = {}): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
         const emailTranscriptOptionalParams: IEmailTranscriptOptionalParams = {};
 
+        let requestId = this.requestId;
+        let chatToken = this.chatToken;
+        let chatId = chatToken.chatId as string;
+
+        if (optionalParams.liveChatContext) {
+            requestId = optionalParams.liveChatContext.requestId;
+            chatToken = optionalParams.liveChatContext.chatToken;
+            chatId = chatToken.chatId as string;
+        }
+
         this.scenarioMarker.startScenario(TelemetryEvent.EmailLiveChatTranscript, {
-            RequestId: this.requestId,
-            ChatId: this.chatToken.chatId as string
+            RequestId: requestId,
+            ChatId: chatId
         });
 
         try {
@@ -1482,29 +1493,29 @@ class OmnichannelChatSDK {
             }
 
             const emailRequestBody = {
-                ChatId: this.chatToken.chatId,
+                ChatId: chatId,
                 EmailAddress: body.emailAddress,
                 DefaultAttachmentMessage: body.attachmentMessage,
                 CustomerLocale: body.locale || getLocaleStringFromId(this.localeId)
             };
 
             const emailResponse = await this.OCClient.emailTranscript(
-                this.requestId,
-                this.chatToken.token,
+                requestId,
+                chatToken.token,
                 emailRequestBody,
                 emailTranscriptOptionalParams);
 
             this.scenarioMarker.completeScenario(TelemetryEvent.EmailLiveChatTranscript, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string
+                RequestId: requestId,
+                ChatId: chatId
             });
 
             return emailResponse;
         } catch (error) {
             console.error(`OmnichannelChatSDK/emailLiveChatTranscript/error: ${error}`);
             this.scenarioMarker.failScenario(TelemetryEvent.EmailLiveChatTranscript, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string
+                RequestId: requestId,
+                ChatId: chatId
             });
         }
     }

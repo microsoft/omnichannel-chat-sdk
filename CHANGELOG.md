@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 ## [Unreleased]
+### Added
+- Add ability to use `ChatSDK.emailLiveChatTranscript()` to email live chat transcript from `liveChatContext`
+
 ### Changed
 - Throw exception when `ChatSDK.startChat()` fails with `ChatSDKConfig.getAuthToken()` failures
 
