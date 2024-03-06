@@ -1561,11 +1561,17 @@ class OmnichannelChatSDK {
         let requestId = this.requestId;
         let chatToken = this.chatToken;
         let chatId = chatToken.chatId as string;
+        let sessionId = this.sessionId;
 
         if (optionalParams.liveChatContext) {
             requestId = optionalParams.liveChatContext.requestId;
             chatToken = optionalParams.liveChatContext.chatToken;
             chatId = chatToken.chatId as string;
+        }
+
+        if (optionalParams.liveChatContext?.sessionId) {
+            sessionId = optionalParams.liveChatContext.sessionId;
+            this.OCClient.sessionId = sessionId;
         }
 
         this.scenarioMarker.startScenario(TelemetryEvent.GetLiveChatTranscript, {
@@ -1583,6 +1589,10 @@ class OmnichannelChatSDK {
                 chatToken.chatId,
                 chatToken.token,
                 getChatTranscriptOptionalParams);
+
+            if (this.sessionId) {
+                this.OCClient.sessionId = this.sessionId;
+            }
 
             this.scenarioMarker.completeScenario(TelemetryEvent.GetLiveChatTranscript, {
                 RequestId: requestId,
