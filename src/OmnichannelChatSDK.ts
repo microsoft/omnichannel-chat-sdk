@@ -823,8 +823,8 @@ class OmnichannelChatSDK {
                 liveWorkItemDetails.participantType = participantType;
             }
 
-            if (sessionId) {
-                this.OCClient.sessionId = sessionId;
+            if (this.sessionId) {
+                this.OCClient.sessionId = this.sessionId;
             }
 
             this.scenarioMarker.completeScenario(TelemetryEvent.GetConversationDetails, {
@@ -1500,11 +1500,17 @@ class OmnichannelChatSDK {
         let requestId = this.requestId;
         let chatToken = this.chatToken;
         let chatId = chatToken.chatId as string;
+        let sessionId = this.sessionId;
 
         if (optionalParams.liveChatContext) {
             requestId = optionalParams.liveChatContext.requestId;
             chatToken = optionalParams.liveChatContext.chatToken;
             chatId = chatToken.chatId as string;
+        }
+
+        if (optionalParams.liveChatContext?.sessionId) {
+            sessionId = optionalParams.liveChatContext.sessionId;
+            this.OCClient.sessionId = sessionId;
         }
 
         this.scenarioMarker.startScenario(TelemetryEvent.EmailLiveChatTranscript, {
@@ -1529,6 +1535,10 @@ class OmnichannelChatSDK {
                 chatToken.token,
                 emailRequestBody,
                 emailTranscriptOptionalParams);
+
+            if (this.sessionId) {
+                this.OCClient.sessionId = this.sessionId;
+            }
 
             this.scenarioMarker.completeScenario(TelemetryEvent.EmailLiveChatTranscript, {
                 RequestId: requestId,
