@@ -108,6 +108,7 @@ class OmnichannelChatSDK {
     public isInitialized: boolean;
     public localeId: string;
     public requestId: string;
+    public sessionId: string | null = null;
     private chatToken: IChatToken;
     private liveChatConfig: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private liveChatVersion: number;
@@ -890,6 +891,10 @@ class OmnichannelChatSDK {
 
                 if (attachmentConfiguration && attachmentConfiguration.AttachmentServiceEndpoint) {
                     this.chatToken.amsEndpoint = attachmentConfiguration.AttachmentServiceEndpoint;
+                }
+
+                if (this.OCClient.sessionId) {
+                    this.sessionId = this.OCClient.sessionId;
                 }
 
                 this.scenarioMarker.completeScenario(TelemetryEvent.GetChatToken, {
