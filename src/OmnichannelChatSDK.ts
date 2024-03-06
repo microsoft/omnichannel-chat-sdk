@@ -766,6 +766,7 @@ class OmnichannelChatSDK {
         let chatToken = this.chatToken;
         let chatId = chatToken.chatId as string;
         let reconnectId = this.reconnectId;
+        let sessionId = this.sessionId;
 
         if (optionalParams.liveChatContext) {
             requestId = optionalParams.liveChatContext.requestId;
@@ -775,6 +776,11 @@ class OmnichannelChatSDK {
 
         if (optionalParams.liveChatContext?.reconnectId) {
             reconnectId = optionalParams.liveChatContext.reconnectId;
+        }
+
+        if (optionalParams.liveChatContext?.sessionId) {
+            sessionId = optionalParams.liveChatContext.sessionId;
+            this.OCClient.sessionId = sessionId;
         }
 
         this.scenarioMarker.startScenario(TelemetryEvent.GetConversationDetails, {
@@ -815,6 +821,10 @@ class OmnichannelChatSDK {
 
             if (participantType) {
                 liveWorkItemDetails.participantType = participantType;
+            }
+
+            if (sessionId) {
+                this.OCClient.sessionId = sessionId;
             }
 
             this.scenarioMarker.completeScenario(TelemetryEvent.GetConversationDetails, {
