@@ -3,9 +3,11 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 ### Added
 - Add ability to use `ChatSDK.emailLiveChatTranscript()` to email live chat transcript from `liveChatContext`
+- Handling the lifecycle of `sessionId` if it exists
 
 ### Changed
 - Throw exception when `ChatSDK.startChat()` fails with `ChatSDKConfig.getAuthToken()` failures
+- Uptake [@microsoft/ocsdk@0.4.3](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.4.3)
 
 ## [1.6.3] - 2024-01-30
 ### Changed

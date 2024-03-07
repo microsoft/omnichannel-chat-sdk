@@ -108,6 +108,7 @@ class OmnichannelChatSDK {
     public isInitialized: boolean;
     public localeId: string;
     public requestId: string;
+    public sessionId: string | null = null;
     private chatToken: IChatToken;
     private liveChatConfig: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private liveChatVersion: number;
@@ -223,6 +224,7 @@ class OmnichannelChatSDK {
             getChatTokenRetryCount: 2,
             getChatTokenTimeBetweenRetriesOnFailure: 2000,
             getChatTokenRetryOn429: false,
+            useUnauthReconnectIdSigQueryParam: false
         };
 
         try {
@@ -436,6 +438,7 @@ class OmnichannelChatSDK {
         if (optionalParams.liveChatContext && Object.keys(optionalParams.liveChatContext).length > 0 && !this.reconnectId) {
             this.chatToken = optionalParams.liveChatContext.chatToken || {};
             this.requestId = optionalParams.liveChatContext.requestId || uuidv4();
+            this.sessionId = optionalParams.liveChatContext.sessionId || null;
 
             // Validate conversation
             const conversationDetails = await this.getConversationDetails();
@@ -688,6 +691,11 @@ class OmnichannelChatSDK {
                 this.IC3Client = null;
             }
 
+            if (this.OCClient.sessionId) {
+                this.OCClient.sessionId = null;
+                this.sessionId = null;
+            }
+
             this.ic3ClientLogger?.setRequestId(this.requestId);
             this.ic3ClientLogger?.setChatId('');
 
@@ -742,6 +750,10 @@ class OmnichannelChatSDK {
             chatSession.reconnectId = this.reconnectId;
         }
 
+        if (this.sessionId) {
+            chatSession.sessionId = this.sessionId;
+        }
+
         this.scenarioMarker.completeScenario(TelemetryEvent.GetCurrentLiveChatContext, {
             RequestId: requestId,
             ChatId: chatToken.chatId as string
@@ -755,6 +767,7 @@ class OmnichannelChatSDK {
         let chatToken = this.chatToken;
         let chatId = chatToken.chatId as string;
         let reconnectId = this.reconnectId;
+        let sessionId = this.sessionId;
 
         if (optionalParams.liveChatContext) {
             requestId = optionalParams.liveChatContext.requestId;
@@ -764,6 +777,11 @@ class OmnichannelChatSDK {
 
         if (optionalParams.liveChatContext?.reconnectId) {
             reconnectId = optionalParams.liveChatContext.reconnectId;
+        }
+
+        if (optionalParams.liveChatContext?.sessionId) {
+            sessionId = optionalParams.liveChatContext.sessionId;
+            this.OCClient.sessionId = sessionId;
         }
 
         this.scenarioMarker.startScenario(TelemetryEvent.GetConversationDetails, {
@@ -804,6 +822,10 @@ class OmnichannelChatSDK {
 
             if (participantType) {
                 liveWorkItemDetails.participantType = participantType;
+            }
+
+            if (this.sessionId) {
+                this.OCClient.sessionId = this.sessionId;
             }
 
             this.scenarioMarker.completeScenario(TelemetryEvent.GetConversationDetails, {
@@ -890,6 +912,10 @@ class OmnichannelChatSDK {
 
                 if (attachmentConfiguration && attachmentConfiguration.AttachmentServiceEndpoint) {
                     this.chatToken.amsEndpoint = attachmentConfiguration.AttachmentServiceEndpoint;
+                }
+
+                if (this.OCClient.sessionId) {
+                    this.sessionId = this.OCClient.sessionId;
                 }
 
                 this.scenarioMarker.completeScenario(TelemetryEvent.GetChatToken, {
@@ -1475,11 +1501,17 @@ class OmnichannelChatSDK {
         let requestId = this.requestId;
         let chatToken = this.chatToken;
         let chatId = chatToken.chatId as string;
+        let sessionId = this.sessionId;
 
         if (optionalParams.liveChatContext) {
             requestId = optionalParams.liveChatContext.requestId;
             chatToken = optionalParams.liveChatContext.chatToken;
             chatId = chatToken.chatId as string;
+        }
+
+        if (optionalParams.liveChatContext?.sessionId) {
+            sessionId = optionalParams.liveChatContext.sessionId;
+            this.OCClient.sessionId = sessionId;
         }
 
         this.scenarioMarker.startScenario(TelemetryEvent.EmailLiveChatTranscript, {
@@ -1505,6 +1537,10 @@ class OmnichannelChatSDK {
                 emailRequestBody,
                 emailTranscriptOptionalParams);
 
+            if (this.sessionId) {
+                this.OCClient.sessionId = this.sessionId;
+            }
+
             this.scenarioMarker.completeScenario(TelemetryEvent.EmailLiveChatTranscript, {
                 RequestId: requestId,
                 ChatId: chatId
@@ -1526,11 +1562,17 @@ class OmnichannelChatSDK {
         let requestId = this.requestId;
         let chatToken = this.chatToken;
         let chatId = chatToken.chatId as string;
+        let sessionId = this.sessionId;
 
         if (optionalParams.liveChatContext) {
             requestId = optionalParams.liveChatContext.requestId;
             chatToken = optionalParams.liveChatContext.chatToken;
             chatId = chatToken.chatId as string;
+        }
+
+        if (optionalParams.liveChatContext?.sessionId) {
+            sessionId = optionalParams.liveChatContext.sessionId;
+            this.OCClient.sessionId = sessionId;
         }
 
         this.scenarioMarker.startScenario(TelemetryEvent.GetLiveChatTranscript, {
@@ -1548,6 +1590,10 @@ class OmnichannelChatSDK {
                 chatToken.chatId,
                 chatToken.token,
                 getChatTranscriptOptionalParams);
+
+            if (this.sessionId) {
+                this.OCClient.sessionId = this.sessionId;
+            }
 
             this.scenarioMarker.completeScenario(TelemetryEvent.GetLiveChatTranscript, {
                 RequestId: requestId,
