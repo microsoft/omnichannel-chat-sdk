@@ -19,7 +19,6 @@ interface PersistentChatConfig {
 
 interface ChatReconnectConfig {
     disable: boolean;
-    useUnauthReconnectIdSigQueryParam?: boolean;
 }
 
 interface ChatSDKConfig {
