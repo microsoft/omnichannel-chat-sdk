@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 ## [Unreleased]
+
+## [1.7.0] - 2024-03-07
 ### Added
 - Add ability to use `ChatSDK.emailLiveChatTranscript()` to email live chat transcript from `liveChatContext`
 - Handling the lifecycle of `sessionId` if it exists
