@@ -2544,6 +2544,63 @@ describe('Omnichannel Chat SDK', () => {
             expect(chatSDK.OCClient.emailTranscript.mock.calls[0][3]).toMatchObject(emailTranscriptOptionalParams);
         });
 
+        it("chatSDK.emailLiveChatTranscript() with liveChatContext should email transcript from liveChatContext", async () => {
+            const omnichannelConfig = {
+                orgUrl: '[data-org-url]',
+                orgId: '[data-org-id]',
+                widgetId: '[data-app-id]'
+            };
+    
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+    
+            await chatSDK.initialize();
+    
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+    
+            const chatToken = {
+                ChatId: 'ChatId',
+                Token: 'Token',
+                RegionGtms: '{}'
+            };
+    
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve(chatToken));
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'emailTranscript').mockResolvedValue(Promise.resolve());
+    
+            const body = {
+                emailAddress: "contoso@microsoft.com",
+                attachmentMessage: "attachmentMessage",
+                locale: "locale"
+            };
+    
+            await chatSDK.startChat();
+            await chatSDK.emailLiveChatTranscript(body);
+    
+            const liveChatContext = {
+                requestId: 'requestId',
+                chatToken: {
+                    chatId: 'chatId',
+                    token: 'token'
+                }
+            }
+    
+            await chatSDK.emailLiveChatTranscript(body, {liveChatContext});
+            
+            expect(chatSDK.OCClient.emailTranscript).toHaveBeenCalledTimes(2);
+            expect(chatSDK.OCClient.emailTranscript.mock.calls[0][0]).toBe(chatSDK.requestId);
+            expect(chatSDK.OCClient.emailTranscript.mock.calls[0][1]).toBe(chatToken.Token);
+            expect(chatSDK.OCClient.emailTranscript.mock.calls[0][2].ChatId).toBe(chatToken.ChatId);
+            expect(chatSDK.OCClient.emailTranscript.mock.calls[1][0]).toBe(liveChatContext.requestId);
+            expect(chatSDK.OCClient.emailTranscript.mock.calls[1][1]).toBe(liveChatContext.chatToken.token);
+            expect(chatSDK.OCClient.emailTranscript.mock.calls[1][2].ChatId).toBe(liveChatContext.chatToken.chatId);
+            expect(chatSDK.OCClient.emailTranscript.mock.calls[1][0]).not.toBe(chatSDK.requestId);
+            expect(chatSDK.OCClient.emailTranscript.mock.calls[1][1]).not.toBe(chatToken.Token);
+            expect(chatSDK.OCClient.emailTranscript.mock.calls[1][2].ChatId).not.toBe(chatToken.ChatId);        
+        });        
+
         it('ChatSDK.getLiveChatTranscript() should call OCClient.getChatTranscripts()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();

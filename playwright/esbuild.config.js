@@ -1,6 +1,5 @@
 const { build } = require('esbuild');
-const GlobalsPolyfills = require('@esbuild-plugins/node-globals-polyfill').default;
-const NodeModulesPolyfills = require('@esbuild-plugins/node-modules-polyfill').default;
+const { polyfillNode } = require("esbuild-plugin-polyfill-node");
 const path = require('path');
 
 const AzureCommunicationChatPolyfills = () => {
@@ -31,8 +30,11 @@ build({
     format: "cjs",
     platform: "browser",
     plugins: [
-        NodeModulesPolyfills(),
-        GlobalsPolyfills(),
+        polyfillNode({
+            polyfills: {
+                crypto: true
+            }
+        }),
         AzureCommunicationChatPolyfills()
     ],
 }).catch(() => process.exit(1))
