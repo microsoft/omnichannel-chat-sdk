@@ -1,0 +1,56 @@
+import axios from 'axios';
+import { format } from 'date-fns';
+import fetchApiUrl from './fetchPerformanceApiConfig';
+
+interface PerformanceData {
+    Scenario: string;
+    DateofRun: string;
+    Threshold: number;
+    ExecutionTime: number;
+    ScenarioType: string;
+}
+
+export async function performanceTestResult(performanceTestData) {
+    try {
+        const perfApiUrl = fetchApiUrl('DefaultSettings');
+        const apiUrl = perfApiUrl.apiUrl;
+        const response = await axios.post(apiUrl, JSON.stringify(performanceTestData), {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        console.log(response.status);
+        console.log("Data sent to API Successfully", response);
+    } catch (error) {
+        console.error("Error while sendind data:", error);
+    }
+}
+
+export function createPerformanceData(Sceanrio: string, executionTime: number, threshold: number): PerformanceData {
+
+    const type = "ChatSDK";
+    const currentDate = new Date();
+    const formattedDate = format(currentDate, 'yyyy-MM-dd hh:mm a');
+
+    const data: PerformanceData = {
+        "Scenario": `${Sceanrio}`,
+        "DateofRun": formattedDate,
+        "Threshold": threshold,
+        "ExecutionTime": executionTime,
+        "ScenarioType": type
+    };
+
+    console.log("Performance data created", data);
+    return data;
+}
+
+export enum ThresholdByScenario {
+    ChatSDK_Initialize = 4000,
+    ChatSDK_StartChat = 4000,
+    ChatSDK_EndChat = 2000,
+    ChatSDK_GetLiveChatTranscript = 2000,
+    ChatSDK_UploadFileAttachment = 4000,
+    ChatSDK_DownloadFileAttachment = 2000,
+    ChatSDK_GetAgentAvailability = 2000
+}

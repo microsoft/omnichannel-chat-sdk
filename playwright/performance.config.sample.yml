@@ -1,0 +1,27 @@
+DefaultSettings:
+  orgId: ''
+  orgUrl: ''
+  widgetId: ''
+  authUrl: ''
+  apiUrl: ''
+UnauthenticatedChat:
+  orgId: ''
+  orgUrl: ''
+  widgetId: ''
+  apiUrl: ''
+UnauthenticatedChatWithAttachments:
+  orgId: ''
+  orgUrl: ''
+  widgetId: ''
+  apiUrl: ''
+AuthenticatedChat:
+  orgId: ''
+  orgUrl: ''
+  widgetId: ''
+  authUrl: ''
+  apiUrl: ''
+UnauthenticatedChatWithTranscripts:
+  orgId: ''
+  orgUrl: ''
+  widgetId: ''
+  apiUrl: ''
