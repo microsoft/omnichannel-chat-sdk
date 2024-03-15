@@ -1711,7 +1711,7 @@ class OmnichannelChatSDK {
 
                 const liveWorkItemDetails = await this.getConversationDetails();
                 
-                if (liveWorkItemDetails == null) {
+                if ( Object.keys(liveWorkItemDetails).length == 0) {
                     this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {
                         RequestId: this.requestId,
                         ExceptionDetails: "LiveWorkItemDetails is null."
