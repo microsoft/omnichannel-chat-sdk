@@ -2,7 +2,7 @@
 
 import { ACSAdapterLogger, ACSClientLogger, AMSClientLogger, CallingSDKLogger, IC3ClientLogger, OCSDKLogger, createACSAdapterLogger, createACSClientLogger, createAMSClientLogger, createCallingSDKLogger, createIC3ClientLogger, createOCSDKLogger } from "./utils/loggers";
 import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
-import { ChatMessageReceivedEvent, ChatMessageEditedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
+import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import { SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
 import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
 import { defaultLocaleId, getLocaleStringFromId } from "./utils/locale";
@@ -10,6 +10,7 @@ import { isClientIdNotFoundErrorMessage, isCustomerMessage } from "./utils/utili
 import { loadScript, removeElementById } from "./utils/WebUtils";
 import platform, { isBrowser } from "./utils/platform";
 import validateSDKConfig, { defaultChatSDKConfig } from "./validators/SDKConfigValidators";
+
 import ACSParticipantDisplayName from "./core/messaging/ACSParticipantDisplayName";
 import AMSFileManager from "./external/ACSAdapter/AMSFileManager";
 import AriaTelemetry from "./telemetry/AriaTelemetry";
@@ -34,6 +35,7 @@ import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/Fi
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
 import FramedlessClient from "@microsoft/omnichannel-amsclient/lib/FramedlessClient";
 import GetAgentAvailabilityOptionalParams from "./core/GetAgentAvailabilityOptionalParams";
+import GetChatTokenOptionalParams from "./core/GetChatTokenOptionalParams";
 import GetConversationDetailsOptionalParams from "./core/GetConversationDetailsOptionalParams";
 import GetLiveChatConfigOptionalParams from "./core/GetLiveChatConfigOptionalParams";
 import GetLiveChatTranscriptOptionalParams from "./core/GetLiveChatTranscriptOptionalParams";
@@ -85,14 +87,13 @@ import createOmnichannelMessage from "./utils/createOmnichannelMessage";
 import createTelemetry from "./utils/createTelemetry";
 import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
 import { defaultMessageTags } from "./core/messaging/MessageTags";
-import exceptionThrowers from "./utils/exceptionThrowers";
 import exceptionSuppressors from "./utils/exceptionSuppressors";
+import exceptionThrowers from "./utils/exceptionThrowers";
 import { getLocationInfo } from "./utils/location";
+import { parseLowerCaseString } from "./utils/parsers";
+import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
-import GetChatTokenOptionalParams from "./core/GetChatTokenOptionalParams";
-import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
-import { parseLowerCaseString } from "./utils/parsers";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -1707,11 +1708,22 @@ class OmnichannelChatSDK {
             const { msdyn_postconversationsurveyenable, msfp_sourcesurveyidentifier, msfp_botsourcesurveyidentifier, postConversationSurveyOwnerId, postConversationBotSurveyOwnerId } = liveWSAndLiveChatEngJoin;
 
             if (parseLowerCaseString(msdyn_postconversationsurveyenable) === "true") {
+
                 const liveWorkItemDetails = await this.getConversationDetails();
+                
+                if (liveWorkItemDetails == null) {
+                    this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {
+                        RequestId: this.requestId,
+                        ExceptionDetails: "LiveWorkItemDetails is null."
+                    });
+                    return Promise.reject("LiveWorkItemDetails is null.");
+                }
+                
                 const participantJoined = parseLowerCaseString(liveWorkItemDetails?.canRenderPostChat as string) === "true";
                 const participantType = liveWorkItemDetails?.participantType;
 
                 conversationId = liveWorkItemDetails?.conversationId;
+                
                 const agentSurveyInviteLinkRequest = {
                     "FormId": msfp_sourcesurveyidentifier,
                     "ConversationId": conversationId,
