@@ -320,6 +320,7 @@ class OmnichannelChatSDK {
 
     private async getChatReconnectContextWithReconnectId(optionalParams: ChatReconnectOptionalParams = {}): Promise<ChatReconnectContext> {
 
+
         this.scenarioMarker.startScenario(TelemetryEvent.GetChatReconnectContextWithReconnectId, {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
@@ -1708,15 +1709,13 @@ class OmnichannelChatSDK {
             const { msdyn_postconversationsurveyenable, msfp_sourcesurveyidentifier, msfp_botsourcesurveyidentifier, postConversationSurveyOwnerId, postConversationBotSurveyOwnerId } = liveWSAndLiveChatEngJoin;
 
             if (parseLowerCaseString(msdyn_postconversationsurveyenable) === "true") {
-
                 const liveWorkItemDetails = await this.getConversationDetails();
-                
-                if ( Object.keys(liveWorkItemDetails).length == 0) {
+                if (Object.keys(liveWorkItemDetails).length == 0) {
                     this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {
                         RequestId: this.requestId,
-                        ExceptionDetails: "LiveWorkItemDetails is null."
+                        ExceptionDetails: "GetPostChatSurveyContext : LiveWorkItemDetails is null."
                     });
-                    return Promise.reject("LiveWorkItemDetails is null.");
+                    return Promise.reject("GetPostChatSurveyContext : LiveWorkItemDetails is null.");
                 }
                 
                 const participantJoined = parseLowerCaseString(liveWorkItemDetails?.canRenderPostChat as string) === "true";
