@@ -1697,7 +1697,8 @@ class OmnichannelChatSDK {
 
     public async getPostChatSurveyContext(): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
         this.scenarioMarker.startScenario(TelemetryEvent.GetPostChatSurveyContext, {
-            RequestId: this.requestId
+            RequestId: this.requestId,
+            ChatId: this.chatToken?.chatId as string,
         });
         let conversationId;
 
@@ -1797,6 +1798,7 @@ class OmnichannelChatSDK {
             } else {
                 this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {
                     RequestId: this.requestId,
+                    ChatId: this.chatToken?.chatId as string,
                     ExceptionDetails: "Post Chat Survey is disabled. Please check the Omnichannel Administration Portal."
                 });
                 return Promise.reject("Post Chat is disabled from admin side.");
