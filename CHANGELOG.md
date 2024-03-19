@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## Changed
+### Changed
 
 - Fix ChatSDK.getPostConversationContext() to reject promise when conversation is not found
 
