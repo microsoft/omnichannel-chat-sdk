@@ -317,10 +317,8 @@ class OmnichannelChatSDK {
 
         return context;
     }
-
+    
     private async getChatReconnectContextWithReconnectId(optionalParams: ChatReconnectOptionalParams = {}): Promise<ChatReconnectContext> {
-
-
         this.scenarioMarker.startScenario(TelemetryEvent.GetChatReconnectContextWithReconnectId, {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
@@ -1713,6 +1711,7 @@ class OmnichannelChatSDK {
                 if (Object.keys(liveWorkItemDetails).length == 0) {
                     this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {
                         RequestId: this.requestId,
+                        ChatId: this.chatToken?.chatId as string,
                         ExceptionDetails: "GetPostChatSurveyContext : LiveWorkItemDetails is null."
                     });
                     return Promise.reject("GetPostChatSurveyContext : LiveWorkItemDetails is null.");
@@ -1756,6 +1755,7 @@ class OmnichannelChatSDK {
                         this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {
                             ConversationId: conversationId,
                             RequestId: this.requestId,
+                            ChatId: this.chatToken?.chatId as string,
                             ExceptionDetails: "Survey Invite link failed to send response."
                         });
                         return Promise.reject("Survey Invite link failed to send response.");
@@ -1789,6 +1789,7 @@ class OmnichannelChatSDK {
                     this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {
                         ConversationId: conversationId,
                         RequestId: this.requestId,
+                        ChatId: this.chatToken?.chatId as string,
                         ExceptionDetails: "surveyInviteLinkResponse is null."
                     });
                     return Promise.reject("surveyInviteLinkResponse is null.");
@@ -1804,6 +1805,7 @@ class OmnichannelChatSDK {
             this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {
                 ConversationId: conversationId ?? "",
                 RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string,
                 ExceptionDetails: JSON.stringify(ex)
             });
 
