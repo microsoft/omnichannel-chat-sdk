@@ -1709,7 +1709,7 @@ class OmnichannelChatSDK {
 
             if (parseLowerCaseString(msdyn_postconversationsurveyenable) === "true") {
                 const liveWorkItemDetails = await this.getConversationDetails();
-                if (Object.keys(liveWorkItemDetails).length == 0) {
+                if (Object.keys(liveWorkItemDetails).length === 0) {
                     this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {
                         RequestId: this.requestId,
                         ChatId: this.chatToken?.chatId as string,
