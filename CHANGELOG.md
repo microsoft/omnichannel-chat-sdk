@@ -2,7 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [1.7.2] - 2024-03-20
+
+### Fixed
+- Remove override block for follow-redirect, which was causing conflicts with ACS libs in LCW
+
 
 ## [1.7.1] - 2024-03-18
 
