@@ -165,12 +165,7 @@ class OmnichannelChatSDK {
         loggerUtils.useTelemetry(this.telemetry, this.ocSdkLogger,  this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
 
         this.scenarioMarker.setRuntimeId(this.runtimeId);
-        this.ic3ClientLogger.setRuntimeId(this.runtimeId);
-        this.ocSdkLogger.setRuntimeId(this.runtimeId);
-        this.acsClientLogger.setRuntimeId(this.runtimeId);
-        this.acsAdapterLogger.setRuntimeId(this.runtimeId);
-        this.callingSdkLogger.setRuntimeId(this.runtimeId);
-        this.amsClientLogger.setRuntimeId(this.runtimeId);
+        loggerUtils.setRuntimeId(this.runtimeId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
 
         validateOmnichannelConfig(omnichannelConfig);
         validateSDKConfig(chatSDKConfig);
