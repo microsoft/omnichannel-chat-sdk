@@ -193,12 +193,7 @@ class OmnichannelChatSDK {
         this.AMSClient?.setDebug(flag);
         this.telemetry?.setDebug(flag);
         this.scenarioMarker.setDebug(flag);
-        this.ic3ClientLogger?.setDebug(flag);
-        this.ocSdkLogger?.setDebug(flag);
-        this.acsClientLogger?.setDebug(flag);
-        this.acsAdapterLogger?.setDebug(flag);
-        this.callingSdkLogger?.setDebug(flag);
-        this.amsClientLogger?.setDebug(flag);
+        loggerUtils.setDebug(flag, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
     }
 
     public async initialize(optionalParams: InitializeOptionalParams = {}): Promise<ChatConfig> {
