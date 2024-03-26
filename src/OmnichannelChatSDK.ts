@@ -485,12 +485,7 @@ class OmnichannelChatSDK {
             await this.getChatToken(false);
         }
 
-        this.ic3ClientLogger?.setChatId(this.chatToken.chatId || '');
-        this.ocSdkLogger?.setChatId(this.chatToken.chatId || '');
-        this.acsClientLogger?.setChatId(this.chatToken.chatId || '');
-        this.acsAdapterLogger?.setChatId(this.chatToken.chatId || '');
-        this.callingSdkLogger?.setChatId(this.chatToken.chatId || '');
-        this.amsClientLogger?.setChatId(this.chatToken.chatId || '');
+        loggerUtils.setChatId(this.chatToken.chatId || '', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
 
         let sessionInitOptionalParams: ISessionInitOptionalParams = {
             initContext: {} as InitContext

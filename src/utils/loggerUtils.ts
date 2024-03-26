@@ -37,9 +37,19 @@ export const setDebug = (flag: boolean, ocSdkLogger?: OCSDKLogger | null, acsCli
     ic3ClientLogger?.setDebug(flag);
 }
 
+export const setChatId = (chatId: string, ocSdkLogger?: OCSDKLogger | null, acsClientLogger?: ACSClientLogger | null, acsAdapterLogger?: ACSAdapterLogger | null, callingSdkLogger?: CallingSDKLogger | null, amsClientLogger?: AMSClientLogger | null, ic3ClientLogger: IC3ClientLogger | null = null) => {
+    ocSdkLogger?.setChatId(chatId);
+    acsClientLogger?.setChatId(chatId);
+    acsAdapterLogger?.setChatId(chatId);
+    callingSdkLogger?.setChatId(chatId);
+    amsClientLogger?.setChatId(chatId);
+    ic3ClientLogger?.setChatId(chatId);
+}
+
 export default {
     useTelemetry,
     setRuntimeId,
     setRequestId,
-    setDebug
+    setDebug,
+    setChatId
 }
