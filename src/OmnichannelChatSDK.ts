@@ -211,13 +211,6 @@ class OmnichannelChatSDK {
             useUnauthReconnectIdSigQueryParam: false
         };
 
-        try {
-            this.OCSDKProvider = OCSDKProvider;
-            this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, ocSDKConfiguration as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
-        } catch (e) {
-            exceptionThrowers.throwOmnichannelClientInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
-        }
-
         if (!this.omnichannelConfig.orgUrl.startsWith(coreServicesOrgUrlPrefix)) {
             const result = unqOrgUrlPattern.exec(this.omnichannelConfig.orgUrl);
             if (result) {
@@ -225,8 +218,16 @@ class OmnichannelChatSDK {
                 const geoName = getCoreServicesGeoName(this.dynamicsLocationCode);
                 if (geoName) {
                   this.coreServicesOrgUrl = `https://m-${this.omnichannelConfig.orgId}.${geoName}.omnichannelengagementhub.com`;
+                  this.omnichannelConfig.orgUrl = this.coreServicesOrgUrl;
                 }
             }
+        }
+
+        try {
+            this.OCSDKProvider = OCSDKProvider;
+            this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, ocSDKConfiguration as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
+        } catch (e) {
+            exceptionThrowers.throwOmnichannelClientInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
 
         try {
