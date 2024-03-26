@@ -19,7 +19,17 @@ export const setRuntimeId = (runtimeId: string, ocSdkLogger: OCSDKLogger, acsCli
     ic3ClientLogger?.setRuntimeId(runtimeId);
 }
 
+export const setRequestId = (requestId: string, ocSdkLogger: OCSDKLogger, acsClientLogger: ACSClientLogger, acsAdapterLogger: ACSAdapterLogger, callingSdkLogger: CallingSDKLogger, amsClientLogger: AMSClientLogger, ic3ClientLogger: IC3ClientLogger | undefined = undefined) => {
+    ocSdkLogger.setRequestId(requestId);
+    acsClientLogger.setRequestId(requestId);
+    acsAdapterLogger.setRequestId(requestId);
+    callingSdkLogger.setRequestId(requestId);
+    amsClientLogger.setRequestId(requestId);
+    ic3ClientLogger?.setRequestId(requestId);
+}
+
 export default {
     useTelemetry,
-    setRuntimeId
+    setRuntimeId,
+    setRequestId
 }

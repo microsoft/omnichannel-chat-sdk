@@ -184,12 +184,7 @@ class OmnichannelChatSDK {
             this.telemetry.initialize(this.chatSDKConfig.telemetry.ariaTelemetryKey);
         }
 
-        this.ic3ClientLogger?.setRequestId(this.requestId);
-        this.ocSdkLogger?.setRequestId(this.requestId);
-        this.acsClientLogger?.setRequestId(this.requestId);
-        this.acsAdapterLogger?.setRequestId(this.requestId);
-        this.callingSdkLogger?.setRequestId(this.requestId);
-        this.amsClientLogger?.setRequestId(this.requestId);
+        loggerUtils.setRequestId(this.requestId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
     }
 
     /* istanbul ignore next */
