@@ -685,23 +685,8 @@ class OmnichannelChatSDK {
                 this.sessionId = null;
             }
 
-            this.ic3ClientLogger?.setRequestId(this.requestId);
-            this.ic3ClientLogger?.setChatId('');
-
-            this.ocSdkLogger?.setRequestId(this.requestId);
-            this.ocSdkLogger?.setChatId('');
-
-            this.acsClientLogger?.setRequestId(this.requestId);
-            this.acsClientLogger?.setChatId('');
-
-            this.acsAdapterLogger?.setRequestId(this.requestId);
-            this.acsAdapterLogger?.setChatId('');
-
-            this.callingSdkLogger?.setRequestId(this.requestId);
-            this.callingSdkLogger?.setChatId('');
-
-            this.amsClientLogger?.setRequestId(this.requestId);
-            this.amsClientLogger?.setChatId('');
+            loggerUtils.setRequestId(this.requestId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+            loggerUtils.setChatId('', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
         } catch (error) {
             const telemetryData = {
                 RequestId: this.requestId,

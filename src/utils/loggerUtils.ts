@@ -19,12 +19,12 @@ export const setRuntimeId = (runtimeId: string, ocSdkLogger: OCSDKLogger, acsCli
     ic3ClientLogger?.setRuntimeId(runtimeId);
 }
 
-export const setRequestId = (requestId: string, ocSdkLogger: OCSDKLogger, acsClientLogger: ACSClientLogger, acsAdapterLogger: ACSAdapterLogger, callingSdkLogger: CallingSDKLogger, amsClientLogger: AMSClientLogger, ic3ClientLogger: IC3ClientLogger | null = null) => {
-    ocSdkLogger.setRequestId(requestId);
-    acsClientLogger.setRequestId(requestId);
-    acsAdapterLogger.setRequestId(requestId);
-    callingSdkLogger.setRequestId(requestId);
-    amsClientLogger.setRequestId(requestId);
+export const setRequestId = (requestId: string, ocSdkLogger?: OCSDKLogger | null, acsClientLogger?: ACSClientLogger | null, acsAdapterLogger?: ACSAdapterLogger | null, callingSdkLogger?: CallingSDKLogger | null, amsClientLogger?: AMSClientLogger | null, ic3ClientLogger: IC3ClientLogger | null = null) => {
+    ocSdkLogger?.setRequestId(requestId);
+    acsClientLogger?.setRequestId(requestId);
+    acsAdapterLogger?.setRequestId(requestId);
+    callingSdkLogger?.setRequestId(requestId);
+    amsClientLogger?.setRequestId(requestId);
     ic3ClientLogger?.setRequestId(requestId);
 }
 
