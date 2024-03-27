@@ -5,7 +5,7 @@ import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 import { createPerformanceData, performanceTestResult, performanceData, ThresholdByScenario } from '../utils/PerformanceHandler';
 
 const testPage = fetchTestPageUrl();
-const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChat');
+const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChatWithTranscripts');
 
 let performanceDataTest: performanceData;
 let performanceTestData: performanceData[] = [];
@@ -18,36 +18,43 @@ test.afterAll(async () => {
 });
 
 test.describe('Performance @Performance ', () => {
-    test('ChatSDK.initialize()', async ({ page }) => {
+    test('ChatSDK.getLiveChatTranscript()', async ({ page }) => {
         await page.goto(testPage);
-        
-        let [response, runtimeContext ] = await Promise.all([
+
+        const [response, runtimeContext] = await Promise.all([
             page.waitForResponse(response => {
-                return response.url().includes(OmnichannelEndpoints.LiveChatConfigPath);
+                return response.url().includes(OmnichannelEndpoints.LiveChatv2GetChatTranscriptPath);
             }),
             await page.evaluate(async ({ omnichannelConfig }) => {
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
 
-                let startTime = new Date();
                 await chatSDK.initialize();
+
+                await chatSDK.startChat();
+
+                let startTime = new Date();
+                const transcript = await chatSDK.getLiveChatTranscript();
                 let endTime = new Date();
                 let timeTaken = endTime.getTime() - startTime.getTime();
 
                 const runtimeContext = {
-                    requestId: chatSDK.requestId,
+                    transcript: transcript,
                     timeTaken: timeTaken
                 };
 
+                await chatSDK.endChat();
+
                 return runtimeContext;
-            }, { omnichannelConfig }),
+            }, { omnichannelConfig })
         ]);
 
-        console.log("chatSDK.initialize(): " + runtimeContext.timeTaken);
+        console.log("chatSDK.getLiveChatTranscript(): " + runtimeContext.timeTaken);
         expect(response.status()).toBe(200);
+        expect(Object.keys(runtimeContext.transcript).includes('chatMessagesJson'));
 
         const executionTime = runtimeContext.timeTaken;
-        const data: performanceData = createPerformanceData("chatSDK.initialize()", executionTime, ThresholdByScenario.ChatSDK_Initialize);
+        const data: performanceData = createPerformanceData("chatSDK.getLiveChatTranscript()", executionTime, ThresholdByScenario.ChatSDK_GetLiveChatTranscript);
         performanceDataTest = data;
     });
 });
