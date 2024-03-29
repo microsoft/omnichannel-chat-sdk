@@ -95,6 +95,7 @@ import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 import { coreServicesOrgUrlPrefix, getCoreServicesGeoName, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
 import loggerUtils from "./utils/loggerUtils";
+import ocSDKConfiguration from "./config/ocSDKConfiguration";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -203,13 +204,6 @@ class OmnichannelChatSDK {
             this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
             return this.liveChatConfig;
         }
-
-        const ocSDKConfiguration = {
-            getChatTokenRetryCount: 2,
-            getChatTokenTimeBetweenRetriesOnFailure: 2000,
-            getChatTokenRetryOn429: false,
-            useUnauthReconnectIdSigQueryParam: false
-        };
 
         if (!this.omnichannelConfig.orgUrl.startsWith(coreServicesOrgUrlPrefix)) {
             const result = unqOrgUrlPattern.exec(this.omnichannelConfig.orgUrl);
