@@ -93,7 +93,7 @@ import { parseLowerCaseString } from "./utils/parsers";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
-import { coreServicesOrgUrlPrefix, getCoreServicesGeoName, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
+import { coreServicesOrgUrlPrefix, getCoreServicesGeoName, nonProductionDynamicsLocationCode, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
 import loggerUtils from "./utils/loggerUtils";
 import ocSDKConfiguration from "./config/ocSDKConfiguration";
 
@@ -112,6 +112,7 @@ class OmnichannelChatSDK {
     public localeId: string;
     public requestId: string;
     public sessionId: string | null = null;
+    private unqServicesOrgUrl: string | null = null;
     private coreServicesOrgUrl: string | null = null;
     private dynamicsLocationCode: string | null = null;
     private chatToken: IChatToken;
@@ -211,8 +212,9 @@ class OmnichannelChatSDK {
                 this.dynamicsLocationCode = result[1];
                 const geoName = getCoreServicesGeoName(this.dynamicsLocationCode);
                 if (geoName) {
-                  this.coreServicesOrgUrl = `https://m-${this.omnichannelConfig.orgId}.${geoName}.omnichannelengagementhub.com`;
-                  this.omnichannelConfig.orgUrl = this.coreServicesOrgUrl;
+                    this.unqServicesOrgUrl = this.omnichannelConfig.orgUrl;
+                    this.coreServicesOrgUrl = `https://m-${this.omnichannelConfig.orgId}.${geoName}.omnichannelengagementhub.com`;
+                    this.omnichannelConfig.orgUrl = this.coreServicesOrgUrl;
                 }
             }
         }
@@ -1974,12 +1976,25 @@ class OmnichannelChatSDK {
         const { sendCacheHeaders } = optionalParams;
         const bypassCache = sendCacheHeaders === true;
 
+        let shouldUseFallback = false;
         let liveChatConfig;
         try {
             liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache);
-        } catch (error) {
-            throw error;
+        } catch (error: any) {
+            // Fallback on non-prod core services org
+            if (error?.isAxiosError && error?.code == "ERR_NETWORK" && this.coreServicesOrgUrl && this.dynamicsLocationCode && nonProductionDynamicsLocationCode.includes(this.dynamicsLocationCode)) {
+                shouldUseFallback = true
+            } else {
+                throw error
+            }
         }
+
+        if (shouldUseFallback) {
+            this.omnichannelConfig.orgUrl = this.unqServicesOrgUrl as string;
+            this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, ocSDKConfiguration as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
+        }
+
+        liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache);
 
         const {
             DataMaskingInfo: dataMaskingConfig,
