@@ -1980,9 +1980,9 @@ class OmnichannelChatSDK {
         let liveChatConfig;
         try {
             liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache);
-        } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+        } catch (error) {
             // Fallback on non-prod core services org
-            if (error?.isAxiosError && error?.code == "ERR_NETWORK" && this.coreServicesOrgUrl && this.dynamicsLocationCode && nonProductionDynamicsLocationCode.includes(this.dynamicsLocationCode)) {
+            if ((error as any).isAxiosError && (error as any).code == "ERR_NETWORK" && this.coreServicesOrgUrl && this.dynamicsLocationCode && nonProductionDynamicsLocationCode.includes(this.dynamicsLocationCode)) { // eslint-disable-line @typescript-eslint/no-explicit-any
                 shouldUseFallback = true
             } else {
                 throw error
