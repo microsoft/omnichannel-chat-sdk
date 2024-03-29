@@ -17,14 +17,15 @@ const CoreServicesGeoNamesMapping: any = { // eslint-disable-line @typescript-es
     "crm19": "no", // NOR 
     "crm20": "sg", // SGP
     "crm21": "kr", // KOR
-    "crm22": "se" // SWE
+    "crm22": "se", // SWE
+    "crmtest": "test" // TEST
 }
 
 export const coreServicesOrgUrlPrefix = "https://m-";
 
 export const unqOrgUrlPattern = /http[s]*:\/\/[\w-]*-(crm[\d]*).[\w.]*/;
 
-export const nonProductionDynamicsLocationCode = ["crm10"];
+export const nonProductionDynamicsLocationCode = ["crm10", "crmtest"];
 
 export const getCoreServicesGeoName = (dynamicsLocationCode: string): string => {
     const locationCode = Object.keys(CoreServicesGeoNamesMapping).find(key => key === dynamicsLocationCode);
