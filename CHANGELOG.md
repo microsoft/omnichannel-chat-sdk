@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- Updated `OCClient.getSurveyInviteLink` request payload to support Copilot Survey
+
 ## [1.7.2] - 2024-03-20
 
 ### Fixed
