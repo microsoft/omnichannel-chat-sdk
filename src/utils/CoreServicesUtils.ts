@@ -1,4 +1,4 @@
-const CoreServicesGeoNamesMapping: any = { // eslint-disable-line @typescript-eslint/no-explicit-any
+export const CoreServicesGeoNamesMapping: any = { // eslint-disable-line @typescript-eslint/no-explicit-any
     "crm": "us", // NAM
     "crm2": "br", // SAM
     "crm3": "ca", // CAN
