@@ -1676,7 +1676,7 @@ class OmnichannelChatSDK {
         try {
             const chatConfig: ChatConfig = this.liveChatConfig;
             const { LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin } = chatConfig;
-            const { msdyn_postconversationsurveyenable, msfp_sourcesurveyidentifier, msfp_botsourcesurveyidentifier, postConversationSurveyOwnerId, postConversationBotSurveyOwnerId } = liveWSAndLiveChatEngJoin;
+            const { msdyn_postconversationsurveyenable, msfp_sourcesurveyidentifier, msfp_botsourcesurveyidentifier, postConversationSurveyOwnerId, postConversationBotSurveyOwnerId, msdyn_surveyprovider } = liveWSAndLiveChatEngJoin;
 
             if (parseLowerCaseString(msdyn_postconversationsurveyenable) === "true") {
                 const liveWorkItemDetails = await this.getConversationDetails();
@@ -1695,12 +1695,16 @@ class OmnichannelChatSDK {
                 conversationId = liveWorkItemDetails?.conversationId;
                 
                 const agentSurveyInviteLinkRequest = {
+                    "SurveyProvider": msdyn_surveyprovider,
+                    "WidgetId": this.omnichannelConfig.widgetId,
                     "FormId": msfp_sourcesurveyidentifier,
                     "ConversationId": conversationId,
                     "OCLocaleCode": getLocaleStringFromId(this.localeId)
                 };
 
                 const botSurveyInviteLinkRequest = {
+                    "SurveyProvider": msdyn_surveyprovider,
+                    "WidgetId": this.omnichannelConfig.widgetId,
                     "FormId": msfp_botsourcesurveyidentifier,
                     "ConversationId": conversationId,
                     "OCLocaleCode": getLocaleStringFromId(this.localeId)

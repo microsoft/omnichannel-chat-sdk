@@ -3955,7 +3955,8 @@ describe('Omnichannel Chat SDK', () => {
                     msfp_sourcesurveyidentifier: "",
                     msfp_botsourcesurveyidentifier: "1",
                     postConversationSurveyOwnerId: "",
-                    postConversationBotSurveyOwnerId: "2"
+                    postConversationBotSurveyOwnerId: "2",
+                    msdyn_surveyprovider: "MCS"
                 },
                 ChatWidgetLanguage: {
                     msdyn_localeid: "1033"
@@ -3990,7 +3991,9 @@ describe('Omnichannel Chat SDK', () => {
                 expect(chatSDK.OCClient.getSurveyInviteLink).toHaveBeenCalledWith("2", {
                     "FormId": "1",
                     "ConversationId": "convId",
-                    "OCLocaleCode": "en-us"
+                    "OCLocaleCode": "en-us",
+                    "SurveyProvider": "MCS",
+                    "WidgetId": "[data-app-id]"
                 },
                 expect.any(Object));
                 expect(postChatContext.participantJoined).toBeTruthy();
