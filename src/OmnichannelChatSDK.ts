@@ -1637,6 +1637,10 @@ class OmnichannelChatSDK {
 
         return Promise.reject(`ChatAdapter for protocol ${protocol} currently not supported`);
     }
+    
+    public isVoiceVideoCallingEnabled(): boolean {
+        return this.callingOption.toString() !== CallingOptionsOptionSetNumber.NoCalling.toString();
+    }
 
     public async getVoiceVideoCalling(params: any = {}): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
         this.scenarioMarker.startScenario(TelemetryEvent.GetVoiceVideoCalling);
@@ -1646,7 +1650,7 @@ class OmnichannelChatSDK {
             exceptionThrowers.throwUnsupportedPlatform(this.scenarioMarker, TelemetryEvent.GetVoiceVideoCalling, message);
         }
 
-        if (this.callingOption.toString() === CallingOptionsOptionSetNumber.NoCalling.toString()) {
+        if (!this.isVoiceVideoCallingEnabled()) {
             const message = "Voice and video call is not enabled";
             exceptionThrowers.throwFeatureDisabled(this.scenarioMarker, TelemetryEvent.GetVoiceVideoCalling, message);
         }
