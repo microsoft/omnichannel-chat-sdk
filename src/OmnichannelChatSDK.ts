@@ -93,9 +93,10 @@ import { parseLowerCaseString } from "./utils/parsers";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
-import { coreServicesOrgUrlPrefix, getCoreServicesGeoName, nonProductionDynamicsLocationCode, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
+import { coreServicesOrgUrlPrefix, getCoreServicesGeoName, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
 import loggerUtils from "./utils/loggerUtils";
 import ocSDKConfiguration from "./config/ocSDKConfiguration";
+import { isCoreServicesOrgUrlDNSError } from "./utils/internalUtils";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -1986,11 +1987,12 @@ class OmnichannelChatSDK {
 
         let shouldUseFallbackOrgUrl = false;
         let liveChatConfig;
+
         try {
             liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache);
         } catch (error) {
             // Fallback on non-prod core services org
-            if ((error as any).isAxiosError && (error as any).code == AxiosErrorCodes.ERR_NETWORK && this.coreServicesOrgUrl && this.dynamicsLocationCode && nonProductionDynamicsLocationCode.includes(this.dynamicsLocationCode)) { // eslint-disable-line @typescript-eslint/no-explicit-any
+            if (isCoreServicesOrgUrlDNSError(error, this.coreServicesOrgUrl, this.dynamicsLocationCode)) { // eslint-disable-line @typescript-eslint/no-explicit-any
                 shouldUseFallbackOrgUrl = true
             } else {
                 throw error
