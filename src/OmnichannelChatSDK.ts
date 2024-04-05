@@ -1984,20 +1984,20 @@ class OmnichannelChatSDK {
         const { sendCacheHeaders } = optionalParams;
         const bypassCache = sendCacheHeaders === true;
 
-        let shouldUseFallback = false;
+        let shouldUseFallbackOrgUrl = false;
         let liveChatConfig;
         try {
             liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache);
         } catch (error) {
             // Fallback on non-prod core services org
             if ((error as any).isAxiosError && (error as any).code == AxiosErrorCodes.ERR_NETWORK && this.coreServicesOrgUrl && this.dynamicsLocationCode && nonProductionDynamicsLocationCode.includes(this.dynamicsLocationCode)) { // eslint-disable-line @typescript-eslint/no-explicit-any
-                shouldUseFallback = true
+                shouldUseFallbackOrgUrl = true
             } else {
                 throw error
             }
         }
 
-        if (shouldUseFallback) {
+        if (shouldUseFallbackOrgUrl) {
             this.omnichannelConfig.orgUrl = this.unqServicesOrgUrl as string;
             this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, ocSDKConfiguration as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
             liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache);
