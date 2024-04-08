@@ -1991,7 +1991,7 @@ class OmnichannelChatSDK {
         try {
             liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache);
         } catch (error) {
-            // Fallback on non-prod core services org
+            // Fallback on orgUrl which got converted to Core Services orgUrl
             if (isCoreServicesOrgUrlDNSError(error, this.coreServicesOrgUrl, this.dynamicsLocationCode)) { // eslint-disable-line @typescript-eslint/no-explicit-any
                 shouldUseFallbackOrgUrl = true
             } else {
