@@ -2002,7 +2002,7 @@ class OmnichannelChatSDK {
         if (shouldUseFallbackOrgUrl) {
             this.omnichannelConfig.orgUrl = this.unqServicesOrgUrl as string;
             this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, ocSDKConfiguration as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
-            liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache);
+            liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache); // Bubble up error by default to throw ChatConfigRetrievalFailure
         }
 
         const {
