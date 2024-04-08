@@ -3,11 +3,11 @@
  */
 
 
-export const isCoreServicesOrgUrlDNSError = (error: any, coreServicesOrgUrl: string | null, dynamicsLocationCode: string | null) => {
+export const isCoreServicesOrgUrlDNSError = (error: any, coreServicesOrgUrl: string | null, dynamicsLocationCode: string | null): boolean => { // eslint-disable-line @typescript-eslint/no-explicit-any
     // Validating whether it's an 'ERR_NAME_NOT_RESOLVED' error
     // `ERR_NETWORK` could return false positives since the error can be caused by network disconnection
     const isDNSUrlResolveError = error.isAxiosError && error.code == AxiosErrorCodes.ERR_NETWORK;
-    if (isDNSUrlResolveError && coreServicesOrgUrl && dynamicsLocationCode) { // eslint-disable-line @typescript-eslint/no-explicit-any
+    if (isDNSUrlResolveError && coreServicesOrgUrl && dynamicsLocationCode) {
         return true;
     }
     
