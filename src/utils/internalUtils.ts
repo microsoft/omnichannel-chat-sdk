@@ -2,6 +2,7 @@
  * Utility function that are only meant to be used internally. It would not guarantee backward compatibility if they were used outside of the package.
  */
 
+import AxiosErrorCodes from "../core/AxiosErrorCodes";
 
 export const isCoreServicesOrgUrlDNSError = (error: any, coreServicesOrgUrl: string | null, dynamicsLocationCode: string | null): boolean => { // eslint-disable-line @typescript-eslint/no-explicit-any
     // Validating whether it's an 'ERR_NAME_NOT_RESOLVED' error
