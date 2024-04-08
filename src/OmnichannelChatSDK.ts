@@ -1995,7 +1995,7 @@ class OmnichannelChatSDK {
             if (isCoreServicesOrgUrlDNSError(error, this.coreServicesOrgUrl, this.dynamicsLocationCode)) { // eslint-disable-line @typescript-eslint/no-explicit-any
                 shouldUseFallbackOrgUrl = true
             } else {
-                throw error
+                throw error // Bubble up error by default to throw ChatConfigRetrievalFailure
             }
         }
 
