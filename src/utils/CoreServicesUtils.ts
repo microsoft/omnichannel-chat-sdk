@@ -31,3 +31,7 @@ export const getCoreServicesGeoName = (dynamicsLocationCode: string): string => 
     const locationCode = Object.keys(CoreServicesGeoNamesMapping).find(key => key === dynamicsLocationCode);
     return locationCode ? CoreServicesGeoNamesMapping[locationCode]: "";
 };
+
+export const createCoreServicesOrgUrl = (orgId: string, geoName: string): string => {
+    return `https://m-${orgId}.${geoName}.omnichannelengagementhub.com`;
+};
