@@ -207,18 +207,7 @@ class OmnichannelChatSDK {
             return this.liveChatConfig;
         }
 
-        if (!this.omnichannelConfig.orgUrl.startsWith(coreServicesOrgUrlPrefix)) {
-            const result = unqOrgUrlPattern.exec(this.omnichannelConfig.orgUrl);
-            if (result) {
-                this.dynamicsLocationCode = result[1];
-                const geoName = getCoreServicesGeoName(this.dynamicsLocationCode);
-                if (geoName) {
-                    this.unqServicesOrgUrl = this.omnichannelConfig.orgUrl;
-                    this.coreServicesOrgUrl = createCoreServicesOrgUrl(this.omnichannelConfig.orgId, geoName);
-                    this.omnichannelConfig.orgUrl = this.coreServicesOrgUrl;
-                }
-            }
-        }
+        this.useCoreServicesOrgUrlIfNotSet();
 
         try {
             this.OCSDKProvider = OCSDKProvider;
@@ -2155,6 +2144,21 @@ class OmnichannelChatSDK {
 
             if (optionalParams?.throwError) {
                 throw Error(exceptionDetails.response);
+            }
+        }
+    }
+
+    private useCoreServicesOrgUrlIfNotSet() {
+        if (!this.omnichannelConfig.orgUrl.startsWith(coreServicesOrgUrlPrefix)) {
+            const result = unqOrgUrlPattern.exec(this.omnichannelConfig.orgUrl);
+            if (result) {
+                this.dynamicsLocationCode = result[1];
+                const geoName = getCoreServicesGeoName(this.dynamicsLocationCode);
+                if (geoName) {
+                    this.unqServicesOrgUrl = this.omnichannelConfig.orgUrl;
+                    this.coreServicesOrgUrl = createCoreServicesOrgUrl(this.omnichannelConfig.orgId, geoName);
+                    this.omnichannelConfig.orgUrl = this.coreServicesOrgUrl;
+                }
             }
         }
     }
