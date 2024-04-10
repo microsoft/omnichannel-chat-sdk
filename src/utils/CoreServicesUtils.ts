@@ -28,8 +28,7 @@ export const unqOrgUrlPattern = /http[s]*:\/\/[\w-]*-(crm[\d]*).[\w.]*/;
 export const nonProductionDynamicsLocationCode = ["crm10", "crmtest"];
 
 export const getCoreServicesGeoName = (dynamicsLocationCode: string): string => {
-    const locationCode = Object.keys(CoreServicesGeoNamesMapping).find(key => key === dynamicsLocationCode);
-    return locationCode ? CoreServicesGeoNamesMapping[locationCode]: "";
+    return CoreServicesGeoNamesMapping[dynamicsLocationCode] ?? "";
 };
 
 export const createCoreServicesOrgUrl = (orgId: string, geoName: string): string => {
