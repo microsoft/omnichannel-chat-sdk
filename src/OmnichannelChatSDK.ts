@@ -1974,7 +1974,6 @@ class OmnichannelChatSDK {
         const { sendCacheHeaders } = optionalParams;
         const bypassCache = sendCacheHeaders === true;
 
-        let shouldUseFallbackOrgUrl = false;
         let liveChatConfig;
 
         try {
@@ -1982,16 +1981,12 @@ class OmnichannelChatSDK {
         } catch (error) {
             // Fallback on orgUrl which got converted to Core Services orgUrl
             if (isCoreServicesOrgUrlDNSError(error, this.coreServicesOrgUrl, this.dynamicsLocationCode)) { // eslint-disable-line @typescript-eslint/no-explicit-any
-                shouldUseFallbackOrgUrl = true
+                this.omnichannelConfig.orgUrl = this.unqServicesOrgUrl as string;
+                this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, ocSDKConfiguration as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
+                liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache); // Bubble up error by default to throw ChatConfigRetrievalFailure
             } else {
                 throw error // Bubble up error by default to throw ChatConfigRetrievalFailure
             }
-        }
-
-        if (shouldUseFallbackOrgUrl === true) {
-            this.omnichannelConfig.orgUrl = this.unqServicesOrgUrl as string;
-            this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, ocSDKConfiguration as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
-            liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache); // Bubble up error by default to throw ChatConfigRetrievalFailure
         }
 
         const {
