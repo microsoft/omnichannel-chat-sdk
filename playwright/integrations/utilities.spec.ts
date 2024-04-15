@@ -1,5 +1,6 @@
+import { expect, test } from '@playwright/test';
+
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
-import { test, expect } from '@playwright/test';
 
 const testPage = fetchTestPageUrl();
 

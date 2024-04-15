@@ -6,7 +6,7 @@ import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEv
 import { SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
 import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
 import { defaultLocaleId, getLocaleStringFromId } from "./utils/locale";
-import { isClientIdNotFoundErrorMessage, isCustomerMessage } from "./utils/utilities";
+import { getRuntimeId, isClientIdNotFoundErrorMessage, isCustomerMessage } from "./utils/utilities";
 import { loadScript, removeElementById } from "./utils/WebUtils";
 import platform, { isBrowser } from "./utils/platform";
 import validateSDKConfig, { defaultChatSDKConfig } from "./validators/SDKConfigValidators";
@@ -134,7 +134,7 @@ class OmnichannelChatSDK {
 
     constructor(omnichannelConfig: OmnichannelConfig, chatSDKConfig: ChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
-        this.runtimeId = uuidv4();
+        this.runtimeId = getRuntimeId(chatSDKConfig?.telemetry?.runtimeId ?? null);
         this.omnichannelConfig = omnichannelConfig;
         this.chatSDKConfig = {
             ...defaultChatSDKConfig,
