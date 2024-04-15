@@ -109,11 +109,7 @@ test.describe('Utilities @Utilities', () => {
         const value = "test";
         expect(isNotEmpty(value)).toBe(true);
     });
-    test("isNotEmpty should return true if the value is not null, undefined or empty string", () => {
-        const value = "test";
-        expect(isNotEmpty(value)).toBe(true);
-    });
-    
+        
     test("isNotEmpty should return false if the value is null", () => {
         const value = null;
         expect(isNotEmpty(value)).toBe(false);
