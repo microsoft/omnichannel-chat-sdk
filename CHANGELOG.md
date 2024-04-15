@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- Adding new externalRuntimeId, allows to pass external runtimeId to ChatSDK and keep in sync sessions for telemetry.
+- Adding new template for PR's
+
 ## [1.8.0] - 2024-03-29
 
 ### Changed
