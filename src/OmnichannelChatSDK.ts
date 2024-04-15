@@ -134,7 +134,7 @@ class OmnichannelChatSDK {
 
     constructor(omnichannelConfig: OmnichannelConfig, chatSDKConfig: ChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
-        this.runtimeId = getRuntimeId(omnichannelConfig?.externalRuntimeId ?? null);
+        this.runtimeId = getRuntimeId(chatSDKConfig?.telemetry?.runtimeId ?? null);
         this.omnichannelConfig = omnichannelConfig;
         this.chatSDKConfig = {
             ...defaultChatSDKConfig,
