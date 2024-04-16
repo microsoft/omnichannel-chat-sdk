@@ -26,7 +26,7 @@ interface ChatReconnectConfig {
  * Non-backward compatible configurations or experimentals. Subject to change any time. Internal use only.
  */
 interface InternalChatSDKConfig {
-    useRuntimeCoreServicesOrgUrl?: boolean;
+    createCoreServicesOrgUrlAtRuntime?: boolean;
 }
 
 interface ChatSDKConfig {
