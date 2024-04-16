@@ -22,6 +22,13 @@ interface ChatReconnectConfig {
     disable: boolean;
 }
 
+/**
+ * Non-backward compatible configurations or experimentals. Subject to change any time. Internal use only.
+ */
+interface InternalChatSDKConfig {
+    useRuntimeCoreServicesOrgUrl?: boolean;
+}
+
 interface ChatSDKConfig {
     dataMasking?: DataMaskingSDKConfig,
     telemetry?: TelemetrySDKConfig,
@@ -29,7 +36,8 @@ interface ChatSDKConfig {
     chatReconnect?: ChatReconnectConfig,
     getAuthToken?: () => Promise<string|null>,
     ic3Config?: IC3Config,
-    chatAdapterConfig?: ChatAdapterConfig
+    chatAdapterConfig?: ChatAdapterConfig,
+    internalConfig?: InternalChatSDKConfig
 }
 
 export {
