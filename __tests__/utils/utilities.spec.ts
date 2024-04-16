@@ -1,3 +1,5 @@
+import { getRuntimeId, isNotEmpty } from "../../src/utils/utilities";
+
 /* eslint-disable @typescript-eslint/no-var-requires */
 const { MessageType } = require("../../src");
 const utilities = require('../../src/utils/utilities');
@@ -99,4 +101,24 @@ describe('Utilities', () => {
 
         expect(utilities.isClientIdNotFoundErrorMessage(error)).toBe(false);
     });
+    it("isNotEmpty should return true if the value is not null, undefined or empty string", () => {
+        const value = "test";
+        expect(isNotEmpty(value)).toBe(true);
+    });
+        
+    it("isNotEmpty should return false if the value is null", () => {
+        const value = null;
+        expect(isNotEmpty(value)).toBe(false);
+    });
+
+    it("getRuntimeId should return externalRuntimeId if it is not empty", () => {
+        const externalRuntimeId = "test";
+        expect(getRuntimeId(externalRuntimeId)).toBe(externalRuntimeId);
+    });
+
+    it("getRuntimeId should return a new uuid if externalRuntimeId is empty", () => {
+        const externalRuntimeId = null;
+        expect(getRuntimeId(externalRuntimeId)).not.toBe(externalRuntimeId);
+    });
+
 });
