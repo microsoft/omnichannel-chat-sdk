@@ -10,7 +10,6 @@ import { getRuntimeId, isClientIdNotFoundErrorMessage, isCustomerMessage } from 
 import { loadScript, removeElementById } from "./utils/WebUtils";
 import platform, { isBrowser } from "./utils/platform";
 import validateSDKConfig, { defaultChatSDKConfig } from "./validators/SDKConfigValidators";
-
 import ACSParticipantDisplayName from "./core/messaging/ACSParticipantDisplayName";
 import AMSFileManager from "./external/ACSAdapter/AMSFileManager";
 import AriaTelemetry from "./telemetry/AriaTelemetry";
@@ -94,6 +93,10 @@ import { parseLowerCaseString } from "./utils/parsers";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
+import { coreServicesOrgUrlPrefix, createCoreServicesOrgUrl, getCoreServicesGeoName, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
+import loggerUtils from "./utils/loggerUtils";
+import ocSDKConfiguration from "./config/ocSDKConfiguration";
+import { isCoreServicesOrgUrlDNSError } from "./utils/internalUtils";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -110,6 +113,9 @@ class OmnichannelChatSDK {
     public localeId: string;
     public requestId: string;
     public sessionId: string | null = null;
+    private unqServicesOrgUrl: string | null = null;
+    private coreServicesOrgUrl: string | null = null;
+    private dynamicsLocationCode: string | null = null;
     private chatToken: IChatToken;
     private liveChatConfig: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private liveChatVersion: number;
@@ -159,20 +165,10 @@ class OmnichannelChatSDK {
         this.amsClientLogger = createAMSClientLogger(this.omnichannelConfig);
 
         this.scenarioMarker.useTelemetry(this.telemetry);
-        this.ic3ClientLogger.useTelemetry(this.telemetry);
-        this.ocSdkLogger.useTelemetry(this.telemetry);
-        this.acsClientLogger.useTelemetry(this.telemetry);
-        this.acsAdapterLogger.useTelemetry(this.telemetry);
-        this.callingSdkLogger.useTelemetry(this.telemetry);
-        this.amsClientLogger.useTelemetry(this.telemetry);
+        loggerUtils.useTelemetry(this.telemetry, this.ocSdkLogger,  this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
 
         this.scenarioMarker.setRuntimeId(this.runtimeId);
-        this.ic3ClientLogger.setRuntimeId(this.runtimeId);
-        this.ocSdkLogger.setRuntimeId(this.runtimeId);
-        this.acsClientLogger.setRuntimeId(this.runtimeId);
-        this.acsAdapterLogger.setRuntimeId(this.runtimeId);
-        this.callingSdkLogger.setRuntimeId(this.runtimeId);
-        this.amsClientLogger.setRuntimeId(this.runtimeId);
+        loggerUtils.setRuntimeId(this.runtimeId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
 
         validateOmnichannelConfig(omnichannelConfig);
         validateSDKConfig(chatSDKConfig);
@@ -191,12 +187,7 @@ class OmnichannelChatSDK {
             this.telemetry.initialize(this.chatSDKConfig.telemetry.ariaTelemetryKey);
         }
 
-        this.ic3ClientLogger?.setRequestId(this.requestId);
-        this.ocSdkLogger?.setRequestId(this.requestId);
-        this.acsClientLogger?.setRequestId(this.requestId);
-        this.acsAdapterLogger?.setRequestId(this.requestId);
-        this.callingSdkLogger?.setRequestId(this.requestId);
-        this.amsClientLogger?.setRequestId(this.requestId);
+        loggerUtils.setRequestId(this.requestId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
     }
 
     /* istanbul ignore next */
@@ -205,12 +196,7 @@ class OmnichannelChatSDK {
         this.AMSClient?.setDebug(flag);
         this.telemetry?.setDebug(flag);
         this.scenarioMarker.setDebug(flag);
-        this.ic3ClientLogger?.setDebug(flag);
-        this.ocSdkLogger?.setDebug(flag);
-        this.acsClientLogger?.setDebug(flag);
-        this.acsAdapterLogger?.setDebug(flag);
-        this.callingSdkLogger?.setDebug(flag);
-        this.amsClientLogger?.setDebug(flag);
+        loggerUtils.setDebug(flag, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
     }
 
     public async initialize(optionalParams: InitializeOptionalParams = {}): Promise<ChatConfig> {
@@ -221,12 +207,7 @@ class OmnichannelChatSDK {
             return this.liveChatConfig;
         }
 
-        const ocSDKConfiguration = {
-            getChatTokenRetryCount: 2,
-            getChatTokenTimeBetweenRetriesOnFailure: 2000,
-            getChatTokenRetryOn429: false,
-            useUnauthReconnectIdSigQueryParam: false
-        };
+        this.useCoreServicesOrgUrlIfNotSet();
 
         try {
             this.OCSDKProvider = OCSDKProvider;
@@ -491,12 +472,7 @@ class OmnichannelChatSDK {
             await this.getChatToken(false);
         }
 
-        this.ic3ClientLogger?.setChatId(this.chatToken.chatId || '');
-        this.ocSdkLogger?.setChatId(this.chatToken.chatId || '');
-        this.acsClientLogger?.setChatId(this.chatToken.chatId || '');
-        this.acsAdapterLogger?.setChatId(this.chatToken.chatId || '');
-        this.callingSdkLogger?.setChatId(this.chatToken.chatId || '');
-        this.amsClientLogger?.setChatId(this.chatToken.chatId || '');
+        loggerUtils.setChatId(this.chatToken.chatId || '', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
 
         let sessionInitOptionalParams: ISessionInitOptionalParams = {
             initContext: {} as InitContext
@@ -696,23 +672,8 @@ class OmnichannelChatSDK {
                 this.sessionId = null;
             }
 
-            this.ic3ClientLogger?.setRequestId(this.requestId);
-            this.ic3ClientLogger?.setChatId('');
-
-            this.ocSdkLogger?.setRequestId(this.requestId);
-            this.ocSdkLogger?.setChatId('');
-
-            this.acsClientLogger?.setRequestId(this.requestId);
-            this.acsClientLogger?.setChatId('');
-
-            this.acsAdapterLogger?.setRequestId(this.requestId);
-            this.acsAdapterLogger?.setChatId('');
-
-            this.callingSdkLogger?.setRequestId(this.requestId);
-            this.callingSdkLogger?.setChatId('');
-
-            this.amsClientLogger?.setRequestId(this.requestId);
-            this.amsClientLogger?.setChatId('');
+            loggerUtils.setRequestId(this.requestId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+            loggerUtils.setChatId('', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
         } catch (error) {
             const telemetryData = {
                 RequestId: this.requestId,
@@ -2012,7 +1973,22 @@ class OmnichannelChatSDK {
     private async getChatConfig(optionalParams: GetLiveChatConfigOptionalParams = {}): Promise<ChatConfig> {
         const { sendCacheHeaders } = optionalParams;
         const bypassCache = sendCacheHeaders === true;
-        const liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache);
+
+        let liveChatConfig;
+
+        try {
+            liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache);
+        } catch (error) {
+            // Fallback on orgUrl which got converted to Core Services orgUrl
+            if (isCoreServicesOrgUrlDNSError(error, this.coreServicesOrgUrl, this.dynamicsLocationCode)) { // eslint-disable-line @typescript-eslint/no-explicit-any
+                this.omnichannelConfig.orgUrl = this.unqServicesOrgUrl as string;
+                this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, ocSDKConfiguration as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
+                liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache); // Bubble up error by default to throw ChatConfigRetrievalFailure
+            } else {
+                throw error // Bubble up error by default to throw ChatConfigRetrievalFailure
+            }
+        }
+
         const {
             DataMaskingInfo: dataMaskingConfig,
             LiveChatConfigAuthSettings: authSettings,
@@ -2163,6 +2139,21 @@ class OmnichannelChatSDK {
 
             if (optionalParams?.throwError) {
                 throw Error(exceptionDetails.response);
+            }
+        }
+    }
+
+    private useCoreServicesOrgUrlIfNotSet() {
+        if (!this.omnichannelConfig.orgUrl.startsWith(coreServicesOrgUrlPrefix) && this.chatSDKConfig.internalConfig?.createCoreServicesOrgUrlAtRuntime === true) {
+            const result = unqOrgUrlPattern.exec(this.omnichannelConfig.orgUrl);
+            if (result) {
+                this.dynamicsLocationCode = result[1];
+                const geoName = getCoreServicesGeoName(this.dynamicsLocationCode);
+                if (geoName) {
+                    this.unqServicesOrgUrl = this.omnichannelConfig.orgUrl;
+                    this.coreServicesOrgUrl = createCoreServicesOrgUrl(this.omnichannelConfig.orgId, geoName);
+                    this.omnichannelConfig.orgUrl = this.coreServicesOrgUrl;
+                }
             }
         }
     }
