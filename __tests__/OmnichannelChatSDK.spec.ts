@@ -464,7 +464,7 @@ describe('Omnichannel Chat SDK', () => {
             }
         });
 
-        it('ChatSDK.initialize() with ChatSDK.getChatConfig() failure should throw an exception', async () => {
+        it('ChatSDK.initialize() with ChatSDK.getChatConfig() failure should throw \'ChatConfigRetrievalFailure\' as exception', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn(() => {throw Error()});
 
@@ -565,6 +565,20 @@ describe('Omnichannel Chat SDK', () => {
 
             await chatSDK.getChatConfig(optionalParams);
             expect(chatSDK.OCClient.getChatConfig.mock.calls[0][1]).toEqual(optionalParams.sendCacheHeaders);
+        });
+
+        it('ChatSDK.getChatConfig() failure should throw an exception by default', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+
+            const mockedErrorMessage = "MockedErrorMessage";
+            chatSDK.OCClient = {};
+            chatSDK.OCClient.getChatConfig = jest.fn(() => {throw Error(mockedErrorMessage)});
+
+            try {
+                await chatSDK.getChatConfig();
+            } catch (e) {
+                expect(e.message).toBe(mockedErrorMessage);
+            }
         });
 
         it('ChatSDK.getChatConfig() with sendCacheHeaders set to \'false\' should be passed to OCClient.getChatConfig()', async () => {
@@ -3941,7 +3955,8 @@ describe('Omnichannel Chat SDK', () => {
                     msfp_sourcesurveyidentifier: "",
                     msfp_botsourcesurveyidentifier: "1",
                     postConversationSurveyOwnerId: "",
-                    postConversationBotSurveyOwnerId: "2"
+                    postConversationBotSurveyOwnerId: "2",
+                    msdyn_surveyprovider: "MCS"
                 },
                 ChatWidgetLanguage: {
                     msdyn_localeid: "1033"
@@ -3976,7 +3991,9 @@ describe('Omnichannel Chat SDK', () => {
                 expect(chatSDK.OCClient.getSurveyInviteLink).toHaveBeenCalledWith("2", {
                     "FormId": "1",
                     "ConversationId": "convId",
-                    "OCLocaleCode": "en-us"
+                    "OCLocaleCode": "en-us",
+                    "SurveyProvider": "MCS",
+                    "WidgetId": "[data-app-id]"
                 },
                 expect.any(Object));
                 expect(postChatContext.participantJoined).toBeTruthy();
