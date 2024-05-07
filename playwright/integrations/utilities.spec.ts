@@ -1,5 +1,4 @@
 import { expect, test } from '@playwright/test';
-import {getRuntimeId, isNotEmpty} from '../../src/utils/utilities';
 
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
 
@@ -105,6 +104,7 @@ test.describe('Utilities @Utilities', () => {
         expect(isAscending(differenceArray)).toBe(true);
     });
 
+
     test("isNotEmpty should return true if the value is not null, undefined or empty string", () => {
         const value = "test";
         expect(isNotEmpty(value)).toBe(true);
@@ -124,4 +124,5 @@ test.describe('Utilities @Utilities', () => {
         const externalRuntimeId = null;
         expect(getRuntimeId(externalRuntimeId)).not.toBe(externalRuntimeId);
     });
+
 });
