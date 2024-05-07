@@ -4,7 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix path for util function uuidv4 that was causing conflicts with pipeline
+
 ## [1.8.1] - 2024-04-24
+
 ### Added
 
 - Adding new externalRuntimeId, allows to pass external runtimeId to ChatSDK and keep in sync sessions for telemetry.
