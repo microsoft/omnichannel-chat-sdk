@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix path for util function uuidv4 that was causing conflicts with pipeline
+
 ## [1.8.0] - 2024-03-29
 
 ### Changed
