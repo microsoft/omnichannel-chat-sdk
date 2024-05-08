@@ -1,8 +1,9 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
-
 ## [Unreleased]
+
+## [1.8.2] - 2024-05-07
 
 ### Fixed
 
