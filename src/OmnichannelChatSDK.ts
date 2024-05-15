@@ -213,7 +213,7 @@ class OmnichannelChatSDK {
         try {
             this.OCSDKProvider = OCSDKProvider;
             this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, ocSDKConfiguration as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
-            setOcUserAgent(this.OCClient);
+            setOcUserAgent(this.OCClient, this.chatSDKConfig?.ocUserAgent);
         } catch (e) {
             exceptionThrowers.throwOmnichannelClientInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }

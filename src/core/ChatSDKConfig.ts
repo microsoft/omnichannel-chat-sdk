@@ -37,7 +37,8 @@ interface ChatSDKConfig {
     getAuthToken?: () => Promise<string|null>,
     ic3Config?: IC3Config,
     chatAdapterConfig?: ChatAdapterConfig,
-    internalConfig?: InternalChatSDKConfig
+    internalConfig?: InternalChatSDKConfig,
+    ocUserAgent?: string[]
 }
 
 export {
