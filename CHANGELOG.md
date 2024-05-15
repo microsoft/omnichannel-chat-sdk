@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.8.3] - 2024-05-15
+
 ### Added
 - Add `RequestHeaders` telemetry base property to `OCSDKContract`
 - Add ability to send `ocUserAgent`
