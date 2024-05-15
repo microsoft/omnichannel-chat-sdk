@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- Add `RequestHeaders` telemetry base property to `OCSDKContract`
+
 ### Changed
 
 - Uptake [@microsoft/ocsdk@0.5.1](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.1)
