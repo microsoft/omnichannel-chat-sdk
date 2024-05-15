@@ -97,6 +97,7 @@ import { coreServicesOrgUrlPrefix, createCoreServicesOrgUrl, getCoreServicesGeoN
 import loggerUtils from "./utils/loggerUtils";
 import ocSDKConfiguration from "./config/ocSDKConfiguration";
 import { isCoreServicesOrgUrlDNSError } from "./utils/internalUtils";
+import setOcUserAgent from "./utils/setOcUserAgent";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -212,6 +213,7 @@ class OmnichannelChatSDK {
         try {
             this.OCSDKProvider = OCSDKProvider;
             this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, ocSDKConfiguration as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
+            setOcUserAgent(this.OCClient, this.chatSDKConfig?.ocUserAgent);
         } catch (e) {
             exceptionThrowers.throwOmnichannelClientInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
