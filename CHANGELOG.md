@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - Add `RequestHeaders` telemetry base property to `OCSDKContract`
+- Add ability to send `ocUserAgent`
 
 ### Changed
 
