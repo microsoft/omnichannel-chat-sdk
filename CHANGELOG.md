@@ -4,7 +4,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.8.3] - 2024-05-15
+
+### Added
+- Add `RequestHeaders` telemetry base property to `OCSDKContract`
+- Add ability to send `ocUserAgent`
+
+### Changed
+
+- Uptake [@microsoft/ocsdk@0.5.1](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.1)
+
+## [1.8.2] - 2024-05-07
+
+### Fixed
+
+- Fix path for util function uuidv4 that was causing conflicts with pipeline
+
 ## [1.8.1] - 2024-04-24
+
 ### Added
 
 - Adding new externalRuntimeId, allows to pass external runtimeId to ChatSDK and keep in sync sessions for telemetry.

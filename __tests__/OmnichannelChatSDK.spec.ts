@@ -394,6 +394,48 @@ describe('Omnichannel Chat SDK', () => {
 
             expect(chatSDK.chatSDKConfig.chatReconnect.disable).toBe(chatSDKConfig.chatReconnect.disable);
         });
+
+        it("ChatSDK.initialize() should pass default 'omnichannel-chat-sdk' user agent", async () => {
+            const omnichannelConfig = {
+                orgUrl: '[data-org-url]',
+                orgId: '[data-org-id]',
+                widgetId: '[data-app-id]'
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            const version = require("../package.json").version;
+            const userAgent = `omnichannel-chat-sdk/${version}`;
+            const expectedResult = [userAgent];
+
+            expect(chatSDK.OCClient.ocUserAgent).toEqual(expectedResult)
+        });
+
+        it("ChatSDK.initialize() with additional user agent should be added as part of oc user agent", async () => {
+            const omnichannelConfig = {
+                orgUrl: '[data-org-url]',
+                orgId: '[data-org-id]',
+                widgetId: '[data-app-id]'
+            };
+
+            const chatSDKConfig = {
+                ocUserAgent: ["user-agent"]
+            }
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            const version = require("../package.json").version;
+            const userAgent = `omnichannel-chat-sdk/${version}`;
+            const expectedResult = [...chatSDKConfig.ocUserAgent, userAgent];
+
+            expect(chatSDK.OCClient.ocUserAgent).toEqual(expectedResult)
+        });
     });
 
     describe('Functionalities', () => {
