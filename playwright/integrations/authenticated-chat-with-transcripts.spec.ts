@@ -37,6 +37,7 @@ test.describe('@AuthenticatedChat @AuthenticatedChatWithTranscripts', () => {
                 const runtimeContext = {};
 
                 await chatSDK.initialize();
+                runtimeContext.orgUrl = chatSDK.omnichannelConfig.orgUrl;
                 runtimeContext.authToken = authToken;
 
                 await chatSDK.startChat();
@@ -55,7 +56,7 @@ test.describe('@AuthenticatedChat @AuthenticatedChatWithTranscripts', () => {
         ]);
 
         const { authToken, requestId, token, chatId, transcript } = runtimeContext;
-        const requestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatv2AuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=lcw`;
+        const requestUrl = `${runtimeContext.orgUrl}/${OmnichannelEndpoints.LiveChatv2AuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=lcw`;
         const requestHeaders = request.headers();
 
         expect(request.url() === requestUrl).toBe(true);
@@ -102,6 +103,7 @@ test.describe('@AuthenticatedChat @AuthenticatedChatWithTranscripts', () => {
                 const runtimeContext = {};
 
                 await chatSDK.initialize();
+                runtimeContext.orgUrl = chatSDK.omnichannelConfig.orgUrl;
                 runtimeContext.authToken = authToken;
 
                 await chatSDK.startChat();
@@ -122,7 +124,7 @@ test.describe('@AuthenticatedChat @AuthenticatedChatWithTranscripts', () => {
         ]);
 
         const { authToken, requestId, token, chatId, transcript } = runtimeContext;
-        const requestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatv2AuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=lcw`;
+        const requestUrl = `${runtimeContext.orgUrl}/${OmnichannelEndpoints.LiveChatv2AuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=lcw`;
         const requestHeaders = request.headers();
 
         expect(request.url() === requestUrl).toBe(true);
@@ -165,6 +167,8 @@ test.describe('@AuthenticatedChat @AuthenticatedChatWithTranscripts', () => {
 
                 await chatSDK.initialize();
 
+                runtimeContext.orgUrl = chatSDK.omnichannelConfig.orgUrl;
+
                 await chatSDK.startChat();
 
                 runtimeContext.requestId = chatSDK.requestId;
@@ -183,7 +187,7 @@ test.describe('@AuthenticatedChat @AuthenticatedChatWithTranscripts', () => {
         ]);
 
         const { requestId } = runtimeContext;
-        const requestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatAuthTranscriptEmailRequestPath}/${requestId}?channelId=lcw`;
+        const requestUrl = `${runtimeContext.orgUrl}/${OmnichannelEndpoints.LiveChatAuthTranscriptEmailRequestPath}/${requestId}?channelId=lcw`;
 
         expect(request.url() === requestUrl).toBe(true);
         expect(response.status()).toBe(200);
