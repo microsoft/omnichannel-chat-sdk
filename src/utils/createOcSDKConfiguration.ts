@@ -1,6 +1,6 @@
 import ocSDKConfiguration from "../config/ocSDKConfiguration";
 
-const createOcSDKConfiguration = (useCoreServices: boolean) => {
+const createOcSDKConfiguration = (useCoreServices: boolean): {[key: string]: number | boolean} => {
     const configuration = {...ocSDKConfiguration};
     if (useCoreServices) {
         configuration.useUnauthReconnectIdSigQueryParam = true;
