@@ -95,9 +95,9 @@ import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 import { createCoreServicesOrgUrl, getCoreServicesGeoName, isCoreServicesOrgUrl, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
 import loggerUtils from "./utils/loggerUtils";
-import ocSDKConfiguration from "./config/ocSDKConfiguration";
 import { isCoreServicesOrgUrlDNSError } from "./utils/internalUtils";
 import setOcUserAgent from "./utils/setOcUserAgent";
+import createOcSDKConfiguration from "./utils/createOcSDKConfiguration";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -210,9 +210,10 @@ class OmnichannelChatSDK {
 
         this.useCoreServicesOrgUrlIfNotSet();
 
+        const useCoreServices = isCoreServicesOrgUrl(this.omnichannelConfig.orgUrl);
         try {
             this.OCSDKProvider = OCSDKProvider;
-            this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, ocSDKConfiguration as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
+            this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(useCoreServices) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
             setOcUserAgent(this.OCClient, this.chatSDKConfig?.ocUserAgent);
         } catch (e) {
             exceptionThrowers.throwOmnichannelClientInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
@@ -1984,7 +1985,7 @@ class OmnichannelChatSDK {
             // Fallback on orgUrl which got converted to Core Services orgUrl
             if (isCoreServicesOrgUrlDNSError(error, this.coreServicesOrgUrl, this.dynamicsLocationCode)) { // eslint-disable-line @typescript-eslint/no-explicit-any
                 this.omnichannelConfig.orgUrl = this.unqServicesOrgUrl as string;
-                this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, ocSDKConfiguration as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
+                this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(false) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
                 liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache); // Bubble up error by default to throw ChatConfigRetrievalFailure
             } else {
                 throw error // Bubble up error by default to throw ChatConfigRetrievalFailure
