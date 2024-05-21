@@ -2147,7 +2147,7 @@ class OmnichannelChatSDK {
     }
 
     private useCoreServicesOrgUrlIfNotSet() {
-        if (!isCoreServicesOrgUrl(this.omnichannelConfig.orgUrl) && this.chatSDKConfig.internalConfig?.createCoreServicesOrgUrlAtRuntime === true) {
+        if (!isCoreServicesOrgUrl(this.omnichannelConfig.orgUrl) && !(this.chatSDKConfig.internalConfig?.createCoreServicesOrgUrlAtRuntime === false)) {
             const result = unqOrgUrlPattern.exec(this.omnichannelConfig.orgUrl);
             if (result) {
                 this.dynamicsLocationCode = result[1];
