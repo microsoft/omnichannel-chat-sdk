@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Enable the ability to use `CoreServices` orgUrl dynamically at runtime
+
 ### Changed
 
 - Uptake [@microsoft/ocsdk@0.5.2](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.2)
