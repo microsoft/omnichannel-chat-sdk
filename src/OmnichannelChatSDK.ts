@@ -93,7 +93,7 @@ import { parseLowerCaseString } from "./utils/parsers";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
-import { coreServicesOrgUrlPrefix, createCoreServicesOrgUrl, getCoreServicesGeoName, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
+import { createCoreServicesOrgUrl, getCoreServicesGeoName, isCoreServicesOrgUrl, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
 import loggerUtils from "./utils/loggerUtils";
 import ocSDKConfiguration from "./config/ocSDKConfiguration";
 import { isCoreServicesOrgUrlDNSError } from "./utils/internalUtils";
@@ -2146,7 +2146,7 @@ class OmnichannelChatSDK {
     }
 
     private useCoreServicesOrgUrlIfNotSet() {
-        if (!this.omnichannelConfig.orgUrl.startsWith(coreServicesOrgUrlPrefix) && this.chatSDKConfig.internalConfig?.createCoreServicesOrgUrlAtRuntime === true) {
+        if (!isCoreServicesOrgUrl(this.omnichannelConfig.orgUrl) && this.chatSDKConfig.internalConfig?.createCoreServicesOrgUrlAtRuntime === true) {
             const result = unqOrgUrlPattern.exec(this.omnichannelConfig.orgUrl);
             if (result) {
                 this.dynamicsLocationCode = result[1];
