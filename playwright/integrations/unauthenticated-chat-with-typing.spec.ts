@@ -26,6 +26,7 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTyping', () => {
 
                 await chatSDK.startChat();
 
+                runtimeContext.orgUrl = chatSDK.omnichannelConfig.orgUrl;
                 runtimeContext.requestId = chatSDK.requestId;
 
                 await chatSDK.sendTypingEvent();
@@ -37,7 +38,7 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTyping', () => {
         ]);
 
         const {requestId} = runtimeContext;
-        const requestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.SendTypingIndicatorPath}/${requestId}`;
+        const requestUrl = `${runtimeContext.orgUrl}/${OmnichannelEndpoints.SendTypingIndicatorPath}/${requestId}`;
 
         expect(request.url() === requestUrl).toBe(true);
         expect(response.status()).toBe(200);
