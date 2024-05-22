@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.9.0] - 2024-05-22
+
 ### Added
 
 - Enable the ability to use `CoreServices` orgUrl dynamically at runtime
