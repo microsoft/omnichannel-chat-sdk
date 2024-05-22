@@ -2147,6 +2147,10 @@ class OmnichannelChatSDK {
     }
 
     private useCoreServicesOrgUrlIfNotSet() {
+        /* Perform orgUrl conversion to CoreServices only if orgUrl is not a CoreServices orgUrl.
+         * Feature should be enabled by default. `createCoreServicesOrgUrlAtRuntime` set to `false` 
+         * would disable the orgUrl conversion and should only be used as fallback only.
+         */
         if (!isCoreServicesOrgUrl(this.omnichannelConfig.orgUrl) && !(this.chatSDKConfig.internalConfig?.createCoreServicesOrgUrlAtRuntime === false)) {
             const result = unqOrgUrlPattern.exec(this.omnichannelConfig.orgUrl);
             if (result) {
