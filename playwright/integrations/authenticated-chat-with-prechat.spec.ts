@@ -48,6 +48,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPrechat', () => {
 
                 await chatSDK.startChat(optionalParams);
 
+                runtimeContext.orgUrl = chatSDK.omnichannelConfig.orgUrl;
                 runtimeContext.requestId = chatSDK.requestId;
 
                 const preChatSurveyRes = await chatSDK.getPreChatSurvey();
@@ -61,7 +62,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPrechat', () => {
         ]);
 
         const { requestId } = runtimeContext;
-        const sessionInitRequestUrl = `${omnichannelConfig.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
+        const sessionInitRequestUrl = `${runtimeContext.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
         const prechatSurveyBody = JSON.parse(optionalParams.preChatResponse.Survey);
         expect(prechatSurveyBody.Name).toEqual('OmnichannelSurvey');
         const requestPostData = sessionInitRequest.postDataJSON();

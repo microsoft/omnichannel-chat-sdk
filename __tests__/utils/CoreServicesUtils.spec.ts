@@ -1,5 +1,5 @@
 
-import { CoreServicesGeoNamesMapping, coreServicesOrgUrlPrefix, getCoreServicesGeoName, nonProductionDynamicsLocationCode, unqOrgUrlPattern } from "../../src/utils/CoreServicesUtils";
+import { CoreServicesGeoNamesMapping, coreServicesOrgUrlPrefix, getCoreServicesGeoName, isCoreServicesOrgUrl, nonProductionDynamicsLocationCode, unqOrgUrlPattern } from "../../src/utils/CoreServicesUtils";
 
 describe("CoreServicesUtils", () => {
     it("unqOrgUrlPattern should be able to retrieve the location code from the an UNQ OrgUrl", () => {
@@ -58,5 +58,17 @@ describe("CoreServicesUtils", () => {
         const locationCode = "NA";
         const result = getCoreServicesGeoName(locationCode);
         expect(result).toBe("");
+    });
+
+    it("isCoreServicesOrgUrl() should return \"true\" if orgUrl is a CoreServices OrgUrl", () => {
+        const orgUrl = "https://m-[orgId].[geoName].omnichannelengagementhub.com";
+        const result = isCoreServicesOrgUrl(orgUrl);
+        expect(result).toBe(true);
+    });
+
+    it("isCoreServicesOrgUrl() should return \"false\" if orgUrl is NOT a CoreServices OrgUrl", () => {
+        const orgUrl = "https://unq[orgId]-[locationCode].omnichannelengagementhub.com";
+        const result = isCoreServicesOrgUrl(orgUrl);
+        expect(result).toBe(false);
     });
 });
