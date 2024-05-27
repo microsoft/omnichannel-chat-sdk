@@ -6,6 +6,7 @@
   "scripts": {
     "build:babel": "babel ../lib -d dist",
     "build:esbuild": "node esbuild.config.js",
+    "build": "npm run build:babel && npm run build:esbuild",
     "test:integrations": "npx playwright test -c playwright.config.ts"
   },
   "author": "Microsoft Corporation",
