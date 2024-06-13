@@ -12,6 +12,7 @@ UnauthenticatedChatOutsideOfOperatingHours:
 UnauthenticatedChatWithChatReconnect:
 UnauthenticatedChatWithMasking:
 UnauthenticatedChatWithNoEscalationToVoiceAndVideo:
+UnauthenticatedChatWithPostChatSurvey:
 AuthenticatedChat:
   orgId: ''
   orgUrl: ''
