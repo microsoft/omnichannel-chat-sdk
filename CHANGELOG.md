@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- Uptake [@microsoft/ocsdk@0.5.3](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.3)
+
 ## [1.9.0] - 2024-05-22
 
 ### Added
