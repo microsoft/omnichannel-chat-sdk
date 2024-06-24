@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Remove internal overrides of the original message contracts to add `content` property with `Object.assign()` causing side effects on ChatAdapter
+
 ## [1.9.1] - 2024-06-20
 
 ### Changed

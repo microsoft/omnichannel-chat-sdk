@@ -105,11 +105,6 @@ export class ACSConversation {
                     continue;
                 }
 
-                // Flatten out message content
-                if (chatMessage.content?.message) {
-                    Object.assign(chatMessage, {content: chatMessage.content?.message});
-                }
-
                 const omnichannelMessage = createOmnichannelMessage(chatMessage as ChatMessage, {
                     liveChatVersion: LiveChatVersion.V2
                 });
@@ -222,10 +217,6 @@ export class ACSConversation {
                 // Filter out duplicate messages
                 if (postedMessageIds.has(id) && !isChatMessageEditedEvent) {
                     return;
-                }
-
-                if (event.message) {
-                    Object.assign(event, {content: event.message});
                 }
 
                 onNewMessageCallback(event);

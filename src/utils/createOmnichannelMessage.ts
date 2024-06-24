@@ -24,9 +24,9 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
         omnichannelMessage.deliveryMode = undefined; // Backward compatibility
         omnichannelMessage.properties = {}; // Backward compatibility
 
-        omnichannelMessage.content = content || '';
+        omnichannelMessage.content = '';
         omnichannelMessage.properties.tags = metadata && metadata.tags? metadata.tags : [];
-        omnichannelMessage.tags = metadata && metadata.tags? metadata.tags.replace(/\"/g, "").split(",").filter((tag: string) => tag.length > 0): [];   // eslint-disable-line no-useless-escape
+        omnichannelMessage.tags = metadata && metadata.tags? metadata.tags.replace(/\"/g, "").split(",").filter((tag: string) => tag.length > 0): []; // eslint-disable-line no-useless-escape
         omnichannelMessage.timestamp = editedOn ?? createdOn;
         omnichannelMessage.messageType = MessageType.UserMessage; // Backward compatibility
         omnichannelMessage.sender = {
@@ -34,6 +34,18 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
             displayName: senderDisplayName,
             type: PersonType.Bot
         } as IPerson;
+
+        if (content) {
+            if (typeof(content) === 'string') {
+                omnichannelMessage.content = content;
+            } else if (typeof(content) === 'object' && typeof(content?.message) === 'string') { // ChatMessage coming from ChatThreadClient.listMessages() API
+                omnichannelMessage.content = content.message;
+            }
+        } else {
+            if ((message as ChatMessageReceivedEvent).message) { // ChatMessageReceivedEvent coming from WS
+                omnichannelMessage.content = (message as ChatMessageReceivedEvent).message;
+            }
+        }
 
         if (metadata && metadata.amsMetadata && metadata.amsReferences || metadata.amsreferences) {
             try {
