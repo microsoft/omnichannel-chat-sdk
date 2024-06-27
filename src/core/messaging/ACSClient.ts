@@ -304,7 +304,14 @@ export class ACSConversation {
             await this.chatThreadClient?.sendMessage(sendMessageRequest, sendMessageOptions);
             this.logger?.completeScenario(ACSClientEvent.SendMessage);
         } catch (error) {
-            this.logger?.failScenario(ACSClientEvent.SendMessage);
+            const exceptionDetails = {
+                response: 'SendMessageFailed',
+                errorObject: `${error}`
+            };
+
+            this.logger?.failScenario(ACSClientEvent.SendMessage, {
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
 
             throw new Error('SendMessageFailed');
         }
@@ -316,8 +323,16 @@ export class ACSConversation {
         try {
             await this.chatThreadClient?.sendTypingNotification();
             this.logger?.completeScenario(ACSClientEvent.SendTyping);
-        } catch {
-            this.logger?.failScenario(ACSClientEvent.SendTyping);
+        } catch (error) {
+            const exceptionDetails = {
+                response: 'SendTypingFailed',
+                errorObject: `${error}`
+            };
+
+            this.logger?.failScenario(ACSClientEvent.SendTyping, {
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
             throw new Error('SendTypingFailed');
         }
     }
