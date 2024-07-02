@@ -4,9 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- Add `crm9` as part of `CoreServicesGeoNamesMapping`
+
 ### Changed
 
 - Log `error` object on failures on sending message and send typing
+- Update `retrieveCollectorUri()` to detect `GCCDomainPatterns` to return `GCCCollectorUri`
 
 ## [1.9.2] - 2024-06-25
 
