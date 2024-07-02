@@ -7,6 +7,7 @@ export const CoreServicesGeoNamesMapping: any = { // eslint-disable-line @typesc
     "crm6": "au", // OCE
     "crm7": "jp", // JPN
     "crm8": "in", // IND
+    "crm9": "gov", // GCC
     "crm10": "preprod", // PREPROD
     "crm11": "uk", // GBR
     "crm12": "fr", // FRA
