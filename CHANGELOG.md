@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.9.3] - 2024-07-12
+
 ### Added
 - Add `crm9` as part of `CoreServicesGeoNamesMapping`
 
