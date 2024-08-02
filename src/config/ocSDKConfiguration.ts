@@ -1,7 +1,7 @@
 const ocSDKConfiguration = {
-    getChatTokenRetryCount: 2,
+    getChatTokenRetryCount: 5,
     getChatTokenTimeBetweenRetriesOnFailure: 2000,
-    getChatTokenRetryOn429: false,
+    getChatTokenRetryOn429: true,
     useUnauthReconnectIdSigQueryParam: false
 };
 

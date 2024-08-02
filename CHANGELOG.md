@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.9.3] - 2024-07-12
+
+### Added
+- Add `crm9` as part of `CoreServicesGeoNamesMapping`
+
+### Changed
+
+- Log `error` object on failures on sending message and send typing
+- Update `retrieveCollectorUri()` to detect `GCCDomainPatterns` to return `GCCCollectorUri`
+
+## [1.9.2] - 2024-06-25
+
+### Fixed
+
+- Remove internal overrides of the original message contracts to add `content` property with `Object.assign()` causing side effects on ChatAdapter
+
+## [1.9.1] - 2024-06-20
+
+### Changed
+
+- Uptake [@microsoft/ocsdk@0.5.3](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.3)
+
 ## [1.9.0] - 2024-05-22
 
 ### Added
