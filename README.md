@@ -63,11 +63,11 @@ Please make sure you have a chat widget configured before using this package or 
 
 ## Live Chat Widget vs. Chat SDK
 
-Omnichannel offers an live chat widget (LCW) by default. You can use the Chat SDK to build your custom chat widget if:
+Omnichannel offers a live chat widget (LCW) by default. You can use the Chat SDK to build your custom chat widget if:
 - You want to fully customize the user interface of the chat widget to conform with your branding.
-- You want to integrate Omnichannel in your mobile app using React Native.
+- You want to integrate Omnichannel into your mobile app using React Native.
 - You want to integrate additional functionalities that LCW does not offer.
-- Some other cool ideas. Please share with us on what you've achieved with the Chat SDK! 🙂
+- Some other cool ideas. Please share with us what you've achieved with the Chat SDK! 🙂
 
 ### Feature Comparisons
 
@@ -188,7 +188,7 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
     };
     ```
 
-1. Add following *import* on top of your entry point file
+1. Add the following *import* on top of your entry point file
     ```ts
     import 'node-libs-react-native/globals';
     import 'react-native-get-random-values';
@@ -324,7 +324,7 @@ const conversationDetails = await chatSDK.getConversationDetails(optionalParams)
 
 ### Get chat Token
 
-It gets the chat token used to initiates a chat with Omnichannel messaging client.
+It gets the chat token used to initiate a chat with Omnichannel messaging client.
 
 ```ts
 const chatToken = await chatSDK.getChatToken();
@@ -332,7 +332,7 @@ const chatToken = await chatSDK.getChatToken();
 
 ### Get Calling Token
 
-It gets the calling token used to initiates a Voice & Video Call.
+It gets the calling token used to initiate a Voice & Video Call.
 
 ```ts
 const callingToken = await chatSDK.getCallingToken();
@@ -380,7 +380,7 @@ chatSDK.onNewMessage((message) => {
 ```
 ### On Typing Event
 
-It subscribes to agent typing event.
+It subscribes to an agent typing event.
 
 ```ts
 chatSDK.onTypingEvent(() => {
@@ -390,7 +390,7 @@ chatSDK.onTypingEvent(() => {
 
 ### On Agent End Session
 
-It subscribes to agent ending the session of the conversation.
+It subscribes to an agent ending the session of the conversation.
 
 ```ts
 chatSDK.onAgentEndSession(() => {
@@ -562,7 +562,7 @@ await chatSDK.startChat();
 // 2. Save post chat survey context before ending chat
 try {
     const context = await chatSDK.getPostChatSurveyContext();
-    if (context.participantJoined) { // participantJoined will be true if an agent has joined the conversation, or a bot has joined the conversation and the bot survey flag has been turned on on the admin side.
+    if (context.participantJoined) { // participantJoined will be true if an agent has joined the conversation, or a bot has joined the conversation and the bot survey flag has been turned on the admin side.
         // formsProLocale is the default language you have set on the CustomerVoice portal. You can override this url parameter with any locale that CustomerVoice supports.
         // If "&lang=" is not set on the url, the locale will be English.
         const link = context.participantType === "Bot" ? context.botSurveyInviteLink : context.surveyInviteLink;
@@ -571,7 +571,7 @@ try {
         // This link is accessible and will redirect to the survey page. Use it as you see fit.
     }
 } catch (ex) {
-    // If the post chat should not be shown by any reason (e.g. post chat is not enabled), promise will be rejected.
+    // If the post chat should not be shown for any reason (e.g. post chat is not enabled), promise will be rejected.
 }
 
 // 3. End chat
