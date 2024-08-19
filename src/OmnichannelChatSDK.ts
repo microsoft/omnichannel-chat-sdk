@@ -222,8 +222,6 @@ class OmnichannelChatSDK {
                 
             setOcUserAgent(this.OCClient, this.chatSDKConfig?.ocUserAgent);
         } catch (e) {
-            console.error(e)
-            console.error(1)
             exceptionThrowers.throwOmnichannelClientInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
 
