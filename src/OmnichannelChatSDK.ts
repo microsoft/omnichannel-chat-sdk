@@ -5,11 +5,13 @@ import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import { SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
 import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
+import { createCoreServicesOrgUrl, getCoreServicesGeoName, isCoreServicesOrgUrl, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
 import { defaultLocaleId, getLocaleStringFromId } from "./utils/locale";
 import { getRuntimeId, isClientIdNotFoundErrorMessage, isCustomerMessage } from "./utils/utilities";
 import { loadScript, removeElementById } from "./utils/WebUtils";
 import platform, { isBrowser } from "./utils/platform";
 import validateSDKConfig, { defaultChatSDKConfig } from "./validators/SDKConfigValidators";
+
 import ACSParticipantDisplayName from "./core/messaging/ACSParticipantDisplayName";
 import AMSFileManager from "./external/ACSAdapter/AMSFileManager";
 import AriaTelemetry from "./telemetry/AriaTelemetry";
@@ -82,6 +84,7 @@ import SetAuthTokenProviderOptionalParams from "./core/SetAuthTokenProviderOptio
 import StartChatOptionalParams from "./core/StartChatOptionalParams";
 import TelemetryEvent from "./telemetry/TelemetryEvent";
 import createAMSClient from "@microsoft/omnichannel-amsclient";
+import createOcSDKConfiguration from "./utils/createOcSDKConfiguration";
 import createOmnichannelMessage from "./utils/createOmnichannelMessage";
 import createTelemetry from "./utils/createTelemetry";
 import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
@@ -89,15 +92,13 @@ import { defaultMessageTags } from "./core/messaging/MessageTags";
 import exceptionSuppressors from "./utils/exceptionSuppressors";
 import exceptionThrowers from "./utils/exceptionThrowers";
 import { getLocationInfo } from "./utils/location";
+import { isCoreServicesOrgUrlDNSError } from "./utils/internalUtils";
+import loggerUtils from "./utils/loggerUtils";
 import { parseLowerCaseString } from "./utils/parsers";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
+import setOcUserAgent from "./utils/setOcUserAgent";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
-import { createCoreServicesOrgUrl, getCoreServicesGeoName, isCoreServicesOrgUrl, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
-import loggerUtils from "./utils/loggerUtils";
-import { isCoreServicesOrgUrlDNSError } from "./utils/internalUtils";
-import setOcUserAgent from "./utils/setOcUserAgent";
-import createOcSDKConfiguration from "./utils/createOcSDKConfiguration";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -203,19 +204,37 @@ class OmnichannelChatSDK {
     public async initialize(optionalParams: InitializeOptionalParams = {}): Promise<ChatConfig> {
         this.scenarioMarker.startScenario(TelemetryEvent.InitializeChatSDK);
 
+        console.log('initialize',1);
+
         if (this.isInitialized) {
             this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
             return this.liveChatConfig;
         }
 
+        console.log('initialize',2);
+
         this.useCoreServicesOrgUrlIfNotSet();
 
         const useCoreServices = isCoreServicesOrgUrl(this.omnichannelConfig.orgUrl);
+        console.log('initialize',3);
+
         try {
             this.OCSDKProvider = OCSDKProvider;
-            this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(useCoreServices) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
+            console.log('initialize',3.2);
+
+            this.OCClient = await OCSDKProvider.getSDK(
+                this.omnichannelConfig as IOmnichannelConfiguration, 
+                createOcSDKConfiguration(useCoreServices) as ISDKConfiguration, 
+                this.ocSdkLogger as OCSDKLogger);
+                
+            console.log('initialize: '+ this.chatSDKConfig?.ocUserAgent + ":: 3.1");
+
             setOcUserAgent(this.OCClient, this.chatSDKConfig?.ocUserAgent);
+            console.log('initialize',4);
+
         } catch (e) {
+            console.error(e)
+            console.error(1)
             exceptionThrowers.throwOmnichannelClientInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
 
