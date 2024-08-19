@@ -2,12 +2,6 @@ const setOcUserAgent = (OCClient: any, ocUserAgent?: string[]): void => { // esl
     const version = require('../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
     const userAgent = `omnichannel-chat-sdk/${version}`;
 
-    console.log("OCClient", OCClient === undefined || OCClient === null)
-    console.log("version ", version)
-    console.log("userAgent", userAgent)
-    
-    console.log("OCClient.ocUserAgent :: ", OCClient.ocUserAgent)
-   
     if (!OCClient.ocUserAgent) {
         OCClient.ocUserAgent = [];
     }

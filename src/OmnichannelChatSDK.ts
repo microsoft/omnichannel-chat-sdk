@@ -204,34 +204,23 @@ class OmnichannelChatSDK {
     public async initialize(optionalParams: InitializeOptionalParams = {}): Promise<ChatConfig> {
         this.scenarioMarker.startScenario(TelemetryEvent.InitializeChatSDK);
 
-        console.log('initialize',1);
-
         if (this.isInitialized) {
             this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
             return this.liveChatConfig;
         }
 
-        console.log('initialize',2);
-
         this.useCoreServicesOrgUrlIfNotSet();
 
         const useCoreServices = isCoreServicesOrgUrl(this.omnichannelConfig.orgUrl);
-        console.log('initialize',3);
-
         try {
             this.OCSDKProvider = OCSDKProvider;
-            console.log('initialize',3.2);
 
             this.OCClient = await OCSDKProvider.getSDK(
                 this.omnichannelConfig as IOmnichannelConfiguration, 
                 createOcSDKConfiguration(useCoreServices) as ISDKConfiguration, 
                 this.ocSdkLogger as OCSDKLogger);
                 
-            console.log('initialize: '+ this.chatSDKConfig?.ocUserAgent + ":: 3.1");
-
             setOcUserAgent(this.OCClient, this.chatSDKConfig?.ocUserAgent);
-            console.log('initialize',4);
-
         } catch (e) {
             console.error(e)
             console.error(1)
