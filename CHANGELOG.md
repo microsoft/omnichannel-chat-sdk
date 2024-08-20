@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [1.9.4]
 
 ### Security
 - Uptake [@microsoft/ocsdk@0.5.5](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.5)
