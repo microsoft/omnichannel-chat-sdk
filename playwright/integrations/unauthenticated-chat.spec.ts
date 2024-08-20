@@ -1,9 +1,8 @@
-import { expect, test } from '@playwright/test';
-
-import ACSEndpoints from '../utils/ACSEndpoints';
-import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
+import { test, expect } from '@playwright/test';
+import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
+import ACSEndpoints from '../utils/ACSEndpoints';
 
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChat');

@@ -8,7 +8,7 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
-    "build:tsc": "tsc && cp -r src/external/aria lib/external/",
+    "build:tsc": "tsc",
     "test": "jest",
     "lint": "eslint src --ext .ts"
   },
@@ -41,7 +41,7 @@
   "dependencies": {
     "@azure/communication-chat": "1.1.1",
     "@azure/communication-common": "1.1.0",
-    "@microsoft/ocsdk": "^0.4.5",
+    "@microsoft/ocsdk": "^0.5.5",
     "@microsoft/omnichannel-amsclient": "^0.1.6",
     "@microsoft/omnichannel-ic3core": "^0.1.4"
   }
