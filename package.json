@@ -8,7 +8,7 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
-    "build:tsc": "tsc",
+    "build:tsc": "tsc && cp -r src/external/aria lib/external/",
     "test": "jest",
     "lint": "eslint src --ext .ts"
   },
