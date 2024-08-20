@@ -214,12 +214,7 @@ class OmnichannelChatSDK {
         const useCoreServices = isCoreServicesOrgUrl(this.omnichannelConfig.orgUrl);
         try {
             this.OCSDKProvider = OCSDKProvider;
-
-            this.OCClient = await OCSDKProvider.getSDK(
-                this.omnichannelConfig as IOmnichannelConfiguration, 
-                createOcSDKConfiguration(useCoreServices) as ISDKConfiguration, 
-                this.ocSdkLogger as OCSDKLogger);
-                
+            this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(useCoreServices) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
             setOcUserAgent(this.OCClient, this.chatSDKConfig?.ocUserAgent);
         } catch (e) {
             exceptionThrowers.throwOmnichannelClientInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
