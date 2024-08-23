@@ -16,13 +16,13 @@ describe("CoreServicesUtils", () => {
 
     it("unqOrgUrlPattern should be able to retrieve the location code from the an custom UNQ OrgUrl", () => {
         const locationCode = "crmtest";
-        const orgUrl = `https://unq1234-${locationCode}.omnichannelengagementhub.com`;
+        const orgUrl = `https://unq1234-${locationCode}.oc.crmlivetie.com`;
         const result = unqOrgUrlPattern.exec(orgUrl);
         
         expect(result).not.toBe(null);
         if (result) {
             expect(result[1]).toBe(locationCode);
-            expect(createCoreServicesOrgUrl("1234",locationCode)).toBe(`https://m-1234.${locationCode}.omnichannelengagementhub.com`)
+            expect(createCoreServicesOrgUrl("1234",locationCode)).toBe(`https://m-1234.test.omnichannelengagementhub.com`)
         }
     });
 
