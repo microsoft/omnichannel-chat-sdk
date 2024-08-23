@@ -7,7 +7,7 @@ describe("CoreServicesUtils", () => {
         const orgUrl = `https://unq[orgId]-${locationCode}.omnichannelengagementhub.com`;
         const result = unqOrgUrlPattern.exec(orgUrl);
 
-        expect(result).toBeDefined();
+        expect(result).not.tobe(null);
         if (result) {
             expect(result[1]).toBe(locationCode);
         }
@@ -18,7 +18,7 @@ describe("CoreServicesUtils", () => {
         const orgUrl = `https://[custom]-${locationCode}.omnichannelengagementhub.com`;
         const result = unqOrgUrlPattern.exec(orgUrl);
         
-        expect(result).toBeDefined();
+        expect(result).not.tobe(null);
         if (result) {
             expect(result[1]).toBe(locationCode);
         }
@@ -29,7 +29,7 @@ describe("CoreServicesUtils", () => {
         const orgUrl = `https://[custom]-${locationCode}.oc.crmlivetie.com`;
         const result = unqOrgUrlPattern.exec(orgUrl);
         
-        expect(result).toBeDefined();
+        expect(result).not.tobe(null);
         if (result) {
             expect(result[1]).toBe(locationCode);
         }
@@ -40,7 +40,7 @@ describe("CoreServicesUtils", () => {
         const orgUrl = `https://[custom]-${locationCode}.omnichannelengagementhub.us`;
         const result = unqOrgUrlPattern.exec(orgUrl);
         
-        expect(result).toBeDefined();
+        expect(result).not.tobe(null);
         if (result) {
             expect(result[1]).toBe(locationCode);
         }        
