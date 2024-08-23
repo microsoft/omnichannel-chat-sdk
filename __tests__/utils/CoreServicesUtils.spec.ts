@@ -10,7 +10,7 @@ describe("CoreServicesUtils", () => {
         expect(result).not.toBe(null);
         if (result) {
             expect(result[1]).toBe(locationCode);
-            expect(createCoreServicesOrgUrl("1234",getCoreServicesGeoName(locationCode))).toBe(`https://m-1234.${locationCode}.omnichannelengagementhub.com`)
+            expect(createCoreServicesOrgUrl("1234",getCoreServicesGeoName(locationCode))).toBe(`https://m-1234.us.omnichannelengagementhub.com`)
         }
     });
 
@@ -34,7 +34,8 @@ describe("CoreServicesUtils", () => {
         expect(result).not.toBe(null);
         if (result) {
             expect(result[1]).toBe(locationCode);
-            expect(createCoreServicesOrgUrl("1234",getCoreServicesGeoName(locationCode))).toBe(`https://m-1234.${locationCode}.omnichannelengagementhub.com`)
+            const geoName = getCoreServicesGeoName(locationCode);
+            expect(createCoreServicesOrgUrl("1234",getCoreServicesGeoName(locationCode))).toBe(`https://m-1234.preprod.omnichannelengagementhub.com`)
         }
     });
 
@@ -46,7 +47,7 @@ describe("CoreServicesUtils", () => {
         expect(result).not.toBe(null);
         if (result) {
             expect(result[1]).toBe(locationCode);
-            expect(createCoreServicesOrgUrl("1234",getCoreServicesGeoName(locationCode))).toBe(`https://m-1234.${locationCode}.omnichannelengagementhub.com`)
+            expect(createCoreServicesOrgUrl("1234",getCoreServicesGeoName(locationCode))).toBe(`https://m-1234.fr.omnichannelengagementhub.com`)
         }        
     });    
 
