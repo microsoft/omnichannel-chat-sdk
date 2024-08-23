@@ -4,7 +4,7 @@ import { CoreServicesGeoNamesMapping, coreServicesOrgUrlPrefix, getCoreServicesG
 describe("CoreServicesUtils", () => {
     it("unqOrgUrlPattern should be able to retrieve the location code from the an UNQ OrgUrl", () => {
         const locationCode = "crm";
-        const orgUrl = `https://unq[orgId]-${locationCode}.omnichannelengagementhub.com`;
+        const orgUrl = `https://unq1234-${locationCode}.omnichannelengagementhub.com`;
         const result = unqOrgUrlPattern.exec(orgUrl);
 
         expect(result).not.tobe(null);
@@ -15,7 +15,7 @@ describe("CoreServicesUtils", () => {
 
     it("unqOrgUrlPattern should be able to retrieve the location code from the an custom UNQ OrgUrl", () => {
         const locationCode = "crmtest";
-        const orgUrl = `https://[custom]-${locationCode}.omnichannelengagementhub.com`;
+        const orgUrl = `https://unq1234-${locationCode}.omnichannelengagementhub.com`;
         const result = unqOrgUrlPattern.exec(orgUrl);
         
         expect(result).not.tobe(null);
@@ -26,7 +26,7 @@ describe("CoreServicesUtils", () => {
 
     it("unqOrgUrlPattern should be able to retrieve the location code from the an UNQ OrgUrl with a different domain", () => {
         const locationCode = "crm10";
-        const orgUrl = `https://[custom]-${locationCode}.oc.crmlivetie.com`;
+        const orgUrl = `https://unq1234-${locationCode}.oc.crmlivetie.com`;
         const result = unqOrgUrlPattern.exec(orgUrl);
         
         expect(result).not.tobe(null);
@@ -37,7 +37,7 @@ describe("CoreServicesUtils", () => {
 
     it("unqOrgUrlPattern should be able to retrieve the location code from the an UNQ OrgUrl with a different top-level domain", () => {
         const locationCode = "crm12";
-        const orgUrl = `https://[custom]-${locationCode}.omnichannelengagementhub.us`;
+        const orgUrl = `https://unq1234-${locationCode}.omnichannelengagementhub.us`;
         const result = unqOrgUrlPattern.exec(orgUrl);
         
         expect(result).not.tobe(null);
