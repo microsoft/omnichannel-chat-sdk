@@ -527,6 +527,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 return response.url().includes("https://unpkg.com/acs_webchat-chat-adapter");
             }),
             await page.evaluate(async ({ omnichannelConfig }) => {
+                const { sleep } = window;
                 const { preloadChatAdapter } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
@@ -546,6 +547,8 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                     runtimeContext.errorMessage = `${err.message}`;
                     runtimeContext.errorObject = `${err}`;
                 }
+
+                await sleep(3000);
 
                 await chatSDK.endChat();
 
