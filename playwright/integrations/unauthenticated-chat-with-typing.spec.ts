@@ -49,6 +49,7 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTyping', () => {
 
         const [runtimeContext] = await Promise.all([
             await page.evaluate(async ({ omnichannelConfig}) => {
+                const { sleep } = window;
                 const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
 
@@ -70,6 +71,8 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTyping', () => {
                     runtimeContext.errorMessage = `${err.message}`;
                     runtimeContext.errorObject = `${err}`;
                 }
+
+                await sleep(1000);
 
                 await chatSDK.endChat();
 
