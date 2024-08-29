@@ -25,6 +25,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithPrechat', () => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatSessionInitPath);
             }),
             await page.evaluate(async ({ omnichannelConfig, optionalParams }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
                 const runtimeContext = {};
@@ -39,6 +40,8 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithPrechat', () => {
                 const preChatSurveyRes = await chatSDK.getPreChatSurvey();
 
                 runtimeContext.preChatSurvey = preChatSurveyRes;
+
+                await sleep(1000);
 
                 await chatSDK.endChat();
 
