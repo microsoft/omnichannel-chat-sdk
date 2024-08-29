@@ -548,7 +548,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                     runtimeContext.errorObject = `${err}`;
                 }
 
-                await sleep(3000);
+                await sleep(1000);
 
                 await chatSDK.endChat();
 

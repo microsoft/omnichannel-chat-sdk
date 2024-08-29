@@ -19,6 +19,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithMasking', () => {
                 return response.url().match(ACSEndpoints.sendMessagePathPattern)?.length >= 0;
             }),
             await page.evaluate(async ({ omnichannelConfig, content }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
 
@@ -35,6 +36,8 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithMasking', () => {
                 await chatSDK.sendMessage({
                     content
                 });
+
+                await sleep(1000);
 
                 await chatSDK.endChat();
 
