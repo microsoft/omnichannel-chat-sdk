@@ -3,6 +3,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+## Changed
+- core service url regex to include crmtest
 
 ## [1.9.4]
 
