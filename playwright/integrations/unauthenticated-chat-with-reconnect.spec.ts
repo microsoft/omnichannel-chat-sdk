@@ -34,6 +34,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithChatReconnect', () =>
                 return response.url().includes(OmnichannelEndpoints.LiveChatReConnect);
             }),
             await page.evaluate(async ({ omnichannelConfig, params }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
                 const chatSDKConfig = {
                     chatReconnect: {
@@ -53,6 +54,8 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithChatReconnect', () =>
                 runtimeContext.requestId = chatSDK.requestId;
 
                 await chatSDK.startChat();
+
+                await sleep(1000);
 
                 await chatSDK.endChat();
 
