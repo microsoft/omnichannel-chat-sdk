@@ -8,10 +8,10 @@ describe("CoreServicesUtils", () => {
         const result = unqOrgUrlPattern.exec(orgUrl);
 
         expect(result).not.toBe(null);
-        if (result) {
-            expect(result[1]).toBe(locationCode);
-            expect(createCoreServicesOrgUrl("1234",getCoreServicesGeoName(locationCode))).toBe(`https://m-1234.us.omnichannelengagementhub.com`)
-        }
+        if (!result) throw new Error("No result object");
+
+        expect(result[1]).toBe(locationCode);
+        expect(createCoreServicesOrgUrl("1234",getCoreServicesGeoName(locationCode))).toBe(`https://m-1234.us.omnichannelengagementhub.com`)        
     });
 
     it("unqOrgUrlPattern should be able to retrieve the location code from the an custom UNQ OrgUrl", () => {
@@ -20,10 +20,9 @@ describe("CoreServicesUtils", () => {
         const result = unqOrgUrlPattern.exec(orgUrl);
         
         expect(result).not.toBe(null);
-        if (result) {
-            expect(result[1]).toBe(locationCode);
-            expect(createCoreServicesOrgUrl("1234",getCoreServicesGeoName(locationCode))).toBe(`https://m-1234.test.omnichannelengagementhub.com`)
-        }
+        if (!result) throw new Error("No result object");
+        expect(result[1]).toBe(locationCode);
+        expect(createCoreServicesOrgUrl("1234",getCoreServicesGeoName(locationCode))).toBe(`https://m-1234.test.omnichannelengagementhub.com`)
     });
 
     it("unqOrgUrlPattern should be able to retrieve the location code from the an UNQ OrgUrl with a different domain", () => {
@@ -32,11 +31,10 @@ describe("CoreServicesUtils", () => {
         const result = unqOrgUrlPattern.exec(orgUrl);
         
         expect(result).not.toBe(null);
-        if (result) {
-            expect(result[1]).toBe(locationCode);
-            const geoName = getCoreServicesGeoName(locationCode);
-            expect(createCoreServicesOrgUrl("1234",getCoreServicesGeoName(locationCode))).toBe(`https://m-1234.preprod.omnichannelengagementhub.com`)
-        }
+        if (!result) throw new Error("No result object");
+        expect(result[1]).toBe(locationCode);
+        const geoName = getCoreServicesGeoName(locationCode);
+        expect(createCoreServicesOrgUrl("1234",getCoreServicesGeoName(locationCode))).toBe(`https://m-1234.preprod.omnichannelengagementhub.com`)
     });
 
     it("unqOrgUrlPattern should be able to retrieve the location code from the an UNQ OrgUrl with a different top-level domain", () => {
@@ -45,10 +43,9 @@ describe("CoreServicesUtils", () => {
         const result = unqOrgUrlPattern.exec(orgUrl);
         
         expect(result).not.toBe(null);
-        if (result) {
-            expect(result[1]).toBe(locationCode);
-            expect(createCoreServicesOrgUrl("1234",getCoreServicesGeoName(locationCode))).toBe(`https://m-1234.fr.omnichannelengagementhub.com`)
-        }        
+        if (!result) throw new Error("No result object");
+        expect(result[1]).toBe(locationCode);
+        expect(createCoreServicesOrgUrl("1234",getCoreServicesGeoName(locationCode))).toBe(`https://m-1234.fr.omnichannelengagementhub.com`)
     });    
 
     it("getCoreServicesGeoName() should return the proper geo name based on location code", () => {
