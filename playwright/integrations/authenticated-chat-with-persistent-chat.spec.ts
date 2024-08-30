@@ -1,5 +1,6 @@
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
+import fetchTestSettings from '../utils/fetchTestSettings';
 import fetchAuthUrl from '../utils/fetchAuthUrl';
 import { test, expect } from '@playwright/test';
 import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
@@ -7,6 +8,7 @@ import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('AuthenticatedChatWithPersistentChat');
 const authUrl = fetchAuthUrl('AuthenticatedChatWithPersistentChat');
+const testSettings = fetchTestSettings('AuthenticatedChatWithPersistentChat');
 
 test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
     test('ChatSDK.endChat() without any reconnect id should call session close with isPersistentChat=true as query params', async ({ page }) => {
@@ -22,7 +24,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatAuthSessionClosePath);
             }),
-            await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
+            await page.evaluate(async ({ omnichannelConfig, authUrl, chatDuration }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK, uuidv4 } = window;
 
                 const data = {
@@ -56,10 +59,12 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
 
                 await chatSDK.startChat();
 
+                await sleep(chatDuration);
+
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, authUrl })
+            }, { omnichannelConfig, authUrl, chatDuration: testSettings.chatDuration })
         ]);
 
         const { requestId } = runtimeContext;
@@ -116,7 +121,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatAuthSessionInitPath);
             }),
-            await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
+            await page.evaluate(async ({ omnichannelConfig, authUrl, chatDuration }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
                 const payload = {
@@ -145,10 +151,12 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
 
                 await chatSDK.startChat();
 
+                await sleep(chatDuration);
+
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, authUrl })
+            }, { omnichannelConfig, authUrl, chatDuration: testSettings.chatDuration })
         ]);
 
         const { requestId, authToken } = runtimeContext;
@@ -183,7 +191,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatAuthReconnectableChats);
             }),
-            await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
+            await page.evaluate(async ({ omnichannelConfig, authUrl, chatDuration }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK, uuidv4 } = window;
 
                 const data = {
@@ -217,10 +226,12 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
 
                 await chatSDK.startChat();
 
+                await sleep(chatDuration);
+
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, authUrl })
+            }, { omnichannelConfig, authUrl, chatDuration: testSettings.chatDuration })
         ]);
 
         const { authToken } = runtimeContext;
@@ -267,7 +278,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatAuthSessionClosePath);
             }),
-            await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
+            await page.evaluate(async ({ omnichannelConfig, authUrl, chatDuration }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
                 const payload = {
@@ -296,10 +308,12 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
 
                 await chatSDK.startChat();
 
+                await sleep(chatDuration);
+
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, authUrl })
+            }, { omnichannelConfig, authUrl, chatDuration: testSettings.chatDuration })
         ]);
 
         const { requestId } = runtimeContext;
