@@ -41,7 +41,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithPrechat', () => {
 
                 runtimeContext.preChatSurvey = preChatSurveyRes;
 
-                await sleep(1000);
+                await sleep(2000);
 
                 await chatSDK.endChat();
 

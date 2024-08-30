@@ -18,6 +18,7 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTranscripts', () => 
                 return response.url().includes(OmnichannelEndpoints.LiveChatTranscriptEmailRequestPath);
             }),
             await page.evaluate(async ({ omnichannelConfig }) => {
+                const {sleep} = window;
                 const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
                 const runtimeContext = {};
@@ -35,6 +36,8 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTranscripts', () => 
                 };
 
                 await chatSDK.emailLiveChatTranscript(body);
+
+                await sleep(1000);
 
                 await chatSDK.endChat();
 
@@ -60,6 +63,7 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTranscripts', () => 
                 return response.url().includes(OmnichannelEndpoints.LiveChatTranscriptEmailRequestPath);
             }),
             await page.evaluate(async ({ omnichannelConfig }) => {
+                const {sleep} = window;
                 const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
                 const runtimeContext = {};
@@ -77,6 +81,8 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTranscripts', () => 
                     emailAddress: 'contoso@microsoft.com',
                     attachmentMessage: 'Attachment Message'
                 };
+
+                await sleep(1000);
 
                 await chatSDK.endChat();
 
@@ -107,6 +113,7 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTranscripts', () => 
                 return response.url().includes(OmnichannelEndpoints.LiveChatv2GetChatTranscriptPath);
             }),
             await page.evaluate(async ({ omnichannelConfig }) => {
+                const {sleep} = window;
                 const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
                 const runtimeContext = {};
@@ -122,6 +129,8 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTranscripts', () => 
 
                 const transcript = await chatSDK.getLiveChatTranscript();
                 runtimeContext.transcript = transcript;
+
+                await sleep(1000);
 
                 await chatSDK.endChat();
 
@@ -159,6 +168,7 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTranscripts', () => 
                 return response.url().includes(OmnichannelEndpoints.LiveChatv2GetChatTranscriptPath);
             }),
             await page.evaluate(async ({ omnichannelConfig }) => {
+                const {sleep} = window;
                 const {OmnichannelChatSDK_1: OmnichannelChatSDK} = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
                 const runtimeContext = {};
@@ -173,6 +183,8 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTranscripts', () => 
                 runtimeContext.requestId = chatSDK.requestId;
                 runtimeContext.token = chatSDK.chatToken.token;
                 runtimeContext.chatId = chatSDK.chatToken.chatId;
+
+                await sleep(1000);
 
                 await chatSDK.endChat();
 
