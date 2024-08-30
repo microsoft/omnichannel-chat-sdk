@@ -1,11 +1,13 @@
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
+import fetchTestSettings from '../utils/fetchTestSettings';
 import { test, expect } from '@playwright/test';
 import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 import ACSEndpoints from '../utils/ACSEndpoints';
 
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChat');
+const testSettings = fetchTestSettings('UnauthenticatedChat');
 
 test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
     test('ChatSDK.initialize() should fetch the live chat configuration', async ({ page }) => {
@@ -99,7 +101,8 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatSessionInitPath);
             }),
-            await page.evaluate(async ({ omnichannelConfig }) => {
+            await page.evaluate(async ({ omnichannelConfig, chatDuration }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
 
@@ -112,10 +115,12 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
 
                 await chatSDK.startChat();
 
+                await sleep(chatDuration);
+
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig })
+            }, { omnichannelConfig, chatDuration: testSettings.chatDuration })
         ]);
 
         const { requestId } = runtimeContext;
