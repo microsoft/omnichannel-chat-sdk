@@ -4,21 +4,19 @@ const fetchTestSettings = (scenario = "") => {
     const testConfig = fetchTestConfig();
     scenario = scenario? scenario: "DefaultSettings";
 
-    const testSettings: any = {};  // eslint-disable-line @typescript-eslint/no-explicit-any
-    testSettings.chatDuration = 3000;
+    let chatDuration = testConfig["DefaultSettings"].chatDuration || 3000;
 
     if (!scenario) {
-        return testSettings;  // eslint-disable-line @typescript-eslint/no-explicit-any
+        return {chatDuration};
     }
 
     if (!Object.keys(testConfig).includes(scenario)) {
-        return testSettings;
+        return {chatDuration};
     }
 
     // Overwrite value only if it exists
-    testSettings.chatDuration = testConfig[scenario]?.chatDuration || testSettings.chatDuration;
-
-    return testSettings;
+    chatDuration = testConfig[scenario]?.chatDuration || chatDuration;
+    return {chatDuration};
 }
 
 export default fetchTestSettings;
