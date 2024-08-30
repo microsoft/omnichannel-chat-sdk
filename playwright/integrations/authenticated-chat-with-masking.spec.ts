@@ -1,12 +1,14 @@
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
 import fetchAuthUrl from '../utils/fetchAuthUrl';
+import fetchTestSettings from '../utils/fetchTestSettings';
 import { test, expect } from '@playwright/test';
 import ACSEndpoints from '../utils/ACSEndpoints';
 
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('AuthenticatedChatWithMasking');
 const authUrl = fetchAuthUrl('AuthenticatedChatWithMasking');
+const testSettings = fetchTestSettings('AuthenticatedChatWithMasking');
 
 test.describe('AuthenticatedChat @AuthenticatedChatWithMasking', () => {
     test('ChatSDK.sendMessage() should send the message masked', async ({ page }) => {
@@ -20,7 +22,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithMasking', () => {
             page.waitForResponse(response => {
                 return response.url().match(ACSEndpoints.sendMessagePathPattern)?.length >= 0;
             }),
-            await page.evaluate(async ({ omnichannelConfig, content, authUrl }) => {
+            await page.evaluate(async ({ omnichannelConfig, content, authUrl, chatDuration }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
                 const payload = {
@@ -51,10 +54,12 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithMasking', () => {
                     content
                 });
 
+                await sleep(chatDuration);
+
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, content, authUrl })
+            }, { omnichannelConfig, content, authUrl, chatDuration: testSettings.chatDuration })
         ]);
         
         const sendMessageRequestPostDataDataJson = sendMessageRequest.postDataJSON();
