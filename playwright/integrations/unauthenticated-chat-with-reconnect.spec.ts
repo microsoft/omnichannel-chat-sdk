@@ -1,10 +1,12 @@
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
+import fetchTestSettings from '../utils/fetchTestSettings';
 import { test, expect } from '@playwright/test';
 import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChatWithChatReconnect');
+const testSettings = fetchTestSettings('UnauthenticatedChatWithChatReconnect');
 
 test.describe('UnauthenticatedChat @UnauthenticatedChatWithChatReconnect', () => {
     test('ChatSDK.getChatReconnectContext() with invalid reconnect id & redirect URL should only return a redirect URL', async ({ page }) => {
@@ -33,7 +35,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithChatReconnect', () =>
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatReConnect);
             }),
-            await page.evaluate(async ({ omnichannelConfig, params }) => {
+            await page.evaluate(async ({ omnichannelConfig, params, chatDuration }) => {
                 const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
                 const chatSDKConfig = {
@@ -55,12 +57,12 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithChatReconnect', () =>
 
                 await chatSDK.startChat();
 
-                await sleep(2000);
+                await sleep(chatDuration);
 
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, params })
+            }, { omnichannelConfig, params, chatDuration: testSettings.chatDuration })
         ]);
 
         const { reconnectId, redirectURL, requestId } = runtimeContext;
