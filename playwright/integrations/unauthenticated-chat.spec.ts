@@ -330,7 +330,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, content, chatDuration: fetchTestSettings.chatDuration })
+            }, { omnichannelConfig, content, chatDuration: testSettings.chatDuration })
         ]);
 
         const { acsEndpoint, chatId } = runtimeContext;
@@ -384,7 +384,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, content, chatDuration: fetchTestSettings.chatDuration })
+            }, { omnichannelConfig, content, chatDuration: testSettings.chatDuration })
         ]);
 
         const { acsEndpoint, chatId } = runtimeContext;
