@@ -6,7 +6,7 @@ import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChatWithTranscripts');
-const testSettings = fetchTestSettings('UnauthenticatedChat');
+const testSettings = fetchTestSettings('UnauthenticatedChatWithTranscripts');
 
 test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTranscripts', () => {
     test('ChatSDK.emailLiveChatTranscript() should not fail', async ({ page }) => {

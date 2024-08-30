@@ -6,7 +6,7 @@ import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChatWithTyping');
-const testSettings = fetchTestSettings('UnauthenticatedChat');
+const testSettings = fetchTestSettings('UnauthenticatedChatWithTyping');
 
 test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTyping', () => {
     test('ChatSDK.sendTyping() should not fail', async ({ page }) => {
