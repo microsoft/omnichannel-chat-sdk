@@ -149,7 +149,8 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatSessionInitPath);
             }),
-            await page.evaluate(async ({ omnichannelConfig, customContext }) => {
+            await page.evaluate(async ({ omnichannelConfig, customContext, chatDuration }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
 
@@ -162,10 +163,12 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
 
                 await chatSDK.startChat({ customContext });
 
+                await sleep(chatDuration);
+
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, customContext })
+            }, { omnichannelConfig, customContext, chatDuration: testSettings.chatDuration })
         ]);
 
         const { requestId } = runtimeContext;
@@ -298,7 +301,8 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
             page.waitForResponse(response => {
                 return response.url().match(ACSEndpoints.sendMessagePathPattern)?.length >= 0;
             }),
-            await page.evaluate(async ({ omnichannelConfig, content }) => {
+            await page.evaluate(async ({ omnichannelConfig, content, chatDuration }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
 
@@ -316,10 +320,12 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                     content
                 });
 
+                await sleep(chatDuration);
+
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, content })
+            }, { omnichannelConfig, content, chatDuration: fetchTestSettings.chatDuration })
         ]);
 
         const { acsEndpoint, chatId } = runtimeContext;
@@ -347,7 +353,8 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
             page.waitForResponse(response => {
                 return response.url().match(ACSEndpoints.getMessagesPathPattern)?.length >= 0 && response.request().method() === 'GET'
             }),
-            await page.evaluate(async ({ omnichannelConfig, content }) => {
+            await page.evaluate(async ({ omnichannelConfig, content, chatDuration }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
 
@@ -367,10 +374,12 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
 
                 await chatSDK.getMessages();
 
+                await sleep(chatDuration);
+
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, content })
+            }, { omnichannelConfig, content, chatDuration: fetchTestSettings.chatDuration })
         ]);
 
         const { acsEndpoint, chatId } = runtimeContext;
@@ -498,7 +507,8 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatSessionClosePath);
             }),
-            await page.evaluate(async ({ omnichannelConfig }) => {
+            await page.evaluate(async ({ omnichannelConfig, chatDuration }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
 
@@ -511,10 +521,12 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
 
                 await chatSDK.startChat();
 
+                await sleep(chatDuration);
+
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig })
+            }, { omnichannelConfig, chatDuration: testSettings.chatDuration })
         ]);
 
         const { requestId } = runtimeContext;
@@ -629,7 +641,8 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatSessionInitPath);
             }),
-            await page.evaluate(async ({ omnichannelConfig }) => {
+            await page.evaluate(async ({ omnichannelConfig, chatDuration }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
 
@@ -646,10 +659,12 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
 
                 await chatSDK.startChat(optionalParams);
 
+                await sleep(chatDuration);
+
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig })
+            }, { omnichannelConfig, chatDuration: testSettings.chatDuration })
         ]);
 
         const { requestId } = runtimeContext;
