@@ -4,7 +4,7 @@ const fetchTestSettings = (scenario = "") => {
     const testConfig = fetchTestConfig();
     scenario = scenario? scenario: "DefaultSettings";
 
-    let chatDuration = testConfig["DefaultSettings"].chatDuration || 3000;
+    let chatDuration = testConfig["DefaultSettings"].chatDuration || 5000;
 
     if (!scenario) {
         return {chatDuration};
