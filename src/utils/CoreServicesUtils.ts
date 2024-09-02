@@ -24,7 +24,7 @@ export const CoreServicesGeoNamesMapping: any = { // eslint-disable-line @typesc
 
 export const coreServicesOrgUrlPrefix = "https://m-";
 
-export const unqOrgUrlPattern = /http[s]*:\/\/[\w-]*-(crm[\d]*).[\w.]*/;
+export const unqOrgUrlPattern = /http[s]*:\/\/[\w-]*-(crmtest|crm[\d]*).[\w.]*/;
 
 export const nonProductionDynamicsLocationCode = ["crm10", "crmtest"];
 
