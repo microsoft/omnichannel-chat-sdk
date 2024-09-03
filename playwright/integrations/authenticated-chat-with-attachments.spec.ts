@@ -28,8 +28,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithAttachments', () => {
             page.waitForResponse(response => {
                 return response.url().match(ACSEndpoints.sendMessagePathPattern)?.length >= 0;
             }),
-            await page.evaluate(async ({ omnichannelConfig, authUrl, chatDuration }) => {
-                const { sleep } = window;
+            await page.evaluate(async ({ omnichannelConfig, authUrl, testSettings }) => {
+                const { waitForSessionInitializationCompletion } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
                 const payload = {
@@ -71,12 +71,12 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithAttachments', () => {
                 const messages = await chatSDK.getMessages();
                 runtimeContext.messages = messages;
 
-                await sleep(chatDuration);
+                await waitForSessionInitializationCompletion(chatSDK, testSettings.waitForSessionInitializationCompletionTimeout, testSettings.waitForSessionInitializationCompletionInterval);
 
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, authUrl, chatDuration: testSettings.chatDuration })
+            }, { omnichannelConfig, authUrl, testSettings })
         ]);
 
         const sendMessageRequestPostDataDataJson = sendMessageRequest.postDataJSON();
@@ -110,8 +110,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithAttachments', () => {
             page.waitForResponse(response => {
                 return response.url().includes(AMSEndpoints.rootDomain) && response.url().match(AMSEndpoints.getImageViewPattern)?.length >= 0 && !response.url().endsWith("status");
             }),
-            await page.evaluate(async ({ omnichannelConfig, authUrl, chatDuration }) => {
-                const { sleep } = window;
+            await page.evaluate(async ({ omnichannelConfig, authUrl, testSettings }) => {
+                const { waitForSessionInitializationCompletion } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
                 const payload = {
@@ -166,12 +166,12 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithAttachments', () => {
                     runtimeContext.errorObject = `${err}`;
                 }
 
-                await sleep(chatDuration);
+                await waitForSessionInitializationCompletion(chatSDK, testSettings.waitForSessionInitializationCompletionTimeout, testSettings.waitForSessionInitializationCompletionInterval);
 
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, authUrl, chatDuration: testSettings.chatDuration })
+            }, { omnichannelConfig, authUrl, testSettings })
         ]);
 
         expect(getImageViewStatusRequest.method()).toBe('GET');
