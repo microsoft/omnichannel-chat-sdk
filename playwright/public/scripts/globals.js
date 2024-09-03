@@ -25,7 +25,7 @@ const preloadChatAdapter = async () => {
 };
 
 // Utility to ensure `LiveWorkItem` is fully created to prevent OC API failures caused by `LiveWorkItem is not found`
-const waitForSessionInitialization = async (chatSDK, timeout = 10000, interval = 1000) => {
+const waitForSessionInitializationCompletion = async (chatSDK, timeout = 10000, interval = 1000) => {
     const startTime = Date.now();
     return new Promise((resolve, reject) => {
         const run = async () => {
@@ -58,4 +58,4 @@ window.sleep = sleep;
 window.uuidv4 = uuidv4;
 window.patchLoadScript = patchLoadScript;
 window.preloadChatAdapter = preloadChatAdapter;
-window.waitForSessionInitialization = waitForSessionInitialization;
+window.waitForSessionInitializationCompletion = waitForSessionInitializationCompletion;
