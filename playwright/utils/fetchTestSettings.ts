@@ -5,6 +5,8 @@ const fetchTestSettings = (scenario = "") => {
     scenario = scenario? scenario: "DefaultSettings";
 
     let chatDuration = testConfig["DefaultSettings"].chatDuration || 5000;
+    let waitForSessionInitializationCompletionTimeout = testConfig["DefaultSettings"].waitForSessionInitializationCompletionTimeout || 10000;
+    let waitForSessionInitializationCompletionInterval = testConfig["DefaultSettings"].waitForSessionInitializationCompletionInterval || 1000;
 
     if (!scenario) {
         return {chatDuration};
@@ -16,7 +18,10 @@ const fetchTestSettings = (scenario = "") => {
 
     // Overwrite value only if it exists
     chatDuration = testConfig[scenario]?.chatDuration || chatDuration;
-    return {chatDuration};
+    waitForSessionInitializationCompletionTimeout = testConfig[scenario]?.waitForSessionInitializationCompletionTimeout || waitForSessionInitializationCompletionTimeout;
+    waitForSessionInitializationCompletionInterval = testConfig[scenario]?.waitForSessionInitializationCompletionInterval || waitForSessionInitializationCompletionInterval;
+
+    return {chatDuration, waitForSessionInitializationCompletionTimeout, waitForSessionInitializationCompletionInterval};
 }
 
 export default fetchTestSettings;
