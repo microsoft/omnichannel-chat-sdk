@@ -28,8 +28,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPrechat', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatAuthSessionInitPath);
             }),
-            await page.evaluate(async ({ omnichannelConfig, optionalParams, authUrl, chatDuration }) => {
-                const { sleep } = window;
+            await page.evaluate(async ({ omnichannelConfig, optionalParams, authUrl, testSettings }) => {
+                const { waitForSessionInitializationCompletion } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
                 const payload = {
@@ -58,12 +58,12 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPrechat', () => {
 
                 runtimeContext.preChatSurvey = preChatSurveyRes;
 
-                await sleep(chatDuration);
+                await waitForSessionInitializationCompletion(chatSDK, testSettings.waitForSessionInitializationCompletionTimeout, testSettings.waitForSessionInitializationCompletionInterval);
 
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, optionalParams, authUrl, chatDuration: testSettings.chatDuration })
+            }, { omnichannelConfig, optionalParams, authUrl, testSettings })
         ]);
 
         const { requestId } = runtimeContext;
