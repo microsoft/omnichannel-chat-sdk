@@ -22,8 +22,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithMasking', () => {
             page.waitForResponse(response => {
                 return response.url().match(ACSEndpoints.sendMessagePathPattern)?.length >= 0;
             }),
-            await page.evaluate(async ({ omnichannelConfig, content, authUrl, chatDuration }) => {
-                const { sleep } = window;
+            await page.evaluate(async ({ omnichannelConfig, content, authUrl, testSettings }) => {
+                const { waitForSessionInitializationCompletion } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
                 const payload = {
@@ -54,12 +54,12 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithMasking', () => {
                     content
                 });
 
-                await sleep(chatDuration);
+                await waitForSessionInitializationCompletion(chatSDK, testSettings.waitForSessionInitializationCompletionTimeout, testSettings.waitForSessionInitializationCompletionInterval);
 
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, content, authUrl, chatDuration: testSettings.chatDuration })
+            }, { omnichannelConfig, content, authUrl, testSettings })
         ]);
         
         const sendMessageRequestPostDataDataJson = sendMessageRequest.postDataJSON();
