@@ -4,6 +4,8 @@ DefaultSettings:
   widgetId: ''
   authUrl: ''
   chatDuration: 5000 # Time to wait before `chatSDK.endChat()` to prevent `sessionclose` failure
+  waitForSessionInitializationCompletionTimeout: 10000 # Timeout on ensuring session initialization is completed before performing further OC API calls
+  waitForSessionInitializationCompletionInterval: 1000 # Interval on verifying whether session initialization is completd
 UnauthenticatedChat:
 UnauthenticatedChatWithTyping:
 UnauthenticatedChatWithTranscripts:
