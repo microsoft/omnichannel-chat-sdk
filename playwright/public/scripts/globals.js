@@ -39,7 +39,16 @@ const waitForSessionInitializationCompletion = async (chatSDK, timeout = 10000, 
             };
 
             try {
-                const liveWorkItemDetails = await chatSDK.getConversationDetails();
+                const baseUrl = `./api/liveworkitem`;
+                const {omnichannelConfig: {orgId, orgUrl, widgetId}} = chatSDK;
+                const liveChatContext = await chatSDK.getCurrentLiveChatContext();
+                const authToken = chatSDK.authenticatedUserToken;
+                const reconnectId = chatSDK.reconnectId;
+                const apiUrl = `${baseUrl}/${liveChatContext.requestId}?orgId=${orgId}&orgUrl=${orgUrl}&widgetId=${widgetId}&reconnectId=${reconnectId}&authToken=${authToken}`;
+                // const liveWorkItemDetails = await chatSDK.getConversationDetails();
+                const response = await fetch(apiUrl);
+                const liveWorkItemDetails = await response.json();
+                console.log(liveWorkItemDetails);
                 if (Object.keys(liveWorkItemDetails).length === 0) { // LWI is 'null' caused by API failures
                     await retry();
                 }
