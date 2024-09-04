@@ -21,8 +21,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithTyping', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.SendTypingIndicatorPath);
             }),
-            await page.evaluate(async ({ omnichannelConfig, authUrl, chatDuration }) => {
-                const { sleep } = window;
+            await page.evaluate(async ({ omnichannelConfig, authUrl, testSettings }) => {
+                const { waitForSessionInitializationCompletion } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
                 const payload = {
@@ -48,12 +48,12 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithTyping', () => {
 
                 await chatSDK.sendTypingEvent();
 
-                await sleep(chatDuration);
+                await waitForSessionInitializationCompletion(chatSDK, testSettings.waitForSessionInitializationCompletionTimeout, testSettings.waitForSessionInitializationCompletionInterval);
 
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, authUrl, chatDuration: testSettings.chatDuration })
+            }, { omnichannelConfig, authUrl, testSettings })
         ]);
 
         const { requestId } = runtimeContext;
@@ -67,8 +67,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithTyping', () => {
         await page.goto(testPage);
 
         const [runtimeContext] = await Promise.all([
-            await page.evaluate(async ({ omnichannelConfig, authUrl, chatDuration }) => {
-                const { sleep } = window;
+            await page.evaluate(async ({ omnichannelConfig, authUrl, testSettings }) => {
+                const { waitForSessionInitializationCompletion } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
                 const payload = {
@@ -103,12 +103,12 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithTyping', () => {
                     runtimeContext.errorObject = `${err}`;
                 }
 
-                await sleep(chatDuration);
+                await waitForSessionInitializationCompletion(chatSDK, testSettings.waitForSessionInitializationCompletionTimeout, testSettings.waitForSessionInitializationCompletionInterval);
 
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, authUrl, chatDuration: testSettings.chatDuration })
+            }, { omnichannelConfig, authUrl, testSettings })
         ]);
 
         expect(runtimeContext?.errorMessage).not.toBeDefined();
