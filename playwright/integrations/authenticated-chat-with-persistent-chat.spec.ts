@@ -79,7 +79,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
         await page.goto(testPage);
 
         const [_, reconnectableChatsRequest, reconnectableChatsResponse, chatTokenRequest, chatTokenResponse, sessionInitRequest, sessionInitResponse, runtimeContext] = await Promise.all([
-            await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
+            await page.evaluate(async ({ omnichannelConfig, authUrl, testSettings }) => {
+                const { waitForSessionInitializationCompletion } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
                 const payload = {
@@ -101,7 +102,9 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
                 await chatSDK.initialize();
 
                 await chatSDK.startChat();
-            }, { omnichannelConfig, authUrl }),
+
+                await waitForSessionInitializationCompletion(chatSDK, testSettings.waitForSessionInitializationCompletionTimeout, testSettings.waitForSessionInitializationCompletionInterval);
+            }, { omnichannelConfig, authUrl, testSettings }),
 
             page.waitForRequest(request => {
                 return request.url().includes(OmnichannelEndpoints.LiveChatAuthReconnectableChats);
