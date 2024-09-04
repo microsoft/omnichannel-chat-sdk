@@ -1,12 +1,14 @@
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
 import fetchAuthUrl from '../utils/fetchAuthUrl';
+import fetchTestSettings from '../utils/fetchTestSettings';
 import { test, expect } from '@playwright/test';
 import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('AuthenticatedChatWithPrechat');
 const authUrl = fetchAuthUrl('AuthenticatedChatWithPrechat');
+const testSettings = fetchTestSettings('AuthenticatedChatWithPrechat');
 
 test.describe('AuthenticatedChat @AuthenticatedChatWithPrechat', () => {
     test('ChatSDK.startChat() with preChatResponse should be part of session init payload', async ({ page }) => {
@@ -26,7 +28,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPrechat', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatAuthSessionInitPath);
             }),
-            await page.evaluate(async ({ omnichannelConfig, optionalParams, authUrl }) => {
+            await page.evaluate(async ({ omnichannelConfig, optionalParams, authUrl, chatDuration }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
                 const payload = {
@@ -55,10 +58,12 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPrechat', () => {
 
                 runtimeContext.preChatSurvey = preChatSurveyRes;
 
+                await sleep(chatDuration);
+
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, optionalParams, authUrl })
+            }, { omnichannelConfig, optionalParams, authUrl, chatDuration: testSettings.chatDuration })
         ]);
 
         const { requestId } = runtimeContext;

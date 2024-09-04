@@ -3,6 +3,7 @@ DefaultSettings:
   orgUrl: ''
   widgetId: ''
   authUrl: ''
+  chatDuration: 5000 # Time to wait before `chatSDK.endChat()` to prevent `sessionclose` failure
 UnauthenticatedChat:
 UnauthenticatedChatWithTyping:
 UnauthenticatedChatWithTranscripts:
