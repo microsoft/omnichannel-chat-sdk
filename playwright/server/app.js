@@ -29,19 +29,42 @@ app.get('/api/liveworkitem/:id', async (req, res) => {
 
     try {
         const headers = {"Content-Type": "application/json"};
-        const endpoint = query.auth === 'true'? `livechatconnector/getliveworkitemdetails`: `livechatconnector/auth/getliveworkitemdetails`;
-        const requestPath = `${endpoint}/${query.orgId}/${query.widgetId}/${params.id}`;
-        const url = `${query.orgUrl}/${requestPath}?channelId=lcw`;
+        const endpoint = query.authToken === 'null'? `livechatconnector/getliveworkitemdetails`: `livechatconnector/auth/getliveworkitemdetails`;
+        let requestPath = `${endpoint}/${query.orgId}/${query.widgetId}/${params.id}`;
+        if (query.authToken !== 'null') {
+            headers["AuthenticatedUserToken"] = query.authToken;
+        }
+
+        if (query.reconnectId !== 'null') {
+            if (query.authToken !== 'null') {
+                requestPath += `/${query.reconnectId}`;
+            }
+        }
+
+        requestPath += `?channelId=lcw`;
+
+        if (query.reconnectId !== 'null') { // Use sig on unauth chat (CoreServices)
+            if (query.authToken === 'null') {
+                requestPath += `&sig=${query.reconnectId}`;
+            }
+        }
+
+        const url = `${query.orgUrl}/${requestPath}`;
+        console.log(url);
 
         const apiResponse = await fetch(url, {headers});
         if (apiResponse.ok) {
             const liveWorkItemDetails = await apiResponse.json();
+            console.log(liveWorkItemDetails);
+
             const { State: state, ConversationId: conversationId } = liveWorkItemDetails;
             responseStatusCode = 200;
             response = {state, conversationId};
         }
     } catch (err) {
+        console.log(err);
         responseStatusCode = 500;
+        res.writeHead(responseStatusCode);
         res.end();
         return;
     }
