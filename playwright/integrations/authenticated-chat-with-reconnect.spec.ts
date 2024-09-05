@@ -1,5 +1,6 @@
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
+import fetchTestSettings from '../utils/fetchTestSettings';
 import fetchAuthUrl from '../utils/fetchAuthUrl';
 import { test, expect } from '@playwright/test';
 import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
@@ -7,6 +8,7 @@ import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('AuthenticatedChatWithChatReconnect');
 const authUrl = fetchAuthUrl('AuthenticatedChatWithChatReconnect');
+const testSettings = fetchTestSettings('AuthenticatedChatWithChatReconnect');
 
 test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
     test("ChatSDK.getChatReconnectContext() should not return a reconnect id if there's no existing chat session", async ({ page }) => {
@@ -19,7 +21,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatAuthReconnectableChats) && response.request().method() === 'GET';
             }),
-            await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
+            await page.evaluate(async ({ omnichannelConfig, authUrl, chatDuration }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK, uuidv4 } = window;
 
                 const data = {
@@ -57,10 +60,12 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
 
                 await chatSDK.startChat();
 
+                await sleep(chatDuration);
+
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, authUrl })
+            }, { omnichannelConfig, authUrl, chatDuration: testSettings.chatDuration })
         ]);
 
         const { authToken, reconnectId } = runtimeContext;
@@ -108,7 +113,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatAuthReconnectableChats) && response.request().method() === 'GET';
             }),
-            await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
+            await page.evaluate(async ({ omnichannelConfig, authUrl, chatDuration }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
                 const payload = {
@@ -142,10 +148,12 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
 
                 await chatSDK.startChat({reconnectId});
 
+                await sleep(chatDuration);
+
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, authUrl })
+            }, { omnichannelConfig, authUrl, chatDuration: testSettings.chatDuration })
         ]);
 
         const { authToken, reconnectId } = runtimeContext;
@@ -199,7 +207,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatAuthSessionInitPath);
             }),
-            await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
+            await page.evaluate(async ({ omnichannelConfig, authUrl, chatDuration }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
                 const payload = {
@@ -234,10 +243,12 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
 
                 await chatSDK.startChat({ reconnectId });
 
+                await sleep(chatDuration);
+
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, authUrl })
+            }, { omnichannelConfig, authUrl, chatDuration: testSettings.chatDuration })
         ]);
 
         const { requestId, reconnectId, authToken } = runtimeContext;
@@ -289,7 +300,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatAuthSessionClosePath);
             }),
-            await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
+            await page.evaluate(async ({ omnichannelConfig, authUrl, chatDuration }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
                 const payload = {
@@ -324,10 +336,12 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
 
                 await chatSDK.startChat({ reconnectId });
 
+                await sleep(chatDuration);
+
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, authUrl })
+            }, { omnichannelConfig, authUrl, chatDuration: testSettings.chatDuration })
         ]);
 
         const { reconnectId } = runtimeContext;
@@ -454,7 +468,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatAuthLiveWorkItemDetailsPath);
             }),
-            await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
+            await page.evaluate(async ({ omnichannelConfig, authUrl, chatDuration }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK, runtimeContext } = window;
                 const payload = {
                     method: "POST"
@@ -482,6 +497,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
                 const liveChatContext = await chatSDK.getCurrentLiveChatContext();
                 runtimeContext.liveChatContext = liveChatContext;
 
+                await sleep(chatDuration);
+
                 await chatSDK.endChat();
                 runtimeContext.invalidRequestId = chatSDK.requestId;
 
@@ -489,7 +506,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
                 runtimeContext.invalidRequestIdConversationDetails = invalidRequestIdConversationDetails;
 
                 (window as any).runtimeContext = runtimeContext;
-            }, { omnichannelConfig, authUrl }),
+            }, { omnichannelConfig, authUrl, chatDuration: testSettings.chatDuration }),
             page.waitForRequest(request => {
                 return request.url().includes(OmnichannelEndpoints.LiveChatAuthLiveWorkItemDetailsPath);
             }),

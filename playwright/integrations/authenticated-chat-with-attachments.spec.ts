@@ -1,6 +1,7 @@
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
 import fetchAuthUrl from '../utils/fetchAuthUrl';
+import fetchTestSettings from '../utils/fetchTestSettings';
 import { test, expect } from '@playwright/test';
 import ACSEndpoints from '../utils/ACSEndpoints';
 import AMSEndpoints from '../utils/AMSEndpoints';
@@ -8,6 +9,7 @@ import AMSEndpoints from '../utils/AMSEndpoints';
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('AuthenticatedChatWithAttachments');
 const authUrl = fetchAuthUrl('AuthenticatedChatWithAttachments');
+const testSettings = fetchTestSettings('AuthenticatedChatWithAttachments');
 
 test.describe('AuthenticatedChat @AuthenticatedChatWithAttachments', () => {
     test('ChatSDK.uploadFileAttachment() should upload attachment to the attachment service & send a message with the metadata', async ({ page }) => {
@@ -26,7 +28,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithAttachments', () => {
             page.waitForResponse(response => {
                 return response.url().match(ACSEndpoints.sendMessagePathPattern)?.length >= 0;
             }),
-            await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
+            await page.evaluate(async ({ omnichannelConfig, authUrl, chatDuration }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
                 const payload = {
@@ -68,10 +71,12 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithAttachments', () => {
                 const messages = await chatSDK.getMessages();
                 runtimeContext.messages = messages;
 
+                await sleep(chatDuration);
+
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, authUrl })
+            }, { omnichannelConfig, authUrl, chatDuration: testSettings.chatDuration })
         ]);
 
         const sendMessageRequestPostDataDataJson = sendMessageRequest.postDataJSON();
@@ -105,7 +110,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithAttachments', () => {
             page.waitForResponse(response => {
                 return response.url().includes(AMSEndpoints.rootDomain) && response.url().match(AMSEndpoints.getImageViewPattern)?.length >= 0 && !response.url().endsWith("status");
             }),
-            await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
+            await page.evaluate(async ({ omnichannelConfig, authUrl, chatDuration }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
                 const payload = {
@@ -160,10 +166,12 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithAttachments', () => {
                     runtimeContext.errorObject = `${err}`;
                 }
 
+                await sleep(chatDuration);
+
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, authUrl })
+            }, { omnichannelConfig, authUrl, chatDuration: testSettings.chatDuration })
         ]);
 
         expect(getImageViewStatusRequest.method()).toBe('GET');
