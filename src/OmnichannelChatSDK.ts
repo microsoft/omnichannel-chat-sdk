@@ -96,6 +96,7 @@ import { isCoreServicesOrgUrlDNSError } from "./utils/internalUtils";
 import loggerUtils from "./utils/loggerUtils";
 import { parseLowerCaseString } from "./utils/parsers";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
+import { set } from "core-js/core/dict";
 import setOcUserAgent from "./utils/setOcUserAgent";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
@@ -167,7 +168,7 @@ class OmnichannelChatSDK {
         this.amsClientLogger = createAMSClientLogger(this.omnichannelConfig);
 
         this.scenarioMarker.useTelemetry(this.telemetry);
-        loggerUtils.useTelemetry(this.telemetry, this.ocSdkLogger,  this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+        loggerUtils.useTelemetry(this.telemetry, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
 
         this.scenarioMarker.setRuntimeId(this.runtimeId);
         loggerUtils.setRuntimeId(this.runtimeId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
@@ -194,14 +195,31 @@ class OmnichannelChatSDK {
 
     /* istanbul ignore next */
     public setDebug(flag: boolean): void {
+        
         this.debug = flag;
-        this.AMSClient?.setDebug(flag);
+        this.getAMSClient().then((client)=> client?.setDebug(flag));
+        
         this.telemetry?.setDebug(flag);
         this.scenarioMarker.setDebug(flag);
         loggerUtils.setDebug(flag, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
     }
 
-    public async initialize(optionalParams: InitializeOptionalParams = {}): Promise<ChatConfig> {
+    private async getAMSClient() {
+        // check if AMSClient is not null, if not return the existing client , is is null retry 3 times to get the client
+        let retryCount = 0;
+        while (retryCount < 5) {
+            if (this.AMSClient) {
+                return this.AMSClient;
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            retryCount++;
+        }
+        console.error("AMSClient is not ready");
+    }
+
+    private async loadInitComponents() {
+
+        console.time('loadInitComponents');
         this.scenarioMarker.startScenario(TelemetryEvent.InitializeChatSDK);
 
         if (this.isInitialized) {
@@ -209,51 +227,81 @@ class OmnichannelChatSDK {
             return this.liveChatConfig;
         }
 
-        this.useCoreServicesOrgUrlIfNotSet();
-
-        const useCoreServices = isCoreServicesOrgUrl(this.omnichannelConfig.orgUrl);
-        try {
-            this.OCSDKProvider = OCSDKProvider;
-            this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(useCoreServices) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
-            setOcUserAgent(this.OCClient, this.chatSDKConfig?.ocUserAgent);
-        } catch (e) {
-            exceptionThrowers.throwOmnichannelClientInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
-        }
-
-        try {
-            const { getLiveChatConfigOptionalParams } = optionalParams;
-            await this.getChatConfig(getLiveChatConfigOptionalParams || {});
-        } catch (e) {
-            exceptionThrowers.throwChatConfigRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
-        }
-
-        const supportedLiveChatVersions = [LiveChatVersion.V1, LiveChatVersion.V2];
+        const supportedLiveChatVersions = [LiveChatVersion.V2];
+        console.log('supportedLiveChatVersions', supportedLiveChatVersions);
         if (!supportedLiveChatVersions.includes(this.liveChatVersion)) {
             exceptionThrowers.throwUnsupportedLiveChatVersionFailure(new Error(ChatSDKErrorName.UnsupportedLiveChatVersion), this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
 
+        // await this.loadAmsClient();
+
+        this.isInitialized = true;
+        this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
+        console.timeEnd('loadInitComponents');
+
+    }
+
+    private async loadAmsClient() {
         try {
+            console.time('loadAmsClient');
             if (this.liveChatVersion === LiveChatVersion.V2) {
+                console.time('createACSClient');
+
                 this.ACSClient = new ACSClient(this.acsClientLogger);
-                this.AMSClient = await createAMSClient({
+                console.timeEnd('createACSClient');
+
+                createAMSClient({
                     framedMode: isBrowser(),
                     multiClient: true,
                     debug: false,
                     logger: this.amsClientLogger as PluggableLogger
+                }).then(client => {
+                    this.AMSClient = client;
+                }).catch(error => {
+                    // Handle error if needed
+                    console.error("Failed to create AMSClient:", error);
                 });
-            } else if (this.liveChatVersion === LiveChatVersion.V1) {
-                this.IC3Client = await this.getIC3Client();
             }
+            console.timeEnd('loadAmsClient');
 
-            this.isInitialized = true;
-            this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
         } catch (e) {
             exceptionThrowers.throwMessagingClientCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
+    }
+
+    public async initialize(optionalParams: InitializeOptionalParams = {}): Promise<ChatConfig> {
+
+        this.useCoreServicesOrgUrlIfNotSet();
+        const executionEngine = Promise.all([this.loadInitComponents(), this.loadChatConfig(optionalParams), this.loadAmsClient()]);
+
+        console.time('initialize_whole');
+        await executionEngine;
+        console.timeEnd('initialize_whole');
 
         return this.liveChatConfig;
     }
 
+
+    private async loadChatConfig(optionalParams: InitializeOptionalParams = {}) {
+
+        const useCoreServices = isCoreServicesOrgUrl(this.omnichannelConfig.orgUrl);
+        try {
+            console.time('loadChatConfig');
+            this.OCSDKProvider = OCSDKProvider;
+            this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(useCoreServices) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
+            setOcUserAgent(this.OCClient, this.chatSDKConfig?.ocUserAgent);
+
+            const { getLiveChatConfigOptionalParams } = optionalParams;
+            console.time('inside_getChatConfig');
+            await this.getChatConfig(getLiveChatConfigOptionalParams || {});
+            console.timeEnd('inside_getChatConfig');
+
+            console.timeEnd('loadChatConfig');
+
+        } catch (e) {
+            exceptionThrowers.throwChatConfigRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
+        }
+    }
 
     private async getChatReconnectContextWithAuthToken(): Promise<ChatReconnectContext> {
 
@@ -449,7 +497,7 @@ class OmnichannelChatSDK {
 
         if (this.authSettings) {
             if (!this.authenticatedUserToken) {
-                await this.setAuthTokenProvider(this.chatSDKConfig.getAuthToken, {throwError: true});
+                await this.setAuthTokenProvider(this.chatSDKConfig.getAuthToken, { throwError: true });
             }
 
             if (optionalParams.liveChatContext && Object.keys(optionalParams.liveChatContext).length > 0) {
@@ -531,7 +579,7 @@ class OmnichannelChatSDK {
                 // Temporarily disable token refresh mechanism
                 // const tokenRefresher = async (): Promise<string> => {
                 //     await this.getChatToken(false, { refreshToken: true });
-                //     await this.AMSClient?.initialize({ chatToken: this.chatToken as OmnichannelChatToken });
+                //     await getAmsClient()?.initialize({ chatToken: this.chatToken as OmnichannelChatToken });
                 //     return this.chatToken.token as string;
                 // };
 
@@ -603,8 +651,9 @@ class OmnichannelChatSDK {
 
         const attachmentClientPromise = async () => {
             try {
+                const amsClient = await this.getAMSClient();
                 if (this.liveChatVersion === LiveChatVersion.V2) {
-                    await this.AMSClient?.initialize({ chatToken: this.chatToken as OmnichannelChatToken });
+                    await amsClient?.initialize({ chatToken: this.chatToken as OmnichannelChatToken });
                 }
             } catch (error) {
                 const telemetryData = {
@@ -1306,15 +1355,16 @@ class OmnichannelChatSDK {
     }
 
     public async uploadFileAttachment(fileInfo: IFileInfo | File): Promise<IRawMessage | OmnichannelMessage> {
+        const amsClient = await this.getAMSClient();
         this.scenarioMarker.startScenario(TelemetryEvent.UploadFileAttachment, {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
         });
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
-            const createObjectResponse: any = await this.AMSClient?.createObject(this.chatToken?.chatId as string, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
+            const createObjectResponse: any = await amsClient?.createObject(this.chatToken?.chatId as string, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
             const documentId = createObjectResponse.id;
-            const uploadDocumentResponse: any = await this.AMSClient?.uploadDocument(documentId, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
+            const uploadDocumentResponse: any = await amsClient?.uploadDocument(documentId, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
 
             const fileIdsProperty = {
                 amsReferences: JSON.stringify([documentId]),
@@ -1419,6 +1469,7 @@ class OmnichannelChatSDK {
     }
 
     public async downloadFileAttachment(fileMetadata: FileMetadata | IFileMetadata): Promise<Blob> {
+        const amsClient = await this.getAMSClient();
         this.scenarioMarker.startScenario(TelemetryEvent.DownloadFileAttachment, {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
@@ -1426,9 +1477,9 @@ class OmnichannelChatSDK {
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
             try {
-                const response: any = await this.AMSClient?.getViewStatus(fileMetadata);  // eslint-disable-line @typescript-eslint/no-explicit-any
+                const response: any = await amsClient?.getViewStatus(fileMetadata);  // eslint-disable-line @typescript-eslint/no-explicit-any
                 const { view_location } = response;
-                const viewResponse: any = await this.AMSClient?.getView(fileMetadata, view_location);  // eslint-disable-line @typescript-eslint/no-explicit-any
+                const viewResponse: any = await amsClient?.getView(fileMetadata, view_location);  // eslint-disable-line @typescript-eslint/no-explicit-any
                 this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string
@@ -1602,7 +1653,7 @@ class OmnichannelChatSDK {
 
         return Promise.reject(`ChatAdapter for protocol ${protocol} currently not supported`);
     }
-    
+
     public isVoiceVideoCallingEnabled(): boolean {
         return this.callingOption.toString() !== CallingOptionsOptionSetNumber.NoCalling.toString();
     }
@@ -1686,12 +1737,12 @@ class OmnichannelChatSDK {
                     });
                     return Promise.reject("GetPostChatSurveyContext : LiveWorkItemDetails is null.");
                 }
-                
+
                 const participantJoined = parseLowerCaseString(liveWorkItemDetails?.canRenderPostChat as string) === "true";
                 const participantType = liveWorkItemDetails?.participantType;
 
                 conversationId = liveWorkItemDetails?.conversationId;
-                
+
                 const agentSurveyInviteLinkRequest = {
                     "SurveyProvider": msdyn_surveyprovider,
                     "WidgetId": this.omnichannelConfig.widgetId,
@@ -2035,7 +2086,7 @@ class OmnichannelChatSDK {
         }
 
         if (this.authSettings && this.chatSDKConfig.getAuthToken) {
-            await this.setAuthTokenProvider(this.chatSDKConfig.getAuthToken, {throwError: false}); // throwError set to 'false` for backward compatibility
+            await this.setAuthTokenProvider(this.chatSDKConfig.getAuthToken, { throwError: false }); // throwError set to 'false` for backward compatibility
         }
 
         if (this.preChatSurvey) {
