@@ -13,6 +13,7 @@ import platform, { isBrowser } from "./utils/platform";
 import validateSDKConfig, { defaultChatSDKConfig } from "./validators/SDKConfigValidators";
 
 import ACSParticipantDisplayName from "./core/messaging/ACSParticipantDisplayName";
+import { AMSClientLoadStates } from "./utils/AMSClientLoadStates";
 import AMSFileManager from "./external/ACSAdapter/AMSFileManager";
 import AriaTelemetry from "./telemetry/AriaTelemetry";
 import AuthSettings from "./core/AuthSettings";
@@ -96,7 +97,6 @@ import { isCoreServicesOrgUrlDNSError } from "./utils/internalUtils";
 import loggerUtils from "./utils/loggerUtils";
 import { parseLowerCaseString } from "./utils/parsers";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
-import { set } from "core-js/core/dict";
 import setOcUserAgent from "./utils/setOcUserAgent";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
@@ -140,6 +140,7 @@ class OmnichannelChatSDK {
     private isChatReconnect = false;
     private reconnectId: null | string = null;
     private refreshTokenTimer: number | null = null;
+    private AMSClientLoadCurrentState: AMSClientLoadStates = AMSClientLoadStates.NOT_LOADED;
 
     constructor(omnichannelConfig: OmnichannelConfig, chatSDKConfig: ChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
@@ -195,26 +196,51 @@ class OmnichannelChatSDK {
 
     /* istanbul ignore next */
     public setDebug(flag: boolean): void {
-        
+
         this.debug = flag;
-        this.getAMSClient().then((client)=> client?.setDebug(flag));
-        
+        this.getAMSClient().then((client) => client?.setDebug(flag));
+
         this.telemetry?.setDebug(flag);
         this.scenarioMarker.setDebug(flag);
         loggerUtils.setDebug(flag, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
     }
-
-    private async getAMSClient() {
-        // check if AMSClient is not null, if not return the existing client , is is null retry 3 times to get the client
+    private async retryLoadAMSClient() {
+        // Constants for retry logic
+        const RETRY_DELAY_MS = 1000;
+        const MAX_RETRY_COUNT = 5;
         let retryCount = 0;
-        while (retryCount < 5) {
+
+        while (retryCount < MAX_RETRY_COUNT) {
             if (this.AMSClient) {
                 return this.AMSClient;
             }
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
             retryCount++;
         }
-        console.error("AMSClient is not ready");
+
+        console.error("AMSClient is not ready after retries");
+        return null;
+    }
+
+    private async getAMSClient() {
+
+        switch (this.AMSClientLoadCurrentState) {
+            case AMSClientLoadStates.LOADED:
+                return this.AMSClient;
+
+            case AMSClientLoadStates.LOADING:
+                return await this.retryLoadAMSClient();
+
+            case AMSClientLoadStates.ERROR:
+            case AMSClientLoadStates.NOT_LOADED:
+                await this.loadAmsClient();
+                return this.AMSClient;
+
+            default:
+                console.error("Unknown AMSClient load state:", this.AMSClientLoadCurrentState);
+                return null;
+        }
+
     }
 
     private async loadInitComponents() {
@@ -233,8 +259,6 @@ class OmnichannelChatSDK {
             exceptionThrowers.throwUnsupportedLiveChatVersionFailure(new Error(ChatSDKErrorName.UnsupportedLiveChatVersion), this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
 
-        // await this.loadAmsClient();
-
         this.isInitialized = true;
         this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
         console.timeEnd('loadInitComponents');
@@ -250,21 +274,20 @@ class OmnichannelChatSDK {
                 this.ACSClient = new ACSClient(this.acsClientLogger);
                 console.timeEnd('createACSClient');
 
-                createAMSClient({
+                this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADING;
+
+                this.AMSClient = await createAMSClient({
                     framedMode: isBrowser(),
                     multiClient: true,
                     debug: false,
                     logger: this.amsClientLogger as PluggableLogger
-                }).then(client => {
-                    this.AMSClient = client;
-                }).catch(error => {
-                    // Handle error if needed
-                    console.error("Failed to create AMSClient:", error);
                 });
+                this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
             }
             console.timeEnd('loadAmsClient');
 
         } catch (e) {
+            this.AMSClientLoadCurrentState = AMSClientLoadStates.ERROR;
             exceptionThrowers.throwMessagingClientCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
     }
@@ -272,10 +295,11 @@ class OmnichannelChatSDK {
     public async initialize(optionalParams: InitializeOptionalParams = {}): Promise<ChatConfig> {
 
         this.useCoreServicesOrgUrlIfNotSet();
-        const executionEngine = Promise.all([this.loadInitComponents(), this.loadChatConfig(optionalParams), this.loadAmsClient()]);
+        const executionEngine = Promise.all([this.loadInitComponents(), this.loadChatConfig(optionalParams)]);
 
         console.time('initialize_whole');
         await executionEngine;
+        this.loadAmsClient()
         console.timeEnd('initialize_whole');
 
         return this.liveChatConfig;
