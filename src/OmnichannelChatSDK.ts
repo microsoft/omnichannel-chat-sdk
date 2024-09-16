@@ -2040,9 +2040,9 @@ class OmnichannelChatSDK {
         let liveChatConfig;
 
         try {
-            console.time('getChatConfigBackend');
+            
             liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache);
-            console.timeEnd('getChatConfigBackend');
+            
         } catch (error) {
             // Fallback on orgUrl which got converted to Core Services orgUrl
             if (isCoreServicesOrgUrlDNSError(error, this.coreServicesOrgUrl, this.dynamicsLocationCode)) { // eslint-disable-line @typescript-eslint/no-explicit-any
