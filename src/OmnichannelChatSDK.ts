@@ -288,7 +288,7 @@ class OmnichannelChatSDK {
     
             this.useCoreServicesOrgUrlIfNotSet();
 
-            // these components will load in parallel to improve time
+            // these components will
             await Promise.all([this.loadInitComponents(), this.loadChatConfig(optionalParams)]);
             // this will load ams in the background, without holding the load 
             this.loadAmsClient();
@@ -364,10 +364,14 @@ class OmnichannelChatSDK {
      * @param parallel if true , it will run in parallel (fastest version) with components loaded in the background
      * @returns livechatConfig
      */
-    public async initialize(optionalParams: InitializeOptionalParams = {}, parallel?:boolean): Promise<ChatConfig> {
+    public async initialize(optionalParams: InitializeOptionalParams = {}): Promise<ChatConfig> {
 
-        console.log("Initializing ChatSDK, parallel: ", parallel);
-        if (parallel === true ){
+        const { getLiveChatConfigOptionalParams } = optionalParams;
+        
+        const useParallelLoad = getLiveChatConfigOptionalParams?.useParallelLoad || false;
+        
+        console.log("Initializing ChatSDK, parallel: ", useParallelLoad);
+        if (useParallelLoad === true ){
             console.log("Parallel initialization")
             return await this.parallelInitialization(optionalParams)
         }else {
