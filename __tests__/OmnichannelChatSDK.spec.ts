@@ -444,10 +444,6 @@ describe('Omnichannel Chat SDK', () => {
             SDKProvider.getSDK = jest.fn(()=>{throw Error("OCSDK Error")});
             chatSDK.SDKProvider = SDKProvider;
 
-            /*chatSDK.SDKProvider={
-                getSDK:jest.fn(()=>{throw Error("OCSDK Error")})
-            };*/
-
             try {
                 await chatSDK.initialize();
                 fail();
@@ -459,9 +455,6 @@ describe('Omnichannel Chat SDK', () => {
             }
 
             SDKProvider.getSDK = currentSDK;
-
-            
-            
         });
 
         it('ChatSDK.initialize() with ChatSDK.getChatConfig() failure should throw \'ChatConfigRetrievalFailure\' as exception', async () => {
