@@ -1,5 +1,6 @@
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 
+import { SDKProvider, uuidv4 } from "@microsoft/ocsdk";
 import { defaultLocaleId, getLocaleStringFromId } from "../src/utils/locale";
 
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
@@ -434,21 +435,33 @@ describe('Omnichannel Chat SDK', () => {
         });
 
         it('ChatSDK.initialize() with OCSDK failure should throw an exception', async () => {
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
-            chatSDK.getChatConfig = jest.fn();
 
-            chatSDK.SDKProvider = {
-                getSDK: jest.fn(() => {throw Error()})
-            }
+           const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+           chatSDK.getChatConfig = jest.fn();
+
+           const currentSDK = SDKProvider.getSDK;
+        
+            SDKProvider.getSDK = jest.fn(()=>{throw Error("OCSDK Error")});
+            chatSDK.SDKProvider = SDKProvider;
+
+            /*chatSDK.SDKProvider={
+                getSDK:jest.fn(()=>{throw Error("OCSDK Error")})
+            };*/
 
             try {
                 await chatSDK.initialize();
                 fail();
             } catch (e) {
+                console.error(e)
                 expect(e.message).toBe("OmnichannelClientInitializationFailure");
                 expect(chatSDK.OCClient).not.toBeDefined();
                 expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(0);
             }
+
+            SDKProvider.getSDK = currentSDK;
+
+            
+            
         });
 
         it('ChatSDK.initialize() with ChatSDK.getChatConfig() failure should throw \'ChatConfigRetrievalFailure\' as exception', async () => {

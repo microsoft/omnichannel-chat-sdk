@@ -247,7 +247,7 @@ class OmnichannelChatSDK {
 
         const supportedLiveChatVersions = [LiveChatVersion.V2];
         if (!supportedLiveChatVersions.includes(this.liveChatVersion)) {
-            exceptionThrowers.throwUnsupportedLiveChatVersionFailure(new Error(ChatSDKErrorName.UnsupportedLiveChatVersion), this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
+            exceptionThrowers.throwUnsupportedLiveChatVersionFailure(new Error(ChatSDKErrorName.UnsupportedLiveChatVersion), this.scenarioMarker, TelemetryEvent.InitializeComponents);
         }
 
         this.isInitialized = true;
@@ -295,26 +295,34 @@ class OmnichannelChatSDK {
         } catch (error) {
             // Handle the error appropriately
             this.scenarioMarker.failScenario(TelemetryEvent.InitializeChatSDK);
-            throw error; // rethrow the error after handling it
+            throw error;
         }
 
         return this.liveChatConfig;
     }
 
-
     private async loadChatConfig(optionalParams: InitializeOptionalParams = {}) {
         this.scenarioMarker.startScenario(TelemetryEvent.InitializeLoadChatConfig);
         const useCoreServices = isCoreServicesOrgUrl(this.omnichannelConfig.orgUrl);
+
         try {
             this.OCSDKProvider = OCSDKProvider;
             this.OCClient = OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(useCoreServices) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
             setOcUserAgent(this.OCClient, this.chatSDKConfig?.ocUserAgent);
+        } catch (e) {
+            console.log("E1=>", e);
+            exceptionThrowers.throwOmnichannelClientInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeLoadChatConfig);
+        }
+
+        try {
             const { getLiveChatConfigOptionalParams } = optionalParams;
             await this.getChatConfig(getLiveChatConfigOptionalParams || {});
-            this.scenarioMarker.completeScenario(TelemetryEvent.InitializeLoadChatConfig);
         } catch (e) {
+            console.log("E2=>", e);
             exceptionThrowers.throwChatConfigRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.InitializeLoadChatConfig);
         }
+
+        this.scenarioMarker.completeScenario(TelemetryEvent.InitializeLoadChatConfig);
     }
 
     private async getChatReconnectContextWithAuthToken(): Promise<ChatReconnectContext> {
