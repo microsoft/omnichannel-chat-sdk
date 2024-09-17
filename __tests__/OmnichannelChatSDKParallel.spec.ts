@@ -8,8 +8,9 @@ import AriaTelemetry from "../src/telemetry/AriaTelemetry";
 import ChatAdapterProtocols from "../src/core/messaging/ChatAdapterProtocols";
 import ConversationMode from '../src/core/ConversationMode';
 import OmnichannelErrorCodes from "../src/core/OmnichannelErrorCodes";
-import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
+import { defaultChatSDKConfig } from "../src/validators/SDKConfigValidators";
 import libraries from "../src/utils/libraries";
+import sleep from "../src/utils/sleep";
 
 describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
@@ -37,7 +38,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
         it('ChatSDK should throw an error if a required omnichannelConfig property is missing', () => {
             const omnichannelConfig = {
                 orgUrl: '[data-org-url]',
-                orgId:'[data-org-id]'
+                orgId: '[data-org-id]'
             };
 
             try {
@@ -98,8 +99,8 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
         it('ChatSDK should not throw an error if a required omnichannelConfig value is not string', () => {
             const omnichannelConfig = {
                 orgUrl: '[data-org-url]',
-                orgId:1234,
-                widgetId:true
+                orgId: 1234,
+                widgetId: true
             };
             const result = new OmnichannelChatSDK(omnichannelConfig);
             expect(result).toBeInstanceOf(OmnichannelChatSDK);
@@ -361,7 +362,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             const version = require("../package.json").version;
             const userAgent = `omnichannel-chat-sdk/${version}`;
@@ -384,7 +385,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             const version = require("../package.json").version;
             const userAgent = `omnichannel-chat-sdk/${version}`;
@@ -411,7 +412,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.liveChatVersion = 'invalid';
 
             try {
-                await chatSDK.initialize(undefined,true);
+                await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
             } catch (e) {
                 expect(e.message).toBe("UnsupportedLiveChatVersion");
             }
@@ -421,7 +422,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -436,16 +437,16 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
         it('ChatSDK.initialize() with OCSDK failure should throw an exception', async () => {
 
-           const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
-           chatSDK.getChatConfig = jest.fn();
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
 
-           const currentSDK = SDKProvider.getSDK;
-        
-            SDKProvider.getSDK = jest.fn(()=>{throw Error("OCSDK Error")});
+            const currentSDK = SDKProvider.getSDK;
+
+            SDKProvider.getSDK = jest.fn(() => { throw Error("OCSDK Error") });
             chatSDK.SDKProvider = SDKProvider;
 
             try {
-                await chatSDK.initialize(undefined,true);
+                await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
                 fail();
             } catch (e) {
                 console.error(e)
@@ -459,10 +460,10 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
         it('ChatSDK.initialize() with ChatSDK.getChatConfig() failure should throw \'ChatConfigRetrievalFailure\' as exception', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
-            chatSDK.getChatConfig = jest.fn(() => {throw Error()});
+            chatSDK.getChatConfig = jest.fn(() => { throw Error() });
 
             try {
-                await chatSDK.initialize(undefined,true);
+                await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
                 fail();
             } catch (e) {
                 expect(e.message).toBe("ChatConfigRetrievalFailure");
@@ -475,10 +476,11 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
 
             const getLiveChatConfigOptionalParams = {
-                sendCacheHeaders: true
+                sendCacheHeaders: true,
+                useParallelLoad: true
             };
 
-            await chatSDK.initialize({getLiveChatConfigOptionalParams}, true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams }, true);
 
             jest.spyOn(chatSDK.OCClient, 'getChatConfig')
 
@@ -491,10 +493,11 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
 
             const getLiveChatConfigOptionalParams = {
-                sendCacheHeaders: false
+                sendCacheHeaders: false,
+                useParallelLoad: true
             };
 
-            await chatSDK.initialize({getLiveChatConfigOptionalParams}, true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams }, true);
 
             jest.spyOn(chatSDK.OCClient, 'getChatConfig')
 
@@ -548,7 +551,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             const mockedErrorMessage = "MockedErrorMessage";
             chatSDK.OCClient = {};
-            chatSDK.OCClient.getChatConfig = jest.fn(() => {throw Error(mockedErrorMessage)});
+            chatSDK.OCClient.getChatConfig = jest.fn(() => { throw Error(mockedErrorMessage) });
 
             try {
                 await chatSDK.getChatConfig();
@@ -698,7 +701,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.authSettings = {};
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             jest.spyOn(chatSDK, 'setAuthTokenProvider');
             jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
@@ -723,7 +726,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.authSettings = {};
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             jest.spyOn(chatSDK, 'setAuthTokenProvider');
             jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
@@ -754,14 +757,14 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.authSettings = {};
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             jest.spyOn(chatSDK, 'setAuthTokenProvider');
             jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
 
             const expectedResponse = 'GetAuthTokenFailed';
 
-            const authTokenProvider = async () => {throw Error("Operation Failed")};
+            const authTokenProvider = async () => { throw Error("Operation Failed") };
             await chatSDK.setAuthTokenProvider(authTokenProvider);
 
             try {
@@ -778,7 +781,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             expect(chatSDK.setAuthTokenProvider).toHaveBeenCalledTimes(2);
             expect(chatSDK.scenarioMarker.failScenario).toHaveBeenCalledTimes(2);
             expect(exceptionDetails.response).toBe(expectedResponse);
-        });        
+        });
 
         it('Authenticated Chat with liveChatContext should call OCClient.validateAuthChatRecord()', async () => {
             const chatSDKConfig = {
@@ -790,9 +793,9 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.authSettings = {};
 
-            await chatSDK.initialize(undefined,true);
-            
-            while(chatSDK.AMSClient === null) {
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
+
+            while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
             }
 
@@ -805,7 +808,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
                 }
             }));
 
-            jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue(Promise.resolve({state: 'state'}));
+            jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue(Promise.resolve({ state: 'state' }));
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.OCClient, 'validateAuthChatRecord').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.AMSClient, 'initialize').mockResolvedValue(Promise.resolve());
@@ -813,7 +816,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve());
 
             const optionalParams = {
-                liveChatContext: { requestId: 'requestId', chatToken: {chatId: 'chatId'}}
+                liveChatContext: { requestId: 'requestId', chatToken: { chatId: 'chatId' } }
             }
 
             await chatSDK.startChat(optionalParams);
@@ -831,7 +834,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.authSettings = {};
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -846,7 +849,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
                 }
             }));
 
-            jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue(Promise.resolve({state: 'state'}));
+            jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue(Promise.resolve({ state: 'state' }));
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.OCClient, 'validateAuthChatRecord').mockResolvedValue(Promise.reject());
             jest.spyOn(chatSDK.AMSClient, 'initialize').mockResolvedValue(Promise.resolve());
@@ -854,7 +857,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve());
 
             const optionalParams = {
-                liveChatContext: { requestId: 'requestId', chatToken: {chatId: 'chatId'}}
+                liveChatContext: { requestId: 'requestId', chatToken: { chatId: 'chatId' } }
             }
 
             try {
@@ -887,12 +890,12 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
                 }
             }));
 
-            await chatSDK.getLiveChatConfig({useRuntimeCache: false});
+            await chatSDK.getLiveChatConfig({ useRuntimeCache: false });
             const preChatSurvey = await chatSDK.getPreChatSurvey(false);
             expect(preChatSurvey).toBe(samplePreChatSurvey);
         });
 
-        it('ChatSDK.getPreChatSurvey() with preChat disabled should NOT return a pre chat survey', async() => {
+        it('ChatSDK.getPreChatSurvey() with preChat disabled should NOT return a pre chat survey', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             const samplePreChatSurvey = '{"type":"AdaptiveCard", "version":"1.1", "body":[]}';
 
@@ -913,12 +916,12 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
                 }
             }));
 
-            await chatSDK.getLiveChatConfig({useRuntimeCache: false});
+            await chatSDK.getLiveChatConfig({ useRuntimeCache: false });
             const preChatSurvey = await chatSDK.getPreChatSurvey(false);
             expect(preChatSurvey).toBe(null);
         });
 
-        it('ChatSDK.getDataMaskingRules() should return active data masking rules', async() => {
+        it('ChatSDK.getDataMaskingRules() should return active data masking rules', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
@@ -928,7 +931,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             chatSDK.dataMaskingRules = dataMaskingRules;
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             expect(await chatSDK.getDataMaskingRules()).toBe(dataMaskingRules);
         });
@@ -949,7 +952,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
             }
@@ -981,7 +984,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1014,7 +1017,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(new Error("Async error message"));
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockRejectedValue(Promise.resolve());
@@ -1033,7 +1036,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1073,7 +1076,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1107,8 +1110,8 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
-            
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
+
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
             }
@@ -1140,7 +1143,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1169,11 +1172,11 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             expect(chatSDK.AMSClient.initialize).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.startchat() with existing liveChatContext should not call OCClient.getChatToken() & OCClient.sessionInit()', async() => {
+        it('ChatSDK.startchat() with existing liveChatContext should not call OCClient.getChatToken() & OCClient.sessionInit()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1213,11 +1216,11 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(0);
         });
 
-        it('ChatSDK.startChat() with invalid liveChatContext should throw an error', async() => {
+        it('ChatSDK.startChat() with invalid liveChatContext should throw an error', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1251,16 +1254,16 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             }
         });
 
-        it('ChatSDK.startChat() with liveChatContext of a closed conversation should throw an error', async() => {
+        it('ChatSDK.startChat() with liveChatContext of a closed conversation should throw an error', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
             }
-            
+
             jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
                 ChatId: '',
                 Token: '',
@@ -1362,7 +1365,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1388,7 +1391,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1414,11 +1417,11 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             expect(Object.keys(chatContext).includes('requestId')).toBe(false);
         });
 
-        it('ChatSDK.getConversationDetails() should call OCClient.getLWIDetails()', async() => {
+        it('ChatSDK.getConversationDetails() should call OCClient.getLWIDetails()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1440,11 +1443,11 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.getConversationDetails() should return "{}" and not throw exception if OCClient.getLWIDetails() fails ', async() => {
+        it('ChatSDK.getConversationDetails() should return "{}" and not throw exception if OCClient.getLWIDetails() fails ', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1475,7 +1478,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1528,7 +1531,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.isChatReconnect = true;
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1567,7 +1570,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1597,7 +1600,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
                 }
             }
 
-            await chatSDK.getConversationDetails({liveChatContext});
+            await chatSDK.getConversationDetails({ liveChatContext });
 
             expect(chatSDK.OCClient.getLWIDetails).toHaveBeenCalledTimes(1);
             expect(chatSDK.OCClient.getLWIDetails.mock.calls[0][0]).toBe(liveChatContext.requestId);
@@ -1609,7 +1612,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1625,7 +1628,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
-                getMessages: () => {}
+                getMessages: () => { }
             }));
 
             await chatSDK.startChat();
@@ -1636,12 +1639,12 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             expect(chatSDK.conversation.getMessages).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.sendMessage() should call conversation.sendMessage()', async() => {
+        it('ChatSDK.sendMessage() should call conversation.sendMessage()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1672,12 +1675,12 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.sendTypingEvent() should call OCClient.sendTypingIndicator()', async() => {
+        it('ChatSDK.sendTypingEvent() should call OCClient.sendTypingIndicator()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1709,13 +1712,11 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
 
-            await chatSDK.initialize(undefined, true);
-
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                sleep(2000);
             }
-
 
             chatSDK.OCClient = {
                 sessionInit: jest.fn()
@@ -1723,7 +1724,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             chatSDK.AMSClient = {
                 initialize: jest.fn(),
-                createObject: jest.fn(() => Promise.resolve({id: 'id'})),
+                createObject: jest.fn(() => Promise.resolve({ id: 'id' })),
                 uploadDocument: jest.fn()
             }
 
@@ -1742,12 +1743,12 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.downloadFileAttachment() should call conversation.downloadFile()', async() => {
+        it('ChatSDK.downloadFileAttachment() should call conversation.downloadFile()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1759,7 +1760,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             chatSDK.AMSClient = {
                 initialize: jest.fn(),
-                getViewStatus: jest.fn(() => Promise.resolve({view_location: 'view_location'})),
+                getViewStatus: jest.fn(() => Promise.resolve({ view_location: 'view_location' })),
                 getView: jest.fn()
             }
 
@@ -1780,7 +1781,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1810,17 +1811,16 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             expect(chatSDK.OCClient.emailTranscript.mock.calls[0][2].CustomerLocale).toBe(emailBody.locale);
         });
 
-        it('ChatSDK.emailLiveChatTranscript() should use ChatSDK.localeId if locale is not passed', async() => {
+        it('ChatSDK.emailLiveChatTranscript() should use ChatSDK.localeId if locale is not passed', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
             }
-
 
             chatSDK.ACSClient.initialize = jest.fn();
             chatSDK.ACSClient.joinConversation = jest.fn();
@@ -1854,7 +1854,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1908,39 +1908,39 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
                 orgId: '[data-org-id]',
                 widgetId: '[data-app-id]'
             };
-    
+
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
-    
-            await chatSDK.initialize(undefined,true);
+
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
             }
-    
+
             chatSDK.ACSClient.initialize = jest.fn();
             chatSDK.ACSClient.joinConversation = jest.fn();
             chatSDK.AMSClient.initialize = jest.fn();
-    
+
             const chatToken = {
                 ChatId: 'ChatId',
                 Token: 'Token',
                 RegionGtms: '{}'
             };
-    
+
             jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve(chatToken));
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.OCClient, 'emailTranscript').mockResolvedValue(Promise.resolve());
-    
+
             const body = {
                 emailAddress: "contoso@microsoft.com",
                 attachmentMessage: "attachmentMessage",
                 locale: "locale"
             };
-    
+
             await chatSDK.startChat();
             await chatSDK.emailLiveChatTranscript(body);
-    
+
             const liveChatContext = {
                 requestId: 'requestId',
                 chatToken: {
@@ -1948,9 +1948,9 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
                     token: 'token'
                 }
             }
-    
-            await chatSDK.emailLiveChatTranscript(body, {liveChatContext});
-            
+
+            await chatSDK.emailLiveChatTranscript(body, { liveChatContext });
+
             expect(chatSDK.OCClient.emailTranscript).toHaveBeenCalledTimes(2);
             expect(chatSDK.OCClient.emailTranscript.mock.calls[0][0]).toBe(chatSDK.requestId);
             expect(chatSDK.OCClient.emailTranscript.mock.calls[0][1]).toBe(chatToken.Token);
@@ -1960,15 +1960,15 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             expect(chatSDK.OCClient.emailTranscript.mock.calls[1][2].ChatId).toBe(liveChatContext.chatToken.chatId);
             expect(chatSDK.OCClient.emailTranscript.mock.calls[1][0]).not.toBe(chatSDK.requestId);
             expect(chatSDK.OCClient.emailTranscript.mock.calls[1][1]).not.toBe(chatToken.Token);
-            expect(chatSDK.OCClient.emailTranscript.mock.calls[1][2].ChatId).not.toBe(chatToken.ChatId);        
-        });        
+            expect(chatSDK.OCClient.emailTranscript.mock.calls[1][2].ChatId).not.toBe(chatToken.ChatId);
+        });
 
         it('ChatSDK.getLiveChatTranscript() should call OCClient.getChatTranscripts()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1997,7 +1997,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -2051,7 +2051,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -2082,7 +2082,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
                 }
             }
 
-            await chatSDK.getLiveChatTranscript({liveChatContext});
+            await chatSDK.getLiveChatTranscript({ liveChatContext });
 
             expect(chatSDK.OCClient.getChatTranscripts).toHaveBeenCalledTimes(2);
             expect(chatSDK.OCClient.getChatTranscripts.mock.calls[1][0]).toBe(liveChatContext.requestId);
@@ -2093,12 +2093,12 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             expect(chatSDK.OCClient.getChatTranscripts.mock.calls[1][2]).not.toBe(chatToken.Token);
         });
 
-        it('ChatSDK.onNewMessage() should call conversation.registerOnNewMessage()', async() => {
+        it('ChatSDK.onNewMessage() should call conversation.registerOnNewMessage()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -2119,7 +2119,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             await chatSDK.startChat();
 
-            await chatSDK.onNewMessage(() => {});
+            await chatSDK.onNewMessage(() => { });
 
             expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(1);
         });
@@ -2129,7 +2129,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -2150,17 +2150,17 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             }));
 
             const messages = [
-                {id: 2},
-                {id: 1},
-                {id: 1},
-                {id: 0}
+                { id: 2 },
+                { id: 1 },
+                { id: 1 },
+                { id: 0 }
             ]
 
             await chatSDK.startChat();
 
             jest.spyOn(chatSDK, 'getMessages').mockResolvedValue(messages);
 
-            await chatSDK.onNewMessage(() => {}, {rehydrate: true});
+            await chatSDK.onNewMessage(() => { }, { rehydrate: true });
 
             expect(chatSDK.getMessages).toHaveBeenCalledTimes(1);
             expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(1);
@@ -2171,7 +2171,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -2190,7 +2190,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             const count = 3;
             for (let i = 0; i < count; i++) {
-                chatSDK.onNewMessage(() => {});
+                chatSDK.onNewMessage(() => { });
             }
 
             expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(count);
@@ -2201,7 +2201,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
             }
@@ -2219,7 +2219,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             const count = 3;
             for (let i = 0; i < count; i++) {
-                chatSDK.onAgentEndSession(() => {});
+                chatSDK.onAgentEndSession(() => { });
             }
 
             expect(chatSDK.conversation.registerOnThreadUpdate).toHaveBeenCalledTimes(count);
@@ -2230,8 +2230,8 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
-            
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
+
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
             }
@@ -2263,7 +2263,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -2298,7 +2298,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -2392,7 +2392,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.isPersistentChat = true;
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             chatSDK.reconnectId = 'reconnectId';
 
@@ -2425,7 +2425,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.updateChatToken = jest.fn();
             global.setInterval = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -2529,7 +2529,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.isChatReconnect = true;
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             chatSDK.reconnectId = 'reconnectId';
 
@@ -2558,7 +2558,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.isChatReconnect = true;
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -2601,7 +2601,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatToken = jest.fn();
             chatSDK.isChatReconnect = true;
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
@@ -2640,7 +2640,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.isChatReconnect = true;
             chatSDK.authenticatedUserToken = 'token';
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             const mockedResponse = {
                 reconnectid: 'reconnectid'
@@ -2675,7 +2675,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.isChatReconnect = true;
             chatSDK.authenticatedUserToken = 'token';
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             const mockedResponse = {
                 reconnectid: 'reconnectid'
@@ -2716,7 +2716,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.isChatReconnect = true;
             chatSDK.authenticatedUserToken = 'token';
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             const mockedResponse = {
                 reconnectid: 'reconnectid'
@@ -2752,7 +2752,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.isChatReconnect = true;
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             jest.spyOn(chatSDK.OCClient, 'getReconnectAvailability').mockResolvedValue(Promise.resolve());
 
@@ -2781,7 +2781,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.isChatReconnect = true;
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             const mockedResponse = {
                 isReconnectAvailable: false,
@@ -2816,7 +2816,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.isChatReconnect = true;
             chatSDK.authenticatedUserToken = 'token';
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             jest.spyOn(chatSDK.OCClient, 'getReconnectableChats').mockResolvedValue(Promise.reject());
             jest.spyOn(console, 'error');
@@ -2845,7 +2845,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.isChatReconnect = true;
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             jest.spyOn(chatSDK.OCClient, 'getReconnectAvailability').mockResolvedValue(Promise.reject());
             jest.spyOn(console, 'error');
@@ -2884,7 +2884,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             chatSDK.liveChatConfig = dummyConfig;
             jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue({
@@ -2895,7 +2895,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             try {
                 await chatSDK.getPostChatSurveyContext();
-                throw("Should throw error.");
+                throw ("Should throw error.");
             } catch (ex) {
                 expect(chatSDK.getConversationDetails).not.toHaveBeenCalled();
             }
@@ -2925,7 +2925,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             chatSDK.liveChatConfig = dummyConfig;
             jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue({
@@ -2938,7 +2938,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             try {
                 await chatSDK.getPostChatSurveyContext();
-                throw("Should throw error.");
+                throw ("Should throw error.");
             } catch (ex) {
                 expect(chatSDK.getConversationDetails).toHaveBeenCalledTimes(1);
                 expect(chatSDK.OCClient.getSurveyInviteLink).toHaveBeenCalledTimes(1);
@@ -2969,7 +2969,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             chatSDK.liveChatConfig = dummyConfig;
             jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue({
@@ -2985,7 +2985,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             try {
                 await chatSDK.getPostChatSurveyContext();
-                throw("Should throw error.");
+                throw ("Should throw error.");
             } catch (ex) {
                 expect(chatSDK.getConversationDetails).toHaveBeenCalledTimes(1);
                 expect(chatSDK.OCClient.getSurveyInviteLink).toHaveBeenCalledTimes(1);
@@ -3016,7 +3016,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             chatSDK.liveChatConfig = dummyConfig;
             jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue({
@@ -3040,7 +3040,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
                 expect(chatSDK.OCClient.getSurveyInviteLink).toHaveBeenCalledTimes(1);
                 expect(postChatContext.participantJoined).toBe(true);
             } catch (ex) {
-                throw("Should not throw error. " + ex);
+                throw ("Should not throw error. " + ex);
             }
         });
 
@@ -3068,7 +3068,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             chatSDK.liveChatConfig = dummyConfig;
             jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue({
@@ -3091,7 +3091,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
                 expect(chatSDK.OCClient.getSurveyInviteLink).toHaveBeenCalledTimes(1);
                 expect(postChatContext.participantJoined).toBeFalsy();
             } catch (ex) {
-                throw("Should not throw error. " + ex);
+                throw ("Should not throw error. " + ex);
             }
         });
 
@@ -3122,7 +3122,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             chatSDK.liveChatConfig = dummyConfig;
             jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue({
@@ -3151,11 +3151,11 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
                     "SurveyProvider": "MCS",
                     "WidgetId": "[data-app-id]"
                 },
-                expect.any(Object));
+                    expect.any(Object));
                 expect(postChatContext.participantJoined).toBeTruthy();
                 expect(postChatContext.participantType).toBe("Bot");
             } catch (ex) {
-                throw("Should not throw error. " + ex);
+                throw ("Should not throw error. " + ex);
             }
         });
 
@@ -3181,7 +3181,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
             chatSDK.authSettings = {};
             chatSDK.authenticatedUserToken = {};
             chatSDK.conversation = {};
@@ -3191,7 +3191,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             try {
                 await chatSDK.getAgentAvailability();
-                throw("Should throw error.");
+                throw ("Should throw error.");
             } catch (ex) {
                 expect(ex?.message).toEqual("GetAgentAvailability can only be called before a chat has started.")
             }
@@ -3223,7 +3223,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize(undefined,true);
+            await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
 
             chatSDK.liveChatConfig = dummyConfig;
             chatSDK.authSettings = {};
@@ -3240,7 +3240,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
                     isAgentAvailable: true
                 });
             } catch (ex) {
-                throw("Should not throw error. " + ex);
+                throw ("Should not throw error. " + ex);
             }
         });
     });
