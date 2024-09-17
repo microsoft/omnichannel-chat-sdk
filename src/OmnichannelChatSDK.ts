@@ -276,17 +276,17 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async initialize(optionalParams: InitializeOptionalParams = {}): Promise<ChatConfig> {
-
-        this.scenarioMarker.startScenario(TelemetryEvent.InitializeChatSDK);
-        this.useCoreServicesOrgUrlIfNotSet();
-
-        if (this.isInitialized) {
-            this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
-            return this.liveChatConfig;
-        }
-        
+    private async parallelInitialization (optionalParams: InitializeOptionalParams = {}){
         try {
+
+    
+            if (this.isInitialized) {
+                this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
+                return this.liveChatConfig;
+            }
+    
+            this.useCoreServicesOrgUrlIfNotSet();
+
             // these components will load in parallel to improve time
             await Promise.all([this.loadInitComponents(), this.loadChatConfig(optionalParams)]);
             // this will load ams in the background, without holding the load 
@@ -299,6 +299,74 @@ class OmnichannelChatSDK {
         }
 
         return this.liveChatConfig;
+    }
+
+    // We will keep this logic for backward compatibility for customers with unknown implementation, so they can test before fully adoption
+    private async sequentialInitialization(optionalParams: InitializeOptionalParams = {}){
+            
+            this.scenarioMarker.startScenario(TelemetryEvent.InitializeChatSDK);
+    
+            if (this.isInitialized) {
+                this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
+                return this.liveChatConfig;
+            }
+    
+            this.useCoreServicesOrgUrlIfNotSet();
+    
+            const useCoreServices = isCoreServicesOrgUrl(this.omnichannelConfig.orgUrl);
+            try {
+                this.OCSDKProvider = OCSDKProvider;
+                this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(useCoreServices) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
+                setOcUserAgent(this.OCClient, this.chatSDKConfig?.ocUserAgent);
+            } catch (e) {
+                exceptionThrowers.throwOmnichannelClientInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
+            }
+    
+            try {
+                const { getLiveChatConfigOptionalParams } = optionalParams;
+                await this.getChatConfig(getLiveChatConfigOptionalParams || {});
+            } catch (e) {
+                exceptionThrowers.throwChatConfigRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
+            }
+    
+            const supportedLiveChatVersions = [LiveChatVersion.V1, LiveChatVersion.V2];
+            if (!supportedLiveChatVersions.includes(this.liveChatVersion)) {
+                exceptionThrowers.throwUnsupportedLiveChatVersionFailure(new Error(ChatSDKErrorName.UnsupportedLiveChatVersion), this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
+            }
+    
+            try {
+                if (this.liveChatVersion === LiveChatVersion.V2) {
+                    this.ACSClient = new ACSClient(this.acsClientLogger);
+                    this.AMSClient = await createAMSClient({
+                        framedMode: isBrowser(),
+                        multiClient: true,
+                        debug: false,
+                        logger: this.amsClientLogger as PluggableLogger
+                    });
+                } else if (this.liveChatVersion === LiveChatVersion.V1) {
+                    this.IC3Client = await this.getIC3Client();
+                }
+    
+                this.isInitialized = true;
+                this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
+            } catch (e) {
+                exceptionThrowers.throwMessagingClientCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
+            }
+    
+            return this.liveChatConfig;
+        
+    }
+
+    /**
+     * 
+     * @param optionalParams 
+     * @param parallel if true , it will run in parallel (fastest version) with components loaded in the background
+     * @returns livechatConfig
+     */
+    public async initialize(optionalParams: InitializeOptionalParams = {}, parallel?:boolean): Promise<ChatConfig> {
+
+        return parallel ? this.parallelInitialization(optionalParams) : this.sequentialInitialization(optionalParams);
+
     }
 
     private async loadChatConfig(optionalParams: InitializeOptionalParams = {}) {
