@@ -279,7 +279,8 @@ class OmnichannelChatSDK {
     private async parallelInitialization (optionalParams: InitializeOptionalParams = {}){
         try {
 
-    
+            this.scenarioMarker.startScenario(TelemetryEvent.InitializeChatSDK);
+
             if (this.isInitialized) {
                 this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
                 return this.liveChatConfig;
@@ -365,7 +366,14 @@ class OmnichannelChatSDK {
      */
     public async initialize(optionalParams: InitializeOptionalParams = {}, parallel?:boolean): Promise<ChatConfig> {
 
-        return parallel ? this.parallelInitialization(optionalParams) : this.sequentialInitialization(optionalParams);
+        console.log("Initializing ChatSDK, parallel: ", parallel);
+        if (parallel === true ){
+            console.log("Parallel initialization")
+            return await this.parallelInitialization(optionalParams)
+        }else {
+            console.log("Sequential initialization")
+           return await this.sequentialInitialization(optionalParams);
+        }
 
     }
 
