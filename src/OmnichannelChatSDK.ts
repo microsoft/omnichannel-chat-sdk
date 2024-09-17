@@ -286,11 +286,17 @@ class OmnichannelChatSDK {
             return this.liveChatConfig;
         }
         
-        // this components will load in parallel to improve time
-        await  Promise.all([this.loadInitComponents(), this.loadChatConfig(optionalParams)]);
-        //this will load ams in the background, without holding the load 
-        this.loadAmsClient();
-        this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
+        try {
+            // these components will load in parallel to improve time
+            await Promise.all([this.loadInitComponents(), this.loadChatConfig(optionalParams)]);
+            // this will load ams in the background, without holding the load 
+            this.loadAmsClient();
+            this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
+        } catch (error) {
+            // Handle the error appropriately
+            this.scenarioMarker.failScenario(TelemetryEvent.InitializeChatSDK);
+            throw error; // rethrow the error after handling it
+        }
 
         return this.liveChatConfig;
     }
