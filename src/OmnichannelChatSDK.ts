@@ -286,8 +286,6 @@ class OmnichannelChatSDK {
     private async parallelInitialization (optionalParams: InitializeOptionalParams = {}){
         try {
 
-            console.log("parallelInitialization");
-            console.time("parallelInitialization");
             this.scenarioMarker.startScenario(TelemetryEvent.InitializeChatSDKParallel);
 
             if (this.isInitialized) {
@@ -310,16 +308,12 @@ class OmnichannelChatSDK {
             throw error;
         }
 
-        console.timeEnd("parallelInitialization");
         return this.liveChatConfig;
     }
 
     // We will keep this logic for backward compatibility for customers with unknown implementation, so they can test before fully adoption
     private async sequentialInitialization(optionalParams: InitializeOptionalParams = {}){
 
-        console.log("sequentialInitialization");
-        console.time("sequentialInitialization");
-            
             this.scenarioMarker.startScenario(TelemetryEvent.InitializeChatSDKSequential);
     
             if (this.isInitialized) {
@@ -373,7 +367,6 @@ class OmnichannelChatSDK {
                 exceptionThrowers.throwMessagingClientCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDKSequential);
             }
 
-            console.timeEnd("sequentialInitialization");
             return this.liveChatConfig;
     }
 
