@@ -214,24 +214,7 @@ class OmnichannelChatSDK {
 
         throwUnsupportedLiveChatVersionFailureIfApplicable(this.liveChatVersion, this.scenarioMarker);
 
-        try {
-            if (this.liveChatVersion === LiveChatVersion.V2) {
-                this.ACSClient = new ACSClient(this.acsClientLogger);
-                this.AMSClient = await createAMSClient({
-                    framedMode: isBrowser(),
-                    multiClient: true,
-                    debug: false,
-                    logger: this.amsClientLogger as PluggableLogger
-                });
-            } else if (this.liveChatVersion === LiveChatVersion.V1) {
-                this.IC3Client = await this.getIC3Client();
-            }
-
-            this.isInitialized = true;
-            this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
-        } catch (e) {
-            exceptionThrowers.throwMessagingClientCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
-        }
+        await this.initMessagingClient();
 
         return this.liveChatConfig;
     }
@@ -253,6 +236,27 @@ class OmnichannelChatSDK {
             await this.getChatConfig(getLiveChatConfigOptionalParams || {});
         } catch (e) {
             exceptionThrowers.throwChatConfigRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
+        }
+    }
+
+    private async initMessagingClient() {
+        try {
+            if (this.liveChatVersion === LiveChatVersion.V2) {
+                this.ACSClient = new ACSClient(this.acsClientLogger);
+                this.AMSClient = await createAMSClient({
+                    framedMode: isBrowser(),
+                    multiClient: true,
+                    debug: false,
+                    logger: this.amsClientLogger as PluggableLogger
+                });
+            } else if (this.liveChatVersion === LiveChatVersion.V1) {
+                this.IC3Client = await this.getIC3Client();
+            }
+
+            this.isInitialized = true;
+            this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
+        } catch (e) {
+            exceptionThrowers.throwMessagingClientCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
     }
 
