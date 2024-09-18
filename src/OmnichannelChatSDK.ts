@@ -210,11 +210,15 @@ class OmnichannelChatSDK {
             return this.liveChatConfig;
         }
 
-        await this.initOmnichannelClient(optionalParams);
+        if (optionalParams?.useConcurrency === true) {
+            await Promise.all([this.initOmnichannelClient(), throwUnsupportedLiveChatVersionFailureIfApplicable(this.liveChatVersion, this.scenarioMarker), this.initMessagingClient()])
+        } else {
+            await this.initOmnichannelClient(optionalParams);
 
-        throwUnsupportedLiveChatVersionFailureIfApplicable(this.liveChatVersion, this.scenarioMarker);
+            throwUnsupportedLiveChatVersionFailureIfApplicable(this.liveChatVersion, this.scenarioMarker);
 
-        await this.initMessagingClient();
+            await this.initMessagingClient();
+        }
 
         this.isInitialized = true;
         this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
