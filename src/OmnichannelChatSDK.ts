@@ -336,6 +336,7 @@ class OmnichannelChatSDK {
             }
     
             try {
+                console.log("this.liveChatVersion=>",this.liveChatVersion);
                 if (this.liveChatVersion === LiveChatVersion.V2) {
                     this.ACSClient = new ACSClient(this.acsClientLogger);
                     this.AMSClient = await createAMSClient({
@@ -353,6 +354,8 @@ class OmnichannelChatSDK {
             } catch (e) {
                 exceptionThrowers.throwMessagingClientCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
             }
+
+            console.log("ChatSDK initialized successfully");
     
             return this.liveChatConfig;
         
@@ -714,6 +717,7 @@ class OmnichannelChatSDK {
                         ChatId: this.chatToken.chatId as string,
                     };
 
+                    console.log("E1 :: Error", error);
                     exceptionThrowers.throwMessagingClientConversationJoinFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
                 }
             } else {
@@ -743,6 +747,8 @@ class OmnichannelChatSDK {
                         RequestId: this.requestId,
                         ChatId: this.chatToken.chatId as string,
                     };
+
+                    console.log("E2 :: Error", error);
 
                     exceptionThrowers.throwMessagingClientConversationJoinFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
                 }
