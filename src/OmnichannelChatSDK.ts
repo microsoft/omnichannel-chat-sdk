@@ -356,11 +356,7 @@ class OmnichannelChatSDK {
                 this.AMSClientLoadCurrentState = AMSClientLoadStates.ERROR;
                 exceptionThrowers.throwMessagingClientCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
             }
-
-            console.log("ChatSDK initialized successfully");
-    
             return this.liveChatConfig;
-        
     }
 
     /**
@@ -372,18 +368,14 @@ class OmnichannelChatSDK {
     public async initialize(optionalParams: InitializeOptionalParams = {}): Promise<ChatConfig> {
 
         const { getLiveChatConfigOptionalParams } = optionalParams;
-        
         const useParallelLoad = getLiveChatConfigOptionalParams?.useParallelLoad || false;
         
-        console.log("Initializing ChatSDK, parallel: ", useParallelLoad);
         if (useParallelLoad === true ){
-            console.log("Parallel initialization")
             return await this.parallelInitialization(optionalParams)
-        }else {
-            console.log("Sequential initialization")
-           return await this.sequentialInitialization(optionalParams);
         }
-
+           
+        return await this.sequentialInitialization(optionalParams);
+        
     }
 
     private async loadChatConfig(optionalParams: InitializeOptionalParams = {}) {
@@ -719,7 +711,6 @@ class OmnichannelChatSDK {
                         ChatId: this.chatToken.chatId as string,
                     };
 
-                    console.log("E1 :: Error", error);
                     exceptionThrowers.throwMessagingClientConversationJoinFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
                 }
             } else {
@@ -750,13 +741,11 @@ class OmnichannelChatSDK {
                         ChatId: this.chatToken.chatId as string,
                     };
 
-                    console.log("E2 :: Error", error);
-
                     exceptionThrowers.throwMessagingClientConversationJoinFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
                 }
             }
         };
-
+        
         const attachmentClientPromise = async () => {
             try {
                 const amsClient = await this.getAMSClient();
