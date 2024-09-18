@@ -209,28 +209,7 @@ class OmnichannelChatSDK {
             return this.liveChatConfig;
         }
 
-        this.useCoreServicesOrgUrlIfNotSet();
-
-        const useCoreServices = isCoreServicesOrgUrl(this.omnichannelConfig.orgUrl);
-        try {
-            this.OCSDKProvider = OCSDKProvider;
-            this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(useCoreServices) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
-            setOcUserAgent(this.OCClient, this.chatSDKConfig?.ocUserAgent);
-        } catch (e) {
-            exceptionThrowers.throwOmnichannelClientInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
-        }
-
-        try {
-            const { getLiveChatConfigOptionalParams } = optionalParams;
-            await this.getChatConfig(getLiveChatConfigOptionalParams || {});
-        } catch (e) {
-            exceptionThrowers.throwChatConfigRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
-        }
-
-        const supportedLiveChatVersions = [LiveChatVersion.V1, LiveChatVersion.V2];
-        if (!supportedLiveChatVersions.includes(this.liveChatVersion)) {
-            exceptionThrowers.throwUnsupportedLiveChatVersionFailure(new Error(ChatSDKErrorName.UnsupportedLiveChatVersion), this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
-        }
+        await this.initOmnichannelClient(optionalParams);
 
         try {
             if (this.liveChatVersion === LiveChatVersion.V2) {
@@ -254,6 +233,25 @@ class OmnichannelChatSDK {
         return this.liveChatConfig;
     }
 
+    private async initOmnichannelClient(optionalParams: InitializeOptionalParams = {}) {
+        this.useCoreServicesOrgUrlIfNotSet();
+
+        const useCoreServices = isCoreServicesOrgUrl(this.omnichannelConfig.orgUrl);
+        try {
+            this.OCSDKProvider = OCSDKProvider;
+            this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(useCoreServices) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
+            setOcUserAgent(this.OCClient, this.chatSDKConfig?.ocUserAgent);
+        } catch (e) {
+            exceptionThrowers.throwOmnichannelClientInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
+        }
+
+        try {
+            const { getLiveChatConfigOptionalParams } = optionalParams;
+            await this.getChatConfig(getLiveChatConfigOptionalParams || {});
+        } catch (e) {
+            exceptionThrowers.throwChatConfigRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
+        }
+    }
 
     private async getChatReconnectContextWithAuthToken(): Promise<ChatReconnectContext> {
 
