@@ -212,7 +212,7 @@ class OmnichannelChatSDK {
 
         await this.initOmnichannelClient(optionalParams);
 
-        throwUnsupportedLiveChatVersionFailureIfApplicable(this.liveChatVersion);
+        throwUnsupportedLiveChatVersionFailureIfApplicable(this.liveChatVersion, this.scenarioMarker);
 
         try {
             if (this.liveChatVersion === LiveChatVersion.V2) {
