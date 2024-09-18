@@ -223,6 +223,8 @@ class OmnichannelChatSDK {
     }
 
     private async initOmnichannelClient(optionalParams: InitializeOptionalParams = {}) {
+        this.scenarioMarker.startScenario(TelemetryEvent.InitializeOmnichannelClient);
+
         this.useCoreServicesOrgUrlIfNotSet();
 
         const useCoreServices = isCoreServicesOrgUrl(this.omnichannelConfig.orgUrl);
@@ -231,6 +233,7 @@ class OmnichannelChatSDK {
             this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(useCoreServices) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
             setOcUserAgent(this.OCClient, this.chatSDKConfig?.ocUserAgent);
         } catch (e) {
+            this.scenarioMarker.failScenario(TelemetryEvent.InitializeOmnichannelClient);
             exceptionThrowers.throwOmnichannelClientInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
 
@@ -238,11 +241,16 @@ class OmnichannelChatSDK {
             const { getLiveChatConfigOptionalParams } = optionalParams;
             await this.getChatConfig(getLiveChatConfigOptionalParams || {});
         } catch (e) {
+            this.scenarioMarker.failScenario(TelemetryEvent.InitializeOmnichannelClient);
             exceptionThrowers.throwChatConfigRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
+
+        this.scenarioMarker.completeScenario(TelemetryEvent.InitializeOmnichannelClient);
     }
 
     private async initMessagingClient() {
+        this.scenarioMarker.startScenario(TelemetryEvent.InitializeMessagingClient);
+
         try {
             if (this.liveChatVersion === LiveChatVersion.V2) {
                 this.ACSClient = new ACSClient(this.acsClientLogger);
@@ -256,8 +264,11 @@ class OmnichannelChatSDK {
                 this.IC3Client = await this.getIC3Client();
             }
         } catch (e) {
+            this.scenarioMarker.failScenario(TelemetryEvent.InitializeMessagingClient);
             exceptionThrowers.throwMessagingClientCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
+
+        this.scenarioMarker.completeScenario(TelemetryEvent.InitializeMessagingClient);
     }
 
     private async getChatReconnectContextWithAuthToken(): Promise<ChatReconnectContext> {
