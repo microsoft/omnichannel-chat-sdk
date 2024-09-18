@@ -217,7 +217,7 @@ class OmnichannelChatSDK {
 
             throwUnsupportedLiveChatVersionFailureIfApplicable(this.liveChatVersion, this.scenarioMarker);
 
-            await this.initMessagingClient();
+            await this.initMessagingClient(optionalParams);
         }
 
         this.isInitialized = true;
@@ -252,18 +252,30 @@ class OmnichannelChatSDK {
         this.scenarioMarker.completeScenario(TelemetryEvent.InitializeOmnichannelClient);
     }
 
-    private async initMessagingClient() {
+    private async initMessagingClient(optionalParams: InitializeOptionalParams = {}) {
         this.scenarioMarker.startScenario(TelemetryEvent.InitializeMessagingClient);
 
         try {
             if (this.liveChatVersion === LiveChatVersion.V2) {
                 this.ACSClient = new ACSClient(this.acsClientLogger);
-                this.AMSClient = await createAMSClient({
-                    framedMode: isBrowser(),
-                    multiClient: true,
-                    debug: false,
-                    logger: this.amsClientLogger as PluggableLogger
-                });
+
+                if (optionalParams?.useConcurrency === true) {
+                    createAMSClient({
+                        framedMode: isBrowser(),
+                        multiClient: true,
+                        debug: false,
+                        logger: this.amsClientLogger as PluggableLogger
+                    }).then((client => {
+                      this.AMSClient = client;
+                    }));
+                } else {
+                    this.AMSClient = await createAMSClient({
+                        framedMode: isBrowser(),
+                        multiClient: true,
+                        debug: false,
+                        logger: this.amsClientLogger as PluggableLogger
+                    });
+                }
             } else if (this.liveChatVersion === LiveChatVersion.V1) {
                 this.IC3Client = await this.getIC3Client();
             }
