@@ -99,6 +99,7 @@ import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import setOcUserAgent from "./utils/setOcUserAgent";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
+import throwUnsupportedLiveChatVersionFailureIfApplicable from "./commands/throwUnsupportedLiveChatVersionFailureIfApplicable";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -210,6 +211,8 @@ class OmnichannelChatSDK {
         }
 
         await this.initOmnichannelClient(optionalParams);
+
+        throwUnsupportedLiveChatVersionFailureIfApplicable(this.liveChatVersion);
 
         try {
             if (this.liveChatVersion === LiveChatVersion.V2) {
