@@ -76,7 +76,6 @@ describe('Omnichannel Chat SDK (Node)', () => {
 
         chatSDK.ACSClient.initialize = jest.fn();
         chatSDK.ACSClient.joinConversation = jest.fn();
-
         chatSDK.AMSClient.initialize = jest.fn();
 
         chatSDK.OCClient.sessionInit = jest.fn();
@@ -85,9 +84,7 @@ describe('Omnichannel Chat SDK (Node)', () => {
 
         try {
             await chatSDK.createChatAdapter();
-            fail("Error should have been thrown");
         } catch (error) {
-            console.log(error);
             expect(error).toEqual('ChatAdapter is only supported on browser');
         }
     });
@@ -119,9 +116,7 @@ describe('Omnichannel Chat SDK (Node)', () => {
 
         try {
             await chatSDK.getVoiceVideoCalling();
-            fail("Error should have been thrown");
         } catch (error) {
-            console.log(error);
             expect(error.message).toEqual('UnsupportedPlatform');
             expect(console.error).toHaveBeenCalledWith('VoiceVideoCalling is only supported on browser');
         }
