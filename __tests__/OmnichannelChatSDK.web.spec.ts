@@ -41,10 +41,6 @@ describe('Omnichannel Chat SDK (Web)', () => {
 
         await chatSDK.initialize();
 
-        while (chatSDK.AMSClient === null) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
-        }
-
         const optionalParams = {
             sendDefaultInitContext: true
         }
@@ -78,10 +74,6 @@ describe('Omnichannel Chat SDK (Web)', () => {
 
         await chatSDK.initialize();
 
-        while (chatSDK.AMSClient === null) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
-        }
-
         const optionalParams = {
             sendDefaultInitContext: true
         }
@@ -114,10 +106,6 @@ describe('Omnichannel Chat SDK (Web)', () => {
 
         await chatSDK.initialize();
 
-        while (chatSDK.AMSClient === null) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
-        }
-
         chatSDK.OCClient.sessionInit = jest.fn();
         chatSDK.ACSClient.initialize = jest.fn();
         chatSDK.ACSClient.joinConversation = jest.fn();
@@ -142,10 +130,6 @@ describe('Omnichannel Chat SDK (Web)', () => {
         chatSDK.getChatToken = jest.fn();
 
         await chatSDK.initialize();
-
-        while (chatSDK.AMSClient === null) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
-        }
 
         chatSDK.OCClient.sessionInit = jest.fn();
         chatSDK.ACSClient.initialize = jest.fn();
@@ -174,10 +158,6 @@ describe('Omnichannel Chat SDK (Web)', () => {
         chatSDK.getChatToken = jest.fn();
 
         await chatSDK.initialize();
-
-        while (chatSDK.AMSClient === null) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
-        }
 
         chatSDK.callingOption = CallingOptionsOptionSetNumber.NoCalling;
         chatSDK.OCClient.sessionInit = jest.fn();
