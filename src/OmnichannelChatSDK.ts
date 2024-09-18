@@ -345,6 +345,7 @@ class OmnichannelChatSDK {
                         debug: false,
                         logger: this.amsClientLogger as PluggableLogger
                     });
+                    this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
                 } else if (this.liveChatVersion === LiveChatVersion.V1) {
                     this.IC3Client = await this.getIC3Client();
                 }
@@ -352,6 +353,7 @@ class OmnichannelChatSDK {
                 this.isInitialized = true;
                 this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
             } catch (e) {
+                this.AMSClientLoadCurrentState = AMSClientLoadStates.ERROR;
                 exceptionThrowers.throwMessagingClientCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
             }
 
