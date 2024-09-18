@@ -216,6 +216,9 @@ class OmnichannelChatSDK {
 
         await this.initMessagingClient();
 
+        this.isInitialized = true;
+        this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
+
         return this.liveChatConfig;
     }
 
@@ -252,9 +255,6 @@ class OmnichannelChatSDK {
             } else if (this.liveChatVersion === LiveChatVersion.V1) {
                 this.IC3Client = await this.getIC3Client();
             }
-
-            this.isInitialized = true;
-            this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
         } catch (e) {
             exceptionThrowers.throwMessagingClientCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
