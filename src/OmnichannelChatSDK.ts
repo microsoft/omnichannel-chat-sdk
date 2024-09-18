@@ -224,6 +224,10 @@ class OmnichannelChatSDK {
 
     private async getAMSClient() {
 
+        if (this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED && this.liveChatVersion === LiveChatVersion.V1) {
+            return null;
+        }
+
         switch (this.AMSClientLoadCurrentState) {
             case AMSClientLoadStates.LOADED:
                 return this.AMSClient;
@@ -350,6 +354,7 @@ class OmnichannelChatSDK {
                         debug: false,
                         logger: this.amsClientLogger as PluggableLogger
                     });
+                    
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
                 } else if (this.liveChatVersion === LiveChatVersion.V1) {
                     this.IC3Client = await this.getIC3Client();

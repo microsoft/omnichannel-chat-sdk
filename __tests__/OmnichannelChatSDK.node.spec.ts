@@ -9,7 +9,7 @@ import AriaTelemetry from "../src/telemetry/AriaTelemetry";
 
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 
-describe('Omnichannel Chat SDK (Node)', () => {
+describe('Omnichannel Chat SDK (Node), Sequential', () => {
     (settings as any).ariaTelemetryKey = '';
     AWTLogManager.initialize = jest.fn();
 

@@ -17,7 +17,7 @@ import libraries from "../src/utils/libraries";
 import platform from "../src/utils/platform";
 
 jest.mock('@microsoft/omnichannel-amsclient', () => ({default: jest.fn()}));
-describe('Omnichannel Chat SDK (Web)', () => {
+describe('Omnichannel Chat SDK (Web), Sequential', () => {
     (settings as any).ariaTelemetryKey = '';
     (AriaTelemetry as any)._disable = true;
     AWTLogManager.initialize = jest.fn();
