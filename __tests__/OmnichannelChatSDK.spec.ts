@@ -495,7 +495,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
         });
 
         it('ChatSDK.initialize() with OCSDK failure should throw an exception', async () => {
-            
+
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
@@ -513,7 +513,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(0);
             }
 
-            SDKProvider.getSDK= currentSDK;
+            SDKProvider.getSDK = currentSDK;
         });
 
         it('ChatSDK.initialize() with ChatSDK.getChatConfig() failure should throw \'ChatConfigRetrievalFailure\' as exception', async () => {
