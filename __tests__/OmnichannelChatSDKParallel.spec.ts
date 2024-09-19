@@ -410,7 +410,8 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.liveChatVersion = 'invalid';
 
             try {
-                await chatSDK.initialize({ useParallelLoad: true });            } catch (e) {
+                await chatSDK.initialize({ useParallelLoad: true });
+            } catch (e) {
                 expect(e.message).toBe("UnsupportedLiveChatVersion");
             }
         });
@@ -422,7 +423,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -446,7 +447,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.SDKProvider = SDKProvider;
 
             try {
-                await chatSDK.initialize({ useParallelLoad: true });                fail();
+                await chatSDK.initialize({ useParallelLoad: true }); fail();
             } catch (e) {
                 console.error(e)
                 expect(e.message).toBe("OmnichannelClientInitializationFailure");
@@ -462,7 +463,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn(() => { throw Error() });
 
             try {
-                await chatSDK.initialize({ useParallelLoad: true });                fail();
+                await chatSDK.initialize({ useParallelLoad: true }); fail();
             } catch (e) {
                 expect(e.message).toBe("ChatConfigRetrievalFailure");
                 expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(1);
@@ -475,10 +476,9 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             const getLiveChatConfigOptionalParams = {
                 sendCacheHeaders: true,
-                useParallelLoad: true
             };
 
-            await chatSDK.initialize({ getLiveChatConfigOptionalParams }, true);
+            await chatSDK.initialize({ useParallelLoad: true, getLiveChatConfigOptionalParams });
 
             jest.spyOn(chatSDK.OCClient, 'getChatConfig')
 
@@ -491,11 +491,15 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
 
             const getLiveChatConfigOptionalParams = {
-                sendCacheHeaders: false,
-                useParallelLoad: true
+                sendCacheHeaders: false
             };
 
-            await chatSDK.initialize({ getLiveChatConfigOptionalParams }, true);
+            await chatSDK.initialize(
+
+                {
+                    useParallelLoad: true,
+                    getLiveChatConfigOptionalParams
+                });
 
             jest.spyOn(chatSDK.OCClient, 'getChatConfig')
 
@@ -831,7 +835,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -949,9 +953,9 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize({ useParallelLoad: true });            let retryCount = 0;
+            await chatSDK.initialize({ useParallelLoad: true }); let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -988,7 +992,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -1043,7 +1047,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -1087,7 +1091,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -1124,7 +1128,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -1160,7 +1164,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -1197,7 +1201,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -1242,9 +1246,9 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize({ useParallelLoad: true });            let retryCount = 0;
+            await chatSDK.initialize({ useParallelLoad: true }); let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -1286,7 +1290,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -1396,7 +1400,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -1426,7 +1430,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -1460,7 +1464,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -1490,7 +1494,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -1524,7 +1528,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -1581,7 +1585,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -1624,7 +1628,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -1670,7 +1674,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -1706,7 +1710,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -1746,7 +1750,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -1782,7 +1786,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -1822,7 +1826,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -1859,7 +1863,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -1896,7 +1900,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -1938,7 +1942,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -1999,7 +2003,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -2086,7 +2090,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -2143,7 +2147,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -2190,9 +2194,9 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
 
-            await chatSDK.initialize({ useParallelLoad: true });            let retryCount = 0;
+            await chatSDK.initialize({ useParallelLoad: true }); let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -2226,7 +2230,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -2271,7 +2275,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -2301,7 +2305,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
 
-            await chatSDK.initialize({ useParallelLoad: true });            while (chatSDK.AMSClient === null) {
+            await chatSDK.initialize({ useParallelLoad: true }); while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
             }
 
@@ -2332,7 +2336,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -2368,7 +2372,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -2406,7 +2410,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -2666,7 +2670,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -2712,7 +2716,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.initialize({ useParallelLoad: true });
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (chatSDK.AMSClient === null && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 retryCount++;
@@ -3280,7 +3284,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            await chatSDK.initialize({ useParallelLoad: true });            chatSDK.authSettings = {};
+            await chatSDK.initialize({ useParallelLoad: true }); chatSDK.authSettings = {};
             chatSDK.authenticatedUserToken = {};
             chatSDK.conversation = {};
             jest.spyOn(console, 'error');

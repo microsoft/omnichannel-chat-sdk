@@ -27,7 +27,7 @@ describe('Omnichannel Chat SDK (Node) Parallel initialization', () => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
 
-         await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
+        await chatSDK.initialize({ useParallelLoad: true });
 
         chatSDK.IC3Client = {
             initialize: jest.fn(),
@@ -72,7 +72,7 @@ describe('Omnichannel Chat SDK (Node) Parallel initialization', () => {
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
 
-         await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
+        await chatSDK.initialize({ useParallelLoad: true });
 
         chatSDK.ACSClient.initialize = jest.fn();
         chatSDK.ACSClient.joinConversation = jest.fn();
@@ -110,7 +110,7 @@ describe('Omnichannel Chat SDK (Node) Parallel initialization', () => {
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
 
-         await chatSDK.initialize({ getLiveChatConfigOptionalParams: { useParallelLoad: true } });
+        await chatSDK.initialize({ useParallelLoad: true });
 
         while (chatSDK.AMSClient === null) {
             await new Promise(resolve => setTimeout(resolve, 2000));
