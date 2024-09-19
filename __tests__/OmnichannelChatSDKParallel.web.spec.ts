@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-export {}; // Fix for "Cannot redeclare block-scoped variable 'OmnichannelChatSDK'"
+export { }; // Fix for "Cannot redeclare block-scoped variable 'OmnichannelChatSDK'"
 
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 
@@ -16,8 +16,8 @@ import WebUtils from "../src/utils/WebUtils";
 import libraries from "../src/utils/libraries";
 import platform from "../src/utils/platform";
 
-jest.mock('@microsoft/omnichannel-amsclient', () => ({default: jest.fn()}));
-describe('Omnichannel Chat SDK (Web), Sequential', () => {
+jest.mock('@microsoft/omnichannel-amsclient', () => ({ default: jest.fn() }));
+describe('Omnichannel Chat SDK (Web)', () => {
     (settings as any).ariaTelemetryKey = '';
     (AriaTelemetry as any)._disable = true;
     AWTLogManager.initialize = jest.fn();
@@ -39,7 +39,11 @@ describe('Omnichannel Chat SDK (Web), Sequential', () => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
 
-        await chatSDK.initialize();
+        await chatSDK.initialize({ useParallelLoad: true });
+
+        while (chatSDK.AMSClient === null) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
 
         const optionalParams = {
             sendDefaultInitContext: true
@@ -72,7 +76,11 @@ describe('Omnichannel Chat SDK (Web), Sequential', () => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
 
-        await chatSDK.initialize();
+        await chatSDK.initialize({ useParallelLoad: true });
+
+        while (chatSDK.AMSClient === null) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
 
         const optionalParams = {
             sendDefaultInitContext: true
@@ -104,7 +112,11 @@ describe('Omnichannel Chat SDK (Web), Sequential', () => {
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
 
-        await chatSDK.initialize();
+        await chatSDK.initialize({ useParallelLoad: true });
+
+        while (chatSDK.AMSClient === null) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
 
         chatSDK.OCClient.sessionInit = jest.fn();
         chatSDK.ACSClient.initialize = jest.fn();
@@ -129,7 +141,11 @@ describe('Omnichannel Chat SDK (Web), Sequential', () => {
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
 
-        await chatSDK.initialize();
+        await chatSDK.initialize({ useParallelLoad: true });
+
+        while (chatSDK.AMSClient === null) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
 
         chatSDK.OCClient.sessionInit = jest.fn();
         chatSDK.ACSClient.initialize = jest.fn();
@@ -157,7 +173,11 @@ describe('Omnichannel Chat SDK (Web), Sequential', () => {
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
 
-        await chatSDK.initialize();
+        await chatSDK.initialize({ useParallelLoad: true });
+
+        while (chatSDK.AMSClient === null) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
 
         chatSDK.callingOption = CallingOptionsOptionSetNumber.NoCalling;
         chatSDK.OCClient.sessionInit = jest.fn();

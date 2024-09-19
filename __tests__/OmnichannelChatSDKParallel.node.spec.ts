@@ -9,7 +9,7 @@ import AriaTelemetry from "../src/telemetry/AriaTelemetry";
 
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 
-describe('Omnichannel Chat SDK (Node), Sequential', () => {
+describe('Omnichannel Chat SDK (Node) Parallel initialization', () => {
     (settings as any).ariaTelemetryKey = '';
     AWTLogManager.initialize = jest.fn();
 
@@ -27,7 +27,7 @@ describe('Omnichannel Chat SDK (Node), Sequential', () => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
 
-        await chatSDK.initialize();
+        await chatSDK.initialize({ useParallelLoad: true });
 
         chatSDK.IC3Client = {
             initialize: jest.fn(),
@@ -72,10 +72,16 @@ describe('Omnichannel Chat SDK (Node), Sequential', () => {
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
 
-        await chatSDK.initialize();
+        await chatSDK.initialize({ useParallelLoad: true });
 
         chatSDK.ACSClient.initialize = jest.fn();
         chatSDK.ACSClient.joinConversation = jest.fn();
+        // if chatSDK.AMSClient is null, retry 3 times before failing and wait 2 second between each retry
+
+        while (chatSDK.AMSClient === null) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+
         chatSDK.AMSClient.initialize = jest.fn();
 
         chatSDK.OCClient.sessionInit = jest.fn();
@@ -84,7 +90,9 @@ describe('Omnichannel Chat SDK (Node), Sequential', () => {
 
         try {
             await chatSDK.createChatAdapter();
+            fail("Error should have been thrown");
         } catch (error) {
+            console.log(error);
             expect(error).toEqual('ChatAdapter is only supported on browser');
         }
     });
@@ -102,7 +110,11 @@ describe('Omnichannel Chat SDK (Node), Sequential', () => {
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
 
-        await chatSDK.initialize();
+        await chatSDK.initialize({ useParallelLoad: true });
+
+        while (chatSDK.AMSClient === null) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
 
         chatSDK.ACSClient.initialize = jest.fn();
         chatSDK.ACSClient.joinConversation = jest.fn();
@@ -116,7 +128,9 @@ describe('Omnichannel Chat SDK (Node), Sequential', () => {
 
         try {
             await chatSDK.getVoiceVideoCalling();
+            fail("Error should have been thrown");
         } catch (error) {
+            console.log(error);
             expect(error.message).toEqual('UnsupportedPlatform');
             expect(console.error).toHaveBeenCalledWith('VoiceVideoCalling is only supported on browser');
         }

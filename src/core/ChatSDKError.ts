@@ -53,7 +53,10 @@ export enum ChatSDKErrorName {
     /** Failure on retrieving AuthToken from AuthTokenProvider */
     GetAuthTokenFailed = "GetAuthTokenFailed",
     /** AuthToken is undefined */
-    UndefinedAuthToken = "UndefinedAuthToken"
+    UndefinedAuthToken = "UndefinedAuthToken",
+
+    UnknownAMSLoadState = "UnknownAMSLoadState",
+
 }
 
 export class ChatSDKError {
