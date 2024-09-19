@@ -1,7 +1,7 @@
 enum TelemetryEvent {
     ValidateOmnichannelConfig = "ValidateOmnichannelConfig",
     ValidateSDKConfig = "ValidateSDKConfig",
-    InitializeChatSDKSequential = "InitializeChatSDKSequential",
+    InitializeChatSDK = "InitializeChatSDK",
     InitializeChatSDKParallel = "InitializeChatSDKParallel",
     InitializeMessagingClient = "InitializeMessagingClient ",
     InitializeComponents = "InitializeComponents",

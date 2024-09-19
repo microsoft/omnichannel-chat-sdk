@@ -311,10 +311,10 @@ class OmnichannelChatSDK {
     // We will keep this logic for backward compatibility for customers with unknown implementation, so they can test before fully adoption
     private async sequentialInitialization(optionalParams: InitializeOptionalParams = {}){
 
-            this.scenarioMarker.startScenario(TelemetryEvent.InitializeChatSDKSequential);
+            this.scenarioMarker.startScenario(TelemetryEvent.InitializeChatSDK);
     
             if (this.isInitialized) {
-                this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDKSequential);
+                this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
                 return this.liveChatConfig;
             }
     
@@ -326,19 +326,19 @@ class OmnichannelChatSDK {
                 this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(useCoreServices) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
                 setOcUserAgent(this.OCClient, this.chatSDKConfig?.ocUserAgent);
             } catch (e) {
-                exceptionThrowers.throwOmnichannelClientInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDKSequential);
+                exceptionThrowers.throwOmnichannelClientInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
             }
     
             try {
                 const { getLiveChatConfigOptionalParams } = optionalParams;
                 await this.getChatConfig(getLiveChatConfigOptionalParams || {});
             } catch (e) {
-                exceptionThrowers.throwChatConfigRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDKSequential);
+                exceptionThrowers.throwChatConfigRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
             }
     
             const supportedLiveChatVersions = [LiveChatVersion.V1, LiveChatVersion.V2];
             if (!supportedLiveChatVersions.includes(this.liveChatVersion)) {
-                exceptionThrowers.throwUnsupportedLiveChatVersionFailure(new Error(ChatSDKErrorName.UnsupportedLiveChatVersion), this.scenarioMarker, TelemetryEvent.InitializeChatSDKSequential);
+                exceptionThrowers.throwUnsupportedLiveChatVersionFailure(new Error(ChatSDKErrorName.UnsupportedLiveChatVersion), this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
             }
     
             try {
@@ -358,10 +358,10 @@ class OmnichannelChatSDK {
                 }
     
                 this.isInitialized = true;
-                this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDKSequential);
+                this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
             } catch (e) {
                 this.AMSClientLoadCurrentState = AMSClientLoadStates.ERROR;
-                exceptionThrowers.throwMessagingClientCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDKSequential);
+                exceptionThrowers.throwMessagingClientCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
             }
 
             return this.liveChatConfig;
