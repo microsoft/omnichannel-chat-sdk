@@ -204,6 +204,7 @@ class OmnichannelChatSDK {
         this.scenarioMarker.setDebug(flag);
         loggerUtils.setDebug(flag, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
     }
+    
     private async retryLoadAMSClient() {
         // Constants for retry logic
         const RETRY_DELAY_MS = 1000;
