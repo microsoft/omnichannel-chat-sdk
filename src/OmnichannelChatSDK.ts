@@ -8,7 +8,7 @@ import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/ch
 import { createCoreServicesOrgUrl, getCoreServicesGeoName, isCoreServicesOrgUrl, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
 import { defaultLocaleId, getLocaleStringFromId } from "./utils/locale";
 import { getRuntimeId, isClientIdNotFoundErrorMessage, isCustomerMessage } from "./utils/utilities";
-import { loadScript, removeElementById } from "./utils/WebUtils";
+import { loadScript, removeElementById, sleep } from "./utils/WebUtils";
 import platform, { isBrowser } from "./utils/platform";
 import validateSDKConfig, { defaultChatSDKConfig } from "./validators/SDKConfigValidators";
 
@@ -214,11 +214,10 @@ class OmnichannelChatSDK {
             if (this.AMSClient) {
                 return this.AMSClient;
             }
-            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+            
+            await sleep(RETRY_DELAY_MS);
             retryCount++;
         }
-
-        console.error("AMSClient is not ready after retries");
         return null;
     }
 
@@ -259,7 +258,7 @@ class OmnichannelChatSDK {
     }
 
     private async loadAmsClient() {
-        this.scenarioMarker.startScenario(TelemetryEvent.InitializeAMSClient);
+        this.scenarioMarker.startScenario(TelemetryEvent.InitializeMessagingClient);
         try {
             if (this.liveChatVersion === LiveChatVersion.V2) {
                 this.ACSClient = new ACSClient(this.acsClientLogger);
@@ -272,18 +271,18 @@ class OmnichannelChatSDK {
                     logger: this.amsClientLogger as PluggableLogger
                 });
                 this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
-            }else if (this.liveChatVersion === LiveChatVersion.V1) {
+            } else if (this.liveChatVersion === LiveChatVersion.V1) {
                 this.IC3Client = await this.getIC3Client();
             }
-            
-            this.scenarioMarker.completeScenario(TelemetryEvent.InitializeAMSClient);
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.InitializeMessagingClient);
         } catch (e) {
             this.AMSClientLoadCurrentState = AMSClientLoadStates.ERROR;
-            exceptionThrowers.throwMessagingClientCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeAMSClient);
+            exceptionThrowers.throwMessagingClientCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeMessagingClient);
         }
     }
 
-    private async parallelInitialization (optionalParams: InitializeOptionalParams = {}){
+    private async parallelInitialization(optionalParams: InitializeOptionalParams = {}) {
         try {
 
             this.scenarioMarker.startScenario(TelemetryEvent.InitializeChatSDKParallel);
@@ -292,10 +291,8 @@ class OmnichannelChatSDK {
                 this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDKParallel);
                 return this.liveChatConfig;
             }
-    
-            this.useCoreServicesOrgUrlIfNotSet();
 
-            // these components will
+            this.useCoreServicesOrgUrlIfNotSet();
             await Promise.all([this.loadInitComponents(), this.loadChatConfig(optionalParams)]);
             // this will load ams in the background, without holding the load 
             this.loadAmsClient();
@@ -378,15 +375,12 @@ class OmnichannelChatSDK {
      */
     public async initialize(optionalParams: InitializeOptionalParams = {}): Promise<ChatConfig> {
 
-        const { getLiveChatConfigOptionalParams } = optionalParams;
-        const useParallelLoad = getLiveChatConfigOptionalParams?.useParallelLoad || false;
-        
-        if (useParallelLoad === true ){
+        const { useParallelLoad } = optionalParams;
+
+        if (useParallelLoad === true) {
             return await this.parallelInitialization(optionalParams)
         }
-           
         return await this.sequentialInitialization(optionalParams);
-        
     }
 
     private async loadChatConfig(optionalParams: InitializeOptionalParams = {}) {
