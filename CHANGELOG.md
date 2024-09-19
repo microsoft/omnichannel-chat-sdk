@@ -4,16 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## Added
+## [1.9.6]
+
+### Added
 
 - Adding mechanism to initialize SDK using parallel threads for a faster load, still supporting sequential load
 
-## Changed
+### Changed
 
 - core service url regex to include crmtest
 - Uptake [@microsoft/ocsdk@0.5.6](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.6)
 
-## [1.9.4]
+## [1.9.5]
 
 ### Security
 - Uptake [@microsoft/ocsdk@0.5.5](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.5)
