@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Added to new versioned path to callingbundle.js
 ## [1.9.6]
 
 ### Added
