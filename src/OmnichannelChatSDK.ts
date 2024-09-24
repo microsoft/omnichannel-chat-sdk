@@ -1783,7 +1783,8 @@ class OmnichannelChatSDK {
         const result = msdyn_widgetsnippet.match(widgetSnippetSourceRegex);
         if (result && result.length) {
             return new Promise(async (resolve) => { // eslint-disable-line no-async-promise-executor
-                const LiveChatWidgetLibCDNUrl = `${result[1]}/livechatwidget/WebChatControl/lib/CallingBundle.js`;
+                // When there is new calling version, release new omni-channel chat sdk version with updated calling version
+                const LiveChatWidgetLibCDNUrl = `${result[1]}/livechatwidget/v2scripts/callingsdk/1.0.20240809-2/CallingBundle.js`;
 
                 this.telemetry?.setCDNPackages({
                     VoiceVideoCalling: LiveChatWidgetLibCDNUrl
