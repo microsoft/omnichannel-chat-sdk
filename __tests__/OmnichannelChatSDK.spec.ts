@@ -3120,6 +3120,102 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.IC3Client).toBe(undefined);
         });
 
+        it('ChatSDK.endChat() should not call close session, because of conversation was ended by agent', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient.sessionInit = jest.fn();
+            chatSDK.OCClient.sessionClose = jest.fn();
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
+            await chatSDK.startChat();
+
+            chatSDK.conversation = {
+                disconnect: jest.fn()
+            };
+
+            const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
+            const optionalParams = {
+                isEndedByAgent: true
+            }
+            await chatSDK.endChat(optionalParams);
+
+            expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(0);
+            expect(conversationDisconnectFn).toHaveBeenCalledTimes(1);
+            expect(chatSDK.conversation).toBe(null);
+            expect(chatSDK.chatToken).toMatchObject({});
+            expect(chatSDK.IC3Client).toBe(undefined);
+        });
+
+        it('ChatSDK.endChat() should call close session ', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient.sessionInit = jest.fn();
+            chatSDK.OCClient.sessionClose = jest.fn();
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
+            await chatSDK.startChat();
+
+            chatSDK.conversation = {
+                disconnect: jest.fn()
+            };
+
+            const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
+            const optionalParams = {
+                isEndedByAgent: false
+            }
+            await chatSDK.endChat(optionalParams);
+
+            expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(1);
+            expect(conversationDisconnectFn).toHaveBeenCalledTimes(1);
+            expect(chatSDK.conversation).toBe(null);
+            expect(chatSDK.chatToken).toMatchObject({});
+            expect(chatSDK.IC3Client).toBe(undefined);
+        });
+
+        it('ChatSDK.endChat() should call close session, with empty optional params', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient.sessionInit = jest.fn();
+            chatSDK.OCClient.sessionClose = jest.fn();
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
+            await chatSDK.startChat();
+
+            chatSDK.conversation = {
+                disconnect: jest.fn()
+            };
+
+            const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
+            const optionalParams = {
+                
+            }
+            await chatSDK.endChat(optionalParams);
+
+            expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(1);
+            expect(conversationDisconnectFn).toHaveBeenCalledTimes(1);
+            expect(chatSDK.conversation).toBe(null);
+            expect(chatSDK.chatToken).toMatchObject({});
+            expect(chatSDK.IC3Client).toBe(undefined);
+        });
+
         it('ChatSDK.endChat() should fail if OCClient.sessionClose() fails', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();

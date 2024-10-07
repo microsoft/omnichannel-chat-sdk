@@ -32,6 +32,7 @@ import ChatTranscriptBody from "./core/ChatTranscriptBody";
 import ConversationMode from "./core/ConversationMode";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import EmailLiveChatTranscriptOptionaParams from "./core/EmailLiveChatTranscriptOptionalParams";
+import EndChatOptionalParams from "./core/EndChatOptionalParams";
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/FileSharingProtocolType";
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
@@ -778,7 +779,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async endChat(): Promise<void> {
+    public async endChat(optionalParams?: EndChatOptionalParams): Promise<void> {
         this.scenarioMarker.startScenario(TelemetryEvent.EndChat, {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
@@ -804,13 +805,19 @@ class OmnichannelChatSDK {
         }
 
         try {
-            await this.OCClient.sessionClose(this.requestId, sessionCloseOptionalParams);
+            console.log("ELOPEZANAYA :: endchat :: sessionCloseOptionalParams", sessionCloseOptionalParams);
+           
+            //no need to call session close since is already ended by agent, this way we avoid the error
+            if (optionalParams?.isEndedByAgent !== true) {
+                await this.OCClient.sessionClose(this.requestId, sessionCloseOptionalParams);
+            }
 
+            
             this.scenarioMarker.completeScenario(TelemetryEvent.EndChat, {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string
             });
-
+            
             this.conversation?.disconnect();
             this.conversation = null;
             this.requestId = uuidv4();
