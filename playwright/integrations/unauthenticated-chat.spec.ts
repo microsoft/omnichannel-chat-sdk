@@ -1,9 +1,10 @@
+import { expect, test } from '@playwright/test';
+
+import ACSEndpoints from '../utils/ACSEndpoints';
+import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
 import fetchTestSettings from '../utils/fetchTestSettings';
-import { test, expect } from '@playwright/test';
-import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
-import ACSEndpoints from '../utils/ACSEndpoints';
 
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChat');
@@ -540,6 +541,93 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         expect(sessionCloseRequest.url() === sessionCloseRequestUrl).toBe(true);
         expect(sessionCloseResponse.status()).toBe(200);
     });
+
+    test('ChatSDK.endChat() should NOT call sessionClose endpoint, due to session ended by agent', async ({ page }) => {
+
+        let sessionCloseRequestMade = false;
+        await page.goto(testPage);
+
+        try {
+          await Promise.all([page.waitForRequest(request => {
+                if (request.url().includes(OmnichannelEndpoints.LiveChatSessionClosePath)) {
+                    sessionCloseRequestMade = true;
+                    return true;
+                }
+                return false;
+            }, { timeout: (testSettings.chatDuration * 2) }),
+
+            page.evaluate(async ({ omnichannelConfig, chatDuration }) => {
+                const { sleep } = window;
+                const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+
+                await chatSDK.initialize();
+
+                const runtimeContext = {
+                    orgUrl: chatSDK.omnichannelConfig.orgUrl,
+                    requestId: chatSDK.requestId
+                };
+
+                await chatSDK.startChat();
+                await sleep(chatDuration);
+
+                const optionalParams = {
+                    isEndedByAgent: true
+                };
+
+               await chatSDK.endChat(optionalParams);
+                return runtimeContext;
+            }, { omnichannelConfig, chatDuration: testSettings.chatDuration })]);
+        sessionCloseRequestMade = true;
+        } catch (e) {
+            // is expected to reach here due to promise timeout, if there is no timeout, then force the error
+            if (!e.message.includes("Timeout")) {
+                sessionCloseRequestMade = true;
+        }
+    }
+        expect(sessionCloseRequestMade).toBe(false);
+    });
+
+    test('ChatSDK.endChat() should call close session when passing optional parameters and closed by C2', async ({ page }) => {
+
+        let sessionCloseRequestMade = false;
+        await page.goto(testPage);
+
+ 
+            await Promise.all([page.waitForRequest(request => {
+                if (request.url().includes(OmnichannelEndpoints.LiveChatSessionClosePath)) {
+                    sessionCloseRequestMade = true;
+                    return true;
+                }
+                return false;
+            }, { timeout: (testSettings.chatDuration * 2) }),
+
+            page.evaluate(async ({ omnichannelConfig, chatDuration }) => {
+                const { sleep } = window;
+                const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+
+                await chatSDK.initialize();
+
+                const runtimeContext = {
+                    orgUrl: chatSDK.omnichannelConfig.orgUrl,
+                    requestId: chatSDK.requestId
+                };
+
+                await chatSDK.startChat();
+                await sleep(chatDuration);
+
+                const optionalParams = {
+                    isEndedByAgent: false
+                };
+
+                await chatSDK.endChat(optionalParams);
+                return runtimeContext;
+            }, { omnichannelConfig, chatDuration: testSettings.chatDuration })]);
+
+        expect(sessionCloseRequestMade).toBe(true);
+    });
+
 
     test('ChatSDK.createChatAdapter() should load ACSAdapter', async ({ page }) => {
         await page.goto(testPage);
