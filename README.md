@@ -781,7 +781,13 @@ await chatSDK.initialize();
 await chatSDK.startChat();
 
 // 3. Create chat adapter
-const chatAdapter = await chatSDK.createChatAdapter();
+const chatAdapter = await chatSDK.createChatAdapter({
+    // optional - connect to a Copilot Studio bot
+    protocol: 'DirectLine',
+    DirectLine: {
+        options: { ...options passed to createDirectLine }
+    }   
+});
 
 // 4. Create WebChat store with middlewares
 const store = createStore(
