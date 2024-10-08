@@ -593,8 +593,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         let sessionCloseRequestMade = false;
         await page.goto(testPage);
 
- 
-            await Promise.all([page.waitForRequest(request => {
+             await Promise.all([page.waitForRequest(request => {
                 if (request.url().includes(OmnichannelEndpoints.LiveChatSessionClosePath)) {
                     sessionCloseRequestMade = true;
                     return true;
