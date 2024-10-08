@@ -805,13 +805,10 @@ class OmnichannelChatSDK {
         }
 
         try {
-            console.log("ELOPEZANAYA :: endchat :: sessionCloseOptionalParams", sessionCloseOptionalParams);
-           
             //no need to call session close since is already ended by agent, this way we avoid the error
             if (optionalParams?.isEndedByAgent !== true) {
                 await this.OCClient.sessionClose(this.requestId, sessionCloseOptionalParams);
             }
-
             
             this.scenarioMarker.completeScenario(TelemetryEvent.EndChat, {
                 RequestId: this.requestId,
