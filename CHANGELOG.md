@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Adding optional params for endchat, to prevent calls to session close for sessions ended by agent
+
 ## [1.9.6]
 
 ### Added
