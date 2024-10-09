@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 - Adding optional params for endchat, to prevent calls to session close for sessions ended by agent
 
+- Added to new versioned path to callingbundle.js
 ## [1.9.6]
 
 ### Added
