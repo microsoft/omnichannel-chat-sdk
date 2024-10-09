@@ -1,4 +1,4 @@
 
 export default interface EndChatOptionalParams {
-    isEndedByAgent?: boolean;
+    isEndedByAgentOrDisconnected?: boolean;
 }

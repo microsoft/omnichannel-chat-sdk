@@ -572,7 +572,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 await sleep(chatDuration);
 
                 const optionalParams = {
-                    isEndedByAgent: true
+                    isEndedByAgentOrDisconnected: true
                 };
 
                await chatSDK.endChat(optionalParams);
@@ -617,7 +617,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 await sleep(chatDuration);
 
                 const optionalParams = {
-                    isEndedByAgent: false
+                    isEndedByAgentOrDisconnected: false
                 };
 
                 await chatSDK.endChat(optionalParams);

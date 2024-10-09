@@ -85,6 +85,7 @@ import ScenarioMarker from "./telemetry/ScenarioMarker";
 import SetAuthTokenProviderOptionalParams from "./core/SetAuthTokenProviderOptionalParams";
 import StartChatOptionalParams from "./core/StartChatOptionalParams";
 import TelemetryEvent from "./telemetry/TelemetryEvent";
+import { callingBundleVersion } from "./config/settings";
 import createAMSClient from "@microsoft/omnichannel-amsclient";
 import createOcSDKConfiguration from "./utils/createOcSDKConfiguration";
 import createOmnichannelMessage from "./utils/createOmnichannelMessage";
@@ -101,7 +102,6 @@ import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import setOcUserAgent from "./utils/setOcUserAgent";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
-import { callingBundleVersion } from "./config/settings";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -807,7 +807,7 @@ class OmnichannelChatSDK {
 
         try {
             //no need to call session close since is already ended by agent, this way we avoid the error
-            if (optionalParams?.isEndedByAgent !== true) {
+            if (optionalParams?.isEndedByAgentOrDisconnected !== true) {
                 await this.OCClient.sessionClose(this.requestId, sessionCloseOptionalParams);
             }
             

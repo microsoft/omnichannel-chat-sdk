@@ -3141,7 +3141,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
             const optionalParams = {
-                isEndedByAgent: true
+                isEndedByAgentOrDisconnected: true
             }
             await chatSDK.endChat(optionalParams);
 
@@ -3173,7 +3173,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
             const optionalParams = {
-                isEndedByAgent: false
+                isEndedByAgentOrDisconnected: false
             }
             await chatSDK.endChat(optionalParams);
 
