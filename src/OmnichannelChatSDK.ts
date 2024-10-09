@@ -32,6 +32,7 @@ import ChatTranscriptBody from "./core/ChatTranscriptBody";
 import ConversationMode from "./core/ConversationMode";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import EmailLiveChatTranscriptOptionaParams from "./core/EmailLiveChatTranscriptOptionalParams";
+import EndChatOptionalParams from "./core/EndChatOptionalParams";
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/FileSharingProtocolType";
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
@@ -84,6 +85,7 @@ import ScenarioMarker from "./telemetry/ScenarioMarker";
 import SetAuthTokenProviderOptionalParams from "./core/SetAuthTokenProviderOptionalParams";
 import StartChatOptionalParams from "./core/StartChatOptionalParams";
 import TelemetryEvent from "./telemetry/TelemetryEvent";
+import { callingBundleVersion } from "./config/settings";
 import createAMSClient from "@microsoft/omnichannel-amsclient";
 import createOcSDKConfiguration from "./utils/createOcSDKConfiguration";
 import createOmnichannelMessage from "./utils/createOmnichannelMessage";
@@ -100,7 +102,6 @@ import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import setOcUserAgent from "./utils/setOcUserAgent";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
-import { callingBundleVersion } from "./config/settings";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -779,7 +780,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async endChat(): Promise<void> {
+    public async endChat(optionalParams?: EndChatOptionalParams): Promise<void> {
         this.scenarioMarker.startScenario(TelemetryEvent.EndChat, {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
@@ -805,13 +806,16 @@ class OmnichannelChatSDK {
         }
 
         try {
-            await this.OCClient.sessionClose(this.requestId, sessionCloseOptionalParams);
-
+            //no need to call session close since is already ended by agent, this way we avoid the error
+            if (optionalParams?.isEndedByAgentOrDisconnected !== true) {
+                await this.OCClient.sessionClose(this.requestId, sessionCloseOptionalParams);
+            }
+            
             this.scenarioMarker.completeScenario(TelemetryEvent.EndChat, {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string
             });
-
+            
             this.conversation?.disconnect();
             this.conversation = null;
             this.requestId = uuidv4();
