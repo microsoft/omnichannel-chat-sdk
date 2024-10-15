@@ -3,6 +3,7 @@ import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
 import RegexExpression from '../utils/RegexExpression';
 import fetchAuthUrl from '../utils/fetchAuthUrl';
+import { callingBundleVersion } from '../../src/config/settings';
 
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('AuthenticatedChatWithEscalationToVoiceAndVideo');
@@ -60,7 +61,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithEscalationToVoiceAndVideo
         ]);
 
         const { result } = runtimeContext;
-        const LiveChatWidgetLibCDNUrl = `${result[1]}/livechatwidget/WebChatControl/lib/CallingBundle.js`;
+        const LiveChatWidgetLibCDNUrl = `${result[1]}/livechatwidget/v2scripts/callingsdk/${callingBundleVersion}/CallingBundle.js`;
 
         expect(CallingBundleRequest.url() === LiveChatWidgetLibCDNUrl).toBe(true);
         expect(CallingBundleRequest.method()).toBe('GET');
