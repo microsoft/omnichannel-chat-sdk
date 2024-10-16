@@ -1,11 +1,14 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
-
 ## [Unreleased]
 
+## [1.9.7] - 2024-10-16
+
+### Changed
 - Added to new versioned path to callingbundle.js
-## [1.9.6]
+
+## [1.9.6] - 2024-09-19
 
 ### Added
 
@@ -16,7 +19,7 @@ All notable changes to this project will be documented in this file.
 - core service url regex to include crmtest
 - Uptake [@microsoft/ocsdk@0.5.6](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.6)
 
-## [1.9.5]
+## [1.9.5] - 2024-08-30
 
 ### Security
 - Uptake [@microsoft/ocsdk@0.5.5](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.5)
