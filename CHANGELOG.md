@@ -2,9 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [1.9.7]
 
+### Changed
 - Added to new versioned path to callingbundle.js
+
 ## [1.9.6]
 
 ### Added
