@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * @jest-environment node
  */
@@ -51,7 +52,7 @@ describe('Omnichannel Chat SDK (Node), Sequential', () => {
 
         try {
             await chatSDK.startChat(optionalParams);
-        } catch (error) {
+        } catch (error : any ) {
             failure = true;
             expect(error.message).toBe(errorMessage);
         }
@@ -84,7 +85,7 @@ describe('Omnichannel Chat SDK (Node), Sequential', () => {
 
         try {
             await chatSDK.createChatAdapter();
-        } catch (error) {
+        } catch (error : any ) {
             expect(error).toEqual('ChatAdapter is only supported on browser');
         }
     });
@@ -116,7 +117,7 @@ describe('Omnichannel Chat SDK (Node), Sequential', () => {
 
         try {
             await chatSDK.getVoiceVideoCalling();
-        } catch (error) {
+        } catch (error : any ) {
             expect(error.message).toEqual('UnsupportedPlatform');
             expect(console.error).toHaveBeenCalledWith('VoiceVideoCalling is only supported on browser');
         }

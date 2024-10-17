@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * @jest-environment jsdom
  */
@@ -93,7 +94,7 @@ describe('Omnichannel Chat SDK (Web), Sequential', () => {
 
         try {
             await chatSDK.startChat(optionalParams);
-        } catch (error) {
+        } catch (error : any ) {
             expect(error.message).toEqual(ChatSDKErrorName.UnsupportedPlatform);
             expect(console.error).toHaveBeenCalledWith("sendDefaultInitContext is only supported on browser");
         }
@@ -119,7 +120,7 @@ describe('Omnichannel Chat SDK (Web), Sequential', () => {
             await chatSDK.createChatAdapter();
             expect(libraries.getIC3AdapterCDNUrl).toHaveBeenCalledTimes(1);
             expect(WebUtils.loadScript).toHaveBeenCalledTimes(1);
-        } catch (error) {
+        } catch (error : any ) {
             expect(error).not.toBeInstanceOf(Error);
         }
     });
@@ -147,7 +148,7 @@ describe('Omnichannel Chat SDK (Web), Sequential', () => {
         }
         try {
             await chatSDK.createChatAdapter(optionalParams);
-        } catch (error) {
+        } catch (error : any ) {
             expect(error).toEqual(`ChatAdapter for protocol ${protocol} currently not supported`);
         }
     });
@@ -171,7 +172,7 @@ describe('Omnichannel Chat SDK (Web), Sequential', () => {
 
         try {
             await chatSDK.getVoiceVideoCalling();
-        } catch (error) {
+        } catch (error : any ) {
             expect(error.message).toEqual('FeatureDisabled');
             expect(console.error).toHaveBeenCalledWith('Voice and video call is not enabled');
         }
