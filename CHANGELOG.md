@@ -1,11 +1,17 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
 ## [Unreleased]
+
+### Changed
+
+- Updating dev libraries and unit tests
 
 ## [1.9.7] - 2024-10-16
 
 ### Changed
+
 - Added to new versioned path to callingbundle.js
 
 ## [1.9.6] - 2024-09-19
@@ -22,6 +28,7 @@ All notable changes to this project will be documented in this file.
 ## [1.9.5] - 2024-08-30
 
 ### Security
+
 - Uptake [@microsoft/ocsdk@0.5.5](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.5)
 - Uptake [@microsoft/omnichannel-ic3core@0.1.4](https://www.npmjs.com/package/@microsoft/omnichannel-ic3core/v/0.1.4)
 
@@ -29,6 +36,7 @@ All notable changes to this project will be documented in this file.
 ## [1.9.3] - 2024-07-12
 
 ### Added
+
 - Add `crm9` as part of `CoreServicesGeoNamesMapping`
 
 ### Changed
@@ -61,6 +69,7 @@ All notable changes to this project will be documented in this file.
 ## [1.8.3] - 2024-05-15
 
 ### Added
+
 - Add `RequestHeaders` telemetry base property to `OCSDKContract`
 - Add ability to send `ocUserAgent`
 

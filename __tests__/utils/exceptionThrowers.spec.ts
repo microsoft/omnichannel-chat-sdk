@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import exceptionThrowers from "../../src/utils/exceptionThrowers"
 
 describe('exceptionThrowers', () => {
@@ -16,7 +18,7 @@ describe('exceptionThrowers', () => {
 
         try {
             exceptionThrowers.throwChatSDKError(chatSDKError, e, scenarioMarker, telemetryEvent);
-        } catch (e) {
+        } catch (e : any) {
             expect(e.message).toBe(chatSDKError);
             expect(scenarioMarker.failScenario.mock.calls[0][1].ExceptionDetails).toBe(JSON.stringify(expectedExceptionDetails));
         }
@@ -35,7 +37,7 @@ describe('exceptionThrowers', () => {
 
         try {
             exceptionThrowers.throwChatSDKError(chatSDKError, undefined, scenarioMarker, telemetryEvent);
-        } catch (e) {
+        } catch (e : any) {
             expect(e.message).toBe(chatSDKError);
             expect(scenarioMarker.failScenario.mock.calls[0][1].ExceptionDetails).toBe(JSON.stringify(expectedExceptionDetails));
         }
@@ -54,7 +56,7 @@ describe('exceptionThrowers', () => {
 
         try {
             exceptionThrowers.throwChatSDKError(chatSDKError, undefined, scenarioMarker, telemetryEvent, telemetryData);
-        } catch (e) {
+        } catch (e : any) {
             expect(e.message).toBe(chatSDKError);
             expect(scenarioMarker.failScenario.mock.calls[0][1].chatId).toBeDefined();
             expect(scenarioMarker.failScenario.mock.calls[0][1].requestId).toBeDefined();
@@ -75,7 +77,7 @@ describe('exceptionThrowers', () => {
 
         try {
             exceptionThrowers.throwChatSDKError(chatSDKError, undefined, scenarioMarker, telemetryEvent, {}, message);
-        } catch (e) {
+        } catch (e : any) {
             expect(e.message).toBe(chatSDKError);
             expect(console.error).toHaveBeenCalledWith(message);
         }
