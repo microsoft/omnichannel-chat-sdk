@@ -59,6 +59,21 @@ describe("CoreServicesUtils", () => {
         expect(createCoreServicesOrgUrl("1234", getCoreServicesGeoName(locationCode))).toBe(`https://m-1234.gov.omnichannelengagementhub.us`);
     });
 
+    it("unqOrgUrlPattern except 'crm9' should use 'omnichannelengagementhub.com' as domain name", () => {
+        const domain = "omnichannelengagementhub.com";
+        const ignoreLocationCodeList = ["crm9"];
+        for (const locationCode in CoreServicesGeoNamesMapping) {
+            if (ignoreLocationCodeList.includes(locationCode)) {
+                continue;
+            }
+
+            let orgId = "1234";
+            let geoName = getCoreServicesGeoName(locationCode);
+            let coreServicesOrgUrl = createCoreServicesOrgUrl(orgId, geoName);
+            expect(coreServicesOrgUrl).toBe(`https://m-${orgId}.${geoName}.${domain}`);
+        }
+    });
+
     it("getCoreServicesGeoName() should return the proper geo name based on location code", () => {
         for (const locationCode in CoreServicesGeoNamesMapping) {
             const geoName = CoreServicesGeoNamesMapping[locationCode];
