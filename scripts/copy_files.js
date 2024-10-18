@@ -2,8 +2,8 @@ const fs = require("fs");
 const path = require("path");
 
 // Define the source and destination file paths
-const sourceFile = path.join(__dirname, '../src/external/aria');
-const destinationFile = path.join(__dirname, '../lib/external/aria');
+const sourceFile = path.join(__dirname, "..","src","external","aria");
+const destinationFile = path.join(__dirname, "..","lib","external","aria");
 console.log("Copying files");
 
 fs.cp(sourceFile, destinationFile,{ recursive: true }, (err) => {
