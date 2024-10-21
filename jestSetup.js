@@ -1,3 +1,18 @@
+const { JSDOM } = require("jsdom");
+const { TextEncoder, TextDecoder } = require("util");
+
 if (global.window === undefined) {
-    global.window = global;
+    const jsdom = new JSDOM();
+    const { window } = jsdom;
+
+    global.window = window;
+    global.document = window.document;
+    global.navigator = window.navigator;
+    global.DOMParser = window.DOMParser;
+    global.Node = window.Node;
+    global.XMLSerializer = window.XMLSerializer;
+    global.TextEncoder = TextEncoder;
+    global.TextDecoder = TextDecoder;
 }
+
+global.self = global; // Mock the `self` global variable

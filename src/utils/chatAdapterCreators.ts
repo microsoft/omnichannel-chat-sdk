@@ -19,7 +19,7 @@ import createFormatEgressTagsMiddleware from "../external/ACSAdapter/createForma
 import createFormatIngressTagsMiddleware from "../external/ACSAdapter/createFormatIngressTagsMiddleware";
 import exceptionThrowers from "./exceptionThrowers";
 import urlResolvers from "./urlResolvers";
-import {createACSAdapter as chatACSAdapter } from "acs_webchat-chat-adapter";
+import { createACSAdapter as createChatACSAdapter } from "acs_webchat-chat-adapter";
 
 
 const createDirectLine = async (optionalParams: ChatAdapterOptionalParams, chatSDKConfig: ChatSDKConfig, liveChatVersion: LiveChatVersion, protocol: string, telemetry: typeof AriaTelemetry, scenarioMarker: ScenarioMarker): Promise<unknown> => {
@@ -74,7 +74,9 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
     scenarioMarker.startScenario(TelemetryEvent.CreateACSAdapter);
 
     try {
-        const adapter = chatACSAdapter (
+console.log("ELOPEZ::1");
+
+        const adapter = createChatACSAdapter (
             chatToken.token as string,
             chatToken.visitorId || 'teamsvisitor',
             chatToken.chatId as string,
@@ -89,8 +91,11 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
             featuresOption,
         );
 
+        console.log("ELOPEZ::2");
+
         scenarioMarker.completeScenario(TelemetryEvent.CreateACSAdapter);
 
+        console.log("ELOPEZ::3");
         if (optionalParams.ACSAdapter?.fileScan?.disabled === false) {
             if (adapter.end) {
                 const {end} = adapter;
@@ -103,6 +108,7 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
             (window as any).chatAdapter = adapter;  // eslint-disable-line @typescript-eslint/no-explicit-any
         }
 
+        console.log("ELOPEZ::4");
         return adapter;
     } catch (error) {
         exceptionThrowers.throwChatAdapterInitializationFailure(error, scenarioMarker, TelemetryEvent.CreateACSAdapter)
