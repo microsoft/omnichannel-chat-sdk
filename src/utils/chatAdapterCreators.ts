@@ -14,13 +14,12 @@ import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
 import WebUtils from "./WebUtils";
 import createChannelDataEgressMiddleware from "../external/ACSAdapter/createChannelDataEgressMiddleware";
+import { createACSAdapter as createChatACSAdapter } from "acs_webchat-chat-adapter";
 import createFileScanIngressMiddleware from "../external/ACSAdapter/createFileScanIngressMiddleware";
 import createFormatEgressTagsMiddleware from "../external/ACSAdapter/createFormatEgressTagsMiddleware";
 import createFormatIngressTagsMiddleware from "../external/ACSAdapter/createFormatIngressTagsMiddleware";
 import exceptionThrowers from "./exceptionThrowers";
 import urlResolvers from "./urlResolvers";
-import { createACSAdapter as createChatACSAdapter } from "acs_webchat-chat-adapter";
-
 
 const createDirectLine = async (optionalParams: ChatAdapterOptionalParams, chatSDKConfig: ChatSDKConfig, liveChatVersion: LiveChatVersion, protocol: string, telemetry: typeof AriaTelemetry, scenarioMarker: ScenarioMarker): Promise<unknown> => {
     const options = optionalParams.DirectLine? optionalParams.DirectLine.options: {};
@@ -50,7 +49,6 @@ const createDirectLine = async (optionalParams: ChatAdapterOptionalParams, chatS
 
 const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatSDKConfig: ChatSDKConfig, liveChatVersion: LiveChatVersion, protocol: string, telemetry: typeof AriaTelemetry, scenarioMarker: ScenarioMarker, omnichannelConfig: OmnichannelConfig, chatToken: IChatToken, fileManager: AMSFileManager, chatClient: ChatClient, logger: ACSAdapterLogger): Promise<unknown> => {
     const options = optionalParams.ACSAdapter? optionalParams.ACSAdapter.options: {};
-
     // Tags formatting middlewares are required to be the last in the pipeline to ensure tags are converted to the right format
     const defaultEgressMiddlewares = [createChannelDataEgressMiddleware({widgetId: omnichannelConfig.widgetId}), createFormatEgressTagsMiddleware()];
     let defaultIngressMiddlewares = [createFormatIngressTagsMiddleware()];
@@ -70,12 +68,8 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
         ingressMiddleware,
         egressMiddleware
     };
-
     scenarioMarker.startScenario(TelemetryEvent.CreateACSAdapter);
-
     try {
-console.log("ELOPEZ::1");
-
         const adapter = createChatACSAdapter (
             chatToken.token as string,
             chatToken.visitorId || 'teamsvisitor',
@@ -90,12 +84,7 @@ console.log("ELOPEZ::1");
             logger,
             featuresOption,
         );
-
-        console.log("ELOPEZ::2");
-
         scenarioMarker.completeScenario(TelemetryEvent.CreateACSAdapter);
-
-        console.log("ELOPEZ::3");
         if (optionalParams.ACSAdapter?.fileScan?.disabled === false) {
             if (adapter.end) {
                 const {end} = adapter;
@@ -104,11 +93,8 @@ console.log("ELOPEZ::1");
                     end();
                 }
             }
-
             (window as any).chatAdapter = adapter;  // eslint-disable-line @typescript-eslint/no-explicit-any
         }
-
-        console.log("ELOPEZ::4");
         return adapter;
     } catch (error) {
         exceptionThrowers.throwChatAdapterInitializationFailure(error, scenarioMarker, TelemetryEvent.CreateACSAdapter)

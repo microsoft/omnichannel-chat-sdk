@@ -6,11 +6,10 @@
 
 import { createACSAdapter, createDirectLine, createIC3Adapter } from "../../src/utils/chatAdapterCreators";
 
+import { ACSAdapterLogger } from "../../src/utils/loggers";
 import LiveChatVersion from "../../src/core/LiveChatVersion";
 import WebUtils from "../../src/utils/WebUtils";
-import { ACSAdapterLogger } from "../../src/utils/loggers";
 
-jest.mock("acs_webchat-chat-adapter");
 describe("Chat Adapter Creators", () => {
 
 
@@ -76,6 +75,7 @@ describe("Chat Adapter Creators", () => {
     });
 
     it("createACSAdapter should return an Adapter", async () => {
+        jest.mock("acs_webchat-chat-adapter");
 
         const optionalParams = {
             ACSAdapter: {
@@ -141,6 +141,7 @@ describe("Chat Adapter Creators", () => {
 
         try {
             await createACSAdapter(optionalParams, chatSDKConfig, LiveChatVersion.V2, "ACS", telemetry, scenarioMarker, omnichannelConfig, chatToken, fileManager, chatClient, logger);
+            fail("Failure expected");
         } catch (e: any) {
             expect(e.message).toBe('ChatAdapterInitializationFailure');
         }
@@ -171,6 +172,7 @@ describe("Chat Adapter Creators", () => {
 
         try {
             await createIC3Adapter(optionalParams, chatSDKConfig, LiveChatVersion.V2, "ACS", telemetry, scenarioMarker, chatToken, ic3Client, logger);
+            fail("Failure expected");
         } catch (e: any) {
             expect(e.message).toBe('ScriptLoadFailure');
         }
@@ -201,6 +203,7 @@ describe("Chat Adapter Creators", () => {
 
         try {
             await createIC3Adapter(optionalParams, chatSDKConfig, LiveChatVersion.V2, "ACS", telemetry, scenarioMarker, chatToken, ic3Client, logger);
+            fail("Failure expected");
         } catch (e: any) {
             expect(e.message).toBe('ChatAdapterInitializationFailure');
         }
