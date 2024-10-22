@@ -8,19 +8,18 @@ import { isClientIdNotFoundErrorMessage, isCustomerMessage, isSystemMessage } fr
 /* eslint-disable @typescript-eslint/no-var-requires */
 const { MessageType } = require("../../src");
 
-
 describe('Utilities', () => {
-    
+
     beforeEach(() => {
         jest.resetModules();
-
     }
     );
+
     afterEach(() => {
         jest.clearAllMocks();
     });
 
-      
+
     it('utilities.isSystemMessage() should return true if contains "system" tags', () => {
         const message = {
             content: 'sample',
@@ -52,8 +51,8 @@ describe('Utilities', () => {
             properties: {}
         }
 
-            const result = isSystemMessage(message);
-            expect(result).toBeDefined();
+        const result = isSystemMessage(message);
+        expect(result).toBeDefined();
 
     });
 
@@ -121,7 +120,7 @@ describe('Utilities', () => {
         const value = "test";
         expect(isNotEmpty(value)).toBe(true);
     });
-        
+
     it("isNotEmpty should return false if the value is null", () => {
         const value = null;
         expect(isNotEmpty(value)).toBe(false);

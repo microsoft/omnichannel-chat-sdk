@@ -10,7 +10,7 @@ describe('Platform', () => {
         jest.resetModules();
     }
     );
-    
+
     afterEach(() => {
         jest.clearAllMocks();
     });

@@ -12,12 +12,11 @@ import WebUtils from "../../src/utils/WebUtils";
 
 describe("Chat Adapter Creators", () => {
 
-
     beforeEach(() => {
         jest.resetModules();
-
     }
     );
+
     afterEach(() => {
         jest.clearAllMocks();
     });

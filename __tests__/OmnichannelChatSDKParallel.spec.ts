@@ -37,7 +37,6 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
         }
     });
 
-
     describe('Configurations', () => {
         it('ChatSDK should require omnichannelConfig as parameter', () => {
             try {

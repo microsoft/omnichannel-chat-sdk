@@ -44,8 +44,6 @@ describe('Omnichannel Chat SDK, Sequential', () => {
     describe('Configurations', () => {
         it('ChatSDK should require omnichannelConfig as parameter', () => {
             try {
-
-
                 new OmnichannelChatSDK();
                 fail();
             } catch (error:any ) {
