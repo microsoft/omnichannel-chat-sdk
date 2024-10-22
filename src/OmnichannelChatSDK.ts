@@ -347,26 +347,19 @@ class OmnichannelChatSDK {
                 
                 if (this.liveChatVersion === LiveChatVersion.V2) {
                     this.ACSClient = new ACSClient(this.acsClientLogger);
-                    console.log(6);
                     this.AMSClient = await createAMSClient({
                         framedMode: isBrowser(),
                         multiClient: true,
                         debug: false,
                         logger: this.amsClientLogger as PluggableLogger
                     });
-
-                    console.log(6.2);
-                    
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
                 } else if (this.liveChatVersion === LiveChatVersion.V1) {
                     this.IC3Client = await this.getIC3Client();
                 }
-                console.log(6.3);
-    
                 this.isInitialized = true;
                 this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
             } catch (e) {
-                console.log("ERROR => ", e);
                 this.AMSClientLoadCurrentState = AMSClientLoadStates.ERROR;
                 exceptionThrowers.throwMessagingClientCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
             }

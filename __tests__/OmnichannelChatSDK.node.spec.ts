@@ -60,8 +60,8 @@ describe('Omnichannel Chat SDK (Node), Sequential', () => {
         let failure = false;
 
         try {
-            console.log("here");
             await chatSDK.startChat(optionalParams);
+            fail("Error expected");
         } catch (error : any ) {
             failure = true;
             expect(error.message).toBe(errorMessage);
@@ -95,6 +95,7 @@ describe('Omnichannel Chat SDK (Node), Sequential', () => {
 
         try {
             await chatSDK.createChatAdapter();
+            fail("Error expected");
         } catch (error : any ) {
             expect(error).toEqual('ChatAdapter is only supported on browser');
         }
@@ -127,6 +128,7 @@ describe('Omnichannel Chat SDK (Node), Sequential', () => {
 
         try {
             await chatSDK.getVoiceVideoCalling();
+            fail("Error expected");
         } catch (error : any ) {
             expect(error.message).toEqual('UnsupportedPlatform');
             expect(console.error).toHaveBeenCalledWith('VoiceVideoCalling is only supported on browser');
