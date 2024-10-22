@@ -1,4 +1,5 @@
 import { getRuntimeId, isNotEmpty } from "../../src/utils/utilities";
+import { isClientIdNotFoundErrorMessage, isCustomerMessage, isSystemMessage } from "../../src/utils/utilities";
 
 /**
  * @jest-environment node
@@ -6,16 +7,19 @@ import { getRuntimeId, isNotEmpty } from "../../src/utils/utilities";
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const { MessageType } = require("../../src");
-const utilities = require('../../src/utils/utilities');
+
 
 describe('Utilities', () => {
+    
     beforeEach(() => {
         jest.resetModules();
-      });
-    
-      afterEach(() => {
+
+    }
+    );
+    afterEach(() => {
         jest.clearAllMocks();
-      });
+    });
+
       
     it('utilities.isSystemMessage() should return true if contains "system" tags', () => {
         const message = {
@@ -26,7 +30,7 @@ describe('Utilities', () => {
             }
         }
 
-        expect(utilities.isSystemMessage(message)).toBe(true);
+        expect(isSystemMessage(message)).toBe(true);
     });
 
     it('utilities.isSystemMessage() should return false if DOES NOT contain "system" tags', () => {
@@ -38,7 +42,7 @@ describe('Utilities', () => {
             }
         }
 
-        expect(utilities.isSystemMessage(message)).toBe(false);
+        expect(isSystemMessage(message)).toBe(false);
     });
 
     it('utilities.isSystemMessage() should not break if `properties.tags` property does not exist', () => {
@@ -48,7 +52,7 @@ describe('Utilities', () => {
             properties: {}
         }
 
-            const result = utilities.isSystemMessage(message);
+            const result = isSystemMessage(message);
             expect(result).toBeDefined();
 
     });
@@ -61,7 +65,7 @@ describe('Utilities', () => {
             }
         }
 
-        expect(utilities.isCustomerMessage(message)).toBe(true);
+        expect(isCustomerMessage(message)).toBe(true);
     });
 
     it('utilities.isCustomerMessage() should return false if sender id DOES NOT contain "contacts/8:"', () => {
@@ -72,7 +76,7 @@ describe('Utilities', () => {
             }
         }
 
-        expect(utilities.isCustomerMessage(message)).toBe(false);
+        expect(isCustomerMessage(message)).toBe(false);
     });
 
     it('utilities.isClientIdNotFoundErrorMessage() should return true if error has UserId Not Found error', () => {
@@ -85,7 +89,7 @@ describe('Utilities', () => {
             }
         }
 
-        expect(utilities.isClientIdNotFoundErrorMessage(error)).toBe(true);
+        expect(isClientIdNotFoundErrorMessage(error)).toBe(true);
     });
 
     it('utilities.isClientIdNotFoundErrorMessage() should return false if error has unknown error message', () => {
@@ -98,7 +102,7 @@ describe('Utilities', () => {
             }
         }
 
-        expect(utilities.isClientIdNotFoundErrorMessage(error)).toBe(false);
+        expect(isClientIdNotFoundErrorMessage(error)).toBe(false);
     });
 
     it('utilities.isClientIdNotFoundErrorMessage() should return false if error has other error code', () => {
@@ -111,7 +115,7 @@ describe('Utilities', () => {
             }
         }
 
-        expect(utilities.isClientIdNotFoundErrorMessage(error)).toBe(false);
+        expect(isClientIdNotFoundErrorMessage(error)).toBe(false);
     });
     it("isNotEmpty should return true if the value is not null, undefined or empty string", () => {
         const value = "test";
