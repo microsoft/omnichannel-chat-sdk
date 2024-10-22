@@ -15,6 +15,8 @@ if (global.window === undefined) {
     global.XMLSerializer = window.XMLSerializer;
     global.TextEncoder = TextEncoder;
     global.TextDecoder = TextDecoder;
+    global.window.dispatchEvent = ()=> {}
+
 }
 
 global.self = global; // Mock the `self` global variable

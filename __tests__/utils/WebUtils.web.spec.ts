@@ -6,6 +6,16 @@
 const WebUtils = require('../../src/utils/WebUtils');
 
 describe('WebUtils', () => {
+
+    beforeEach(() => {
+        jest.resetModules();
+
+    }
+    );
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+    
     it('WebUtils.loadScript() should create <script> element', () => {
         const sampleUrl = 'sample';
 
