@@ -2,13 +2,17 @@
 const { TextEncoder, TextDecoder } = require("util");
 
 if (global.window === undefined) {
+    
     const { JSDOM } = require("jsdom");
     const jsdom = new JSDOM();
 
      const { window } = jsdom;
 
-     global.window = global;
-
+    global.window = global;
+    
+    global.window.addEventListener = () => {};
+    global.window.removeEventListener = () => {};
+    
     global.document = window.document;
     global.navigator = window.navigator;
     global.DOMParser = window.DOMParser;

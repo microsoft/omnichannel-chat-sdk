@@ -84,6 +84,7 @@ import ScenarioMarker from "./telemetry/ScenarioMarker";
 import SetAuthTokenProviderOptionalParams from "./core/SetAuthTokenProviderOptionalParams";
 import StartChatOptionalParams from "./core/StartChatOptionalParams";
 import TelemetryEvent from "./telemetry/TelemetryEvent";
+import { callingBundleVersion } from "./config/settings";
 import createAMSClient from "@microsoft/omnichannel-amsclient";
 import createOcSDKConfiguration from "./utils/createOcSDKConfiguration";
 import createOmnichannelMessage from "./utils/createOmnichannelMessage";
@@ -100,7 +101,6 @@ import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import setOcUserAgent from "./utils/setOcUserAgent";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
-import { callingBundleVersion } from "./config/settings";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -347,21 +347,26 @@ class OmnichannelChatSDK {
                 
                 if (this.liveChatVersion === LiveChatVersion.V2) {
                     this.ACSClient = new ACSClient(this.acsClientLogger);
+                    console.log(6);
                     this.AMSClient = await createAMSClient({
                         framedMode: isBrowser(),
                         multiClient: true,
                         debug: false,
                         logger: this.amsClientLogger as PluggableLogger
                     });
+
+                    console.log(6.2);
                     
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
                 } else if (this.liveChatVersion === LiveChatVersion.V1) {
                     this.IC3Client = await this.getIC3Client();
                 }
+                console.log(6.3);
     
                 this.isInitialized = true;
                 this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
             } catch (e) {
+                console.log("ERROR => ", e);
                 this.AMSClientLoadCurrentState = AMSClientLoadStates.ERROR;
                 exceptionThrowers.throwMessagingClientCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
             }
