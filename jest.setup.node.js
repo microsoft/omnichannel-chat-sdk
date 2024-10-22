@@ -1,7 +1,8 @@
-const { JSDOM } = require("jsdom");
+
 const { TextEncoder, TextDecoder } = require("util");
 
 if (global.window === undefined) {
+    const { JSDOM } = require("jsdom");
     const jsdom = new JSDOM();
 
      const { window } = jsdom;
@@ -11,7 +12,7 @@ if (global.window === undefined) {
     global.document = window.document;
     global.navigator = window.navigator;
     global.DOMParser = window.DOMParser;
-    global.Node = global.Node;
+    global.Node = window.Node;
     global.XMLSerializer = window.XMLSerializer;
     global.TextEncoder = TextEncoder;
     global.TextDecoder = TextDecoder;
