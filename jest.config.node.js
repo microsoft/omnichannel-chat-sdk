@@ -18,5 +18,5 @@ module.exports = {
   moduleNameMapper: {
     '^axios$': require.resolve('axios'),
   },
-  setupFiles: ["./jestSetup.js"]
+  setupFiles: ["./jest.setup.node.js"]
 };

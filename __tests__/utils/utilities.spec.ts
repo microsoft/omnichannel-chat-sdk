@@ -1,10 +1,22 @@
 import { getRuntimeId, isNotEmpty } from "../../src/utils/utilities";
 
+/**
+ * @jest-environment node
+ */
+
 /* eslint-disable @typescript-eslint/no-var-requires */
 const { MessageType } = require("../../src");
 const utilities = require('../../src/utils/utilities');
 
 describe('Utilities', () => {
+    beforeEach(() => {
+        jest.resetModules();
+      });
+    
+      afterEach(() => {
+        jest.clearAllMocks();
+      });
+      
     it('utilities.isSystemMessage() should return true if contains "system" tags', () => {
         const message = {
             content: 'sample',

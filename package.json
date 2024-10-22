@@ -10,7 +10,9 @@
   "scripts": {
     "build:tsc": "tsc",
     "postbuild:tsc": "node ./scripts/copy_files.js",
-    "test": "jest",
+    "test-full": "npm test:jsdom && npm test:node",
+    "test:jsdom":"jest --config jest.config.jsdom.js",
+    "test:node":"jest --config jest.config.node.js",
     "lint": "eslint src --ext .ts"
   },
   "author": "Microsoft Corporation",
