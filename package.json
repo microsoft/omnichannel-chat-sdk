@@ -11,8 +11,8 @@
     "build:tsc": "tsc",
     "postbuild:tsc": "node ./scripts/copy_files.js",
     "test-full": "npm run test:jsdom && npm run test:node",
-    "test:jsdom":"jest --config jest.config.jsdom.js",
-    "test:node":"jest --config jest.config.node.js",
+    "test:jsdom": "jest --config jest.config.jsdom.js",
+    "test:node": "jest --config jest.config.node.js",
     "lint": "eslint src --ext .ts"
   },
   "author": "Microsoft Corporation",
@@ -39,6 +39,7 @@
     "eslint": "^7.32.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
+    "text-encoding": "^0.7.0",
     "ts-jest": "^29.2.5",
     "typescript": "^5.4.2"
   },
