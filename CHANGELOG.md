@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.9.9] - 2024-10-21
+
+### Fixed
+
+- Fix `CoreServices` orgUrl conversion for `crm9` orgs
+
 ## [1.9.8] - 2024-10-18
 
 ### Changed

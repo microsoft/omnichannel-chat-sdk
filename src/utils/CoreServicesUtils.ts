@@ -33,7 +33,13 @@ export const getCoreServicesGeoName = (dynamicsLocationCode: string): string => 
 };
 
 export const createCoreServicesOrgUrl = (orgId: string, geoName: string): string => {
-    return `https://m-${orgId}.${geoName}.omnichannelengagementhub.com`;
+    let domainName = "omnichannelengagementhub.com";
+
+    if (geoName === "gov") {
+        domainName = "omnichannelengagementhub.us";
+    }
+
+    return `https://m-${orgId}.${geoName}.${domainName}`;
 };
 
 export const isCoreServicesOrgUrl = (orgUrl: string): boolean => {
