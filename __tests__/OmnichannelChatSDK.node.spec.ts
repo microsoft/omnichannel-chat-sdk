@@ -34,14 +34,11 @@ describe('Omnichannel Chat SDK (Node), Sequential', () => {
 
     it('ChatSDK.startChat() with sendDefaultInitContext should not work on non-browser platform', async () => {
         
-
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
 
-        console.log("neto...");
         await chatSDK.initialize();
-
-        console.log("me lo juras...");
+        
         chatSDK.IC3Client = {
             initialize: jest.fn(),
             joinConversation: jest.fn()

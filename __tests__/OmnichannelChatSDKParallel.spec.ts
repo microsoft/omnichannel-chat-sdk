@@ -27,6 +27,17 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
         widgetId: '[data-app-id]'
     };
 
+    beforeAll(()=>{
+        if (global.navigator) {
+            (global as any).navigator = undefined;
+        }
+        
+        if (global.window.document) {
+            (global as any).window.document = undefined;
+        }
+    });
+
+
     describe('Configurations', () => {
         it('ChatSDK should require omnichannelConfig as parameter', () => {
             try {
