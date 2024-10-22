@@ -8,11 +8,11 @@ if (global.window === undefined) {
 
      global.window = global;
 
-    global.document = window.document;
-    global.navigator = window.navigator;
-    global.DOMParser = window.DOMParser;
-    global.Node = window.Node;
-    global.XMLSerializer = window.XMLSerializer;
+    global.document = global.document;
+    global.navigator = global.navigator;
+    global.DOMParser = global.DOMParser;
+    global.Node = global.Node;
+    global.XMLSerializer = global.XMLSerializer;
     global.TextEncoder = TextEncoder;
     global.TextDecoder = TextDecoder;
 }
