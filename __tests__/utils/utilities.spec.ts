@@ -1,9 +1,9 @@
-import { getRuntimeId, isNotEmpty } from "../../src/utils/utilities";
-import { isClientIdNotFoundErrorMessage, isCustomerMessage, isSystemMessage } from "../../src/utils/utilities";
-
 /**
  * @jest-environment node
  */
+
+import { getRuntimeId, isNotEmpty } from "../../src/utils/utilities";
+import { isClientIdNotFoundErrorMessage, isCustomerMessage, isSystemMessage } from "../../src/utils/utilities";
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const { MessageType } = require("../../src");
@@ -19,7 +19,6 @@ describe('Utilities', () => {
         jest.clearAllMocks();
     });
 
-
     it('utilities.isSystemMessage() should return true if contains "system" tags', () => {
         const message = {
             content: 'sample',
@@ -29,7 +28,6 @@ describe('Utilities', () => {
             }
         }
 
-        
         expect(isSystemMessage(message)).toBe(true);
     });
 
