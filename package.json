@@ -40,7 +40,6 @@
     "eslint": "^7.32.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
-    "text-encoding": "^0.7.0",
     "ts-jest": "^29.2.5",
     "typescript": "^5.4.2"
   },

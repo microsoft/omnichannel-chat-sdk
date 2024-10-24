@@ -2,17 +2,17 @@
 const { TextEncoder, TextDecoder } = require("util");
 
 if (global.window === undefined) {
-    
+
     const { JSDOM } = require("jsdom");
     const jsdom = new JSDOM();
 
-     const { window } = jsdom;
+    const { window } = jsdom;
 
     global.window = global;
-    
-    global.window.addEventListener = () => {};
-    global.window.removeEventListener = () => {};
-    
+
+    global.window.addEventListener = () => { };
+    global.window.removeEventListener = () => { };
+
     global.document = window.document;
     global.navigator = window.navigator;
     global.DOMParser = window.DOMParser;
@@ -20,8 +20,8 @@ if (global.window === undefined) {
     global.XMLSerializer = window.XMLSerializer;
     global.TextEncoder = TextEncoder;
     global.TextDecoder = TextDecoder;
-    global.window.location = { href :""};
-    global.window.dispatchEvent = ()=> {};
+    global.window.location = { href: "" };
+    global.window.dispatchEvent = () => { };
 
 }
 
