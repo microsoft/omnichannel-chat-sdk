@@ -9,7 +9,7 @@ interface DataMaskingSDKConfig {
 interface TelemetrySDKConfig {
     disable: boolean,
     ariaTelemetryKey?: string,
-    ariaCollectorUri?: string, 
+    ariaCollectorUri?: string,
     runtimeId?: string
 }
 

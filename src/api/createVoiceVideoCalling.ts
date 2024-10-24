@@ -122,7 +122,7 @@ export class VoiceVideoCallingProxy {
 
     public addEventListener(eventName: string, callback: Function): void {
         this.proxyInstance.registerEvent(eventName, (params: IEventPayload) => {
-            const {callId} = params;
+            const { callId } = params;
 
             if (eventName === CallingEvents.CallAdded) {
                 this.callId = callId;
@@ -138,14 +138,14 @@ export class VoiceVideoCallingProxy {
     }
 
     public isMicrophoneMuted(): boolean {
-        const {callClientName, callId} = this;
-        return this.proxyInstance.isMicrophoneMuted({callClientName, callId});
+        const { callClientName, callId } = this;
+        return this.proxyInstance.isMicrophoneMuted({ callClientName, callId });
     }
 
     public async acceptCall(params: IAcceptCallConfig = {}): Promise<void> {
-        const {callClientName, callId} = this;
+        const { callClientName, callId } = this;
 
-        this.scenarioMarker?.startScenario(params.withVideo? TelemetryEvent.AcceptVideoCall: TelemetryEvent.AcceptVoiceCall, {
+        this.scenarioMarker?.startScenario(params.withVideo ? TelemetryEvent.AcceptVideoCall : TelemetryEvent.AcceptVoiceCall, {
             CallId: callId || ''
         });
 
@@ -155,26 +155,26 @@ export class VoiceVideoCallingProxy {
         this.debug && console.debug(params);
 
         try {
-            await this.proxyInstance.acceptCall({callClientName, callId, withVideo: params.withVideo || false});
+            await this.proxyInstance.acceptCall({ callClientName, callId, withVideo: params.withVideo || false });
         } catch {
             const exceptionDetails = {
-                response: params.withVideo? "AcceptVideoCallFailed": "AcceptVoiceCallFailed"
+                response: params.withVideo ? "AcceptVideoCallFailed" : "AcceptVoiceCallFailed"
             };
 
-            this.scenarioMarker?.failScenario(params.withVideo? TelemetryEvent.AcceptVideoCall: TelemetryEvent.AcceptVoiceCall, {
+            this.scenarioMarker?.failScenario(params.withVideo ? TelemetryEvent.AcceptVideoCall : TelemetryEvent.AcceptVoiceCall, {
                 CallId: callId || '',
                 ExceptionDetails: JSON.stringify(exceptionDetails)
             });
         }
 
         const body = {
-            SecondaryChannelType: params.withVideo? SecondaryChannelType.Video: SecondaryChannelType.Voice,
+            SecondaryChannelType: params.withVideo ? SecondaryChannelType.Video : SecondaryChannelType.Voice,
             SecondaryChannelEventType: SecondaryChannelEvents.Accept
         }
 
         try {
             this.callingParams?.OCClient.makeSecondaryChannelEventRequest(this.callingParams?.chatToken.requestId, body);
-            this.scenarioMarker?.completeScenario(params.withVideo? TelemetryEvent.AcceptVideoCall: TelemetryEvent.AcceptVoiceCall, {
+            this.scenarioMarker?.completeScenario(params.withVideo ? TelemetryEvent.AcceptVideoCall : TelemetryEvent.AcceptVoiceCall, {
                 CallId: callId || ''
             });
 
@@ -185,7 +185,7 @@ export class VoiceVideoCallingProxy {
                 response: "OCClientMakeSecondaryChannelEventRequestFailed"
             };
 
-            this.scenarioMarker?.failScenario(params.withVideo? TelemetryEvent.AcceptVideoCall: TelemetryEvent.AcceptVoiceCall, {
+            this.scenarioMarker?.failScenario(params.withVideo ? TelemetryEvent.AcceptVideoCall : TelemetryEvent.AcceptVoiceCall, {
                 CallId: callId || '',
                 ExceptionDetails: JSON.stringify(exceptionDetails)
             });
@@ -195,7 +195,7 @@ export class VoiceVideoCallingProxy {
     }
 
     public async rejectCall(): Promise<void> {
-        const {callClientName, callId} = this;
+        const { callClientName, callId } = this;
 
         this.scenarioMarker?.startScenario(TelemetryEvent.RejectCall, {
             CallId: callId || ''
@@ -204,7 +204,7 @@ export class VoiceVideoCallingProxy {
         /* istanbul ignore next */
         this.debug && console.debug(`[VoiceVideoCallingProxy][rejectCall] callId: ${callId}`);
         try {
-            await this.proxyInstance.rejectCall({callClientName, callId});
+            await this.proxyInstance.rejectCall({ callClientName, callId });
             this.scenarioMarker?.completeScenario(TelemetryEvent.RejectCall, {
                 CallId: callId || ''
             });
@@ -220,7 +220,7 @@ export class VoiceVideoCallingProxy {
         }
 
         const body = {
-            SecondaryChannelType: this.isRemoteVideoEnabled()? SecondaryChannelType.Video: SecondaryChannelType.Voice,
+            SecondaryChannelType: this.isRemoteVideoEnabled() ? SecondaryChannelType.Video : SecondaryChannelType.Voice,
             SecondaryChannelEventType: SecondaryChannelEvents.Reject
         }
 
@@ -243,7 +243,7 @@ export class VoiceVideoCallingProxy {
     }
 
     public async stopCall(): Promise<void> {
-        const {callClientName, callId} = this;
+        const { callClientName, callId } = this;
 
         this.scenarioMarker?.startScenario(TelemetryEvent.StopCall, {
             CallId: callId || ''
@@ -252,9 +252,9 @@ export class VoiceVideoCallingProxy {
         /* istanbul ignore next */
         this.debug && console.debug(`[VoiceVideoCallingProxy][stopCall] callId: ${callId}`);
 
-        const forEveryone = this.callingParams?.chatToken.voiceVideoCallToken?.Token? true: false; // Not supported on skype identity
+        const forEveryone = this.callingParams?.chatToken.voiceVideoCallToken?.Token ? true : false; // Not supported on skype identity
         try {
-            await this.proxyInstance.stopCall({callClientName, callId, forEveryone});
+            await this.proxyInstance.stopCall({ callClientName, callId, forEveryone });
             this.scenarioMarker?.completeScenario(TelemetryEvent.StopCall, {
                 CallId: callId || ''
             });
@@ -266,38 +266,38 @@ export class VoiceVideoCallingProxy {
     }
 
     public async toggleMute(): Promise<void> {
-        const {callClientName, callId} = this;
-        return this.proxyInstance.toggleMute({callClientName, callId});
+        const { callClientName, callId } = this;
+        return this.proxyInstance.toggleMute({ callClientName, callId });
     }
 
     public isRemoteVideoEnabled(): boolean {
-        const {callClientName, callId} = this;
-        return this.proxyInstance.isRemoteVideoEnabled({callClientName, callId});
+        const { callClientName, callId } = this;
+        return this.proxyInstance.isRemoteVideoEnabled({ callClientName, callId });
     }
 
     public isLocalVideoEnabled(): boolean {
-        const {callClientName, callId} = this;
-        return this.proxyInstance.isLocalVideoEnabled({callClientName, callId});
+        const { callClientName, callId } = this;
+        return this.proxyInstance.isLocalVideoEnabled({ callClientName, callId });
     }
 
     public async toggleLocalVideo(): Promise<void> {
-        const {callClientName, callId} = this;
-        return this.proxyInstance.toggleLocalVideo({callClientName, callId});
+        const { callClientName, callId } = this;
+        return this.proxyInstance.toggleLocalVideo({ callClientName, callId });
     }
 
     public isInACall(): boolean {
-        const {callClientName, callId} = this;
-        return this.proxyInstance.isInACall({callClientName, callId});
+        const { callClientName, callId } = this;
+        return this.proxyInstance.isInACall({ callClientName, callId });
     }
 
     public renderVideoStreams(): void {
-        const {callClientName, callId} = this;
-        return this.proxyInstance.renderVideoStreams({callClientName, callId});
+        const { callClientName, callId } = this;
+        return this.proxyInstance.renderVideoStreams({ callClientName, callId });
     }
 
     public disposeVideoRenderers(): void {
-        const {callClientName, callId} = this;
-        return this.proxyInstance.disposeVideoRenderers({callClientName, callId});
+        const { callClientName, callId } = this;
+        return this.proxyInstance.disposeVideoRenderers({ callClientName, callId });
     }
 
     public close(): void {

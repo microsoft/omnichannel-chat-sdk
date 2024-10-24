@@ -11,6 +11,6 @@ export const isCoreServicesOrgUrlDNSError = (error: any, coreServicesOrgUrl: str
     if (isDNSUrlResolveError && coreServicesOrgUrl && dynamicsLocationCode) {
         return true;
     }
-    
+
     return false;
 }

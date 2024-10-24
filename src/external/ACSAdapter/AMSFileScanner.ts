@@ -1,7 +1,7 @@
+import { AMSViewScanStatus } from "./AMSFileManager";
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
 import WebUtils from "../../utils/WebUtils";
-import { AMSViewScanStatus } from "./AMSFileManager";
 import activityUtils from "./activityUtils";
 
 interface FileScanResponse {
@@ -67,29 +67,29 @@ class AMSFileScanner {
     public addNext(id: string, next: Function): void {
         const scanResult = this.scanResults?.get(id);
         if (scanResult) {
-            this.scanResults?.set(id, {...scanResult, next});
+            this.scanResults?.set(id, { ...scanResult, next });
         }
     }
 
     public addActivity(id: string, activity: any): void {  // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
         const scanResult = this.scanResults?.get(id);
         if (scanResult) {
-            this.scanResults?.set(id, {...scanResult, activity});
+            this.scanResults?.set(id, { ...scanResult, activity });
         }
     }
 
     public async scanFileCallback(scanResult: FileScanResult, id: string): Promise<void> {
-        const {fileMetadata, next, activity, scan} = scanResult;
+        const { fileMetadata, next, activity, scan } = scanResult;
 
         if (scan?.status === AMSViewScanStatus.INPROGRESS) {
             try {
                 const response: any = await this.amsClient.getViewStatus(fileMetadata); // eslint-disable-line @typescript-eslint/no-explicit-any
-                const {view_location, scan} = response;
+                const { view_location, scan } = response;
 
                 this.addOrUpdateFile(id, scanResult.fileMetadata, scan);
 
                 if (scan.status === AMSViewScanStatus.PASSED && next && activity) {
-                   await this.renderAttachmentActivity(scanResult, view_location);
+                    await this.renderAttachmentActivity(scanResult, view_location);
                 }
 
                 if (scan.status === AMSViewScanStatus.MALWARE && next && activity) {
@@ -106,7 +106,7 @@ class AMSFileScanner {
     public scanFiles(): Promise<void> {
         // eslint-disable-next-line no-async-promise-executor
         return new Promise(async (resolve) => {
-            this.scanResults?.forEach(async (scanResult, id) => {await this.scanFileCallback(scanResult, id)});
+            this.scanResults?.forEach(async (scanResult, id) => { await this.scanFileCallback(scanResult, id) });
             resolve();
         });
     }
@@ -136,18 +136,18 @@ class AMSFileScanner {
     }
 
     public async renderAttachmentActivity(scanResult: FileScanResult, view_location: any): Promise<void> { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
-        const {fileMetadata, next, activity} = scanResult;
+        const { fileMetadata, next, activity } = scanResult;
         const blob = await this.retrieveFileBlob(fileMetadata, view_location);
-        const file = new File([blob], fileMetadata.name as string, { type: fileMetadata.type});
+        const file = new File([blob], fileMetadata.name as string, { type: fileMetadata.type });
 
         await this.addAttachmentToActivity(activity, file);
 
         const index = activity.attachments.findIndex((attachment: any) => (attachment.name === file.name)); // eslint-disable-line @typescript-eslint/no-explicit-any
-        activity.channelData.fileScan[index] = {status: AMSViewScanStatus.PASSED};
+        activity.channelData.fileScan[index] = { status: AMSViewScanStatus.PASSED };
 
         const hasMultipleAttachments = index > 0;
         if (hasMultipleAttachments) {
-            const {metadata: {amsreferences}} = activity.channelData;
+            const { metadata: { amsreferences } } = activity.channelData;
             const fileIds = JSON.parse(amsreferences);
             fileIds.forEach((fileId: string) => {
                 this.addActivity(fileId, activity);
@@ -158,9 +158,9 @@ class AMSFileScanner {
     }
 
     public async renderMalwareActivity(scanResult: FileScanResult): Promise<void> { // eslint-disable-line @typescript-eslint/no-explicit-any
-        const {fileMetadata, next, activity} = scanResult;
+        const { fileMetadata, next, activity } = scanResult;
         const index = activity.attachments.findIndex((attachment: any) => (attachment.name === fileMetadata.name)); // eslint-disable-line @typescript-eslint/no-explicit-any
-        activity.channelData.fileScan[index] = {status: AMSViewScanStatus.MALWARE};
+        activity.channelData.fileScan[index] = { status: AMSViewScanStatus.MALWARE };
         next(activity);
     }
 }
