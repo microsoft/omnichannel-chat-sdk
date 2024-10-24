@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Load ACS Chat adapter as npm dependency, instead of download it from unpk host.
+- Load ACS Chat adapter as npm dependency, instead of download it from unpkg host.
 
 
 ## [1.9.9] - 2024-10-21
