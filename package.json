@@ -10,6 +10,7 @@
   "scripts": {
     "build:tsc": "tsc",
     "postbuild:tsc": "node ./scripts/copy_files.js",
+    "prebuild:tsc": "eslint src --ext .ts",
     "test": "npm run test:jsdom && npm run test:node",
     "test:jsdom": "jest --config jest.config.jsdom.js",
     "test:node": "jest --config jest.config.node.js",

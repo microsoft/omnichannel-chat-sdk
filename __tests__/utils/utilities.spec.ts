@@ -29,6 +29,7 @@ describe('Utilities', () => {
             }
         }
 
+        
         expect(isSystemMessage(message)).toBe(true);
     });
 

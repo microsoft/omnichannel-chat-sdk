@@ -3,5 +3,5 @@ export enum AMSClientLoadStates {
   LOADING = 'LOADING',
   LOADED = 'LOADED',
   ERROR = 'ERROR',
-  NOT_LOADED = 'NOT_LOADED' 
+  NOT_LOADED = 'NOT_LOADED'
 }

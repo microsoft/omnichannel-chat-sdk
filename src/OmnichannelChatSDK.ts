@@ -205,7 +205,7 @@ class OmnichannelChatSDK {
         this.scenarioMarker.setDebug(flag);
         loggerUtils.setDebug(flag, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
     }
-    
+
     private async retryLoadAMSClient() {
         // Constants for retry logic
         const RETRY_DELAY_MS = 1000;
@@ -216,7 +216,7 @@ class OmnichannelChatSDK {
             if (this.AMSClient) {
                 return this.AMSClient;
             }
-            
+
             await sleep(RETRY_DELAY_MS);
             retryCount++;
         }
@@ -230,19 +230,19 @@ class OmnichannelChatSDK {
         }
 
         switch (this.AMSClientLoadCurrentState) {
-            case AMSClientLoadStates.LOADED:
-                return this.AMSClient;
+        case AMSClientLoadStates.LOADED:
+            return this.AMSClient;
 
-            case AMSClientLoadStates.LOADING:
-                return await this.retryLoadAMSClient();
+        case AMSClientLoadStates.LOADING:
+            return await this.retryLoadAMSClient();
 
-            case AMSClientLoadStates.ERROR:
-            case AMSClientLoadStates.NOT_LOADED:
-                await this.loadAmsClient();
-                return this.AMSClient;
+        case AMSClientLoadStates.ERROR:
+        case AMSClientLoadStates.NOT_LOADED:
+            await this.loadAmsClient();
+            return this.AMSClient;
 
-            default:
-                return null;
+        default:
+            return null;
         }
 
     }
@@ -296,7 +296,7 @@ class OmnichannelChatSDK {
 
             this.useCoreServicesOrgUrlIfNotSet();
             await Promise.all([this.loadInitComponents(), this.loadChatConfig(optionalParams)]);
-            // this will load ams in the background, without holding the load 
+            // this will load ams in the background, without holding the load
             this.loadAmsClient();
 
             this.isInitialized = true;
@@ -311,65 +311,65 @@ class OmnichannelChatSDK {
     }
 
     // We will keep this logic for backward compatibility for customers with unknown implementation, so they can test before fully adoption
-    private async sequentialInitialization(optionalParams: InitializeOptionalParams = {}){
+    private async sequentialInitialization(optionalParams: InitializeOptionalParams = {}) {
 
-            this.scenarioMarker.startScenario(TelemetryEvent.InitializeChatSDK);
-    
-            if (this.isInitialized) {
-                this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
-                return this.liveChatConfig;
-            }
-    
-            this.useCoreServicesOrgUrlIfNotSet();
-    
-            const useCoreServices = isCoreServicesOrgUrl(this.omnichannelConfig.orgUrl);
-            try {
-                this.OCSDKProvider = OCSDKProvider;
-                this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(useCoreServices) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
-                setOcUserAgent(this.OCClient, this.chatSDKConfig?.ocUserAgent);
-            } catch (e) {
-                exceptionThrowers.throwOmnichannelClientInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
-            }
-    
-            try {
-                const { getLiveChatConfigOptionalParams } = optionalParams;
-                await this.getChatConfig(getLiveChatConfigOptionalParams || {});
-            } catch (e) {
-                exceptionThrowers.throwChatConfigRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
-            }
-    
-            const supportedLiveChatVersions = [LiveChatVersion.V1, LiveChatVersion.V2];
-            if (!supportedLiveChatVersions.includes(this.liveChatVersion)) {
-                exceptionThrowers.throwUnsupportedLiveChatVersionFailure(new Error(ChatSDKErrorName.UnsupportedLiveChatVersion), this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
-            }
-    
-            try {
-                
-                if (this.liveChatVersion === LiveChatVersion.V2) {
-                    this.ACSClient = new ACSClient(this.acsClientLogger);
-                    this.AMSClient = await createAMSClient({
-                        framedMode: isBrowser(),
-                        multiClient: true,
-                        debug: false,
-                        logger: this.amsClientLogger as PluggableLogger
-                    });
-                    this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
-                } else if (this.liveChatVersion === LiveChatVersion.V1) {
-                    this.IC3Client = await this.getIC3Client();
-                }
-                this.isInitialized = true;
-                this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
-            } catch (e) {
-                this.AMSClientLoadCurrentState = AMSClientLoadStates.ERROR;
-                exceptionThrowers.throwMessagingClientCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
-            }
+        this.scenarioMarker.startScenario(TelemetryEvent.InitializeChatSDK);
 
+        if (this.isInitialized) {
+            this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
             return this.liveChatConfig;
+        }
+
+        this.useCoreServicesOrgUrlIfNotSet();
+
+        const useCoreServices = isCoreServicesOrgUrl(this.omnichannelConfig.orgUrl);
+        try {
+            this.OCSDKProvider = OCSDKProvider;
+            this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(useCoreServices) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
+            setOcUserAgent(this.OCClient, this.chatSDKConfig?.ocUserAgent);
+        } catch (e) {
+            exceptionThrowers.throwOmnichannelClientInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
+        }
+
+        try {
+            const { getLiveChatConfigOptionalParams } = optionalParams;
+            await this.getChatConfig(getLiveChatConfigOptionalParams || {});
+        } catch (e) {
+            exceptionThrowers.throwChatConfigRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
+        }
+
+        const supportedLiveChatVersions = [LiveChatVersion.V1, LiveChatVersion.V2];
+        if (!supportedLiveChatVersions.includes(this.liveChatVersion)) {
+            exceptionThrowers.throwUnsupportedLiveChatVersionFailure(new Error(ChatSDKErrorName.UnsupportedLiveChatVersion), this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
+        }
+
+        try {
+
+            if (this.liveChatVersion === LiveChatVersion.V2) {
+                this.ACSClient = new ACSClient(this.acsClientLogger);
+                this.AMSClient = await createAMSClient({
+                    framedMode: isBrowser(),
+                    multiClient: true,
+                    debug: false,
+                    logger: this.amsClientLogger as PluggableLogger
+                });
+                this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
+            } else if (this.liveChatVersion === LiveChatVersion.V1) {
+                this.IC3Client = await this.getIC3Client();
+            }
+            this.isInitialized = true;
+            this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
+        } catch (e) {
+            this.AMSClientLoadCurrentState = AMSClientLoadStates.ERROR;
+            exceptionThrowers.throwMessagingClientCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
+        }
+
+        return this.liveChatConfig;
     }
 
     /**
-     * 
-     * @param optionalParams 
+     *
+     * @param optionalParams
      * @param parallel if true , it will run in parallel (fastest version) with components loaded in the background
      * @returns livechatConfig
      */
@@ -750,7 +750,7 @@ class OmnichannelChatSDK {
                 }
             }
         };
-        
+
         const attachmentClientPromise = async () => {
             try {
                 const amsClient = await this.getAMSClient();
@@ -1878,8 +1878,7 @@ class OmnichannelChatSDK {
                 if (agentSurveyInviteLinkResponse != null) {
                     if (agentSurveyInviteLinkResponse.inviteList != null && agentSurveyInviteLinkResponse.inviteList.length == 1) {
                         agentSurveyInviteLink = agentSurveyInviteLinkResponse.inviteList[0].invitationLink;
-                    }
-                    else {
+                    } else {
                         this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {
                             ConversationId: conversationId,
                             RequestId: this.requestId,
@@ -2135,9 +2134,9 @@ class OmnichannelChatSDK {
         let liveChatConfig;
 
         try {
-            
+
             liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache);
-            
+
         } catch (error) {
             // Fallback on orgUrl which got converted to Core Services orgUrl
             if (isCoreServicesOrgUrlDNSError(error, this.coreServicesOrgUrl, this.dynamicsLocationCode)) { // eslint-disable-line @typescript-eslint/no-explicit-any
