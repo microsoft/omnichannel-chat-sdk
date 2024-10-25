@@ -7,7 +7,7 @@
         "declaration": true,
         "outDir": "./lib",
         "strict": true,
-        "typeRoots": ["./node_modules/@types", "./override_type"]
+        "typeRoots": ["./node_modules/@types", "./types"]
     },
     "include": [
         "src/**/*"
