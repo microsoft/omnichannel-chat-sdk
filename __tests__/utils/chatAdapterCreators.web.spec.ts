@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * @jest-environment jsdom
  */
 
+import {createACSAdapter, createDirectLine, createIC3Adapter} from "../../src/utils/chatAdapterCreators";
+
 import LiveChatVersion from "../../src/core/LiveChatVersion";
-import {createDirectLine, createACSAdapter, createIC3Adapter} from "../../src/utils/chatAdapterCreators";
 import WebUtils from "../../src/utils/WebUtils";
 
 describe("Chat Adapter Creators", () => {
@@ -28,7 +30,7 @@ describe("Chat Adapter Creators", () => {
 
         try {
             await createDirectLine(optionalParams, chatSDKConfig, LiveChatVersion.V2, "DirectLine", telemetry, scenarioMarker);
-        } catch (e) {
+        } catch (e: any ) {
             expect(e.message).toBe('ScriptLoadFailure');
         }
     });
@@ -54,7 +56,7 @@ describe("Chat Adapter Creators", () => {
 
         try {
             await createDirectLine(optionalParams, chatSDKConfig, LiveChatVersion.V2, "DirectLine", telemetry, scenarioMarker);
-        } catch (e) {
+        } catch (e: any ) {
             expect(e.message).toBe('ChatAdapterInitializationFailure');
         }
     });
@@ -91,7 +93,7 @@ describe("Chat Adapter Creators", () => {
 
         try {
             await createACSAdapter(optionalParams, chatSDKConfig, LiveChatVersion.V2, "ACS", telemetry, scenarioMarker, omnichannelConfig, chatToken, fileManager, chatClient, logger);
-        } catch (e) {
+        } catch (e: any ) {
             expect(e.message).toBe('ScriptLoadFailure');
         }
     });
@@ -128,7 +130,7 @@ describe("Chat Adapter Creators", () => {
 
         try {
             await createACSAdapter(optionalParams, chatSDKConfig, LiveChatVersion.V2, "ACS", telemetry, scenarioMarker, omnichannelConfig, chatToken, fileManager, chatClient, logger);
-        } catch (e) {
+        } catch (e: any ) {
             expect(e.message).toBe('ChatAdapterInitializationFailure');
         }
     });
@@ -158,7 +160,7 @@ describe("Chat Adapter Creators", () => {
 
         try {
             await createIC3Adapter(optionalParams, chatSDKConfig, LiveChatVersion.V2, "ACS", telemetry, scenarioMarker, chatToken, ic3Client, logger);
-        } catch (e) {
+        } catch (e: any ) {
             expect(e.message).toBe('ScriptLoadFailure');
         }
     });
@@ -188,7 +190,7 @@ describe("Chat Adapter Creators", () => {
 
         try {
             await createIC3Adapter(optionalParams, chatSDKConfig, LiveChatVersion.V2, "ACS", telemetry, scenarioMarker, chatToken, ic3Client, logger);
-        } catch (e) {
+        } catch (e: any ) {
             expect(e.message).toBe('ChatAdapterInitializationFailure');
         }
     });

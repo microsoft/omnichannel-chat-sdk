@@ -1,5 +1,5 @@
 const GCCDomainPatterns = [
-    "gov.omnichannelengagementhub.com",
+    "gov.omnichannelengagementhub.us",
     "-crm9"
 ];
 

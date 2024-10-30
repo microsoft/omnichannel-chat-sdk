@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import ACSClient from "../../../src/core/messaging/ACSClient";
 
 jest.mock('@azure/communication-common');
@@ -76,7 +78,7 @@ describe('ACSClient', () => {
                 threadId: 'threadId',
                 pollingInterval: 1000,
             });
-        } catch (error) {
+        } catch (error : any ) {
             expect(error.message).toBe('GetChatThreadClientFailed');
         }
     });
@@ -108,7 +110,7 @@ describe('ACSClient', () => {
                 threadId: 'threadId',
                 pollingInterval: 1000,
             });
-        } catch (error) {
+        } catch (error : any ) {
             expect(error.message).toBe('StartRealtimeNotificationsFailed');
         }
     });
@@ -364,7 +366,7 @@ describe('ACSClient', () => {
             await conversation.sendMessage({
                 content: 'message',
             });
-        } catch (error) {
+        } catch (error : any ) {
             expect(error.message).toBe('SendMessageFailed');
         }
     });
@@ -444,7 +446,7 @@ describe('ACSClient', () => {
 
         try {
             await conversation.sendTyping();
-        } catch (error) {
+        } catch (error : any ) {
             expect(error.message).toBe('SendTypingFailed');
         }
 
