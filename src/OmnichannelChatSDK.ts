@@ -1438,7 +1438,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async uploadFileAttachment(fileInfo: IFileInfo | File): Promise<IRawMessage | OmnichannelMessage> {
+    public async uploadFileAttachment(fileInfo: IFileInfo | File): Promise<IRawMessage | OmnichannelMessage | undefined> {
         const amsClient = await this.getAMSClient();
         this.scenarioMarker.startScenario(TelemetryEvent.UploadFileAttachment, {
             RequestId: this.requestId,
@@ -1498,49 +1498,6 @@ class OmnichannelChatSDK {
                 return messageToSend;
             } catch (error) {
                 console.error("OmnichannelChatSDK/uploadFileAttachment/sendMessage/error");
-
-                this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-            }
-
-            return {} as OmnichannelMessage;
-        } else {
-            let fileMetadata: IFileMetadata;
-
-            if (platform.isReactNative() || platform.isNode()) {
-                fileMetadata = await (this.conversation as IConversation)!.sendFileData(fileInfo as IFileInfo, FileSharingProtocolType.AmsBasedFileSharing);
-            } else {
-                fileMetadata = await (this.conversation as IConversation)!.uploadFile(fileInfo as File, FileSharingProtocolType.AmsBasedFileSharing);
-            }
-
-            const messageToSend: IRawMessage = {
-                content: "",
-                timestamp: new Date(),
-                contentType: MessageContentType.Text,
-                deliveryMode: DeliveryMode.Bridged,
-                messageType: MessageType.UserMessage,
-                tags: [...defaultMessageTags],
-                sender: {
-                    displayName: "Customer",
-                    id: "customer",
-                    type: PersonType.User,
-                },
-                fileMetadata: fileMetadata
-            };
-
-            try {
-                await this.conversation!.sendFileMessage(fileMetadata, messageToSend);
-
-                this.scenarioMarker.completeScenario(TelemetryEvent.UploadFileAttachment, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-
-                return messageToSend;
-            } catch (error) {
-                console.error(`OmnichannelChatSDK/uploadFileAttachment/error: ${error}`);
 
                 this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
                     RequestId: this.requestId,

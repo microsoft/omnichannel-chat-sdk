@@ -2395,37 +2395,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.conversation.sendTyping).toHaveBeenCalledTimes(1);
         });
 
-        it('[LiveChatV1] ChatSDK.uploadFileAttachment() should call conversation.sendFileData() & conversation.sendFileMessage()', async () => {
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
-            chatSDK.getChatConfig = jest.fn();
-            chatSDK.getChatToken = jest.fn();
-
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
-
-            await chatSDK.initialize();
-
-            chatSDK.OCClient = {
-                sessionInit: jest.fn()
-            }
-
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
-                sendFileData: (fileInfo: IFileInfo, fileSharingProtocolType: FileSharingProtocolType) => {},
-                sendFileMessage: (fileMetaData: IFileMetadata, message: IMessage) => {}
-            }));
-
-            await chatSDK.startChat();
-
-            jest.spyOn(chatSDK.conversation, 'sendFileData').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.conversation, 'sendFileMessage').mockResolvedValue(Promise.resolve());
-
-            const fileInfo = {};
-            await chatSDK.uploadFileAttachment(fileInfo);
-            expect(chatSDK.conversation.sendFileData).toHaveBeenCalledTimes(1);
-            expect(chatSDK.conversation.sendFileMessage).toHaveBeenCalledTimes(1);
-        });
-
-        it('ChatSDK.uploadFileAttachment() should call AMSClient.createObject, AMSClient.uploadDocument() & conversation.sendMessage()', async () => {
+        it('ChatSDK.uploadFileAttachment() should call AMSClient.createObject(), AMSClient.uploadDocument() & conversation.sendMessage()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
