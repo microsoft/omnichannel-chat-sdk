@@ -2457,36 +2457,6 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
         });
 
-        it('[LiveChatV1] ChatSDK.downloadFileAttachment() should call conversation.downloadFile()', async() => {
-            
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
-            chatSDK.getChatConfig = jest.fn();
-            chatSDK.getChatToken = jest.fn();
-
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
-
-            await chatSDK.initialize();
-
-            const mockOCClient = {
-                sessionInit: jest.fn()
-            };
-
-            chatSDK.OCClient = mockOCClient;
-
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
-                downloadFile: () => {console.log("download")}
-            }));
-
-            await chatSDK.startChat();
-
-            jest.spyOn(chatSDK.conversation, 'downloadFile').mockResolvedValue(Promise.resolve());
-
-            const fileMetaData = {};
-            await chatSDK.downloadFileAttachment(fileMetaData);
-            expect(chatSDK.conversation.downloadFile).toHaveBeenCalledTimes(1);
-        });
-
         it('ChatSDK.downloadFileAttachment() should call conversation.downloadFile()', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();

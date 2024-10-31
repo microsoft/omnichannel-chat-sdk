@@ -1552,7 +1552,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async downloadFileAttachment(fileMetadata: FileMetadata | IFileMetadata): Promise<Blob> {
+    public async downloadFileAttachment(fileMetadata: FileMetadata | IFileMetadata): Promise<Blob | undefined> {
         const amsClient = await this.getAMSClient();
         this.scenarioMarker.startScenario(TelemetryEvent.DownloadFileAttachment, {
             RequestId: this.requestId,
@@ -1570,22 +1570,6 @@ class OmnichannelChatSDK {
                 });
                 return viewResponse;
             } catch {
-                this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-                throw new Error('DownloadFileAttachmentFailed');
-            }
-        } else {
-            try {
-                const downloadedFile = await (this.conversation as IConversation)!.downloadFile(fileMetadata as IFileMetadata);
-                this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-                return downloadedFile;
-            } catch (error) {
-                console.error(`OmnichannelChatSDK/downloadFileAttachment/error: ${error}`);
                 this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string
