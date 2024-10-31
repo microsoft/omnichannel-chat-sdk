@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [1.10.0]
 
 ### Changed
 - Uptake [@microsoft/ocsdk@0.5.8](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.8)
