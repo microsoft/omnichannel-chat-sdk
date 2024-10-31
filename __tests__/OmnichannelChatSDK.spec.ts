@@ -2098,12 +2098,10 @@ describe('Omnichannel Chat SDK, Sequential', () => {
         });
 
 
-        it('[LiveChatV1] ChatSDK.sendMessage() should mask characters if enabled', async () => {
+        it('ChatSDK.sendMessage() should mask characters if enabled', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
-
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -2111,9 +2109,9 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 sessionInit: jest.fn()
             }
 
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
-                sendMessage: (message: any) => {}
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendMessage: jest.fn()
             }));
 
             await chatSDK.startChat();
@@ -2149,12 +2147,10 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect((chatSDK.conversation.sendMessage.mock.calls[0][0] as any).content).toBe(content);
         });
 
-        it('[LiveChatV1] ChatSDK.sendMessage() should NOT mask characters if disabled', async () => {
+        it('ChatSDK.sendMessage() should NOT mask characters if disabled', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
-
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -2162,9 +2158,9 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 sessionInit: jest.fn()
             }
 
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
-                sendMessage: (message: any) => {}
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendMessage: jest.fn()
             }));
 
             await chatSDK.startChat();
@@ -2190,69 +2186,6 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.chatSDKConfig.dataMasking.disable).toBe(true);
             expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
             expect((chatSDK.conversation.sendMessage.mock.calls[0][0] as any).content).toBe(messageToSend.content);
-        });
-
-        it('[LiveChatV1] ChatSDK.sendMessage() should send message with custom tags if set', async () => {
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
-            chatSDK.getChatConfig = jest.fn();
-            chatSDK.getChatToken = jest.fn();
-
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
-
-            await chatSDK.initialize();
-
-            chatSDK.OCClient = {
-                sessionInit: jest.fn()
-            }
-
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
-                sendMessage: (message: any) => {}
-            }));
-
-            await chatSDK.startChat();
-            jest.spyOn(chatSDK.conversation, 'sendMessage').mockResolvedValue(Promise.resolve());
-
-            const messageToSend = {
-                content: 'sample',
-                tags: ['system']
-            }
-
-            await chatSDK.sendMessage(messageToSend);
-            expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
-            expect((chatSDK.conversation.sendMessage.mock.calls[0][0] as any).tags.length).not.toBe(0);
-        });
-
-        it('[LiveChatV1] ChatSDK.sendMessage() should send message with custom timestamp if set', async () => {
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
-            chatSDK.getChatConfig = jest.fn();
-            chatSDK.getChatToken = jest.fn();
-
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
-
-            await chatSDK.initialize();
-
-            chatSDK.OCClient = {
-                sessionInit: jest.fn()
-            }
-
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
-                sendMessage: (message: any) => {}
-            }));
-
-            await chatSDK.startChat();
-            jest.spyOn(chatSDK.conversation, 'sendMessage').mockResolvedValue(Promise.resolve());
-
-            const messageToSend = {
-                content: 'sample',
-                timestamp: 'timestamp'
-            }
-
-            await chatSDK.sendMessage(messageToSend);
-            expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            expect((chatSDK.conversation.sendMessage.mock.calls[0][0] as any).timestamp).toEqual(messageToSend.timestamp);
         });
 
         it('ChatSDK.sendMessage() should call conversation.sendMessage()', async() => {
