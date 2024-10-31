@@ -1315,27 +1315,6 @@ class OmnichannelChatSDK {
 
                 throw new Error('SendTypingFailure');
             }
-        } else {
-            const typingPayload = `{isTyping: 0}`;
-
-            try {
-                await (this.conversation as IConversation)!.indicateTypingStatus(0);
-                const members: IPerson[] = await (this.conversation as IConversation)!.getMembers();
-                const botMembers = members.filter((member: IPerson) => member.type === PersonType.Bot);
-                await (this.conversation as IConversation)!.sendMessageToBot(botMembers[0].id, { payload: typingPayload });
-
-                this.scenarioMarker.completeScenario(TelemetryEvent.SendTypingEvent, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-            } catch (error) {
-                this.scenarioMarker.failScenario(TelemetryEvent.SendTypingEvent, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-
-                throw new Error('SendTypingFailure');
-            }
         }
     }
 
