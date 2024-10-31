@@ -3080,15 +3080,12 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             };
 
             const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
-            const ic3ClientDiposeFn = jest.spyOn(chatSDK.IC3Client, 'dispose');
             await chatSDK.endChat();
 
             expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(1);
             expect(conversationDisconnectFn).toHaveBeenCalledTimes(1);
             expect(chatSDK.conversation).toBe(null);
             expect(chatSDK.chatToken).toMatchObject({});
-            expect(ic3ClientDiposeFn).toHaveBeenCalledTimes(1);
-            expect(chatSDK.IC3Client).toBe(null);
         });
 
 

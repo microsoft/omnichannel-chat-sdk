@@ -804,12 +804,6 @@ class OmnichannelChatSDK {
             this.chatToken = {};
             this.reconnectId = null;
 
-            if (this.IC3Client) {
-                this.IC3Client.dispose();
-                !platform.isNode() && !platform.isReactNative() && removeElementById(this.IC3Client.id);
-                this.IC3Client = null;
-            }
-
             if (this.OCClient.sessionId) {
                 this.OCClient.sessionId = null;
                 this.sessionId = null;
