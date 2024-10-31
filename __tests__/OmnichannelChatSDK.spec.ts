@@ -2947,32 +2947,6 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(count);
         });
 
-        it('[LiveChatV1] Ability to add multiple "onTypingEvent" event handler', async () => {
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
-            chatSDK.getChatConfig = jest.fn();
-            chatSDK.getChatToken = jest.fn();
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
-
-            await chatSDK.initialize();
-
-            chatSDK.OCClient.sessionInit = jest.fn();
-            chatSDK.IC3Client.initialize = jest.fn();
-            chatSDK.IC3Client.joinConversation = jest.fn();
-
-            await chatSDK.startChat();
-
-            chatSDK.conversation = {
-                registerOnNewMessage: jest.fn()
-            };
-
-            const count = 3;
-            for (let i = 0; i < count; i++) {
-                chatSDK.onTypingEvent(() => {});
-            }
-
-            expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(count);
-        });
-
         it('Ability to add multiple "onAgentEndSession" event handler', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();

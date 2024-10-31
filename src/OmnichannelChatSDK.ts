@@ -1359,31 +1359,6 @@ class OmnichannelChatSDK {
                     ChatId: this.chatToken.chatId as string
                 });
             }
-        } else {
-            try {
-                this.conversation?.registerOnNewMessage((message: IRawMessage) => {
-                    const { messageType } = message;
-
-                    // Filter out customer messages
-                    if (isCustomerMessage(message)) {
-                        return;
-                    }
-
-                    if (messageType === MessageType.Typing) {
-                        onTypingEventCallback(message);
-                    }
-                });
-
-                this.scenarioMarker.completeScenario(TelemetryEvent.OnTypingEvent, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-            } catch {
-                this.scenarioMarker.failScenario(TelemetryEvent.OnTypingEvent, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-            }
         }
     }
 
