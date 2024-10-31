@@ -4,10 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- Uptake [@microsoft/ocsdk@0.5.8](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.8)
 
 ## [1.9.10] - 2024-10-25
 
 ### Changed
+
 - Uptake [@microsoft/ocsdk@0.5.7](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.7)
 
 ## [1.9.9] - 2024-10-21
@@ -45,7 +48,6 @@ All notable changes to this project will be documented in this file.
 
 - Uptake [@microsoft/ocsdk@0.5.5](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.5)
 - Uptake [@microsoft/omnichannel-ic3core@0.1.4](https://www.npmjs.com/package/@microsoft/omnichannel-ic3core/v/0.1.4)
-
 
 ## [1.9.3] - 2024-07-12
 
