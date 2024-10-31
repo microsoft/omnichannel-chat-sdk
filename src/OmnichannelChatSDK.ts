@@ -763,13 +763,6 @@ class OmnichannelChatSDK {
         };
 
         await Promise.all([sessionInitPromise(), messagingClientPromise(), attachmentClientPromise()]);
-
-        if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
-            this.refreshTokenTimer = setInterval(async () => {
-                await this.getChatToken(false);
-                this.updateChatToken(this.chatToken.token as string, this.chatToken.regionGTMS);
-            }, this.chatSDKConfig.persistentChat?.tokenUpdateTime);
-        }
     }
 
     public async endChat(): Promise<void> {
@@ -2205,40 +2198,6 @@ class OmnichannelChatSDK {
 
     private resolveChatAdapterUrl(protocol: string): string {
         return urlResolvers.resolveChatAdapterUrl(this.chatSDKConfig, this.liveChatVersion, protocol);
-    }
-
-    private async updateChatToken(newToken: string, newRegionGTMS: IRegionGtms): Promise<void> {
-        this.scenarioMarker.startScenario(TelemetryEvent.UpdateChatToken, {
-            RequestId: this.requestId,
-            ChatId: this.chatToken.chatId as string
-        })
-
-        try {
-            if (this.liveChatVersion === LiveChatVersion.V1) {
-                const sessionInfo: IInitializationInfo = {
-                    token: newToken,
-                    regionGtms: newRegionGTMS,
-                    visitor: true
-                };
-
-                await this.IC3Client.initialize(sessionInfo);
-            }
-
-            this.scenarioMarker.completeScenario(TelemetryEvent.UpdateChatToken, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string
-            })
-        } catch (error) {
-            const exceptionDetails = {
-                response: "UpdateChatTokenFailed"
-            }
-
-            this.scenarioMarker.failScenario(TelemetryEvent.UpdateChatToken, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string,
-                ExceptionDetails: JSON.stringify(exceptionDetails)
-            });
-        }
     }
 
     private async setAuthTokenProvider(provider: ChatSDKConfig["getAuthToken"], optionalParams: SetAuthTokenProviderOptionalParams = {}) {
