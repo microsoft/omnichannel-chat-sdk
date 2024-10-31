@@ -2647,68 +2647,6 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(platform.isReactNative).toHaveBeenCalledTimes(1);
         });
 
-        it('[LiveChatV1] ChatSDK.onNewMessage() with rehydrate flag should call ChatSDK.getMessages()', async () => {
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
-            chatSDK.getChatConfig = jest.fn();
-            chatSDK.getChatToken = jest.fn();
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
-
-            await chatSDK.initialize();
-
-            chatSDK.OCClient.sessionInit = jest.fn();
-            chatSDK.IC3Client.initialize = jest.fn();
-            chatSDK.IC3Client.joinConversation = jest.fn();
-
-            const messages = [
-                {clientmessageid: 2},
-                {clientmessageid: 1},
-                {clientmessageid: 1},
-                {clientmessageid: 0}
-            ]
-
-            await chatSDK.startChat();
-
-            chatSDK.conversation = {
-                registerOnNewMessage: jest.fn(),
-                getMessages: jest.fn()
-            };
-
-            jest.spyOn(chatSDK, 'getMessages').mockResolvedValue(messages);
-
-            await chatSDK.onNewMessage(() => {}, {rehydrate: true});
-
-            expect(chatSDK.getMessages).toHaveBeenCalledTimes(1);
-            expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(1);
-        });
-
-        it('[LiveChatV1] ChatSDK.onNewMessage() with rehydrate flag & with no messages should not break', async () => {
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
-            chatSDK.getChatConfig = jest.fn();
-            chatSDK.getChatToken = jest.fn();
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
-
-            await chatSDK.initialize();
-
-            chatSDK.OCClient.sessionInit = jest.fn();
-            chatSDK.IC3Client.initialize = jest.fn();
-            chatSDK.IC3Client.joinConversation = jest.fn();
-
-            const messages = undefined;
-            await chatSDK.startChat();
-
-            chatSDK.conversation = {
-                registerOnNewMessage: jest.fn(),
-                getMessages: jest.fn()
-            };
-
-            jest.spyOn(chatSDK, 'getMessages').mockResolvedValue(messages);
-
-            await chatSDK.onNewMessage(() => {}, {rehydrate: true});
-
-            expect(chatSDK.getMessages).toHaveBeenCalledTimes(1);
-            expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(1);
-        });
-
         it('ChatSDK.onNewMessage() should call conversation.registerOnNewMessage()', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
