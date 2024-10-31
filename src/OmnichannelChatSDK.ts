@@ -713,36 +713,6 @@ class OmnichannelChatSDK {
 
                     exceptionThrowers.throwMessagingClientConversationJoinFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
                 }
-            } else {
-                try {
-                    await this.IC3Client.initialize({
-                        token: this.chatToken.token,
-                        regionGtms: this.chatToken.regionGTMS,
-                        visitor: true
-                    });
-                } catch (error) {
-                    const telemetryData = {
-                        RequestId: this.requestId,
-                        ChatId: this.chatToken.chatId as string,
-                    };
-
-                    exceptionThrowers.throwMessagingClientInitializationFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
-                }
-
-                try {
-                    this.conversation = await this.IC3Client.joinConversation(this.chatToken.chatId);
-                    this.scenarioMarker.completeScenario(TelemetryEvent.StartChat, {
-                        RequestId: this.requestId,
-                        ChatId: this.chatToken.chatId as string
-                    });
-                } catch (error) {
-                    const telemetryData = {
-                        RequestId: this.requestId,
-                        ChatId: this.chatToken.chatId as string,
-                    };
-
-                    exceptionThrowers.throwMessagingClientConversationJoinFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
-                }
             }
         };
         
