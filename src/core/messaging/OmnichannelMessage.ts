@@ -56,8 +56,8 @@ export class ResourceType {
 }
 
 interface OmnichannelMessage {
-    id: string;
-    liveChatVersion: LiveChatVersion;
+    id?: string;
+    liveChatVersion?: LiveChatVersion;
     clientmessageid?: string;
     messageid?: string;
     content: string;
