@@ -1660,17 +1660,12 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(callingToken).toEqual(chatSDK.chatToken.token);
         });
 
-        it('[LiveChatV1] ChatSDK.getCurrentLiveChatContext() should return chat session data', async () => {
+        it('ChatSDK.getCurrentLiveChatContext() should return chat session data', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
-
-            chatSDK.IC3Client = {
-                initialize: jest.fn(),
-                joinConversation: jest.fn()
-            }
 
             jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
                 ChatId: '',
