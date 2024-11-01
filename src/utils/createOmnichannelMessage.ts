@@ -8,7 +8,7 @@ interface CreateOmnichannelMessageOptionalParams {
     debug?: boolean;
 }
 
-const createOmnichannelMessage = (message: ChatMessageReceivedEvent | ChatMessageEditedEvent | ChatMessage, optionalParams: CreateOmnichannelMessageOptionalParams): OmnichannelMessage => {
+const createOmnichannelMessage = (message: OmnichannelMessage | ChatMessageReceivedEvent | ChatMessageEditedEvent | ChatMessage, optionalParams: CreateOmnichannelMessageOptionalParams): OmnichannelMessage => {
     let omnichannelMessage = {} as OmnichannelMessage;
     omnichannelMessage.liveChatVersion = optionalParams.liveChatVersion || LiveChatVersion.V1;
 
@@ -67,7 +67,7 @@ const createOmnichannelMessage = (message: ChatMessageReceivedEvent | ChatMessag
             }
         }
     } else {
-        const {clientmessageid} = message as IRawMessage;
+        const {clientmessageid} = message as OmnichannelMessage;
         omnichannelMessage.id = clientmessageid as string;
         omnichannelMessage = {...message} as OmnichannelMessage;
     }
