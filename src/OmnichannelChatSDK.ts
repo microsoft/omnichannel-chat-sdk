@@ -273,8 +273,6 @@ class OmnichannelChatSDK {
                     logger: this.amsClientLogger as PluggableLogger
                 });
                 this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
-            } else if (this.liveChatVersion === LiveChatVersion.V1) {
-                this.IC3Client = await this.getIC3Client();
             }
 
             this.scenarioMarker.completeScenario(TelemetryEvent.InitializeMessagingClient);
