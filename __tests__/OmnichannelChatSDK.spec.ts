@@ -1571,11 +1571,10 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.OCClient.sessionInit.mock.calls[0][1]).toMatchObject(sessionInitOptionalParams);
         });
 
-        it('[LiveChatV1] ChatSDK.getCallingToken() should return acs token if available', async () => {
+        it('ChatSDK.getCallingToken() should return acs token if available', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -1583,10 +1582,9 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             chatSDK.OCClient.getChatToken = jest.fn();
             chatSDK.OCClient.sessionInit = jest.fn();
 
-            chatSDK.IC3Client = {
-                initialize: jest.fn(),
-                joinConversation: jest.fn()
-            }
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
 
             await chatSDK.startChat();
 
@@ -1605,11 +1603,10 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(callingToken).toEqual(chatSDK.chatToken.voiceVideoCallToken.Token);
         });
 
-        it('[LiveChatV1] ChatSDK.getCallingToken() should return nothing if chatToken is invalid', async () => {
+        it('ChatSDK.getCallingToken() should return nothing if chatToken is invalid', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
@@ -1617,10 +1614,9 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             chatSDK.OCClient.getChatToken = jest.fn();
             chatSDK.OCClient.sessionInit = jest.fn();
 
-            chatSDK.IC3Client = {
-                initialize: jest.fn(),
-                joinConversation: jest.fn()
-            }
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
 
             await chatSDK.startChat();
 
