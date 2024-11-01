@@ -131,7 +131,6 @@ class OmnichannelChatSDK {
     private callingOption: CallingOptionsOptionSetNumber = CallingOptionsOptionSetNumber.NoCalling;
     private telemetry: typeof AriaTelemetry | null = null;
     private scenarioMarker: ScenarioMarker;
-    private ic3ClientLogger: IC3ClientLogger | null = null;
     private ocSdkLogger: OCSDKLogger | null = null;
     private acsClientLogger: ACSClientLogger | null = null;
     private acsAdapterLogger: ACSAdapterLogger | null = null;
@@ -162,7 +161,6 @@ class OmnichannelChatSDK {
         this.preChatSurvey = null;
         this.telemetry = createTelemetry(this.debug);
         this.scenarioMarker = new ScenarioMarker(this.omnichannelConfig);
-        this.ic3ClientLogger = createIC3ClientLogger(this.omnichannelConfig);
         this.ocSdkLogger = createOCSDKLogger(this.omnichannelConfig);
         this.acsClientLogger = createACSClientLogger(this.omnichannelConfig);
         this.acsAdapterLogger = createACSAdapterLogger(this.omnichannelConfig);
