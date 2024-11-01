@@ -1461,17 +1461,15 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.OCClient.sessionInit.mock.calls[0][1]).toMatchObject(sessionInitOptionalParams);
         });
 
-        it('[LiveChatV1] ChatSDK.startChat() with initContext defined should override IStartChatOptionalParams', async() => {
+        it('ChatSDK.startChat() with initContext defined should override IStartChatOptionalParams', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
-            chatSDK.IC3Client = {
-                initialize: jest.fn(),
-                joinConversation: jest.fn()
-            }
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
 
             const optionalParams = {
                 preChatResponse: 'preChatResponse',
@@ -1514,7 +1512,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.OCClient.sessionInit.mock.calls[0][1]).toMatchObject(sessionInitOptionalParams);
         });
 
-        it('[LiveChatV1] ChatSDK.startChat() with authenticatedUserToken should pass it to OCClient.sessionInit() call\'s optional parameters', async() => {
+        it('ChatSDK.startChat() with authenticatedUserToken should pass it to OCClient.sessionInit() call\'s optional parameters', async() => {
 
             const chatSDKConfig = {
                 getAuthToken: async () => {
@@ -1522,7 +1520,6 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 }
             };
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             const oldGetChatConfig = chatSDK.getChatConfig;
             
@@ -1530,10 +1527,9 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             await chatSDK.initialize();
 
-            chatSDK.IC3Client = {
-                initialize: jest.fn(),
-                joinConversation: jest.fn()
-            }
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
 
             const optionalParams = {
                 authenticatedUserToken: 'authenticatedUserToken'
@@ -1559,8 +1555,6 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             chatSDK.getChatConfig = oldGetChatConfig;
 
             await chatSDK.getChatConfig();
-            
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.startChat({});
             const sessionInitOptionalParams = {
