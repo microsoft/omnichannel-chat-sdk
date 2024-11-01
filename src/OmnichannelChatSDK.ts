@@ -1842,10 +1842,6 @@ class OmnichannelChatSDK {
         return this.liveChatConfig;
     }
 
-    private resolveIC3ClientUrl(): string {
-        return urlResolvers.resolveIC3ClientUrl(this.chatSDKConfig);
-    }
-
     private resolveChatAdapterUrl(protocol: string): string {
         return urlResolvers.resolveChatAdapterUrl(this.chatSDKConfig, this.liveChatVersion, protocol);
     }
