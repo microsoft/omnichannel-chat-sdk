@@ -1,4 +1,4 @@
-import LogLevel from '@microsoft/omnichannel-ic3core/lib/logging/LogLevel';
+import LogLevel from '../../src/telemetry/LogLevel';
 import {ACSAdapterLogger, ACSClientLogger, OCSDKLogger, CallingSDKLogger, AMSClientLogger} from '../../src/utils/loggers';
 
 describe('loggers', () => {
