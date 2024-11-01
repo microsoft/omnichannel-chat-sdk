@@ -1842,10 +1842,6 @@ class OmnichannelChatSDK {
         return this.liveChatConfig;
     }
 
-    private resolveChatAdapterUrl(protocol: string): string {
-        return urlResolvers.resolveChatAdapterUrl(this.chatSDKConfig, this.liveChatVersion, protocol);
-    }
-
     private async setAuthTokenProvider(provider: ChatSDKConfig["getAuthToken"], optionalParams: SetAuthTokenProviderOptionalParams = {}) {
         this.scenarioMarker.startScenario(TelemetryEvent.GetAuthToken);
 
