@@ -1353,17 +1353,15 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(1);
         });
 
-        it('[LiveChatV1] ChatSDK.startChat() with preChatResponse should pass it to OCClient.sessionInit() call\'s optional parameters', async() => {
+        it('ChatSDK.startChat() with preChatResponse should pass it to OCClient.sessionInit() call\'s optional parameters', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
-            chatSDK.IC3Client = {
-                initialize: jest.fn(),
-                joinConversation: jest.fn()
-            }
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
 
             const optionalParams = {
                 preChatResponse: 'preChatResponse'
@@ -1417,17 +1415,15 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             }
         });
 
-        it('[LiveChatV1] ChatSDK.startChat() with customContext, browser, os, locale, device defined in sessionInitOptionalParams should pass it to OCClient.sessionInit() call\'s optional parameters', async() => {
+        it('ChatSDK.startChat() with customContext, browser, os, locale, device defined in sessionInitOptionalParams should pass it to OCClient.sessionInit() call\'s optional parameters', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
 
-            chatSDK.IC3Client = {
-                initialize: jest.fn(),
-                joinConversation: jest.fn()
-            }
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
 
             const optionalParams = {
                 preChatResponse: 'preChatResponse',
