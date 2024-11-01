@@ -30,7 +30,6 @@ import ChatSDKExceptionDetails from "./core/ChatSDKExceptionDetails";
 import ChatSDKMessage from "./core/messaging/ChatSDKMessage";
 import ChatTranscriptBody from "./core/ChatTranscriptBody";
 import ConversationMode from "./core/ConversationMode";
-import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import EmailLiveChatTranscriptOptionaParams from "./core/EmailLiveChatTranscriptOptionalParams";
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/FileSharingProtocolType";
@@ -56,8 +55,6 @@ import IInitializationInfo from "@microsoft/omnichannel-ic3core/lib/model/IIniti
 import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import IOmnichannelConfiguration from "@microsoft/ocsdk/lib/Interfaces/IOmnichannelConfiguration";
 import IPerson from "@microsoft/omnichannel-ic3core/lib/model/IPerson";
-import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
-import IRawThread from "@microsoft/omnichannel-ic3core/lib/interfaces/IRawThread";
 import IReconnectableChatsParams from "@microsoft/ocsdk/lib/Interfaces/IReconnectableChatsParams";
 import IRegionGtms from "@microsoft/omnichannel-ic3core/lib/model/IRegionGtms";
 import ISDKConfiguration from "@microsoft/ocsdk/lib/Interfaces/ISDKConfiguration";
@@ -74,7 +71,7 @@ import MessageType from "@microsoft/omnichannel-ic3core/lib/model/MessageType";
 import OmnichannelChatToken from "@microsoft/omnichannel-amsclient/lib/OmnichannelChatToken";
 import OmnichannelConfig from "./core/OmnichannelConfig";
 import OmnichannelErrorCodes from "./core/OmnichannelErrorCodes";
-import OmnichannelMessage from "./core/messaging/OmnichannelMessage";
+import OmnichannelMessage, { DeliveryMode } from "./core/messaging/OmnichannelMessage";
 import OnNewMessageOptionalParams from "./core/messaging/OnNewMessageOptionalParams";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import PluggableLogger from "@microsoft/omnichannel-amsclient/lib/PluggableLogger";
@@ -1204,7 +1201,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async onAgentEndSession(onAgentEndSessionCallback: (message: IRawThread | ParticipantsRemovedEvent) => void): Promise<void> {
+    public async onAgentEndSession(onAgentEndSessionCallback: (message: ParticipantsRemovedEvent) => void): Promise<void> {
         this.scenarioMarker.startScenario(TelemetryEvent.OnAgentEndSession, {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
@@ -1229,7 +1226,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async uploadFileAttachment(fileInfo: IFileInfo | File): Promise<IRawMessage | OmnichannelMessage | undefined> {
+    public async uploadFileAttachment(fileInfo: IFileInfo | File): Promise<OmnichannelMessage | undefined> {
         const amsClient = await this.getAMSClient();
         this.scenarioMarker.startScenario(TelemetryEvent.UploadFileAttachment, {
             RequestId: this.requestId,
@@ -1263,7 +1260,7 @@ class OmnichannelChatSDK {
                 }
             };
 
-            const messageToSend: IRawMessage = {
+            const messageToSend: OmnichannelMessage = {
                 content: "",
                 timestamp: new Date(),
                 contentType: MessageContentType.Text,
