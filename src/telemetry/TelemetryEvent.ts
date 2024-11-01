@@ -24,7 +24,6 @@ enum TelemetryEvent {
     DownloadFileAttachment = "DownloadFileAttachment",
     EmailLiveChatTranscript = "EmailLiveChatTranscript",
     GetLiveChatTranscript = "GetLiveChatTranscript",
-    CreateIC3Adapter = "CreateChatAdapter",
     CreateACSAdapter = "CreateACSAdapter",
     CreateDirectLine = "CreateDirectLine",
     GetVoiceVideoCalling = "GetVoiceVideoCalling",
