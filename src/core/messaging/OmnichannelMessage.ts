@@ -38,6 +38,13 @@ export enum FileSharingProtocolType {
     AmsBasedFileSharing = 0
 }
 
+export interface IFileInfo {
+    name: string;
+    type: string;
+    size: number;
+    data: ArrayBuffer;
+}
+
 export interface IFileMetadata {
     id: string;
     name: string;
