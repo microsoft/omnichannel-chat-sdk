@@ -39,7 +39,6 @@ import GetChatTokenOptionalParams from "./core/GetChatTokenOptionalParams";
 import GetConversationDetailsOptionalParams from "./core/GetConversationDetailsOptionalParams";
 import GetLiveChatConfigOptionalParams from "./core/GetLiveChatConfigOptionalParams";
 import GetLiveChatTranscriptOptionalParams from "./core/GetLiveChatTranscriptOptionalParams";
-import IChatToken from "./external/IC3Adapter/IChatToken";
 import IEmailTranscriptOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IEmailTranscriptOptionalParams";
 import IGetChatTokenOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTokenOptionalParams";
 import IGetChatTranscriptsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTranscriptsOptionalParams";
@@ -56,7 +55,7 @@ import LiveChatContext from "./core/LiveChatContext";
 import LiveChatVersion from "./core/LiveChatVersion";
 import LiveWorkItemDetails from "./core/LiveWorkItemDetails";
 import LiveWorkItemState from "./core/LiveWorkItemState";
-import OmnichannelChatToken from "@microsoft/omnichannel-amsclient/lib/OmnichannelChatToken";
+import AMSOmnichannelChatToken from "@microsoft/omnichannel-amsclient/lib/OmnichannelChatToken";
 import OmnichannelConfig from "./core/OmnichannelConfig";
 import OmnichannelErrorCodes from "./core/OmnichannelErrorCodes";
 import OmnichannelMessage, { DeliveryMode, IFileInfo, IFileMetadata, MessageContentType, MessageType, PersonType } from "./core/messaging/OmnichannelMessage";
@@ -83,6 +82,7 @@ import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import setOcUserAgent from "./utils/setOcUserAgent";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 import { callingBundleVersion } from "./config/settings";
+import OmnichannelChatToken from "./core/OmnichannelChatToken";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -100,7 +100,7 @@ class OmnichannelChatSDK {
     private unqServicesOrgUrl: string | null = null;
     private coreServicesOrgUrl: string | null = null;
     private dynamicsLocationCode: string | null = null;
-    private chatToken: IChatToken;
+    private chatToken: OmnichannelChatToken;
     private liveChatConfig: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private liveChatVersion: number;
     private dataMaskingRules: any; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -694,7 +694,7 @@ class OmnichannelChatSDK {
             try {
                 const amsClient = await this.getAMSClient();
                 if (this.liveChatVersion === LiveChatVersion.V2) {
-                    await amsClient?.initialize({ chatToken: this.chatToken as OmnichannelChatToken });
+                    await amsClient?.initialize({ chatToken: this.chatToken as AMSOmnichannelChatToken });
                 }
             } catch (error) {
                 const telemetryData = {
@@ -915,7 +915,7 @@ class OmnichannelChatSDK {
         return this.getChatConfig({ sendCacheHeaders: optionalParams?.sendCacheHeaders || false });
     }
 
-    public async getChatToken(cached = true, optionalParams?: GetChatTokenOptionalParams): Promise<IChatToken> {
+    public async getChatToken(cached = true, optionalParams?: GetChatTokenOptionalParams): Promise<OmnichannelChatToken> {
         this.scenarioMarker.startScenario(TelemetryEvent.GetChatToken, {
             RequestId: this.requestId
         });

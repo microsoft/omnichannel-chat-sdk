@@ -1,6 +1,6 @@
-export default interface IChatToken {
+export default interface OmnichannelChatToken {
     chatId?: string;
-    regionGTMS?: any;
+    regionGTMS?: Record<string, string>;
     requestId?: string;
     token?: string;
     expiresIn?: string;

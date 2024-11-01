@@ -5,7 +5,6 @@ import AriaTelemetry from "../telemetry/AriaTelemetry";
 import ChatAdapterOptionalParams from "../core/messaging/ChatAdapterOptionalParams";
 import { ChatClient } from "@azure/communication-chat";
 import ChatSDKConfig from "../core/ChatSDKConfig";
-import IChatToken from "../external/IC3Adapter/IChatToken";
 import LiveChatVersion from "../core/LiveChatVersion";
 import OmnichannelConfig from "../core/OmnichannelConfig";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
@@ -17,6 +16,7 @@ import createFormatEgressTagsMiddleware from "../external/ACSAdapter/createForma
 import createFormatIngressTagsMiddleware from "../external/ACSAdapter/createFormatIngressTagsMiddleware";
 import exceptionThrowers from "./exceptionThrowers";
 import urlResolvers from "./urlResolvers";
+import OmnichannelChatToken from "../core/OmnichannelChatToken";
 
 const createDirectLine = async (optionalParams: ChatAdapterOptionalParams, chatSDKConfig: ChatSDKConfig, liveChatVersion: LiveChatVersion, protocol: string, telemetry: typeof AriaTelemetry, scenarioMarker: ScenarioMarker): Promise<unknown> => {
     const options = optionalParams.DirectLine? optionalParams.DirectLine.options: {};
@@ -44,7 +44,7 @@ const createDirectLine = async (optionalParams: ChatAdapterOptionalParams, chatS
     }
 };
 
-const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatSDKConfig: ChatSDKConfig, liveChatVersion: LiveChatVersion, protocol: string, telemetry: typeof AriaTelemetry, scenarioMarker: ScenarioMarker, omnichannelConfig: OmnichannelConfig, chatToken: IChatToken, fileManager: AMSFileManager, chatClient: ChatClient, logger: ACSAdapterLogger): Promise<unknown> => {
+const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatSDKConfig: ChatSDKConfig, liveChatVersion: LiveChatVersion, protocol: string, telemetry: typeof AriaTelemetry, scenarioMarker: ScenarioMarker, omnichannelConfig: OmnichannelConfig, chatToken: OmnichannelChatToken, fileManager: AMSFileManager, chatClient: ChatClient, logger: ACSAdapterLogger): Promise<unknown> => {
     const options = optionalParams.ACSAdapter? optionalParams.ACSAdapter.options: {};
     const acsAdapterCDNUrl = urlResolvers.resolveChatAdapterUrl(chatSDKConfig, liveChatVersion, protocol);
 

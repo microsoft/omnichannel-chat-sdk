@@ -1,11 +1,11 @@
-import IChatToken from "../external/IC3Adapter/IChatToken";
+import OmnichannelChatToken from "../core/OmnichannelChatToken";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
 
 interface IVoiceVideoCallingParams {
     environment?: string;
     logger?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-    chatToken: IChatToken;
+    chatToken: OmnichannelChatToken;
     OCClient: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     selfVideoHTMLElementId: string;
     remoteVideoHTMLElementId: string;
