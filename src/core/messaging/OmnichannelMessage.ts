@@ -68,7 +68,7 @@ interface OmnichannelMessage {
     clientmessageid?: string;
     messageid?: string;
     content: string;
-    contentType: string;
+    contentType: string | MessageContentType;
     deliveryMode: DeliveryMode | undefined;
     messageType: MessageType;
     sender: IPerson;
