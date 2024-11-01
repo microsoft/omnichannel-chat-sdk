@@ -28,7 +28,7 @@ const resolveACSAdapterCDNUrl = (chatSDKConfig: ChatSDKConfig) => {
 };
 
 const resolveChatAdapterUrl = (chatSDKConfig: ChatSDKConfig, liveChatVersion: LiveChatVersion, protocol: string): string => {
-    const supportedChatAdapterProtocols = [ChatAdapterProtocols.ACS, ChatAdapterProtocols.IC3, ChatAdapterProtocols.DirectLine];
+    const supportedChatAdapterProtocols = [ChatAdapterProtocols.ACS, ChatAdapterProtocols.DirectLine];
     if (protocol && !supportedChatAdapterProtocols.includes(protocol as string)) {
         throw new Error(`ChatAdapter for protocol ${protocol} currently not supported`);
     }

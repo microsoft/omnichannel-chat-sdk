@@ -27,7 +27,6 @@ enum TelemetryEvent {
     CreateACSAdapter = "CreateACSAdapter",
     CreateDirectLine = "CreateDirectLine",
     GetVoiceVideoCalling = "GetVoiceVideoCalling",
-    GetIC3Client = "GetIC3Client",
     InitializeVoiceVideoCallingSDK = "InitializeVoiceVideoCallingSDK",
     AcceptVoiceCall = "AcceptVoiceCall",
     AcceptVideoCall = "AcceptVideoCall",
