@@ -45,8 +45,6 @@ import { SDKProvider as IC3SDKProvider } from '@microsoft/omnichannel-ic3core';
 import IChatToken from "./external/IC3Adapter/IChatToken";
 import IConversation from "@microsoft/omnichannel-ic3core/lib/model/IConversation";
 import IEmailTranscriptOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IEmailTranscriptOptionalParams";
-import IFileInfo from "@microsoft/omnichannel-ic3core/lib/interfaces/IFileInfo";
-import IFileMetadata from "@microsoft/omnichannel-ic3core/lib/model/IFileMetadata";
 import IGetChatTokenOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTokenOptionalParams";
 import IGetChatTranscriptsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetChatTranscriptsOptionalParams";
 import IGetLWIDetailsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetLWIDetailsOptionalParams";
@@ -69,7 +67,7 @@ import LiveWorkItemState from "./core/LiveWorkItemState";
 import OmnichannelChatToken from "@microsoft/omnichannel-amsclient/lib/OmnichannelChatToken";
 import OmnichannelConfig from "./core/OmnichannelConfig";
 import OmnichannelErrorCodes from "./core/OmnichannelErrorCodes";
-import OmnichannelMessage, { DeliveryMode, MessageContentType, MessageType, PersonType } from "./core/messaging/OmnichannelMessage";
+import OmnichannelMessage, { DeliveryMode, IFileInfo, IFileMetadata, MessageContentType, MessageType, PersonType } from "./core/messaging/OmnichannelMessage";
 import OnNewMessageOptionalParams from "./core/messaging/OnNewMessageOptionalParams";
 import PluggableLogger from "@microsoft/omnichannel-amsclient/lib/PluggableLogger";
 import PostChatContext from "./core/PostChatContext";
@@ -119,7 +117,7 @@ class OmnichannelChatSDK {
     private authSettings: AuthSettings | null = null;
     private authenticatedUserToken: string | null = null;
     private preChatSurvey: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-    private conversation: IConversation | ACSConversation | null = null;
+    private conversation: ACSConversation | null = null;
     private callingOption: CallingOptionsOptionSetNumber = CallingOptionsOptionSetNumber.NoCalling;
     private telemetry: typeof AriaTelemetry | null = null;
     private scenarioMarker: ScenarioMarker;
@@ -1014,14 +1012,14 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async getMessages(): Promise<IMessage[] | OmnichannelMessage[] | undefined> {
+    public async getMessages(): Promise<OmnichannelMessage[] | undefined> {
         this.scenarioMarker.startScenario(TelemetryEvent.GetMessages, {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
         });
 
         try {
-            const messages = await (this.conversation as (IConversation | ACSConversation))?.getMessages();
+            const messages = await (this.conversation as (ACSConversation))?.getMessages();
 
             this.scenarioMarker.completeScenario(TelemetryEvent.GetMessages, {
                 RequestId: this.requestId,
