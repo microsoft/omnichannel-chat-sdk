@@ -1,9 +1,4 @@
-import { webChatACSAdapterVersion, webChatDirectLineVersion, webChatIC3AdapterVersion } from "../config/settings";
-
-const getIC3AdapterCDNUrl = (version = webChatIC3AdapterVersion): string => {
-    const IC3AdapterCDNUrl = `https://webchatic3.blob.core.windows.net/webchat-ic3adapter/${version}/botframework-webchat-adapter-ic3.production.min.js`;
-    return IC3AdapterCDNUrl;
-}
+import { webChatACSAdapterVersion, webChatDirectLineVersion } from "../config/settings";
 
 const getACSAdapterCDNUrl = (version = webChatACSAdapterVersion): string => {
     const ACSAdapterCDNUrl = `https://unpkg.com/acs_webchat-chat-adapter@${version}/dist/chat-adapter.js`;
@@ -16,13 +11,11 @@ const getDirectLineCDNUrl = (version = webChatDirectLineVersion): string => {
 }
 
 export default {
-    getIC3AdapterCDNUrl,
     getACSAdapterCDNUrl,
     getDirectLineCDNUrl
 }
 
 export {
-    getIC3AdapterCDNUrl,
     getACSAdapterCDNUrl,
     getDirectLineCDNUrl
 }
