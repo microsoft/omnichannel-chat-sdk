@@ -1,5 +1,4 @@
-import { ACSAdapterLogger, IC3ClientLogger } from "./loggers";
-
+import { ACSAdapterLogger } from "./loggers";
 import ACSParticipantDisplayName from "../core/messaging/ACSParticipantDisplayName";
 import AMSFileManager from "../external/ACSAdapter/AMSFileManager";
 import AriaTelemetry from "../telemetry/AriaTelemetry";

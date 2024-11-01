@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { ACSAdapterLogger, ACSClientLogger, AMSClientLogger, CallingSDKLogger, IC3ClientLogger, OCSDKLogger, createACSAdapterLogger, createACSClientLogger, createAMSClientLogger, createCallingSDKLogger, createOCSDKLogger } from "./utils/loggers";
+import { ACSAdapterLogger, ACSClientLogger, AMSClientLogger, CallingSDKLogger, OCSDKLogger, createACSAdapterLogger, createACSClientLogger, createAMSClientLogger, createCallingSDKLogger, createOCSDKLogger } from "./utils/loggers";
 import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import { SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
