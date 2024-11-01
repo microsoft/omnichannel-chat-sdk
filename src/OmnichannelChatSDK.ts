@@ -170,10 +170,10 @@ class OmnichannelChatSDK {
         this.amsClientLogger = createAMSClientLogger(this.omnichannelConfig);
 
         this.scenarioMarker.useTelemetry(this.telemetry);
-        loggerUtils.useTelemetry(this.telemetry, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+        loggerUtils.useTelemetry(this.telemetry, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger);
 
         this.scenarioMarker.setRuntimeId(this.runtimeId);
-        loggerUtils.setRuntimeId(this.runtimeId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+        loggerUtils.setRuntimeId(this.runtimeId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger);
 
         validateOmnichannelConfig(omnichannelConfig);
         validateSDKConfig(chatSDKConfig);
@@ -192,7 +192,7 @@ class OmnichannelChatSDK {
             this.telemetry.initialize(this.chatSDKConfig.telemetry.ariaTelemetryKey);
         }
 
-        loggerUtils.setRequestId(this.requestId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+        loggerUtils.setRequestId(this.requestId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger);
     }
 
     /* istanbul ignore next */
@@ -203,7 +203,7 @@ class OmnichannelChatSDK {
 
         this.telemetry?.setDebug(flag);
         this.scenarioMarker.setDebug(flag);
-        loggerUtils.setDebug(flag, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+        loggerUtils.setDebug(flag, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger);
     }
     
     private async retryLoadAMSClient() {
@@ -617,7 +617,7 @@ class OmnichannelChatSDK {
             await this.getChatToken(false);
         }
 
-        loggerUtils.setChatId(this.chatToken.chatId || '', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+        loggerUtils.setChatId(this.chatToken.chatId || '', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger);
 
         let sessionInitOptionalParams: ISessionInitOptionalParams = {
             initContext: {} as InitContext
@@ -775,8 +775,8 @@ class OmnichannelChatSDK {
                 this.sessionId = null;
             }
 
-            loggerUtils.setRequestId(this.requestId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
-            loggerUtils.setChatId('', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+            loggerUtils.setRequestId(this.requestId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger);
+            loggerUtils.setChatId('', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger);
         } catch (error) {
             const telemetryData = {
                 RequestId: this.requestId,
