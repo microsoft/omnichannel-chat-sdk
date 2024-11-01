@@ -353,8 +353,6 @@ class OmnichannelChatSDK {
                 });
                 
                 this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
-            } else if (this.liveChatVersion === LiveChatVersion.V1) {
-                this.IC3Client = await this.getIC3Client();
             }
 
             this.isInitialized = true;
