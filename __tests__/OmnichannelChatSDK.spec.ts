@@ -5,18 +5,10 @@ import { defaultLocaleId, getLocaleStringFromId } from "../src/utils/locale";
 
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
 import AriaTelemetry from "../src/telemetry/AriaTelemetry";
-import ChatAdapterProtocols from "../src/core/messaging/ChatAdapterProtocols";
 import ConversationMode from '../src/core/ConversationMode';
-import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/FileSharingProtocolType";
-import IFileInfo from "@microsoft/omnichannel-ic3core/lib/interfaces/IFileInfo";
-import IFileMetadata from "@microsoft/omnichannel-ic3core/lib/model/IFileMetadata";
-import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
-import LiveChatVersion from "../src/core/LiveChatVersion";
 import OmnichannelErrorCodes from "../src/core/OmnichannelErrorCodes";
-import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import { SDKProvider } from "@microsoft/ocsdk";
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
-import libraries from "../src/utils/libraries";
 
 describe('Omnichannel Chat SDK, Sequential', () => {
     AWTLogManager.initialize = jest.fn();
