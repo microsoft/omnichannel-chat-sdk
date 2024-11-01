@@ -29,8 +29,7 @@ describe('AriaTelemetry', () => {
 
     it('AriaTelemetry.setCDNPackages() should update AriaTelemetry._CDNPackagesInfo', () => {
         const packages = {
-            IC3Client: 'IC3Client',
-            IC3Adapter: 'IC3Adapter',
+            ACSAdapter: 'ACSAdapter',
         };
 
         AriaTelemetry.setCDNPackages(packages);
@@ -40,13 +39,11 @@ describe('AriaTelemetry', () => {
 
     it('AriaTelemetry.setCDNPackages() should be able to override previous AriaTelemetry._CDNPackagesInfo', () => {
         const packages = {
-            IC3Client: 'IC3Client',
-            IC3Adapter: 'IC3Adapter',
+            ACSAdapter: 'ACSAdapter',
         };
 
         const overridePackages = {
-            IC3Client: 'override',
-            IC3Adapter: 'override',
+            ACSAdapter: 'override',
         };
 
         AriaTelemetry.setCDNPackages(packages);
@@ -230,46 +227,6 @@ describe('AriaTelemetry', () => {
 
         expect((AriaTelemetry as any)._disable).toBe(false);
         expect((AriaTelemetry as any).logger.logEvent.mock.calls[0][0].name).toBe(ScenarioType.OCSDK);
-    });
-
-    it('AriaTelemetry.info() for IC3CLIENT should send IC3CLIENT telemetry data', () => {
-        jest.spyOn((AriaTelemetry as any).logger, 'logEvent');
-        AriaTelemetry.info({}, ScenarioType.IC3CLIENT);
-
-        expect((AriaTelemetry as any)._disable).toBe(false);
-        expect((AriaTelemetry as any).logger.logEvent.mock.calls[0][0].name).toBe(ScenarioType.IC3CLIENT);
-    });
-
-    it('AriaTelemetry.debug() for IC3CLIENT should send IC3CLIENT telemetry data', () => {
-        jest.spyOn((AriaTelemetry as any).logger, 'logEvent');
-        AriaTelemetry.debug({}, ScenarioType.IC3CLIENT);
-
-        expect((AriaTelemetry as any)._disable).toBe(false);
-        expect((AriaTelemetry as any).logger.logEvent.mock.calls[0][0].name).toBe(ScenarioType.IC3CLIENT);
-    });
-
-    it('AriaTelemetry.warn() for IC3CLIENT should send IC3CLIENT telemetry data', () => {
-        jest.spyOn((AriaTelemetry as any).logger, 'logEvent');
-        AriaTelemetry.warn({}, ScenarioType.IC3CLIENT);
-
-        expect((AriaTelemetry as any)._disable).toBe(false);
-        expect((AriaTelemetry as any).logger.logEvent.mock.calls[0][0].name).toBe(ScenarioType.IC3CLIENT);
-    });
-
-    it('AriaTelemetry.error() for IC3CLIENT should send IC3CLIENT telemetry data', () => {
-        jest.spyOn((AriaTelemetry as any).logger, 'logEvent');
-        AriaTelemetry.error({}, ScenarioType.IC3CLIENT);
-
-        expect((AriaTelemetry as any)._disable).toBe(false);
-        expect((AriaTelemetry as any).logger.logEvent.mock.calls[0][0].name).toBe(ScenarioType.IC3CLIENT);
-    });
-
-    it('AriaTelemetry.log() for IC3CLIENT should send IC3CLIENT telemetry data', () => {
-        jest.spyOn((AriaTelemetry as any).logger, 'logEvent');
-        AriaTelemetry.log({}, ScenarioType.IC3CLIENT);
-
-        expect((AriaTelemetry as any)._disable).toBe(false);
-        expect((AriaTelemetry as any).logger.logEvent.mock.calls[0][0].name).toBe(ScenarioType.IC3CLIENT);
     });
 
     it('AriaTelemetry.info() for ACSCLIENT should send ACSCLIENT telemetry data', () => {

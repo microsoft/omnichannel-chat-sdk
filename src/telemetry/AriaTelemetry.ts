@@ -3,7 +3,7 @@ import { AWTEventPriority } from '../external/aria/common/Enums';
 import { AWTLogManager, AWTLogger, AWTEventData, AWTLogConfiguration } from '../external/aria/webjs/AriaSDK';
 import LogLevel from '../telemetry/LogLevel';
 import ScenarioType from '../telemetry/ScenarioType';
-import { ic3ClientVersion, webChatACSAdapterVersion } from '../config/settings';
+import { webChatACSAdapterVersion } from '../config/settings';
 import { isBrowser, isReactNative } from '../utils/platform';
 
 interface BaseContract {
@@ -31,30 +31,10 @@ interface NPMPackagesInfo {
 }
 
 interface CDNPackagesInfo {
-    IC3Client?: string;
-    IC3Adapter?: string;
     ACSAdapter?: string;
     DirectLine?: string;
     SpoolSDK?: string;
     VoiceVideoCalling?: string;
-}
-
-interface IC3ClientContract {
-    ChatSDKRuntimeId: string;
-    OrgId: string;
-    OrgUrl: string;
-    WidgetId: string;
-    RequestId: string;
-    ChatId: string;
-    Event?: string;
-    Description?: string;
-    SubscriptionId?: string;
-    EndpointId?: string;
-    EndpointUrl?: string;
-    ErrorCode?: string;
-    ExceptionDetails?: string;
-    ElapsedTimeInMilliseconds?: string;
-    IC3ClientVersion: string;
 }
 
 interface OCSDKContract {
@@ -195,18 +175,6 @@ class AriaTelemetry {
             priority: AWTEventPriority.High
         };
 
-        if (scenarioType == ScenarioType.IC3CLIENT) {
-            event = {
-                name: ScenarioType.IC3CLIENT,
-                properties: {
-                    ...AriaTelemetry.populateIC3ClientBaseProperties(),
-                    ...properties,
-                    LogLevel: LogLevel.INFO
-                },
-                priority: AWTEventPriority.High
-            }
-        }
-
         if (scenarioType == ScenarioType.OCSDK) {
             event = {
                 name: ScenarioType.OCSDK,
@@ -289,18 +257,6 @@ class AriaTelemetry {
             },
             priority: AWTEventPriority.High
         };
-
-        if (scenarioType == ScenarioType.IC3CLIENT) {
-            event = {
-                name: ScenarioType.IC3CLIENT,
-                properties: {
-                    ...AriaTelemetry.populateIC3ClientBaseProperties(),
-                    ...properties,
-                    LogLevel: LogLevel.DEBUG
-                },
-                priority: AWTEventPriority.High
-            }
-        }
 
         if (scenarioType == ScenarioType.OCSDK) {
             event = {
@@ -385,18 +341,6 @@ class AriaTelemetry {
             priority: AWTEventPriority.High
         };
 
-        if (scenarioType == ScenarioType.IC3CLIENT) {
-            event = {
-                name: ScenarioType.IC3CLIENT,
-                properties: {
-                    ...AriaTelemetry.populateIC3ClientBaseProperties(),
-                    ...properties,
-                    LogLevel: LogLevel.WARN
-                },
-                priority: AWTEventPriority.High
-            }
-        }
-
         if (scenarioType == ScenarioType.OCSDK) {
             event = {
                 name: ScenarioType.OCSDK,
@@ -480,18 +424,6 @@ class AriaTelemetry {
             priority: AWTEventPriority.High
         };
 
-        if (scenarioType == ScenarioType.IC3CLIENT) {
-            event = {
-                name: ScenarioType.IC3CLIENT,
-                properties: {
-                    ...AriaTelemetry.populateIC3ClientBaseProperties(),
-                    ...properties,
-                    LogLevel: LogLevel.ERROR
-                },
-                priority: AWTEventPriority.High
-            }
-        }
-
         if (scenarioType == ScenarioType.OCSDK) {
             event = {
                 name: ScenarioType.OCSDK,
@@ -574,18 +506,6 @@ class AriaTelemetry {
             },
             priority: AWTEventPriority.High
         };
-
-        if (scenarioType == ScenarioType.IC3CLIENT) {
-            event = {
-                name: ScenarioType.IC3CLIENT,
-                properties: {
-                    ...AriaTelemetry.populateIC3ClientBaseProperties(),
-                    ...properties,
-                    LogLevel: LogLevel.LOG
-                },
-                priority: AWTEventPriority.High
-            }
-        }
 
         if (scenarioType == ScenarioType.OCSDK) {
             event = {
@@ -749,26 +669,6 @@ class AriaTelemetry {
         }
 
         return platformData;
-    }
-
-    private static populateIC3ClientBaseProperties(): IC3ClientContract {
-        return {
-            ChatSDKRuntimeId: '',
-            OrgId: '',
-            OrgUrl: '',
-            WidgetId: '',
-            RequestId: '',
-            ChatId: '',
-            Event: '',
-            Description: '',
-            SubscriptionId: '',
-            EndpointId: '',
-            EndpointUrl: '',
-            ErrorCode: '',
-            ExceptionDetails: '',
-            ElapsedTimeInMilliseconds: '',
-            IC3ClientVersion: ic3ClientVersion
-        }
     }
 
     private static populateOCSDKBaseProperties(): OCSDKContract {
