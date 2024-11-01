@@ -7,7 +7,6 @@ import ChatAdapterOptionalParams from "../core/messaging/ChatAdapterOptionalPara
 import { ChatClient } from "@azure/communication-chat";
 import ChatSDKConfig from "../core/ChatSDKConfig";
 import IChatToken from "../external/IC3Adapter/IChatToken";
-import IIC3AdapterOptions from "../external/IC3Adapter/IIC3AdapterOptions";
 import LiveChatVersion from "../core/LiveChatVersion";
 import OmnichannelConfig from "../core/OmnichannelConfig";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
