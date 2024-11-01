@@ -1630,22 +1630,20 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(callingToken).toEqual('');
         });
 
-        it('[LiveChatV1] ChatSDK.getCallingToken() should return skype token if acs token is not available', async () => {
+        it('ChatSDK.getCallingToken() should return skype token if acs token is not available', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
+
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
 
             chatSDK.OCClient = {};
             chatSDK.OCClient.getChatToken = jest.fn();
             chatSDK.OCClient.sessionInit = jest.fn();
-
-            chatSDK.IC3Client = {
-                initialize: jest.fn(),
-                joinConversation: jest.fn()
-            }
 
             await chatSDK.startChat();
 
