@@ -106,9 +106,7 @@ class OmnichannelChatSDK {
     private debug: boolean;
     public runtimeId: string;
     public OCSDKProvider: unknown;
-    public IC3SDKProvider: unknown;
     public OCClient: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-    public IC3Client: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     public ACSClient: ACSClient | null = null;
     public AMSClient: FramedClient | FramedlessClient | null = null;
     public omnichannelConfig: OmnichannelConfig;
