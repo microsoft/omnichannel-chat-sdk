@@ -250,7 +250,7 @@ class OmnichannelChatSDK {
     private async loadInitComponents() {
         this.scenarioMarker.startScenario(TelemetryEvent.InitializeComponents);
 
-        const supportedLiveChatVersions = [LiveChatVersion.V1, LiveChatVersion.V2];
+        const supportedLiveChatVersions = [LiveChatVersion.V2];
         if (!supportedLiveChatVersions.includes(this.liveChatVersion)) {
             exceptionThrowers.throwUnsupportedLiveChatVersionFailure(new Error(ChatSDKErrorName.UnsupportedLiveChatVersion), this.scenarioMarker, TelemetryEvent.InitializeComponents);
         }
@@ -335,7 +335,7 @@ class OmnichannelChatSDK {
             exceptionThrowers.throwChatConfigRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
 
-        const supportedLiveChatVersions = [LiveChatVersion.V1, LiveChatVersion.V2];
+        const supportedLiveChatVersions = [LiveChatVersion.V2];
         if (!supportedLiveChatVersions.includes(this.liveChatVersion)) {
             exceptionThrowers.throwUnsupportedLiveChatVersionFailure(new Error(ChatSDKErrorName.UnsupportedLiveChatVersion), this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
