@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/omnichannel-chat-sdk",
-  "version": "1.9.10-0",
+  "version": "1.10.1-0",
   "description": "Microsoft Omnichannel Chat SDK",
   "files": [
     "lib/**/*"
@@ -46,7 +46,7 @@
   "dependencies": {
     "@azure/communication-chat": "1.1.1",
     "@azure/communication-common": "1.1.0",
-    "@microsoft/ocsdk": "^0.5.7",
+    "@microsoft/ocsdk": "^0.5.8",
     "@microsoft/omnichannel-amsclient": "^0.1.6",
     "@microsoft/omnichannel-ic3core": "^0.1.4",
     "acs_webchat-chat-adapter": "^0.0.35-beta.30.1"
