@@ -1,4 +1,4 @@
-import IChatToken from "../external/IC3Adapter/IChatToken";
+import OmnichannelChatToken from "./OmnichannelChatToken";
 
 /**
  * Context of a live chat conversation. It contains all the necessary metadata to interact with a conversation.
@@ -8,7 +8,7 @@ import IChatToken from "../external/IC3Adapter/IChatToken";
  * reconnectId: Unique ID used to retrieve conversation for chat reconnect or persistent chat tied to the user
  */
 export default interface LiveChatContext {
-    chatToken: IChatToken,
+    chatToken: OmnichannelChatToken,
     requestId: string,
     reconnectId?: string,
     sessionId?: string

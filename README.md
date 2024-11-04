@@ -917,7 +917,7 @@ if (VoiceVideoCallingSDK) {
 | Send Typing indicator | Embedded | Requires `sendTypingIndicator` flag set to `true` |
 | PreChat Survey | Requires Adaptive Cards renderer | Requires Adaptive Cards renderer
 | Display Attachments | Requires implementation | Basic interface provided & Customizable |
-| Incoming messages handling | IC3 protocol message data | DirectLine activity data |
+| Incoming messages handling | Omnichannel message data | DirectLine activity data |
 
 ### React Native
 | | Custom Control | Gifted Chat Control | WebChat Control |
@@ -928,7 +928,7 @@ if (VoiceVideoCallingSDK) {
 | Send Typing indicator | Embedded | Requires Implementation | X |
 | PreChat Survey | Requires Adaptive Cards renderer | Requires Adaptive Cards renderer | X |
 | Display Attachments | Requires implementation| Embedded | X |
-| Incoming messages handling |IC3 protocol message data | IC3 protocol message data | X |
+| Incoming messages handling | Omnichannel message data | Omnichannel message data | X |
 
 ## Telemetry
 

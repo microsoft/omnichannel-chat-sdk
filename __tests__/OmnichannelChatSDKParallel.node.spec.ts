@@ -30,10 +30,10 @@ describe('Omnichannel Chat SDK (Node) Parallel initialization', () => {
 
         await chatSDK.initialize({ useParallelLoad: true });
 
-        chatSDK.IC3Client = {
-            initialize: jest.fn(),
-            joinConversation: jest.fn()
-        }
+        chatSDK.AMSClient = {};
+        chatSDK.ACSClient.initialize = jest.fn();
+        chatSDK.ACSClient.joinConversation = jest.fn();
+        chatSDK.AMSClient.initialize = jest.fn();
 
         const optionalParams = {
             sendDefaultInitContext: true

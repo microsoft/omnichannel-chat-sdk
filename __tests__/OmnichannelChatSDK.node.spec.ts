@@ -30,10 +30,9 @@ describe('Omnichannel Chat SDK (Node), Sequential', () => {
 
         await chatSDK.initialize();
 
-        chatSDK.IC3Client = {
-            initialize: jest.fn(),
-            joinConversation: jest.fn()
-        }
+        chatSDK.ACSClient.initialize = jest.fn();
+        chatSDK.ACSClient.joinConversation = jest.fn();
+        chatSDK.AMSClient.initialize = jest.fn();
 
         const optionalParams = {
             sendDefaultInitContext: true

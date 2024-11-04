@@ -125,12 +125,12 @@ describe('Omnichannel Chat SDK (Web)', () => {
 
         await chatSDK.startChat();
 
-        jest.spyOn(libraries, 'getIC3AdapterCDNUrl');
+        jest.spyOn(libraries, 'getACSAdapterCDNUrl');
         jest.spyOn(WebUtils, 'loadScript');
 
         try {
             await chatSDK.createChatAdapter();
-            expect(libraries.getIC3AdapterCDNUrl).toHaveBeenCalledTimes(1);
+            expect(libraries.getACSAdapterCDNUrl).toHaveBeenCalledTimes(1);
             expect(WebUtils.loadScript).toHaveBeenCalledTimes(1);
         } catch (error : any ) {
             expect(error).not.toBeInstanceOf(Error);

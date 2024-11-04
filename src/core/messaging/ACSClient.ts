@@ -9,9 +9,8 @@ import { ChatMessageReceivedEvent, ChatMessageEditedEvent, ParticipantsRemovedEv
 import ChatSDKMessage from "./ChatSDKMessage";
 import createOmnichannelMessage from "../../utils/createOmnichannelMessage";
 import { defaultMessageTags } from "./MessageTags";
-import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import LiveChatVersion from "../LiveChatVersion";
-import OmnichannelMessage from "./OmnichannelMessage";
+import OmnichannelMessage, { DeliveryMode } from "./OmnichannelMessage";
 
 enum ACSClientEvent {
     InitializeACSClient = 'InitializeACSClient',

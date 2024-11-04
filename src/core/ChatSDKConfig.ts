@@ -1,5 +1,4 @@
 import ChatAdapterConfig from "./messaging/ChatAdapterConfig";
-import IC3Config from "./messaging/IC3Config";
 
 interface DataMaskingSDKConfig {
     disable: boolean,
@@ -35,7 +34,6 @@ interface ChatSDKConfig {
     persistentChat?: PersistentChatConfig,
     chatReconnect?: ChatReconnectConfig,
     getAuthToken?: () => Promise<string|null>,
-    ic3Config?: IC3Config,
     chatAdapterConfig?: ChatAdapterConfig,
     internalConfig?: InternalChatSDKConfig,
     ocUserAgent?: string[]

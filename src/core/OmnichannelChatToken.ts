@@ -1,8 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-export default interface IChatToken {
+export default interface OmnichannelChatToken {
     chatId?: string;
-    regionGTMS?: any;
+    regionGTMS?: Record<string, string>;
     requestId?: string;
     token?: string;
     expiresIn?: string;

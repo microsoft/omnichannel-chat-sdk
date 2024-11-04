@@ -38,6 +38,13 @@ export enum FileSharingProtocolType {
     AmsBasedFileSharing = 0
 }
 
+export interface IFileInfo {
+    name: string;
+    type: string;
+    size: number;
+    data: ArrayBuffer;
+}
+
 export interface IFileMetadata {
     id: string;
     name: string;
@@ -56,12 +63,12 @@ export class ResourceType {
 }
 
 interface OmnichannelMessage {
-    id: string;
-    liveChatVersion: LiveChatVersion;
+    id?: string;
+    liveChatVersion?: LiveChatVersion;
     clientmessageid?: string;
     messageid?: string;
     content: string;
-    contentType: string;
+    contentType: string | MessageContentType;
     deliveryMode: DeliveryMode | undefined;
     messageType: MessageType;
     sender: IPerson;
