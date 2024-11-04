@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- Remove deprecated client
 
 ## [1.9.10] - 2024-10-25
 
