@@ -310,7 +310,6 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             expect(chatSDK.getChatConfig).toHaveBeenCalledTimes(1);
             expect(chatSDK.OCClient).toBeDefined();
-            expect(chatSDK.IC3Client).not.toBeDefined();
             expect(chatSDK.ACSClient).toBeDefined();
             expect(chatSDK.AMSClient).toBeDefined();
         });
@@ -1314,11 +1313,9 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
                 retryCount++;
             }
 
-
-            chatSDK.IC3Client = {
-                initialize: jest.fn(),
-                joinConversation: jest.fn()
-            }
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
 
             jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
                 ChatId: '',
@@ -1348,11 +1345,9 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
                 retryCount++;
             }
 
-
-            chatSDK.IC3Client = {
-                initialize: jest.fn(),
-                joinConversation: jest.fn()
-            }
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
 
             jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue({
                 State: 'state',
@@ -2239,7 +2234,6 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             expect(conversationDisconnectFn).toHaveBeenCalledTimes(1);
             expect(chatSDK.conversation).toBe(null);
             expect(chatSDK.chatToken).toMatchObject({});
-            expect(chatSDK.IC3Client).toBe(undefined);
         });
 
         it('ChatSDK.endChat() should fail if OCClient.sessionClose() fails', async () => {
