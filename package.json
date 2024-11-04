@@ -36,15 +36,14 @@
     "@typescript-eslint/parser": "^5.4.2",
     "eslint": "^7.32.0",
     "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
     "ts-jest": "^29.1.2",
-    "typescript": "^5.4.2",
-    "jest-environment-jsdom": "^29.7.0"
+    "typescript": "^5.4.2"
   },
   "dependencies": {
     "@azure/communication-chat": "1.1.1",
     "@azure/communication-common": "1.1.0",
     "@microsoft/ocsdk": "^0.5.7",
-    "@microsoft/omnichannel-amsclient": "^0.1.6",
-    "@microsoft/omnichannel-ic3core": "^0.1.4"
+    "@microsoft/omnichannel-amsclient": "^0.1.6"
   }
 }
