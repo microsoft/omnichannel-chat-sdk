@@ -1,12 +1,12 @@
-import LogLevel from "../telemetry/LogLevel";
-import OmnichannelConfig from "../core/OmnichannelConfig";
 import { AWTEventData } from "../external/aria/webjs/AriaSDK";
+import AriaTelemetry from "../telemetry/AriaTelemetry";
 import ICallingSDKLogData from "../external/CallingSDK/ICallingSDKLogData";
 import IIC3SDKLogData from "../external/IC3Client/IIC3SDKLogData";
 import IOCSDKLogData from "../external/OCSDK/IOCSDKLogData";
-import AriaTelemetry from "../telemetry/AriaTelemetry";
-import ScenarioType from "../telemetry/ScenarioType";
+import LogLevel from "../telemetry/LogLevel";
+import OmnichannelConfig from "../core/OmnichannelConfig";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
+import ScenarioType from "../telemetry/ScenarioType";
 
 export class IC3ClientLogger {
     private debug = false;
@@ -59,35 +59,35 @@ export class IC3ClientLogger {
 
         const additionalProperties: AWTEventData["properties"] = {
             ...event,
-            ExceptionDetails: event.ExceptionDetails? JSON.stringify(event.ExceptionDetails): '',
+            ExceptionDetails: event.ExceptionDetails ? JSON.stringify(event.ExceptionDetails) : '',
         };
 
-        switch(logLevel) {
-            case LogLevel.DEBUG:
-                this.telemetry?.debug({
-                    ...baseProperties,
-                    ...additionalProperties
-                }, ScenarioType.IC3CLIENT);
-                break;
-            case LogLevel.WARN:
-                this.telemetry?.warn({
-                    ...baseProperties,
-                    ...additionalProperties
-                }, ScenarioType.IC3CLIENT);
-                break;
-            case LogLevel.ERROR:
-                this.telemetry?.error({
-                    ...baseProperties,
-                    ...additionalProperties
-                }, ScenarioType.IC3CLIENT);
-                break;
-            case LogLevel.INFO:
-            default:
-                this.telemetry?.info({
-                    ...baseProperties,
-                    ...additionalProperties
-                }, ScenarioType.IC3CLIENT);
-                break;
+        switch (logLevel) {
+        case LogLevel.DEBUG:
+            this.telemetry?.debug({
+                ...baseProperties,
+                ...additionalProperties
+            }, ScenarioType.IC3CLIENT);
+            break;
+        case LogLevel.WARN:
+            this.telemetry?.warn({
+                ...baseProperties,
+                ...additionalProperties
+            }, ScenarioType.IC3CLIENT);
+            break;
+        case LogLevel.ERROR:
+            this.telemetry?.error({
+                ...baseProperties,
+                ...additionalProperties
+            }, ScenarioType.IC3CLIENT);
+            break;
+        case LogLevel.INFO:
+        default:
+            this.telemetry?.info({
+                ...baseProperties,
+                ...additionalProperties
+            }, ScenarioType.IC3CLIENT);
+            break;
         }
     }
 }
@@ -143,37 +143,37 @@ export class OCSDKLogger {
 
         const additionalProperties: AWTEventData["properties"] = {
             ...event,
-            RequestHeaders: event.RequestHeaders? JSON.stringify(event.RequestHeaders): '',
-            RequestPayload: event.RequestPayload? JSON.stringify(event.RequestPayload): '',
-            ExceptionDetails: event.ExceptionDetails? JSON.stringify(event.ExceptionDetails): '',
+            RequestHeaders: event.RequestHeaders ? JSON.stringify(event.RequestHeaders) : '',
+            RequestPayload: event.RequestPayload ? JSON.stringify(event.RequestPayload) : '',
+            ExceptionDetails: event.ExceptionDetails ? JSON.stringify(event.ExceptionDetails) : '',
         };
 
-        switch(logLevel) {
-            case LogLevel.DEBUG:
-                this.telemetry?.debug({
-                    ...baseProperties,
-                    ...additionalProperties
-                }, ScenarioType.OCSDK);
-                break;
-            case LogLevel.WARN:
-                this.telemetry?.warn({
-                    ...baseProperties,
-                    ...additionalProperties
-                }, ScenarioType.OCSDK);
-                break;
-            case LogLevel.ERROR:
-                this.telemetry?.error({
-                    ...baseProperties,
-                    ...additionalProperties
-                }, ScenarioType.OCSDK);
-                break;
-            case LogLevel.INFO:
-            default:
-                this.telemetry?.info({
-                    ...baseProperties,
-                    ...additionalProperties
-                }, ScenarioType.OCSDK);
-                break;
+        switch (logLevel) {
+        case LogLevel.DEBUG:
+            this.telemetry?.debug({
+                ...baseProperties,
+                ...additionalProperties
+            }, ScenarioType.OCSDK);
+            break;
+        case LogLevel.WARN:
+            this.telemetry?.warn({
+                ...baseProperties,
+                ...additionalProperties
+            }, ScenarioType.OCSDK);
+            break;
+        case LogLevel.ERROR:
+            this.telemetry?.error({
+                ...baseProperties,
+                ...additionalProperties
+            }, ScenarioType.OCSDK);
+            break;
+        case LogLevel.INFO:
+        default:
+            this.telemetry?.info({
+                ...baseProperties,
+                ...additionalProperties
+            }, ScenarioType.OCSDK);
+            break;
         }
     }
 }
@@ -235,35 +235,35 @@ export class ACSClientLogger {
 
         const additionalProperties: AWTEventData["properties"] = {
             ...event,
-            ExceptionDetails: event.ExceptionDetails? JSON.stringify(event.ExceptionDetails): '',
+            ExceptionDetails: event.ExceptionDetails ? JSON.stringify(event.ExceptionDetails) : '',
         };
 
-        switch(logLevel) {
-            case LogLevel.DEBUG:
-                this.telemetry?.debug({
-                    ...baseProperties,
-                    ...additionalProperties
-                }, ScenarioType.ACSCLIENT);
-                break;
-            case LogLevel.WARN:
-                this.telemetry?.warn({
-                    ...baseProperties,
-                    ...additionalProperties
-                }, ScenarioType.ACSCLIENT);
-                break;
-            case LogLevel.ERROR:
-                this.telemetry?.error({
-                    ...baseProperties,
-                    ...additionalProperties
-                }, ScenarioType.ACSCLIENT);
-                break;
-            case LogLevel.INFO:
-            default:
-                this.telemetry?.info({
-                    ...baseProperties,
-                    ...additionalProperties
-                }, ScenarioType.ACSCLIENT);
-                break;
+        switch (logLevel) {
+        case LogLevel.DEBUG:
+            this.telemetry?.debug({
+                ...baseProperties,
+                ...additionalProperties
+            }, ScenarioType.ACSCLIENT);
+            break;
+        case LogLevel.WARN:
+            this.telemetry?.warn({
+                ...baseProperties,
+                ...additionalProperties
+            }, ScenarioType.ACSCLIENT);
+            break;
+        case LogLevel.ERROR:
+            this.telemetry?.error({
+                ...baseProperties,
+                ...additionalProperties
+            }, ScenarioType.ACSCLIENT);
+            break;
+        case LogLevel.INFO:
+        default:
+            this.telemetry?.info({
+                ...baseProperties,
+                ...additionalProperties
+            }, ScenarioType.ACSCLIENT);
+            break;
         }
     }
 
@@ -273,7 +273,7 @@ export class ACSClientLogger {
             ChatId: this.chatId
         };
 
-        this.scenarioMarker?.startScenario(event, {...baseProperties, ...additionalProperties});
+        this.scenarioMarker?.startScenario(event, { ...baseProperties, ...additionalProperties });
     }
 
     public failScenario(event: string, additionalProperties: any = {}): void {  // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -282,7 +282,7 @@ export class ACSClientLogger {
             ChatId: this.chatId
         };
 
-        this.scenarioMarker?.failScenario(event, {...baseProperties, ...additionalProperties});
+        this.scenarioMarker?.failScenario(event, { ...baseProperties, ...additionalProperties });
     }
 
     public completeScenario(event: string, additionalProperties: any = {}): void {  // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -291,7 +291,7 @@ export class ACSClientLogger {
             ChatId: this.chatId
         };
 
-        this.scenarioMarker?.completeScenario(event, {...baseProperties, ...additionalProperties});
+        this.scenarioMarker?.completeScenario(event, { ...baseProperties, ...additionalProperties });
     }
 }
 
@@ -352,35 +352,35 @@ export class ACSAdapterLogger {
 
         const additionalProperties: AWTEventData["properties"] = {
             ...event,
-            ExceptionDetails: event.ExceptionDetails? JSON.stringify(event.ExceptionDetails): '',
+            ExceptionDetails: event.ExceptionDetails ? JSON.stringify(event.ExceptionDetails) : '',
         };
 
-        switch(logLevel) {
-            case LogLevel.DEBUG:
-                this.telemetry?.debug({
-                    ...baseProperties,
-                    ...additionalProperties
-                }, ScenarioType.ACSADAPTER);
-                break;
-            case LogLevel.WARN:
-                this.telemetry?.warn({
-                    ...baseProperties,
-                    ...additionalProperties
-                }, ScenarioType.ACSADAPTER);
-                break;
-            case LogLevel.ERROR:
-                this.telemetry?.error({
-                    ...baseProperties,
-                    ...additionalProperties
-                }, ScenarioType.ACSADAPTER);
-                break;
-            case LogLevel.INFO:
-            default:
-                this.telemetry?.info({
-                    ...baseProperties,
-                    ...additionalProperties
-                }, ScenarioType.ACSADAPTER);
-                break;
+        switch (logLevel) {
+        case LogLevel.DEBUG:
+            this.telemetry?.debug({
+                ...baseProperties,
+                ...additionalProperties
+            }, ScenarioType.ACSADAPTER);
+            break;
+        case LogLevel.WARN:
+            this.telemetry?.warn({
+                ...baseProperties,
+                ...additionalProperties
+            }, ScenarioType.ACSADAPTER);
+            break;
+        case LogLevel.ERROR:
+            this.telemetry?.error({
+                ...baseProperties,
+                ...additionalProperties
+            }, ScenarioType.ACSADAPTER);
+            break;
+        case LogLevel.INFO:
+        default:
+            this.telemetry?.info({
+                ...baseProperties,
+                ...additionalProperties
+            }, ScenarioType.ACSADAPTER);
+            break;
         }
     }
 
@@ -390,7 +390,7 @@ export class ACSAdapterLogger {
             ChatId: this.chatId
         };
 
-        this.scenarioMarker?.startScenario(event, {...baseProperties, ...additionalProperties});
+        this.scenarioMarker?.startScenario(event, { ...baseProperties, ...additionalProperties });
     }
 
     public failScenario(event: string, additionalProperties: any = {}): void {  // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -399,7 +399,7 @@ export class ACSAdapterLogger {
             ChatId: this.chatId
         };
 
-        this.scenarioMarker?.failScenario(event, {...baseProperties, ...additionalProperties});
+        this.scenarioMarker?.failScenario(event, { ...baseProperties, ...additionalProperties });
     }
 
     public completeScenario(event: string, additionalProperties: any = {}): void {  // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -408,7 +408,7 @@ export class ACSAdapterLogger {
             ChatId: this.chatId
         };
 
-        this.scenarioMarker?.completeScenario(event, {...baseProperties, ...additionalProperties});
+        this.scenarioMarker?.completeScenario(event, { ...baseProperties, ...additionalProperties });
     }
 }
 
@@ -468,35 +468,35 @@ export class CallingSDKLogger {
 
         const additionalProperties: AWTEventData["properties"] = {
             ...event,
-            ExceptionDetails: event.ExceptionDetails? JSON.stringify(event.ExceptionDetails): '',
+            ExceptionDetails: event.ExceptionDetails ? JSON.stringify(event.ExceptionDetails) : '',
         };
 
-        switch(logLevel) {
-            case LogLevel.DEBUG:
-                this.telemetry?.debug({
-                    ...baseProperties,
-                    ...additionalProperties
-                }, ScenarioType.CALLINGSDK);
-                break;
-            case LogLevel.WARN:
-                this.telemetry?.warn({
-                    ...baseProperties,
-                    ...additionalProperties
-                }, ScenarioType.CALLINGSDK);
-                break;
-            case LogLevel.ERROR:
-                this.telemetry?.error({
-                    ...baseProperties,
-                    ...additionalProperties
-                }, ScenarioType.CALLINGSDK);
-                break;
-            case LogLevel.INFO:
-            default:
-                this.telemetry?.info({
-                    ...baseProperties,
-                    ...additionalProperties
-                }, ScenarioType.CALLINGSDK);
-                break;
+        switch (logLevel) {
+        case LogLevel.DEBUG:
+            this.telemetry?.debug({
+                ...baseProperties,
+                ...additionalProperties
+            }, ScenarioType.CALLINGSDK);
+            break;
+        case LogLevel.WARN:
+            this.telemetry?.warn({
+                ...baseProperties,
+                ...additionalProperties
+            }, ScenarioType.CALLINGSDK);
+            break;
+        case LogLevel.ERROR:
+            this.telemetry?.error({
+                ...baseProperties,
+                ...additionalProperties
+            }, ScenarioType.CALLINGSDK);
+            break;
+        case LogLevel.INFO:
+        default:
+            this.telemetry?.info({
+                ...baseProperties,
+                ...additionalProperties
+            }, ScenarioType.CALLINGSDK);
+            break;
         }
     }
 }
@@ -552,35 +552,35 @@ export class AMSClientLogger {
 
         const additionalProperties: AWTEventData["properties"] = {
             ...event,
-            ExceptionDetails: event.ExceptionDetails? JSON.stringify(event.ExceptionDetails): '',
+            ExceptionDetails: event.ExceptionDetails ? JSON.stringify(event.ExceptionDetails) : '',
         };
 
-        switch(logLevel) {
-            case LogLevel.DEBUG:
-                this.telemetry?.debug({
-                    ...baseProperties,
-                    ...additionalProperties
-                }, ScenarioType.AMSCLIENT);
-                break;
-            case LogLevel.WARN:
-                this.telemetry?.warn({
-                    ...baseProperties,
-                    ...additionalProperties
-                }, ScenarioType.AMSCLIENT);
-                break;
-            case LogLevel.ERROR:
-                this.telemetry?.error({
-                    ...baseProperties,
-                    ...additionalProperties
-                }, ScenarioType.AMSCLIENT);
-                break;
-            case LogLevel.INFO:
-            default:
-                this.telemetry?.info({
-                    ...baseProperties,
-                    ...additionalProperties
-                }, ScenarioType.AMSCLIENT);
-                break;
+        switch (logLevel) {
+        case LogLevel.DEBUG:
+            this.telemetry?.debug({
+                ...baseProperties,
+                ...additionalProperties
+            }, ScenarioType.AMSCLIENT);
+            break;
+        case LogLevel.WARN:
+            this.telemetry?.warn({
+                ...baseProperties,
+                ...additionalProperties
+            }, ScenarioType.AMSCLIENT);
+            break;
+        case LogLevel.ERROR:
+            this.telemetry?.error({
+                ...baseProperties,
+                ...additionalProperties
+            }, ScenarioType.AMSCLIENT);
+            break;
+        case LogLevel.INFO:
+        default:
+            this.telemetry?.info({
+                ...baseProperties,
+                ...additionalProperties
+            }, ScenarioType.AMSCLIENT);
+            break;
         }
     }
 }

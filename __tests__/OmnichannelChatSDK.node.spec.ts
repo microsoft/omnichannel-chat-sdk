@@ -21,15 +21,24 @@ describe('Omnichannel Chat SDK (Node), Sequential', () => {
     };
 
     beforeEach(() => {
+        if (global.navigator) {
+            (global as any).navigator = undefined;
+        }
+        
+        if (global.window.document) {
+            (global as any).window.document = undefined;
+        }
+        
         jest.clearAllMocks();
     });
 
     it('ChatSDK.startChat() with sendDefaultInitContext should not work on non-browser platform', async () => {
+        
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
 
         await chatSDK.initialize();
-
+        
         chatSDK.IC3Client = {
             initialize: jest.fn(),
             joinConversation: jest.fn()
@@ -52,6 +61,7 @@ describe('Omnichannel Chat SDK (Node), Sequential', () => {
 
         try {
             await chatSDK.startChat(optionalParams);
+            fail("Error expected");
         } catch (error : any ) {
             failure = true;
             expect(error.message).toBe(errorMessage);
@@ -85,6 +95,7 @@ describe('Omnichannel Chat SDK (Node), Sequential', () => {
 
         try {
             await chatSDK.createChatAdapter();
+            fail("Error expected");
         } catch (error : any ) {
             expect(error).toEqual('ChatAdapter is only supported on browser');
         }
@@ -117,6 +128,7 @@ describe('Omnichannel Chat SDK (Node), Sequential', () => {
 
         try {
             await chatSDK.getVoiceVideoCalling();
+            fail("Error expected");
         } catch (error : any ) {
             expect(error.message).toEqual('UnsupportedPlatform');
             expect(console.error).toHaveBeenCalledWith('VoiceVideoCalling is only supported on browser');

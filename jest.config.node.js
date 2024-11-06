@@ -1,6 +1,12 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  
+  testMatch: [
+    "**/*.node.spec.ts", 
+    "**/*.spec.ts",
+    "!**/*.web.spec.ts"
+  ],
   testPathIgnorePatterns : [
     "<rootDir>/samples/",
     "<rootDir>/playwright/"
@@ -11,5 +17,5 @@ module.exports = {
   moduleNameMapper: {
     '^axios$': require.resolve('axios'),
   },
-  setupFiles: ["./jestSetup.js"]
+  setupFiles: ["./jest.setup.node.js"]
 };

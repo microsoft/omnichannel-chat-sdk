@@ -17,7 +17,7 @@ export const getAttachments = async (files: File[]): Promise<Array<any>> => { //
                     contentType: file.type,
                     contentUrl: url,
                     name: file.name,
-                    thumbnailUrl: file.type.match("(image|video|audio).*") ? url: undefined
+                    thumbnailUrl: file.type.match("(image|video|audio).*") ? url : undefined
                 }
             }
         })
@@ -30,4 +30,4 @@ export const getAttachmentSizes = (files: File[]): number[] => {
     });
 }
 
-export default {getDataURL, getAttachments, getAttachmentSizes};
+export default { getDataURL, getAttachments, getAttachmentSizes };

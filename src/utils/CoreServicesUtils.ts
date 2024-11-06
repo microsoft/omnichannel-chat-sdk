@@ -15,7 +15,7 @@ export const CoreServicesGeoNamesMapping: any = { // eslint-disable-line @typesc
     "crm15": "ae", // UAE
     "crm16": "de", // GER
     "crm17": "ch", // CHE
-    "crm19": "no", // NOR 
+    "crm19": "no", // NOR
     "crm20": "sg", // SGP
     "crm21": "kr", // KOR
     "crm22": "se", // SWE

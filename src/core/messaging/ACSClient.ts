@@ -1,17 +1,18 @@
+import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
+import { ChatClient, ChatMessage, ChatParticipant, ChatThreadClient } from "@azure/communication-chat";
+import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
+
 import ACSChatMessageType from "./ACSChatMessageType";
 import ACSClientConfig from "./ACSClientConfig";
 import { ACSClientLogger } from "../../utils/loggers";
 import ACSParticipantDisplayName from "./ACSParticipantDisplayName";
 import ACSSessionInfo from "./ACSSessionInfo";
-import { ChatClient, ChatParticipant, ChatThreadClient, ChatMessage } from "@azure/communication-chat";
-import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
-import { ChatMessageReceivedEvent, ChatMessageEditedEvent, ParticipantsRemovedEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
 import ChatSDKMessage from "./ChatSDKMessage";
-import createOmnichannelMessage from "../../utils/createOmnichannelMessage";
-import { defaultMessageTags } from "./MessageTags";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import LiveChatVersion from "../LiveChatVersion";
 import OmnichannelMessage from "./OmnichannelMessage";
+import createOmnichannelMessage from "../../utils/createOmnichannelMessage";
+import { defaultMessageTags } from "./MessageTags";
 
 enum ACSClientEvent {
     InitializeACSClient = 'InitializeACSClient',
@@ -175,7 +176,7 @@ export class ACSConversation {
                 try {
                     const messages = await this.getMessages();
                     for (const message of messages.reverse()) {
-                        const {id, sender} = message;
+                        const { id, sender } = message;
                         const customerMessageCondition = sender.displayName === ACSParticipantDisplayName.Customer;
 
                         // Filter out customer messages
@@ -204,7 +205,7 @@ export class ACSConversation {
             const listener = (event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
                 isReceivingNotifications = true;
 
-                const {id, sender} = event;
+                const { id, sender } = event;
 
                 const customerMessageCondition = ((sender as CommunicationUserIdentifier).communicationUserId === (this.sessionInfo?.id as string));
                 const isChatMessageEditedEvent = Object.keys(event).includes("editedOn");
@@ -262,11 +263,11 @@ export class ACSConversation {
 
         try {
             const listener = (event: TypingIndicatorReceivedEvent) => {
-                const {sender, recipient} = event;
+                const { sender, recipient } = event;
 
                 // Ignore participant's own typing events
                 if ((sender as any).communicationUserId === (recipient as any).communicationUserId) { // eslint-disable-line @typescript-eslint/no-explicit-any
-                  return;
+                    return;
                 }
 
                 onTypingEventCallback(event);
@@ -341,7 +342,7 @@ export class ACSConversation {
         return undefined;
     }
 
-    public async sendFileData():  Promise<void> {
+    public async sendFileData(): Promise<void> {
         return undefined;
     }
 
@@ -373,10 +374,10 @@ export class ACSConversation {
         const participants = await this.getParticipants();
         const participantsMapping = {};
         for (const participant of participants) {
-            const {id} = participant;
+            const { id } = participant;
 
             if (!Object.keys(participantsMapping).includes((id as CommunicationUserIdentifier).communicationUserId)) {
-                Object.assign(participantsMapping, {[(id as CommunicationUserIdentifier).communicationUserId]: participant});
+                Object.assign(participantsMapping, { [(id as CommunicationUserIdentifier).communicationUserId]: participant });
             }
         }
 
@@ -456,7 +457,7 @@ class ACSClient {
         return conversation;
     }
 
-    public getChatClient() : ChatClient | null {
+    public getChatClient(): ChatClient | null {
         return this.chatClient;
     }
 }
