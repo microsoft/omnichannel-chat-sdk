@@ -14,6 +14,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Load ACS Chat adapter as npm dependency, instead of download it from unpkg host.
+
 - Uptake [@microsoft/ocsdk@0.5.7](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.7)
 
 ## [1.9.9] - 2024-10-21

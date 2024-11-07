@@ -31,12 +31,22 @@ describe('Omnichannel Chat SDK, Sequential', () => {
         widgetId: '[data-app-id]'
     };
 
+    beforeAll(()=>{
+        if (global.navigator) {
+            (global as any).navigator = undefined;
+        }
+        
+        if (global.window.document) {
+            (global as any).window.document = undefined;
+        }
+    });
+
     describe('Configurations', () => {
         it('ChatSDK should require omnichannelConfig as parameter', () => {
             try {
                 new OmnichannelChatSDK();
                 fail();
-            } catch (error : any ) {
+            } catch (error:any ) {
                 expect(error).toBeInstanceOf(Error);
             }
         });

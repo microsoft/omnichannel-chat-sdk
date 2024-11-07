@@ -583,53 +583,6 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         expect(runtimeContext.errorObject).not.toBeDefined();
     });
 
-    test('ChatSDK.createChatAdapter() script load failures should retry for up to 3 times', async ({ page }) => {
-        let retryCount = 0;
-
-        // Mock 404
-        const chatAdapterUrl = 'https://unpkg.com/acs_webchat-chat-adapter@**/dist/chat-adapter.js';
-        await page.route(chatAdapterUrl, route => {
-            retryCount++;
-            route.fulfill({ status: 404 });
-        });
-
-        await page.goto(testPage);
-
-        const [runtimeContext] = await Promise.all([
-            await page.evaluate(async ({ omnichannelConfig }) => {
-                const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
-                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
-
-                await chatSDK.initialize();
-
-                const runtimeContext = {
-                    requestId: chatSDK.requestId
-                };
-
-                await chatSDK.startChat();
-
-                try {
-                    const chatAdapter = await chatSDK.createChatAdapter();
-                } catch (err) {
-                    runtimeContext.errorMessage = `${err.message}`;
-                    runtimeContext.errorObject = `${err}`;
-                }
-
-                await chatSDK.endChat();
-
-                return runtimeContext;
-            }, { omnichannelConfig })
-        ]);
-
-        await page.unroute(chatAdapterUrl);
-
-        const expectedRetryCount = 3;
-        const expectedErrorMessage = "ScriptLoadFailure";
-        expect(runtimeContext.errorObject).toBeDefined();
-        expect(runtimeContext.errorMessage).toBe(expectedErrorMessage);
-        expect(retryCount).toBe(expectedRetryCount);
-    });
-
     test('ChatSDK.startChat() with sendDefaultInitContext should send default init contexts', async ({ page }) => {
         await page.goto(testPage);
 
