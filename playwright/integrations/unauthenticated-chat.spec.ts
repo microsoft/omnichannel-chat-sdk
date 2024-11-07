@@ -207,7 +207,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
 
                 await chatSDK.endChat();
 
-                await sleep(3000); // Sleep to avoid race condition
+                await sleep(chatDuration); // Sleep to avoid race condition
 
                 try {
                     await chatSDK.startChat({ liveChatContext: liveChatContext });
