@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Add `requestId` to `OCClient.getReconnectableChats()` parameters
+
 ## [1.10.0] - 2024-10-31
 
 ### Changed
