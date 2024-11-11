@@ -20,6 +20,8 @@ import createFormatEgressTagsMiddleware from "../external/ACSAdapter/createForma
 import createFormatIngressTagsMiddleware from "../external/ACSAdapter/createFormatIngressTagsMiddleware";
 import exceptionThrowers from "./exceptionThrowers";
 import urlResolvers from "./urlResolvers";
+import { AdapterErrorEvent } from "../external/ACSAdapter/AdapterErrorEvent";
+import LogLevel from "../telemetry/LogLevel";
 
 const createDirectLine = async (optionalParams: ChatAdapterOptionalParams, chatSDKConfig: ChatSDKConfig, liveChatVersion: LiveChatVersion, protocol: string, telemetry: typeof AriaTelemetry, scenarioMarker: ScenarioMarker): Promise<unknown> => {
     const options = optionalParams.DirectLine ? optionalParams.DirectLine.options : {};
@@ -48,14 +50,25 @@ const createDirectLine = async (optionalParams: ChatAdapterOptionalParams, chatS
 };
 
 const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatSDKConfig: ChatSDKConfig, liveChatVersion: LiveChatVersion, protocol: string, telemetry: typeof AriaTelemetry, scenarioMarker: ScenarioMarker, omnichannelConfig: OmnichannelConfig, chatToken: IChatToken, fileManager: AMSFileManager, chatClient: ChatClient, logger: ACSAdapterLogger): Promise<unknown> => {
-    const options = optionalParams.ACSAdapter ? optionalParams.ACSAdapter.options : {};
+    const adapterParams = optionalParams.ACSAdapter;
+    const options = adapterParams ? adapterParams.options : {};
+
     // Tags formatting middlewares are required to be the last in the pipeline to ensure tags are converted to the right format
     const defaultEgressMiddlewares = [createChannelDataEgressMiddleware({ widgetId: omnichannelConfig.widgetId }), createFormatEgressTagsMiddleware()];
     let defaultIngressMiddlewares = [createFormatIngressTagsMiddleware()];
 
-    if (optionalParams.ACSAdapter?.fileScan?.disabled === false) {
+    if (adapterParams?.fileScan?.disabled === false) {
         defaultIngressMiddlewares = [createFileScanIngressMiddleware(), ...defaultIngressMiddlewares];
     }
+
+    const errorEventSubscriber = {
+        notifyErrorEvent: (adapterErrorEvent: AdapterErrorEvent) => {
+            logger.logEvent(LogLevel.ERROR, {...adapterErrorEvent});
+            if (adapterParams?.errorEventSubscriber) {
+                adapterParams?.errorEventSubscriber?.notifyErrorEvent(adapterErrorEvent);
+            }
+        }
+    };
 
     const egressMiddleware = options?.egressMiddleware ? [...options.egressMiddleware, ...defaultEgressMiddlewares] : [...defaultEgressMiddlewares];
     const ingressMiddleware = options?.ingressMiddleware ? [...options.ingressMiddleware, ...defaultIngressMiddlewares] : [...defaultIngressMiddlewares];
@@ -78,7 +91,7 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
             fileManager,
             30000,
             // eslint-disable-next-line @typescript-eslint/no-empty-function
-            { notifyErrorEvent: () => { } }, // Passing empty callback for now for backward compatibility
+            errorEventSubscriber,
             ACSParticipantDisplayName.Customer,
             chatClient,
             logger,
