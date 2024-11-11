@@ -1,3 +1,5 @@
+import { IErrorEventSubscriber } from "../../external/ACSAdapter/IErrorEventSubscriber";
+
 interface ChatAdapterOptionalParams {
     protocol?: string;
     IC3Adapter?: {
@@ -13,7 +15,8 @@ interface ChatAdapterOptionalParams {
         },
         options?: {
             [key: string]: any // eslint-disable-line @typescript-eslint/no-explicit-any
-        }
+        },
+        errorEventSubscriber?: IErrorEventSubscriber
     };
     DirectLine?: {
         options?: {
