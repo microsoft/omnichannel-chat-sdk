@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.10.1] - 2024-11-11
+
+### Fixed
+
+- Add `requestId` to `OCClient.getReconnectableChats()` parameters
+- Load ACS Chat adapter as npm dependency, instead of download it from unpkg host.
+
 ## [1.10.0] - 2024-10-31
 
 ### Changed
@@ -14,7 +21,6 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Load ACS Chat adapter as npm dependency, instead of download it from unpkg host.
 
 - Uptake [@microsoft/ocsdk@0.5.7](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.7)
 

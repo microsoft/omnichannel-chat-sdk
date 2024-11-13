@@ -419,7 +419,8 @@ class OmnichannelChatSDK {
 
         try {
             const reconnectableChatsParams: IReconnectableChatsParams = {
-                authenticatedUserToken: this.authenticatedUserToken as string
+                authenticatedUserToken: this.authenticatedUserToken as string,
+                requestId: this.requestId as string
             }
 
             const reconnectableChatsResponse = await this.OCClient.getReconnectableChats(reconnectableChatsParams);
@@ -552,7 +553,8 @@ class OmnichannelChatSDK {
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
             try {
                 const reconnectableChatsParams: IReconnectableChatsParams = {
-                    authenticatedUserToken: this.authenticatedUserToken as string
+                    authenticatedUserToken: this.authenticatedUserToken as string,
+                    requestId: this.requestId as string
                 }
 
                 const reconnectableChatsResponse = await this.OCClient.getReconnectableChats(reconnectableChatsParams);
