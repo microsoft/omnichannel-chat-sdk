@@ -162,7 +162,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
         const { requestId, authToken } = runtimeContext;
         const reconnectableChatsResponseData = JSON.parse(await reconnectableChatsResponse.text());
         const reconnectId = reconnectableChatsResponseData.reconnectid;
-        const reconnectableChatsRequestUrl = `${runtimeContext.orgUrl}/${OmnichannelEndpoints.LiveChatAuthReconnectableChats}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${omnichannelConfig.orgId}?channelId=lcw`;
+        const reconnectableChatsRequestUrl = `${runtimeContext.orgUrl}/${OmnichannelEndpoints.LiveChatAuthReconnectableChats}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
         const chatTokenRequestUrl = `${runtimeContext.orgUrl}/${OmnichannelEndpoints.LiveChatv2AuthGetChatTokenPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}/${reconnectId}?channelId=lcw`;
         const sessionInitRequestUrl = `${runtimeContext.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}/${reconnectId}?channelId=lcw`;
 
@@ -234,8 +234,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
             }, { omnichannelConfig, authUrl, chatDuration: testSettings.chatDuration })
         ]);
 
-        const { authToken } = runtimeContext;
-        const reconnectableChatsRequestUrl = `${runtimeContext.orgUrl}/${OmnichannelEndpoints.LiveChatAuthReconnectableChats}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${omnichannelConfig.orgId}?channelId=lcw`;
+        const { authToken, requestId } = runtimeContext;
+        const reconnectableChatsRequestUrl = `${runtimeContext.orgUrl}/${OmnichannelEndpoints.LiveChatAuthReconnectableChats}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
 
         const reconnectableChatsRequestHeaders = reconnectableChatsRequest.headers();
 
@@ -243,7 +243,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
         expect(reconnectableChatsRequestHeaders['authenticatedusertoken']).toBe(authToken);
         expect(reconnectableChatsResponse.status()).toBe(204);
     });
-  
+
     test('ChatSDK.endChat() on an existing session should call session close with isPersistentChat=true & isReconnectChat=true as query params', async ({ page }) => {
         await page.goto(testPage);
 
