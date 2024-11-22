@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- uptake [azure/communication-chat@1.5.0](https://www.npmjs.com/package/@azure/communication-chat/v/1.5.0)
+- uptake [azure/communication-common@2.3.1](https://www.npmjs.com/package/@azure/communication-common/v/2.3.1)
+- uptake [acs_webchat-chat-adapter@0.0.35-beta.30](https://www.npmjs.com/package/acs_webchat-chat-adapter/v/0.0.35-beta.30)
+
 ## [1.10.1] - 2024-11-11
 
 ### Fixed
@@ -20,7 +26,6 @@ All notable changes to this project will be documented in this file.
 ## [1.9.10] - 2024-10-25
 
 ### Changed
-
 
 - Uptake [@microsoft/ocsdk@0.5.7](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.7)
 
