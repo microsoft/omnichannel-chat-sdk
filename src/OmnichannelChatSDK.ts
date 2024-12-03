@@ -781,10 +781,12 @@ class OmnichannelChatSDK {
 
     public async softEndChat(): Promise<void> {
 
-        this.scenarioMarker.startScenario(TelemetryEvent.SoftEndChat, {
+        const cleanupMetadata = {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
-        });
+        };
+
+        this.scenarioMarker.startScenario(TelemetryEvent.SoftEndChat, cleanupMetadata);
 
         this.conversation?.disconnect();
 
@@ -806,11 +808,6 @@ class OmnichannelChatSDK {
             clearInterval(this.refreshTokenTimer);
             this.refreshTokenTimer = null;
         }
-
-        const cleanupMetadata = {
-            RequestId: this.requestId,
-            ChatId: this.chatToken.chatId as string
-        };
 
         this.conversation = null;
         this.requestId = uuidv4();
