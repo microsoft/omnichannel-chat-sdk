@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- New soft end method, which will allow to cleanup internal properties without calling close session, specific designed for disconnection or when agent ends the chat.
+
 ### Changed
 
 - uptake [azure/communication-chat@1.5.0](https://www.npmjs.com/package/@azure/communication-chat/v/1.5.0)
