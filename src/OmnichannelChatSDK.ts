@@ -779,6 +779,44 @@ class OmnichannelChatSDK {
         }
     }
 
+    public async softEndChat(): Promise<void> {
+
+        this.scenarioMarker.startScenario(TelemetryEvent.SoftEndChat, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string
+        });
+
+        this.conversation?.disconnect();
+        this.conversation = null;
+        this.requestId = uuidv4();
+        this.chatToken = {};
+        this.reconnectId = null;
+
+        if (this.IC3Client) {
+            this.IC3Client.dispose();
+            !platform.isNode() && !platform.isReactNative() && removeElementById(this.IC3Client.id);
+            this.IC3Client = null;
+        }
+
+        if (this.OCClient.sessionId) {
+            this.OCClient.sessionId = null;
+            this.sessionId = null;
+        }
+
+        loggerUtils.setRequestId(this.requestId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+        loggerUtils.setChatId('', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+
+        if (this.refreshTokenTimer !== null) {
+            clearInterval(this.refreshTokenTimer);
+            this.refreshTokenTimer = null;
+        }
+
+        this.scenarioMarker.completeScenario(TelemetryEvent.SoftEndChat, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string
+        });
+    }
+
     public async endChat(): Promise<void> {
         this.scenarioMarker.startScenario(TelemetryEvent.EndChat, {
             RequestId: this.requestId,
