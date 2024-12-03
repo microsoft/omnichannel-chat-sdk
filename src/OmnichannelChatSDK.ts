@@ -787,10 +787,6 @@ class OmnichannelChatSDK {
         });
 
         this.conversation?.disconnect();
-        this.conversation = null;
-        this.requestId = uuidv4();
-        this.chatToken = {};
-        this.reconnectId = null;
 
         if (this.IC3Client) {
             this.IC3Client.dispose();
@@ -811,10 +807,17 @@ class OmnichannelChatSDK {
             this.refreshTokenTimer = null;
         }
 
-        this.scenarioMarker.completeScenario(TelemetryEvent.SoftEndChat, {
+        const cleanupMetadata = {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
-        });
+        };
+
+        this.conversation = null;
+        this.requestId = uuidv4();
+        this.chatToken = {};
+        this.reconnectId = null;
+
+        this.scenarioMarker.completeScenario(TelemetryEvent.SoftEndChat, cleanupMetadata);
     }
 
     public async endChat(): Promise<void> {
