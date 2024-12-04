@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- New soft end method, which will allow to cleanup internal properties without calling close session, specific designed for disconnection or when agent ends the chat.
+- Adding optional params for end chat to allow decide internally when to call close session backend.
 
 ### Changed
 
