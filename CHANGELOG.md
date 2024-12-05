@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file.
 
 - Adding optional params for end chat to allow decide internally when to call close session backend.
 
+### Fixed
+- Added console log when the given widget id is no longer found in the system
+
 ### Changed
 
 - uptake [azure/communication-chat@1.5.0](https://www.npmjs.com/package/@azure/communication-chat/v/1.5.0)
