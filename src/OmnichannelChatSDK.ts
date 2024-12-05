@@ -785,6 +785,7 @@ class OmnichannelChatSDK {
         const cleanupMetadata = {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string,
+            isSessionEnded: !endChatOptionalParams?.isSessionEnded
         };
 
         // in case a session was ended by agent or disconnected, there is no need to close the session
@@ -815,7 +816,10 @@ class OmnichannelChatSDK {
                 await this.OCClient.sessionClose(this.requestId, sessionCloseOptionalParams);
 
             } catch (error) {
-                exceptionThrowers.throwConversationClosureFailure(error, this.scenarioMarker, TelemetryEvent.CloseChatSession, cleanupMetadata);
+                exceptionThrowers.throwConversationClosureFailure(error, this.scenarioMarker, TelemetryEvent.CloseChatSession, {
+                    ...cleanupMetadata,
+                    isSessionEnded: String(!endChatOptionalParams?.isSessionEnded)
+                });
             }
             this.scenarioMarker.completeScenario(TelemetryEvent.CloseChatSession, cleanupMetadata);
         }
