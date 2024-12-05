@@ -24,11 +24,11 @@ describe('Omnichannel Chat SDK (Node) Parallel initialization', () => {
         if (global.navigator) {
             (global as any).navigator = undefined;
         }
-        
+
         if (global.window.document) {
             (global as any).window.document = undefined;
         }
-        
+
         jest.clearAllMocks();
     });
 
