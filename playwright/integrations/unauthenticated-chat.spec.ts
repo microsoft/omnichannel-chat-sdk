@@ -1,9 +1,10 @@
+import { expect, test } from '@playwright/test';
+
+import ACSEndpoints from '../utils/ACSEndpoints';
+import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
 import fetchTestSettings from '../utils/fetchTestSettings';
-import { test, expect } from '@playwright/test';
-import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
-import ACSEndpoints from '../utils/ACSEndpoints';
 
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChat');
@@ -539,6 +540,40 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
 
         expect(sessionCloseRequest.url() === sessionCloseRequestUrl).toBe(true);
         expect(sessionCloseResponse.status()).toBe(200);
+    });
+
+    test('ChatSDK.endChat() should not call close session for identified sessions ended by agent', async ({ page }) => {
+        await page.goto(testPage);
+
+        let counterCalls = 0;
+        page.on('request', (request) => {
+            if (request.url().includes(OmnichannelEndpoints.LiveChatSessionClosePath)) {
+                counterCalls++;
+            }
+        });
+
+        await page.evaluate(async ({ omnichannelConfig, chatDuration }) => {
+            const { sleep } = window;
+            const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
+            const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+
+            await chatSDK.initialize();
+
+            const runtimeContext = {
+                orgUrl: chatSDK.omnichannelConfig.orgUrl,
+                requestId: chatSDK.requestId
+            };
+
+            await chatSDK.startChat();
+
+            await sleep(chatDuration);
+
+            await chatSDK.endChat({ isSessionEnded: true });
+
+            return runtimeContext;
+        }, { omnichannelConfig, chatDuration: testSettings.chatDuration });
+
+        expect(counterCalls).toBe(0);
     });
 
     test('ChatSDK.createChatAdapter() should load ACSAdapter', async ({ page }) => {
