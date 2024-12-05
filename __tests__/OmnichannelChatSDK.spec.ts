@@ -3130,7 +3130,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.IC3Client).toBe(undefined);
         });
 
-        it('ChatSDK.endChat() should end conversation without calling closeSession', async () => {
+        it('ChatSDK.endChat() with optional params \'isSessionEnded\' set as \'true\' should not call sessionClose', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
@@ -3161,7 +3161,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.IC3Client).toBe(undefined);
         });
 
-        it('ChatSDK.endChat() should end conversation passing optional params', async () => {
+        it('ChatSDK.endChat() with optional params \'isSessionEnded\' set as \'false\' should call sessionClose', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
@@ -3192,7 +3192,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.IC3Client).toBe(undefined);
         });
 
-        it('ChatSDK.endChat() should end conversation passing optional params as undefined', async () => {
+        it('ChatSDK.endChat() with optional params \'isSessionEnded\' set as \'undefined\' should call sessionClose', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();

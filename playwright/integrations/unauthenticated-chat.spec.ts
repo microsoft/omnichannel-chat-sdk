@@ -542,7 +542,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         expect(sessionCloseResponse.status()).toBe(200);
     });
 
-    test('ChatSDK.endChat() should not call close session for identified sessions ended by agent', async ({ page }) => {
+    test('ChatSDK.endChat() with optional params \'isSessionEnded\' set as \'true\' should not call sessionClose', async ({ page }) => {
         await page.goto(testPage);
 
         let counterCalls = 0;
