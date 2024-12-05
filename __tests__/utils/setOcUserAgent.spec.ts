@@ -8,6 +8,7 @@ describe("setOcUserAgent", () => {
 
         setOcUserAgent(OCClient, []);
 
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const version = require("../../package.json").version;
         const userAgent = `omnichannel-chat-sdk/${version}`;
         const expectedResult = [userAgent];

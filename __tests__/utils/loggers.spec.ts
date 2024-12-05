@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import {ACSAdapterLogger, ACSClientLogger, AMSClientLogger, CallingSDKLogger, IC3ClientLogger, OCSDKLogger} from '../../src/utils/loggers';
+
 import LogLevel from '@microsoft/omnichannel-ic3core/lib/logging/LogLevel';
-import {ACSAdapterLogger, ACSClientLogger, IC3ClientLogger, OCSDKLogger, CallingSDKLogger, AMSClientLogger} from '../../src/utils/loggers';
 
 describe('loggers', () => {
     describe('IC3ClientLogger', () => {
@@ -214,7 +217,6 @@ describe('loggers', () => {
             expect((logger as any).scenarioMarker.startScenario).toHaveBeenCalledTimes(1);
         });
 
-
         it('ACSClientLogger.failScenario() should call ScenarioMarker.failScenario()', () => {
             const logger = new ACSClientLogger(omnichannelConfig);
 
@@ -317,7 +319,6 @@ describe('loggers', () => {
 
             expect((logger as any).scenarioMarker.startScenario).toHaveBeenCalledTimes(1);
         });
-
 
         it('ACSAdapterLogger.failScenario() should call ScenarioMarker.failScenario()', () => {
             const logger = new ACSAdapterLogger(omnichannelConfig);

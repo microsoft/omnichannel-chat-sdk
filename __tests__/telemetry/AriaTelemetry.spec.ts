@@ -1,6 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import * as settings from '../../src/config/settings';
+
 import AriaTelemetry from '../../src/telemetry/AriaTelemetry';
 import ScenarioType from '../../src/telemetry/ScenarioType';
-import * as settings from '../../src/config/settings';
 
 describe('AriaTelemetry', () => {
     (settings as any).ariaTelemetryKey = '';

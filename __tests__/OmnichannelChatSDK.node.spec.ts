@@ -6,8 +6,8 @@
 import * as settings from '../src/config/settings';
 
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
-import AriaTelemetry from "../src/telemetry/AriaTelemetry";
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 
 describe('Omnichannel Chat SDK (Node), Sequential', () => {
@@ -24,21 +24,21 @@ describe('Omnichannel Chat SDK (Node), Sequential', () => {
         if (global.navigator) {
             (global as any).navigator = undefined;
         }
-        
+
         if (global.window.document) {
             (global as any).window.document = undefined;
         }
-        
+
         jest.clearAllMocks();
     });
 
     it('ChatSDK.startChat() with sendDefaultInitContext should not work on non-browser platform', async () => {
-        
+
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
 
         await chatSDK.initialize();
-        
+
         chatSDK.IC3Client = {
             initialize: jest.fn(),
             joinConversation: jest.fn()

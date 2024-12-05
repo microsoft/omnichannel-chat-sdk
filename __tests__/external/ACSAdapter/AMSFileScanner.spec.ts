@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import AMSFileScanner from '../../../src/external/ACSAdapter/AMSFileScanner';
-import activityUtils from '../../../src/external/ACSAdapter/activityUtils';
 import WebUtils from '../../../src/utils/WebUtils';
+import activityUtils from '../../../src/external/ACSAdapter/activityUtils';
 
 describe("AMSFileScanner", () => {
 

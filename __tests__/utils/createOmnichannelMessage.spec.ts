@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import LiveChatVersion from '../../src/core/LiveChatVersion';
-import createOmnichannelMessage from '../../src/utils/createOmnichannelMessage';
-import { ChatMessageReceivedEvent } from '@azure/communication-signaling';
-import { DeliveryMode, MessageType } from '../../src/core/messaging/OmnichannelMessage';
+import { MessageType } from '../../src/core/messaging/OmnichannelMessage';
 import PersonType from '@microsoft/omnichannel-ic3core/lib/model/PersonType';
+import createOmnichannelMessage from '../../src/utils/createOmnichannelMessage';
 
 describe('createOmnichannelMessage', () => {
     it('createOmnichannelMessage with LiveChatV2 messaging contracts should return OmnichannelMessage contracts', () => {

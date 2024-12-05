@@ -1,8 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-empty-function */
 /**
  * @jest-environment jsdom
  */
 
 import createVoiceVideoCalling from '../../src/api/createVoiceVideoCalling';
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const VoiceVideoCallingProxy = require('../../src/api/createVoiceVideoCalling').VoiceVideoCallingProxy;
 
 describe('createVoiceVideoCalling', () => {
@@ -12,6 +16,7 @@ describe('createVoiceVideoCalling', () => {
         load: jest.fn().mockResolvedValue(Promise.resolve()),
         initialize: jest.fn(),
         isInitialized: jest.fn().mockResolvedValue(true),
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         registerEvent: jest.fn((eventName: string, callback: Function) => {}),
         isMicrophoneMuted: jest.fn(),
         acceptCall: jest.fn(),

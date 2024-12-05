@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import ACSClient from "../../../src/core/messaging/ACSClient";
@@ -49,7 +50,6 @@ describe('ACSClient', () => {
         expect(conversation).toBeDefined();
         expect(conversation.sessionInfo).toBeDefined();
     });
-
 
     it('ACSClient.initialize() with ChatClient.getChatThreadClient() failure show throw an error', async () => {
         const client: any = new ACSClient();
