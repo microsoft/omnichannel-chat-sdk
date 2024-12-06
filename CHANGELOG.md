@@ -2,13 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [1.10.2] 2024-12-06
 
 ### Added
 
 - Adding optional params for end chat to allow decide internally when to call close session backend.
 
 ### Fixed
+
 - Added console log when the given widget id is no longer found in the system
 
 ### Changed
