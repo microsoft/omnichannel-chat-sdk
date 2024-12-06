@@ -1,6 +1,6 @@
 enum OmnichannelErrorCodes {
     WidgetUseOutsideOperatingHour = 705,
-    noWidgetPresentErrorCode = 701,
+    WidgetNotFound = 701,
 }
 
 export default OmnichannelErrorCodes;

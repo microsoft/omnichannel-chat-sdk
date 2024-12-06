@@ -2176,8 +2176,8 @@ class OmnichannelChatSDK {
                 liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache); // Bubble up error by default to throw ChatConfigRetrievalFailure
             } else {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                if ((error as any).response?.headers?.errorcode && parseInt((error as any).response.headers.errorcode) === OmnichannelErrorCodes.noWidgetPresentErrorCode) {
-                    console.log("No widget with the given app id is present in the system.");
+                if ((error as any).response?.headers?.errorcode && parseInt((error as any).response.headers.errorcode) === OmnichannelErrorCodes.WidgetNotFound) {
+                    console.warn("No widget with the given app id is present in the system.");
                 }
                 throw error // Bubble up error by default to throw ChatConfigRetrievalFailure
             }
