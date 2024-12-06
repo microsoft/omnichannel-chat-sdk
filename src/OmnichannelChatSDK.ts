@@ -32,6 +32,7 @@ import ChatTranscriptBody from "./core/ChatTranscriptBody";
 import ConversationMode from "./core/ConversationMode";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import EmailLiveChatTranscriptOptionaParams from "./core/EmailLiveChatTranscriptOptionalParams";
+import EndChatOptionalParams from "./core/EndChatOptionalParams";
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/FileSharingProtocolType";
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
@@ -779,38 +780,64 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async endChat(): Promise<void> {
-        this.scenarioMarker.startScenario(TelemetryEvent.EndChat, {
+    private async closeChat(endChatOptionalParams: EndChatOptionalParams): Promise<void> {
+
+        const cleanupMetadata = {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string,
+            isSessionEnded: !endChatOptionalParams?.isSessionEnded
+        };
+
+        // in case a session was ended by agent or disconnected, there is no need to close the session
+        this.scenarioMarker.startScenario(TelemetryEvent.CloseChatSession, cleanupMetadata);
+
+        if (!endChatOptionalParams?.isSessionEnded) {
+            try {
+
+                const sessionCloseOptionalParams: ISessionCloseOptionalParams = {};
+
+                if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
+                    const isReconnectChat = this.reconnectId !== null ? true : false;
+
+                    sessionCloseOptionalParams.isPersistentChat = this.isPersistentChat;
+                    sessionCloseOptionalParams.isReconnectChat = isReconnectChat;
+                }
+
+                if (this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat) {
+                    const isChatReconnect = this.reconnectId !== null ? true : false;
+                    this.requestId = isChatReconnect ? (this.reconnectId as string) : this.requestId; // Chat Reconnect session to close
+                    sessionCloseOptionalParams.isReconnectChat = isChatReconnect;
+                }
+
+                if (this.authenticatedUserToken) {
+                    sessionCloseOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
+                }
+
+                await this.OCClient.sessionClose(this.requestId, sessionCloseOptionalParams);
+
+            } catch (error) {
+                exceptionThrowers.throwConversationClosureFailure(error, this.scenarioMarker, TelemetryEvent.CloseChatSession, {
+                    ...cleanupMetadata,
+                    isSessionEnded: String(!endChatOptionalParams?.isSessionEnded)
+                });
+            }
+            this.scenarioMarker.completeScenario(TelemetryEvent.CloseChatSession, cleanupMetadata);
+        }
+    }
+
+    public async endChat(endChatOptionalParams: EndChatOptionalParams = {}): Promise<void> {
+
+        const cleanupMetadata = {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
-        });
+        };
 
-        const sessionCloseOptionalParams: ISessionCloseOptionalParams = {};
-
-        if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
-            const isReconnectChat = this.reconnectId !== null ? true : false;
-
-            sessionCloseOptionalParams.isPersistentChat = this.isPersistentChat;
-            sessionCloseOptionalParams.isReconnectChat = isReconnectChat;
-        }
-
-        if (this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat) {
-            const isChatReconnect = this.reconnectId !== null ? true : false;
-            this.requestId = isChatReconnect ? (this.reconnectId as string) : this.requestId; // Chat Reconnect session to close
-            sessionCloseOptionalParams.isReconnectChat = isChatReconnect;
-        }
-
-        if (this.authenticatedUserToken) {
-            sessionCloseOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
-        }
+        this.scenarioMarker.startScenario(TelemetryEvent.EndChat, cleanupMetadata);
 
         try {
-            await this.OCClient.sessionClose(this.requestId, sessionCloseOptionalParams);
 
-            this.scenarioMarker.completeScenario(TelemetryEvent.EndChat, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string
-            });
+            // calling close chat, internally will handle the session close
+            await this.closeChat(endChatOptionalParams);
 
             this.conversation?.disconnect();
             this.conversation = null;
@@ -831,18 +858,20 @@ class OmnichannelChatSDK {
 
             loggerUtils.setRequestId(this.requestId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
             loggerUtils.setChatId('', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+
+            if (this.refreshTokenTimer !== null) {
+                clearInterval(this.refreshTokenTimer);
+                this.refreshTokenTimer = null;
+            }
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.EndChat, cleanupMetadata);
+
         } catch (error) {
             const telemetryData = {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string
             };
-
             exceptionThrowers.throwConversationClosureFailure(error, this.scenarioMarker, TelemetryEvent.EndChat, telemetryData);
-        }
-
-        if (this.refreshTokenTimer !== null) {
-            clearInterval(this.refreshTokenTimer);
-            this.refreshTokenTimer = null;
         }
     }
 

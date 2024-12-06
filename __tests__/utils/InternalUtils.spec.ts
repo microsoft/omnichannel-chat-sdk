@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { isCoreServicesOrgUrlDNSError } from "../../src/utils/internalUtils";
 
 describe('InternalUtils', () => {
@@ -31,5 +33,5 @@ describe('InternalUtils', () => {
         const dynamicsLocationCode = null;
         const result = isCoreServicesOrgUrlDNSError(axiosErrorObject, coreServicesOrgUrl, dynamicsLocationCode);
         expect(result).toBe(false);
-    });  
+    });
 });

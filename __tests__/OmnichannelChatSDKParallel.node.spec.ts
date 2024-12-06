@@ -6,8 +6,8 @@
 import * as settings from '../src/config/settings';
 
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
-import AriaTelemetry from "../src/telemetry/AriaTelemetry";
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 
 describe('Omnichannel Chat SDK (Node) Parallel initialization', () => {
@@ -24,11 +24,11 @@ describe('Omnichannel Chat SDK (Node) Parallel initialization', () => {
         if (global.navigator) {
             (global as any).navigator = undefined;
         }
-        
+
         if (global.window.document) {
             (global as any).window.document = undefined;
         }
-        
+
         jest.clearAllMocks();
     });
 

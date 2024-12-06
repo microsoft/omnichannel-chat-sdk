@@ -43,7 +43,6 @@ describe('createFormatEgressTagsMiddleware', () => {
         expect(next).toHaveBeenCalledWith(expectedActivity);
     });
 
-
     it('createFormatEgressTagsMiddleware should convert activity with tags in JSON format to string', () => {
         const next = jest.fn();
 

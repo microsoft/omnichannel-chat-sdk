@@ -1,4 +1,5 @@
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const locale = require('../../src/utils/locale');
 
 describe('Locales', () => {

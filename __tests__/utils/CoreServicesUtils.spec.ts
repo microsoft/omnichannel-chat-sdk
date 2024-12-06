@@ -1,5 +1,4 @@
-
-import { CoreServicesGeoNamesMapping, coreServicesOrgUrlPrefix, createCoreServicesOrgUrl, getCoreServicesGeoName, isCoreServicesOrgUrl, nonProductionDynamicsLocationCode, unqOrgUrlPattern } from "../../src/utils/CoreServicesUtils";
+import { CoreServicesGeoNamesMapping, createCoreServicesOrgUrl, getCoreServicesGeoName, isCoreServicesOrgUrl, unqOrgUrlPattern } from "../../src/utils/CoreServicesUtils";
 
 describe("CoreServicesUtils", () => {
     it("unqOrgUrlPattern should be able to retrieve the location code from the an UNQ OrgUrl", () => {
@@ -18,7 +17,7 @@ describe("CoreServicesUtils", () => {
         const locationCode = "crmtest";
         const orgUrl = `https://unq1234-${locationCode}.oc.crmlivetie.com`;
         const result = unqOrgUrlPattern.exec(orgUrl);
-        
+
         expect(result).not.toBe(null);
         if (!result) throw new Error("No result object");
         expect(result[1]).toBe(locationCode);
@@ -29,11 +28,10 @@ describe("CoreServicesUtils", () => {
         const locationCode = "crm10";
         const orgUrl = `https://unq1234-${locationCode}.oc.crmlivetie.com`;
         const result = unqOrgUrlPattern.exec(orgUrl);
-        
+
         expect(result).not.toBe(null);
         if (!result) throw new Error("No result object");
         expect(result[1]).toBe(locationCode);
-        const geoName = getCoreServicesGeoName(locationCode);
         expect(createCoreServicesOrgUrl("1234", getCoreServicesGeoName(locationCode))).toBe(`https://m-1234.preprod.omnichannelengagementhub.com`);
     });
 
@@ -41,7 +39,7 @@ describe("CoreServicesUtils", () => {
         const locationCode = "crm12";
         const orgUrl = `https://unq1234-${locationCode}.omnichannelengagementhub.us`;
         const result = unqOrgUrlPattern.exec(orgUrl);
-        
+
         expect(result).not.toBe(null);
         if (!result) throw new Error("No result object");
         expect(result[1]).toBe(locationCode);
@@ -67,9 +65,9 @@ describe("CoreServicesUtils", () => {
                 continue;
             }
 
-            let orgId = "1234";
-            let geoName = getCoreServicesGeoName(locationCode);
-            let coreServicesOrgUrl = createCoreServicesOrgUrl(orgId, geoName);
+            const orgId = "1234";
+            const geoName = getCoreServicesGeoName(locationCode);
+            const coreServicesOrgUrl = createCoreServicesOrgUrl(orgId, geoName);
             expect(coreServicesOrgUrl).toBe(`https://m-${orgId}.${geoName}.${domain}`);
         }
     });
