@@ -3,6 +3,7 @@
 import { ACSAdapterLogger } from "../utils/loggers";
 import AMSFileManager from "../external/ACSAdapter/AMSFileManager";
 import { ChatClient } from "@azure/communication-chat";
+import PostChatContext from "../core/PostChatContext";
 
 type AdapterEgressIngressFunction = (arg: any) => Promise<any>;
 type GetStateFunction = (name: string) => unknown;
@@ -59,6 +60,12 @@ export type GetPrechatSurveyResponse = OmnichannelGenericResponse;
 export type GetDataMaskingRulesResponse = OmnichannelGenericResponse;
 export type EmailLiveChatTranscriptResponse = OmnichannelGenericResponse;
 export type GetLiveChatTranscriptResponse = OmnichannelGenericResponse;
-export type GetPostChatSurveyContextResponse = OmnichannelGenericResponse;
+
+export type GetPostChatSurveyContextResponse = {
+	data : PostChatContext | undefined;
+	error? : string;
+	success: boolean;
+};
+
 export type GetAgentAvailabilityResponse = OmnichannelGenericResponse;
 export type CreateChatAdapterResponse = OmnichannelGenericResponse;

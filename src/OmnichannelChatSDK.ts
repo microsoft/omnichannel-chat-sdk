@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { ACSAdapterLogger, ACSClientLogger, AMSClientLogger, CallingSDKLogger, IC3ClientLogger, OCSDKLogger, createACSAdapterLogger, createACSClientLogger, createAMSClientLogger, createCallingSDKLogger, createIC3ClientLogger, createOCSDKLogger } from "./utils/loggers";
@@ -1830,7 +1831,7 @@ class OmnichannelChatSDK {
         return this.callingOption.toString() !== CallingOptionsOptionSetNumber.NoCalling.toString();
     }
 
-    public async getVoiceVideoCalling(params: any = {}): Promise<VoiceVideoCallingProxy | undefined> { // eslint-disable-line @typescript-eslint/no-explicit-any
+    public async getVoiceVideoCalling(params: any = {}): Promise<VoiceVideoCallingProxy | undefined> {
         this.scenarioMarker.startScenario(TelemetryEvent.GetVoiceVideoCalling);
 
         if (platform.isNode() || platform.isReactNative()) {
