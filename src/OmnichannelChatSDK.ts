@@ -5,8 +5,8 @@ import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import { CreateChatAdapterResponse, EmailLiveChatTranscriptResponse, GetAgentAvailabilityResponse, GetDataMaskingRulesResponse, GetLiveChatTranscriptResponse, GetPostChatSurveyContextResponse, GetPrechatSurveyResponse } from "./types/adapter";
 import { SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
-import { createACSAdapter } from "./utils/chatAdapterCreators";
 import { createCoreServicesOrgUrl, getCoreServicesGeoName, isCoreServicesOrgUrl, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
+import createVoiceVideoCalling, { VoiceVideoCallingProxy } from "./api/createVoiceVideoCalling";
 import { defaultLocaleId, getLocaleStringFromId } from "./utils/locale";
 import { getRuntimeId, isClientIdNotFoundErrorMessage, isCustomerMessage } from "./utils/utilities";
 import { loadScript, removeElementById, sleep } from "./utils/WebUtils";
@@ -87,11 +87,11 @@ import SetAuthTokenProviderOptionalParams from "./core/SetAuthTokenProviderOptio
 import StartChatOptionalParams from "./core/StartChatOptionalParams";
 import TelemetryEvent from "./telemetry/TelemetryEvent";
 import { callingBundleVersion } from "./config/settings";
+import { createACSAdapter } from "./utils/chatAdapterCreators";
 import createAMSClient from "@microsoft/omnichannel-amsclient";
 import createOcSDKConfiguration from "./utils/createOcSDKConfiguration";
 import createOmnichannelMessage from "./utils/createOmnichannelMessage";
 import createTelemetry from "./utils/createTelemetry";
-import createVoiceVideoCalling, { VoiceVideoCallingProxy } from "./api/createVoiceVideoCalling";
 import { defaultMessageTags } from "./core/messaging/MessageTags";
 import exceptionSuppressors from "./utils/exceptionSuppressors";
 import exceptionThrowers from "./utils/exceptionThrowers";
@@ -230,23 +230,18 @@ class OmnichannelChatSDK {
         if (this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED && this.liveChatVersion === LiveChatVersion.V1) {
             return null;
         }
-
         switch (this.AMSClientLoadCurrentState) {
-            case AMSClientLoadStates.LOADED:
-                return this.AMSClient;
-
-            case AMSClientLoadStates.LOADING:
-                return await this.retryLoadAMSClient();
-
-            case AMSClientLoadStates.ERROR:
-            case AMSClientLoadStates.NOT_LOADED:
-                await this.loadAmsClient();
-                return this.AMSClient;
-
-            default:
-                return null;
+        case AMSClientLoadStates.LOADED:
+            return this.AMSClient;
+        case AMSClientLoadStates.LOADING:
+            return await this.retryLoadAMSClient();
+        case AMSClientLoadStates.ERROR:
+        case AMSClientLoadStates.NOT_LOADED:
+            await this.loadAmsClient();
+            return this.AMSClient;
+        default:
+            return null;
         }
-
     }
 
     private async loadInitComponents() {
@@ -1807,7 +1802,7 @@ class OmnichannelChatSDK {
         }
 
         const { protocol } = optionalParams;
-        let executionResult : CreateChatAdapterResponse;
+        let executionResult: CreateChatAdapterResponse;
 
         const supportedChatAdapterProtocols = [ChatAdapterProtocols.ACS];
         if (protocol && !supportedChatAdapterProtocols.includes(protocol as string)) {
