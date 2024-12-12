@@ -3,8 +3,9 @@
 import { ACSAdapterLogger, ACSClientLogger, AMSClientLogger, CallingSDKLogger, IC3ClientLogger, OCSDKLogger, createACSAdapterLogger, createACSClientLogger, createAMSClientLogger, createCallingSDKLogger, createIC3ClientLogger, createOCSDKLogger } from "./utils/loggers";
 import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
+import { CreateChatAdapterResponse, EmailLiveChatTranscriptResponse, GetAgentAvailabilityResponse, GetDataMaskingRulesResponse, GetLiveChatTranscriptResponse, GetPostChatSurveyContextResponse, GetPrechatSurveyResponse } from "./types/adapter";
 import { SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
-import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
+import { createACSAdapter } from "./utils/chatAdapterCreators";
 import { createCoreServicesOrgUrl, getCoreServicesGeoName, isCoreServicesOrgUrl, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
 import { defaultLocaleId, getLocaleStringFromId } from "./utils/locale";
 import { getRuntimeId, isClientIdNotFoundErrorMessage, isCustomerMessage } from "./utils/utilities";
@@ -90,7 +91,7 @@ import createAMSClient from "@microsoft/omnichannel-amsclient";
 import createOcSDKConfiguration from "./utils/createOcSDKConfiguration";
 import createOmnichannelMessage from "./utils/createOmnichannelMessage";
 import createTelemetry from "./utils/createTelemetry";
-import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
+import createVoiceVideoCalling, { VoiceVideoCallingProxy } from "./api/createVoiceVideoCalling";
 import { defaultMessageTags } from "./core/messaging/MessageTags";
 import exceptionSuppressors from "./utils/exceptionSuppressors";
 import exceptionThrowers from "./utils/exceptionThrowers";
@@ -231,19 +232,19 @@ class OmnichannelChatSDK {
         }
 
         switch (this.AMSClientLoadCurrentState) {
-        case AMSClientLoadStates.LOADED:
-            return this.AMSClient;
+            case AMSClientLoadStates.LOADED:
+                return this.AMSClient;
 
-        case AMSClientLoadStates.LOADING:
-            return await this.retryLoadAMSClient();
+            case AMSClientLoadStates.LOADING:
+                return await this.retryLoadAMSClient();
 
-        case AMSClientLoadStates.ERROR:
-        case AMSClientLoadStates.NOT_LOADED:
-            await this.loadAmsClient();
-            return this.AMSClient;
+            case AMSClientLoadStates.ERROR:
+            case AMSClientLoadStates.NOT_LOADED:
+                await this.loadAmsClient();
+                return this.AMSClient;
 
-        default:
-            return null;
+            default:
+                return null;
         }
 
     }
@@ -1001,15 +1002,27 @@ class OmnichannelChatSDK {
      * Gets PreChat Survey.
      * @param parse Whether to parse PreChatSurvey to JSON or not.
      */
-    public async getPreChatSurvey(parse = true): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+    public async getPreChatSurvey(parse = true): Promise<GetPrechatSurveyResponse> {
+
         this.scenarioMarker.startScenario(TelemetryEvent.GetPreChatSurvey);
+        let executionResult: GetPrechatSurveyResponse;
+
         try {
             const result = parse ? JSON.parse(this.preChatSurvey) : this.preChatSurvey;
             this.scenarioMarker.completeScenario(TelemetryEvent.GetPreChatSurvey);
-            return result;
+            executionResult = {
+                data: result,
+                success: true
+            };
         } catch {
             this.scenarioMarker.failScenario(TelemetryEvent.GetPreChatSurvey);
+            executionResult = {
+                data: undefined,
+                success: false,
+                error: "GetPrechat survey could not be obtained"
+            }
         }
+        return executionResult;
     }
 
     public async getLiveChatConfig(optionalParams?: GetLiveChatConfigOptionalParams): Promise<ChatConfig> {
@@ -1130,8 +1143,13 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async getDataMaskingRules(): Promise<any> {  // eslint-disable-line  @typescript-eslint/no-explicit-any
-        return this.dataMaskingRules;
+    public async getDataMaskingRules(): Promise<GetDataMaskingRulesResponse> {
+
+        return {
+            data: this.dataMaskingRules,
+            success: true
+        };
+
     }
 
     public async sendMessage(message: ChatSDKMessage): Promise<void> {
@@ -1644,13 +1662,14 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async emailLiveChatTranscript(body: ChatTranscriptBody, optionalParams: EmailLiveChatTranscriptOptionaParams = {}): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+    public async emailLiveChatTranscript(body: ChatTranscriptBody, optionalParams: EmailLiveChatTranscriptOptionaParams = {}): Promise<EmailLiveChatTranscriptResponse> { // eslint-disable-line @typescript-eslint/no-explicit-any
         const emailTranscriptOptionalParams: IEmailTranscriptOptionalParams = {};
 
         let requestId = this.requestId;
         let chatToken = this.chatToken;
         let chatId = chatToken.chatId as string;
         let sessionId = this.sessionId;
+        let executionResult: EmailLiveChatTranscriptResponse;
 
         if (optionalParams.liveChatContext) {
             requestId = optionalParams.liveChatContext.requestId;
@@ -1695,23 +1714,34 @@ class OmnichannelChatSDK {
                 ChatId: chatId
             });
 
-            return emailResponse;
+            executionResult = {
+                data: emailResponse,
+                success: true
+            };
         } catch (error) {
             console.error(`OmnichannelChatSDK/emailLiveChatTranscript/error: ${error}`);
             this.scenarioMarker.failScenario(TelemetryEvent.EmailLiveChatTranscript, {
                 RequestId: requestId,
                 ChatId: chatId
             });
+
+            executionResult = {
+                data: undefined,
+                success: false,
+                error: `OmnichannelChatSDK/emailLiveChatTranscript/error: ${error}`
+            }
         }
+        return executionResult;
     }
 
-    public async getLiveChatTranscript(optionalParams: GetLiveChatTranscriptOptionalParams = {}): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+    public async getLiveChatTranscript(optionalParams: GetLiveChatTranscriptOptionalParams = {}): Promise<GetLiveChatTranscriptResponse> {
         const getChatTranscriptOptionalParams: IGetChatTranscriptsOptionalParams = {};
 
         let requestId = this.requestId;
         let chatToken = this.chatToken;
         let chatId = chatToken.chatId as string;
         let sessionId = this.sessionId;
+        let executionResult: GetLiveChatTranscriptResponse;
 
         if (optionalParams.liveChatContext) {
             requestId = optionalParams.liveChatContext.requestId;
@@ -1749,7 +1779,11 @@ class OmnichannelChatSDK {
                 ChatId: chatId
             });
 
-            return transcriptResponse;
+            executionResult = {
+                data: transcriptResponse,
+                success: true
+            }
+
         } catch (error) {
             const telemetryData = {
                 RequestId: requestId,
@@ -1757,31 +1791,41 @@ class OmnichannelChatSDK {
             };
 
             exceptionThrowers.throwLiveChatTranscriptRetrievalFailure(error, this.scenarioMarker, TelemetryEvent.GetLiveChatTranscript, telemetryData);
+            executionResult = {
+                data: undefined,
+                error: "Live Chat Transcript Retrieval Failure",
+                success: false
+            }
         }
+
+        return executionResult;
     }
 
-    public async createChatAdapter(optionalParams: ChatAdapterOptionalParams = {}): Promise<unknown> {
+    public async createChatAdapter(optionalParams: ChatAdapterOptionalParams = {}): Promise<CreateChatAdapterResponse> {
         if (platform.isNode() || platform.isReactNative()) {
             return Promise.reject('ChatAdapter is only supported on browser');
         }
 
         const { protocol } = optionalParams;
-        const supportedChatAdapterProtocols = [ChatAdapterProtocols.ACS, ChatAdapterProtocols.IC3, ChatAdapterProtocols.DirectLine];
+        let executionResult : CreateChatAdapterResponse;
+
+        const supportedChatAdapterProtocols = [ChatAdapterProtocols.ACS];
         if (protocol && !supportedChatAdapterProtocols.includes(protocol as string)) {
             return Promise.reject(`ChatAdapter for protocol ${protocol} currently not supported`);
         }
 
-        if (protocol === ChatAdapterProtocols.DirectLine) {
-            return createDirectLine(optionalParams, this.chatSDKConfig, this.liveChatVersion, ChatAdapterProtocols.DirectLine, this.telemetry as typeof AriaTelemetry, this.scenarioMarker);
-        } else if (protocol === ChatAdapterProtocols.ACS || this.liveChatVersion === LiveChatVersion.V2) {
+        if (protocol === ChatAdapterProtocols.ACS || this.liveChatVersion === LiveChatVersion.V2) {
             const options = {
                 fileScan: optionalParams.ACSAdapter?.fileScan
             };
 
             const fileManager = new AMSFileManager(this.AMSClient as FramedClient, this.acsAdapterLogger, options);
-            return createACSAdapter(optionalParams, this.chatSDKConfig, this.liveChatVersion, ChatAdapterProtocols.ACS, this.telemetry as typeof AriaTelemetry, this.scenarioMarker, this.omnichannelConfig, this.chatToken, fileManager, this.ACSClient?.getChatClient() as ChatClient, this.acsAdapterLogger as ACSAdapterLogger);
-        } else if (protocol === ChatAdapterProtocols.IC3 || this.liveChatVersion === LiveChatVersion.V1) {
-            return createIC3Adapter(optionalParams, this.chatSDKConfig, this.liveChatVersion, ChatAdapterProtocols.IC3, this.telemetry as typeof AriaTelemetry, this.scenarioMarker, this.chatToken, this.IC3Client, this.ic3ClientLogger as IC3ClientLogger);
+
+            executionResult = {
+                data: createACSAdapter(optionalParams, this.chatSDKConfig, this.liveChatVersion, ChatAdapterProtocols.ACS, this.telemetry as typeof AriaTelemetry, this.scenarioMarker, this.omnichannelConfig, this.chatToken, fileManager, this.ACSClient?.getChatClient() as ChatClient, this.acsAdapterLogger as ACSAdapterLogger),
+                success: true
+            };
+            return executionResult;
         }
 
         return Promise.reject(`ChatAdapter for protocol ${protocol} currently not supported`);
@@ -1791,7 +1835,7 @@ class OmnichannelChatSDK {
         return this.callingOption.toString() !== CallingOptionsOptionSetNumber.NoCalling.toString();
     }
 
-    public async getVoiceVideoCalling(params: any = {}): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+    public async getVoiceVideoCalling(params: any = {}): Promise<VoiceVideoCallingProxy | undefined> { // eslint-disable-line @typescript-eslint/no-explicit-any
         this.scenarioMarker.startScenario(TelemetryEvent.GetVoiceVideoCalling);
 
         if (platform.isNode() || platform.isReactNative()) {
@@ -1849,12 +1893,13 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async getPostChatSurveyContext(): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+    public async getPostChatSurveyContext(): Promise<GetPostChatSurveyContextResponse> { // eslint-disable-line @typescript-eslint/no-explicit-any
         this.scenarioMarker.startScenario(TelemetryEvent.GetPostChatSurveyContext, {
             RequestId: this.requestId,
             ChatId: this.chatToken?.chatId as string,
         });
         let conversationId;
+        let executionResult: GetPostChatSurveyContextResponse;
 
         try {
             const chatConfig: ChatConfig = this.liveChatConfig;
@@ -1869,7 +1914,14 @@ class OmnichannelChatSDK {
                         ChatId: this.chatToken?.chatId as string,
                         ExceptionDetails: "GetPostChatSurveyContext : LiveWorkItemDetails is null."
                     });
-                    return Promise.reject("GetPostChatSurveyContext : LiveWorkItemDetails is null.");
+
+                    executionResult = {
+                        data: undefined,
+                        error: "GetPostChatSurveyContext : LiveWorkItemDetails is null.",
+                        success: false
+                    };
+
+                    return Promise.reject(executionResult);
                 }
 
                 const participantJoined = parseLowerCaseString(liveWorkItemDetails?.canRenderPostChat as string) === "true";
@@ -1916,7 +1968,14 @@ class OmnichannelChatSDK {
                             ChatId: this.chatToken?.chatId as string,
                             ExceptionDetails: "Survey Invite link failed to send response."
                         });
-                        return Promise.reject("Survey Invite link failed to send response.");
+
+                        executionResult = {
+                            data: undefined,
+                            error: "Survey Invite link failed to send response.",
+                            success: false
+                        };
+
+                        return Promise.reject(executionResult);
                     }
 
                     if (agentSurveyInviteLinkResponse.formsProLocaleCode != null) {
@@ -1942,7 +2001,13 @@ class OmnichannelChatSDK {
                         botFormsProLocale
                     }
 
-                    return Promise.resolve(postChatContext);
+                    executionResult = {
+                        data: postChatContext,
+                        success: true
+                    };
+
+                    return Promise.resolve(executionResult);
+
                 } else {
                     this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {
                         ConversationId: conversationId,
@@ -1950,7 +2015,15 @@ class OmnichannelChatSDK {
                         ChatId: this.chatToken?.chatId as string,
                         ExceptionDetails: "surveyInviteLinkResponse is null."
                     });
-                    return Promise.reject("surveyInviteLinkResponse is null.");
+
+                    executionResult = {
+                        data: undefined,
+                        error: "surveyInviteLinkResponse is null.",
+                        success: false
+                    };
+
+                    return Promise.reject(executionResult);
+
                 }
             } else {
                 this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {
@@ -1958,7 +2031,14 @@ class OmnichannelChatSDK {
                     ChatId: this.chatToken?.chatId as string,
                     ExceptionDetails: "Post Chat Survey is disabled. Please check the Omnichannel Administration Portal."
                 });
-                return Promise.reject("Post Chat is disabled from admin side.");
+
+                executionResult = {
+                    data: undefined,
+                    error: "Post Chat Survey is disabled. Please check the Omnichannel Administration Portal.",
+                    success: false
+                };
+
+                return Promise.reject(executionResult);
             }
         } catch (ex) {
             this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {
@@ -1968,32 +2048,38 @@ class OmnichannelChatSDK {
                 ExceptionDetails: JSON.stringify(ex)
             });
 
-            return Promise.reject("Retrieving post chat context failed " + JSON.stringify(ex));
+            executionResult = {
+                data: undefined,
+                error: "Retrieving post chat context failed " + JSON.stringify(ex),
+                success: false
+            };
+
+            return Promise.reject(executionResult);
         }
     }
 
-    public async getAgentAvailability(optionalParams: GetAgentAvailabilityOptionalParams = {}): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
-        const reportError = (response: string, message: string, chatId = "") => {
-            const exceptionDetails: ChatSDKExceptionDetails = {
-                response,
-                message
-            };
+    public async getAgentAvailability(optionalParams: GetAgentAvailabilityOptionalParams = {}): Promise<GetAgentAvailabilityResponse> {
 
-            this.scenarioMarker.failScenario(TelemetryEvent.GetAgentAvailability, {
-                RequestId: this.requestId,
-                ExceptionDetails: JSON.stringify(exceptionDetails),
-                ChatId: chatId
-            });
-
-            throw new Error(exceptionDetails.message);
-        }
+        let executionResult: GetAgentAvailabilityResponse;
 
         this.scenarioMarker.startScenario(TelemetryEvent.GetAgentAvailability, {
             RequestId: this.requestId
         });
 
         if (this.conversation) {
-            reportError("InvalidOperation", "GetAgentAvailability can only be called before a chat has started.", this.chatToken.chatId as string);
+
+            const exceptionDetails: ChatSDKExceptionDetails = {
+                response: "InvalidOperation",
+                message: "GetAgentAvailability can only be called before a chat has started.",
+            };
+
+            this.scenarioMarker.failScenario(TelemetryEvent.GetAgentAvailability, {
+                RequestId: this.requestId,
+                ExceptionDetails: JSON.stringify(exceptionDetails),
+                ChatId: this.chatToken.chatId as string
+            });
+
+            throw new Error(exceptionDetails.message);
         }
 
         let getAgentAvailabilityOptionalParams: IGetQueueAvailabilityOptionalParams = {
@@ -2004,10 +2090,26 @@ class OmnichannelChatSDK {
 
         try {
             const response = await this.OCClient.getAgentAvailability(this.requestId, getAgentAvailabilityOptionalParams);
-            return response;
+
+            executionResult = {
+                data: response,
+                success: true
+            };
+
+            return executionResult;
         } catch (e) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            reportError("GetAgentAvailabilityFailed", (e as any).message as string);
+
+            const exceptionDetails: ChatSDKExceptionDetails = {
+                response: "GetAgentAvailabilityFailed",
+                message: (e as Error)?.message
+            };
+
+            this.scenarioMarker.failScenario(TelemetryEvent.GetAgentAvailability, {
+                RequestId: this.requestId,
+                ExceptionDetails: JSON.stringify(exceptionDetails),
+            });
+
+            throw new Error(exceptionDetails.message);
         }
     }
 
@@ -2240,10 +2342,6 @@ class OmnichannelChatSDK {
 
     private resolveIC3ClientUrl(): string {
         return urlResolvers.resolveIC3ClientUrl(this.chatSDKConfig);
-    }
-
-    private resolveChatAdapterUrl(protocol: string): string {
-        return urlResolvers.resolveChatAdapterUrl(this.chatSDKConfig, this.liveChatVersion, protocol);
     }
 
     private async updateChatToken(newToken: string, newRegionGTMS: IRegionGtms): Promise<void> {

@@ -48,3 +48,17 @@ export type AdapterCreator = (
 	chatClient: ChatClient,
 	logger: ACSAdapterLogger,
 	featureOption: IAdapterInitFeatureOption) => IChatAdapter;
+
+export type OmnichannelGenericResponse = {
+	data : {} | undefined;
+	error? : string;
+	success: boolean;
+}
+
+export type GetPrechatSurveyResponse = OmnichannelGenericResponse;
+export type GetDataMaskingRulesResponse = OmnichannelGenericResponse;
+export type EmailLiveChatTranscriptResponse = OmnichannelGenericResponse;
+export type GetLiveChatTranscriptResponse = OmnichannelGenericResponse;
+export type GetPostChatSurveyContextResponse = OmnichannelGenericResponse;
+export type GetAgentAvailabilityResponse = OmnichannelGenericResponse;
+export type CreateChatAdapterResponse = OmnichannelGenericResponse;
