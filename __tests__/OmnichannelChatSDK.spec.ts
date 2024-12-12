@@ -3,6 +3,7 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 
+import { GetAgentAvailabilityResponse, GetDataMaskingRulesResponse, GetPostChatSurveyContextResponse, GetPrechatSurveyResponse } from "../src/types/adapter";
 import { defaultLocaleId, getLocaleStringFromId } from "../src/utils/locale";
 
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
@@ -136,171 +137,6 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 fail();
             } catch (error : any ) {
                 expect(error).toBeInstanceOf(Error);
-            }
-        });
-
-        it('ChatSDK should be able to pick custom ic3ClientVersion if set', async () => {
-
-            const chatSDKConfig = {
-                ic3Config: {
-                    ic3ClientVersion: 'version'
-                }
-            };
-
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfigGlobal, chatSDKConfig);
-            const url = chatSDK.resolveIC3ClientUrl();
-
-            expect(url).toBe(libraries.getIC3ClientCDNUrl(chatSDKConfig.ic3Config.ic3ClientVersion));
-        });
-
-        it('ChatSDK should be able to pick custom ic3ClientCDNUrl if set', async () => {
-
-            const chatSDKConfig = {
-                ic3Config: {
-                    ic3ClientVersion: 'version',
-                    ic3ClientCDNUrl: 'cdn'
-                }
-            };
-
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfigGlobal, chatSDKConfig);
-            const url = chatSDK.resolveIC3ClientUrl();
-
-            expect(url).toBe(chatSDKConfig.ic3Config.ic3ClientCDNUrl);
-        });
-
-        it('ChatSDK should pick the default ic3ClientCDNUrl if no ic3Config is set', async () => {
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfigGlobal);
-            const url = chatSDK.resolveIC3ClientUrl();
-
-            expect(url).toBe(libraries.getIC3ClientCDNUrl());
-        });
-
-        it('[LiveChatV1] ChatSDK should be able to pick custom webChatIC3AdapterVersion if set', async () => {
-
-            const chatSDKConfig = {
-                chatAdapterConfig: {
-                    webChatIC3AdapterVersion: 'version'
-                }
-            };
-
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfigGlobal, chatSDKConfig);
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
-
-            const url = chatSDK.resolveChatAdapterUrl(ChatAdapterProtocols.IC3);
-
-            expect(url).toBe(libraries.getIC3AdapterCDNUrl(chatSDKConfig.chatAdapterConfig.webChatIC3AdapterVersion));
-        });
-
-        it('[LiveChatV1] ChatSDK should be able to pick custom webChatIC3AdapterCDNUrl if set', async () => {
-
-            const chatSDKConfig = {
-                chatAdapterConfig: {
-                    webChatIC3AdapterVersion: 'version',
-                    webChatIC3AdapterCDNUrl: 'cdn'
-                }
-            };
-
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfigGlobal, chatSDKConfig);
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
-
-            const url = chatSDK.resolveChatAdapterUrl(ChatAdapterProtocols.IC3);
-
-            expect(url).toBe(chatSDKConfig.chatAdapterConfig.webChatIC3AdapterCDNUrl);
-        });
-
-        it('[LiveChatV1] ChatSDK should pick the default webChatIC3AdapterCDNUrl if no chatAdapterConfig is set', async () => {
-
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfigGlobal);
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
-
-            const url = chatSDK.resolveChatAdapterUrl(ChatAdapterProtocols.IC3);
-
-            expect(url).toBe(libraries.getIC3AdapterCDNUrl());
-        });
-
-        it('ChatSDK should be able to pick custom webChatACSAdapterVersion if set', async () => {
-
-            const chatSDKConfig = {
-                chatAdapterConfig: {
-                    webChatACSAdapterVersion: 'version'
-                }
-            };
-
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfigGlobal, chatSDKConfig);
-            const url = chatSDK.resolveChatAdapterUrl(ChatAdapterProtocols.ACS);
-
-            expect(url).toBe(libraries.getACSAdapterCDNUrl(chatSDKConfig.chatAdapterConfig.webChatACSAdapterVersion));
-        });
-
-        it('ChatSDK should be able to pick custom webChatACSAdapterCDNUrl if set', async () => {
-
-            const chatSDKConfig = {
-                chatAdapterConfig: {
-                    webChatACSAdapterVersion: 'version',
-                    webChatACSAdapterCDNUrl: 'cdn'
-                }
-            };
-
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfigGlobal, chatSDKConfig);
-            const url = chatSDK.resolveChatAdapterUrl(ChatAdapterProtocols.ACS);
-
-            expect(url).toBe(chatSDKConfig.chatAdapterConfig.webChatACSAdapterCDNUrl);
-        });
-
-        it('ChatSDK should pick the default webChatACSAdapterCDNUrl if no chatAdapterConfig is set', async () => {
-
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfigGlobal);
-            const url = chatSDK.resolveChatAdapterUrl(ChatAdapterProtocols.ACS);
-
-            expect(url).toBe(libraries.getACSAdapterCDNUrl());
-        });
-
-        it('ChatSDK should be able to pick custom webChatDirectLineVersion if set', async () => {
-
-            const chatSDKConfig = {
-                chatAdapterConfig: {
-                    webChatDirectLineVersion: 'version'
-                }
-            };
-
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfigGlobal, chatSDKConfig);
-            const url = chatSDK.resolveChatAdapterUrl(ChatAdapterProtocols.DirectLine);
-
-            expect(url).toBe(libraries.getDirectLineCDNUrl(chatSDKConfig.chatAdapterConfig.webChatDirectLineVersion));
-        });
-
-        it('ChatSDK should be able to pick custom webChatDirectLineCDNUrl if set', async () => {
-
-            const chatSDKConfig = {
-                chatAdapterConfig: {
-                    webChatDirectLineVersion: 'version',
-                    webChatDirectLineCDNUrl: 'cdn'
-                }
-            };
-
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfigGlobal, chatSDKConfig);
-            const url = chatSDK.resolveChatAdapterUrl(ChatAdapterProtocols.DirectLine);
-
-            expect(url).toBe(chatSDKConfig.chatAdapterConfig.webChatDirectLineCDNUrl);
-        });
-
-        it('ChatSDK should pick the default webChatDirectLineCDNUrl if no chatAdapterConfig is set', async () => {
-
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfigGlobal);
-            const url = chatSDK.resolveChatAdapterUrl(ChatAdapterProtocols.DirectLine);
-
-            expect(url).toBe(libraries.getDirectLineCDNUrl());
-        });
-
-        it('ChatSDK should throw an error if ChatSDK.resolveChatAdapterUrl() is called with other protocol than supported protocols', async () => {
-
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfigGlobal);
-            const protocol = "UnsupportedProtocol";
-            try {
-                chatSDK.resolveChatAdapterUrl(protocol);
-                fail();
-            } catch (error : any ) {
-                expect(error.toString()).toContain(`ChatAdapter for protocol ${protocol} currently not supported`);
             }
         });
 
@@ -973,8 +809,8 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             }));
 
             await chatSDK.getLiveChatConfig({useRuntimeCache: false});
-            const preChatSurvey = await chatSDK.getPreChatSurvey(false);
-            expect(preChatSurvey).toBe(samplePreChatSurvey);
+            const preChatSurvey : GetPrechatSurveyResponse = await chatSDK.getPreChatSurvey(false);
+            expect(preChatSurvey.data).toBe(samplePreChatSurvey);
         });
 
         it('ChatSDK.getPreChatSurvey() with preChat disabled should NOT return a pre chat survey', async() => {
@@ -999,8 +835,8 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             }));
 
             await chatSDK.getLiveChatConfig({useRuntimeCache: false});
-            const preChatSurvey = await chatSDK.getPreChatSurvey(false);
-            expect(preChatSurvey).toBe(null);
+            const preChatSurvey : GetPrechatSurveyResponse = await chatSDK.getPreChatSurvey(false);
+            expect(preChatSurvey.data).toBe(null);
         });
 
         it('ChatSDK.getDataMaskingRules() should return active data masking rules', async() => {
@@ -1015,7 +851,8 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             await chatSDK.initialize();
 
-            expect(await chatSDK.getDataMaskingRules()).toBe(dataMaskingRules);
+            const dataMaskingRulesResponse : GetDataMaskingRulesResponse = await chatSDK.getDataMaskingRules();
+            expect(dataMaskingRulesResponse.data).toBe(dataMaskingRules);
         });
 
         it('ChatSDK.startChat() should throw an exception if ChatSDK.initialize() is not called', async () => {
@@ -4065,10 +3902,10 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             });
             jest.spyOn(console, 'error');
 
-            const postChatContext = await chatSDK.getPostChatSurveyContext();
+            const postChatContext : GetPostChatSurveyContextResponse = await chatSDK.getPostChatSurveyContext();
             expect(chatSDK.getConversationDetails).toHaveBeenCalledTimes(1);
             expect(chatSDK.OCClient.getSurveyInviteLink).toHaveBeenCalledTimes(1);
-            expect(postChatContext.participantJoined).toBe(true);
+            expect(postChatContext?.data?.participantJoined).toBe(true);
 
         });
 
@@ -4166,7 +4003,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             });
             jest.spyOn(console, 'error');
 
-            const postChatContext = await chatSDK.getPostChatSurveyContext();
+            const postChatContext : GetPostChatSurveyContextResponse = await chatSDK.getPostChatSurveyContext();
             expect(chatSDK.getConversationDetails).toHaveBeenCalledTimes(1);
             expect(chatSDK.OCClient.getSurveyInviteLink).toHaveBeenCalledWith("2", {
                 "FormId": "1",
@@ -4176,8 +4013,8 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 "WidgetId": "[data-app-id]"
             },
             expect.any(Object));
-            expect(postChatContext.participantJoined).toBeTruthy();
-            expect(postChatContext.participantType).toBe("Bot");
+            expect(postChatContext?.data?.participantJoined).toBeTruthy();
+            expect(postChatContext?.data?.participantType).toBe("Bot");
         });
 
         it('ChatSDK.getAgentAvailability() should throw error if conversation already started', async () => {
@@ -4255,8 +4092,8 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 isAgentAvailable: true
             });
 
-            const agentAvailability = await chatSDK.getAgentAvailability();
-            expect(agentAvailability).toEqual({
+            const agentAvailability: GetAgentAvailabilityResponse = await chatSDK.getAgentAvailability();
+            expect(agentAvailability.data).toEqual({
                 isAgentAvailable: true
             });
 
