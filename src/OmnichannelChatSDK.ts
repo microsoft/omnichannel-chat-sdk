@@ -4,7 +4,7 @@
 import { ACSAdapterLogger, ACSClientLogger, AMSClientLogger, CallingSDKLogger, IC3ClientLogger, OCSDKLogger, createACSAdapterLogger, createACSClientLogger, createAMSClientLogger, createCallingSDKLogger, createIC3ClientLogger, createOCSDKLogger } from "./utils/loggers";
 import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
-import { CreateChatAdapterResponse, EmailLiveChatTranscriptResponse, GetAgentAvailabilityResponse, GetDataMaskingRulesResponse, GetLiveChatTranscriptResponse, GetPostChatSurveyContextResponse, GetPrechatSurveyResponse } from "./types/adapter";
+import { CreateChatAdapterResponse, EmailLiveChatTranscriptResponse, GetAgentAvailabilityResponse, GetDataMaskingRulesResponse, GetLiveChatTranscriptResponse, GetPostChatSurveyContextResponse, GetPrechatSurveyResponse } from "./types/response";
 import { SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
 import { createCoreServicesOrgUrl, getCoreServicesGeoName, isCoreServicesOrgUrl, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
 import createVoiceVideoCalling, { VoiceVideoCallingProxy } from "./api/createVoiceVideoCalling";
@@ -1658,14 +1658,13 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async emailLiveChatTranscript(body: ChatTranscriptBody, optionalParams: EmailLiveChatTranscriptOptionaParams = {}): Promise<EmailLiveChatTranscriptResponse> { // eslint-disable-line @typescript-eslint/no-explicit-any
+    public async emailLiveChatTranscript(body: ChatTranscriptBody, optionalParams: EmailLiveChatTranscriptOptionaParams = {}): Promise<void> {
         const emailTranscriptOptionalParams: IEmailTranscriptOptionalParams = {};
 
         let requestId = this.requestId;
         let chatToken = this.chatToken;
         let chatId = chatToken.chatId as string;
         let sessionId = this.sessionId;
-        let executionResult: EmailLiveChatTranscriptResponse;
 
         if (optionalParams.liveChatContext) {
             requestId = optionalParams.liveChatContext.requestId;
@@ -1695,7 +1694,7 @@ class OmnichannelChatSDK {
                 CustomerLocale: body.locale || getLocaleStringFromId(this.localeId)
             };
 
-            const emailResponse = await this.OCClient.emailTranscript(
+            await this.OCClient.emailTranscript(
                 requestId,
                 chatToken.token,
                 emailRequestBody,
@@ -1710,10 +1709,6 @@ class OmnichannelChatSDK {
                 ChatId: chatId
             });
 
-            executionResult = {
-                data: emailResponse,
-                success: true
-            };
         } catch (error) {
             console.error(`OmnichannelChatSDK/emailLiveChatTranscript/error: ${error}`);
             this.scenarioMarker.failScenario(TelemetryEvent.EmailLiveChatTranscript, {
@@ -1721,13 +1716,8 @@ class OmnichannelChatSDK {
                 ChatId: chatId
             });
 
-            executionResult = {
-                data: undefined,
-                success: false,
-                error: `OmnichannelChatSDK/emailLiveChatTranscript/error: ${error}`
-            }
         }
-        return executionResult;
+
     }
 
     public async getLiveChatTranscript(optionalParams: GetLiveChatTranscriptOptionalParams = {}): Promise<GetLiveChatTranscriptResponse> {
