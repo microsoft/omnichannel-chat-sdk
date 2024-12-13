@@ -3,6 +3,7 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 
+import { GetPrechatSurveyResponse, MaskingRule, MaskingRules } from "../src/types/response";
 import { defaultLocaleId, getLocaleStringFromId } from "../src/utils/locale";
 
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
@@ -973,8 +974,8 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             }));
 
             await chatSDK.getLiveChatConfig({useRuntimeCache: false});
-            const preChatSurvey = await chatSDK.getPreChatSurvey(false);
-            expect(preChatSurvey).toBe(samplePreChatSurvey);
+            const preChatSurvey : GetPrechatSurveyResponse = await chatSDK.getPreChatSurvey(false);
+            expect(preChatSurvey.data).toBe(samplePreChatSurvey);
         });
 
         it('ChatSDK.getPreChatSurvey() with preChat disabled should NOT return a pre chat survey', async() => {
@@ -999,23 +1000,26 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             }));
 
             await chatSDK.getLiveChatConfig({useRuntimeCache: false});
-            const preChatSurvey = await chatSDK.getPreChatSurvey(false);
-            expect(preChatSurvey).toBe(null);
+            const preChatSurvey : GetPrechatSurveyResponse = await chatSDK.getPreChatSurvey(false);
+            expect(preChatSurvey.data).toBe(null);
         });
 
         it('ChatSDK.getDataMaskingRules() should return active data masking rules', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
 
-            const dataMaskingRules = {
-                'SSN': "\\b(?!000|666|9)\\d{3}[- ]?(?!00)\\d{2}[- ]?(?!0000)\\d{4}\\b"
-            }
+            const dataMaskingRule : MaskingRule = {
+                id: "SSN",
+                regex: "\\b(?!000|666|9)\\d{3}[- ]?(?!00)\\d{2}[- ]?(?!0000)\\d{4}\\b"
+            };
 
-            chatSDK.dataMaskingRules = dataMaskingRules;
+            chatSDK.dataMaskingRules = { rules : [dataMaskingRule]} as MaskingRules;
 
             await chatSDK.initialize();
 
-            expect(await chatSDK.getDataMaskingRules()).toBe(dataMaskingRules);
+            const maskingRules : MaskingRules = await chatSDK.getDataMaskingRules();
+
+            expect(maskingRules.rules[0]).toBe(dataMaskingRule);
         });
 
         it('ChatSDK.startChat() should throw an exception if ChatSDK.initialize() is not called', async () => {
@@ -2136,15 +2140,19 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 }
             }
 
-            chatSDK.dataMaskingRules = {
-                'SSN': "\\b(?!000|666|9)\\d{3}[- ]?(?!00)\\d{2}[- ]?(?!0000)\\d{4}\\b"
-            }
+            const maskingRule : MaskingRule = {
+                id: "SSN",
+                regex : "\\b(?!000|666|9)\\d{3}[- ]?(?!00)\\d{2}[- ]?(?!0000)\\d{4}\\b"
+            };
+
+            chatSDK.dataMaskingRules = { rules : [maskingRule] } as MaskingRules;
 
             const messageToSend = {
                 content: 'Sending my SSN 514-12-3456'
             }
 
-            const regex = new RegExp(chatSDK.dataMaskingRules.SSN as string, 'g');
+            const regex = new RegExp(chatSDK.dataMaskingRules.rules[0].regex as string, 'g');
+
             let match;
             let {content} = messageToSend;
             // eslint-disable-next-line no-cond-assign
@@ -2189,9 +2197,12 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 }
             }
 
-            chatSDK.dataMaskingRules = {
-                'SSN': "\\b(?!000|666|9)\\d{3}[- ]?(?!00)\\d{2}[- ]?(?!0000)\\d{4}\\b"
-            }
+            const maskingRule : MaskingRule = {
+                id: "SSN",
+                regex : "\\b(?!000|666|9)\\d{3}[- ]?(?!00)\\d{2}[- ]?(?!0000)\\d{4}\\b"
+            };
+
+            chatSDK.dataMaskingRules = { rules : [maskingRule] } as MaskingRules;
 
             const messageToSend = {
                 content: 'Sending my SSN 514-12-3456'
