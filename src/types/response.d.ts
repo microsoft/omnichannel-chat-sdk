@@ -1,4 +1,3 @@
-import PostChatContext from "../core/PostChatContext";
 
 export type OmnichannelGenericResponse = {
 	data : {} | undefined;
@@ -12,23 +11,18 @@ export type MaskingRule = {
 
 }
 
-export type GetMaskingRulesResponse = {
-    data : MaskingRule[] | undefined;
-    error? : string;
-    success: boolean;
-};
+export type MaskingRules = {
+	rules: MaskingRule[];
+}
 
 // wraps an adaptive card that will be render by UI, no need to deconstruct the card in types
 export type GetPrechatSurveyResponse = OmnichannelGenericResponse;
-export type GetDataMaskingRulesResponse = OmnichannelGenericResponse;
-export type EmailLiveChatTranscriptResponse = OmnichannelGenericResponse;
-export type GetLiveChatTranscriptResponse = OmnichannelGenericResponse;
 
-export type GetPostChatSurveyContextResponse = {
-	data : PostChatContext | undefined;
+// Response from OCSDK is a string (JSON)
+export type GetLiveChatTranscriptResponse = {
+	data : string | undefined;
 	error? : string;
 	success: boolean;
 };
 
-export type GetAgentAvailabilityResponse = OmnichannelGenericResponse;
 export type CreateChatAdapterResponse = OmnichannelGenericResponse;
