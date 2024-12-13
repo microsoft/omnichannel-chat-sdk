@@ -2,6 +2,7 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 
+import { GetPrechatSurveyResponse, MaskingRule, MaskingRules } from "../src/types/response";
 import { defaultLocaleId, getLocaleStringFromId } from "../src/utils/locale";
 
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
@@ -903,8 +904,8 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             }));
 
             await chatSDK.getLiveChatConfig({ useRuntimeCache: false });
-            const preChatSurvey = await chatSDK.getPreChatSurvey(false);
-            expect(preChatSurvey).toBe(samplePreChatSurvey);
+            const preChatSurvey : GetPrechatSurveyResponse = await chatSDK.getPreChatSurvey(false);
+            expect(preChatSurvey.data).toBe(samplePreChatSurvey);
         });
 
         it('ChatSDK.getPreChatSurvey() with preChat disabled should NOT return a pre chat survey', async () => {
@@ -929,8 +930,8 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             }));
 
             await chatSDK.getLiveChatConfig({ useRuntimeCache: false });
-            const preChatSurvey = await chatSDK.getPreChatSurvey(false);
-            expect(preChatSurvey).toBe(null);
+            const preChatSurvey : GetPrechatSurveyResponse = await chatSDK.getPreChatSurvey(false);
+            expect(preChatSurvey.data).toBe(null);
         });
 
         it('ChatSDK.getDataMaskingRules() should return active data masking rules', async () => {
@@ -938,13 +939,17 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
 
             const dataMaskingRules = {
-                'SSN': "\\b(?!000|666|9)\\d{3}[- ]?(?!00)\\d{2}[- ]?(?!0000)\\d{4}\\b"
-            }
+                id: 'SSN',
+                regex: "\\b(?!000|666|9)\\d{3}[- ]?(?!00)\\d{2}[- ]?(?!0000)\\d{4}\\b"
+            } as MaskingRule;
 
-            chatSDK.dataMaskingRules = dataMaskingRules;
+            chatSDK.dataMaskingRules = {
+                rules : [ dataMaskingRules ]
+            } as MaskingRules;
 
             await chatSDK.initialize({ useParallelLoad: true });
-            expect(await chatSDK.getDataMaskingRules()).toBe(dataMaskingRules);
+            const maskingRules : MaskingRules = await chatSDK.getDataMaskingRules();
+            expect(maskingRules.rules[0]).toBe(dataMaskingRules);
         });
 
         it('ChatSDK.startChat() should throw an exception if ChatSDK.initialize() is not called', async () => {
