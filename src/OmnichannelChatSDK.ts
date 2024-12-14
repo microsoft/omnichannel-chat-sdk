@@ -3,7 +3,7 @@
 import { ACSAdapterLogger, ACSClientLogger, AMSClientLogger, CallingSDKLogger, IC3ClientLogger, OCSDKLogger, createACSAdapterLogger, createACSClientLogger, createAMSClientLogger, createCallingSDKLogger, createIC3ClientLogger, createOCSDKLogger } from "./utils/loggers";
 import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
-import { CreateChatAdapterResponse, GetLiveChatTranscriptResponse, GetPrechatSurveyResponse, MaskingRules } from "./types/response";
+import { CreateChatAdapterResponse, GetLiveChatTranscriptResponse, GetPrechatSurveyResponse, MaskingRule, MaskingRules } from "./types/response";
 import { SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
 import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
 import { createCoreServicesOrgUrl, getCoreServicesGeoName, isCoreServicesOrgUrl, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
@@ -126,7 +126,7 @@ class OmnichannelChatSDK {
     private chatToken: IChatToken;
     private liveChatConfig: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private liveChatVersion: number;
-    private dataMaskingRules: MaskingRules = { rules: [] };
+    private dataMaskingRules: MaskingRules = { rules: [] } as MaskingRules;
     private authSettings: AuthSettings | null = null;
     private authenticatedUserToken: string | null = null;
     private preChatSurvey: any; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -160,7 +160,6 @@ class OmnichannelChatSDK {
         this.requestId = uuidv4();
         this.chatToken = {};
         this.liveChatConfig = {};
-        this.dataMaskingRules = { rules: [] };
         this.authSettings = null;
         this.preChatSurvey = null;
         this.telemetry = createTelemetry(this.debug);
@@ -1146,17 +1145,12 @@ class OmnichannelChatSDK {
         return this.dataMaskingRules;
     }
 
-    public async sendMessage(message: ChatSDKMessage): Promise<void> {
-        this.scenarioMarker.startScenario(TelemetryEvent.SendMessages, {
-            RequestId: this.requestId,
-            ChatId: this.chatToken.chatId as string
-        });
-
+    private transformMessage(message: ChatSDKMessage): ChatSDKMessage {
         const { disable, maskingCharacter } = this.chatSDKConfig.dataMasking!;
+        if (!disable) {
 
-        let { content } = message;
+            let { content } = message;
 
-        if (this.dataMaskingRules.rules.length > 0 && !disable) {
             for (const maskingRule of this.dataMaskingRules.rules) {
                 const regex = new RegExp(maskingRule.regex, 'g');
                 let match;
@@ -1165,8 +1159,18 @@ class OmnichannelChatSDK {
                     content = content.replace(match[0], replaceStr);
                 }
             }
+            message.content = content;
         }
-        message.content = content;
+        return message;
+    }
+
+    public async sendMessage(message: ChatSDKMessage): Promise<void> {
+        this.scenarioMarker.startScenario(TelemetryEvent.SendMessages, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string
+        });
+
+        this.transformMessage(message);
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -2235,8 +2239,18 @@ class OmnichannelChatSDK {
         this.debug && console.log(`[OmnichannelChatSDK][getChatConfig][liveChatVersion] ${this.liveChatVersion}`);
 
         const { setting } = dataMaskingConfig;
+
         if (setting.msdyn_maskforcustomer) {
-            this.dataMaskingRules = dataMaskingConfig.dataMaskingRules;
+
+            console.log(dataMaskingConfig.dataMaskingRules);
+
+            for (const [key, value] of Object.entries(dataMaskingConfig.dataMaskingRules)) {
+                console.log(`${key}: ${value}`);
+                this.dataMaskingRules.rules.push({
+                    id: key,
+                    regex: value
+                } as MaskingRule);
+            }
         }
 
         if (authSettings) {
