@@ -310,6 +310,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
             await page.evaluate(async ({ omnichannelConfig, content, chatDuration }) => {
                 const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
+
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
 
                 await chatSDK.initialize();
@@ -348,16 +349,20 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         expect(sendMessageResponse.status()).toBe(201);
     });
 
-    test('ChatSDK.getMessages() should return a list of messages', async ({ page }) => {
+    test('12345', async ({ page }) => {
         await page.goto(testPage);
 
         const content = "Hi";
         const [getMessagesRequest, getMessagesResponse, runtimeContext] = await Promise.all([
             page.waitForRequest(request => {
-                return request.url().match(ACSEndpoints.getMessagesPathPattern)?.length >= 0 && request.method() === 'GET';
+                const match = request.url().match(ACSEndpoints.getMessagesPathPattern);
+                return match !== null && match.length > 0  && request.method() === 'GET';
             }),
+
             page.waitForResponse(response => {
-                return response.url().match(ACSEndpoints.getMessagesPathPattern)?.length >= 0 && response.request().method() === 'GET'
+                const match = response.url().match(ACSEndpoints.getMessagesPathPattern);
+
+                return match !== null && match.length > 0 && response.request().method() === 'GET'
             }),
             await page.evaluate(async ({ omnichannelConfig, content, chatDuration }) => {
                 const { sleep } = window;
@@ -391,6 +396,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         const { acsEndpoint, chatId } = runtimeContext;
         const getMessagesRequestPartialUrl = `${acsEndpoint}chat/threads/${encodeURIComponent(chatId)}/messages?api-version=`;
         const getMessagesResponseDataJson = await getMessagesResponse.json();
+
         const sentMessage = getMessagesResponseDataJson.value.filter((message) => message.type === 'text' && message.content.message === content);
         const sentMessageContent = sentMessage[0].content.message;
 
