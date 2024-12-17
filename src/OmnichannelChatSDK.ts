@@ -2,9 +2,9 @@
 
 import { ACSAdapterLogger, ACSClientLogger, AMSClientLogger, CallingSDKLogger, IC3ClientLogger, OCSDKLogger, createACSAdapterLogger, createACSClientLogger, createAMSClientLogger, createCallingSDKLogger, createIC3ClientLogger, createOCSDKLogger } from "./utils/loggers";
 import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
+import { ChatAdapter, GetLiveChatTranscriptResponse, GetPreChatSurveyResponse, MaskingRule, MaskingRules } from "./types/response";
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import { ChatWidgetLanguage, DataMaskingInfo, LiveWSAndLiveChatEngJoin, VoiceVideoCallingOptionalParams } from "./types/config";
-import { CreateChatAdapterResponse, GetLiveChatTranscriptResponse, GetPrechatSurveyResponse, MaskingRule, MaskingRules } from "./types/response";
 import { SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
 import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
 import { createCoreServicesOrgUrl, getCoreServicesGeoName, isCoreServicesOrgUrl, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
@@ -1007,25 +1007,15 @@ class OmnichannelChatSDK {
      * Gets PreChat Survey.
      * @param parse Whether to parse PreChatSurvey to JSON or not.
      */
-    public async getPreChatSurvey(parse = true): Promise<GetPrechatSurveyResponse> {
+    public async getPreChatSurvey(parse = true): Promise<GetPreChatSurveyResponse> {
         this.scenarioMarker.startScenario(TelemetryEvent.GetPreChatSurvey);
-        let executionResult: GetPrechatSurveyResponse;
         try {
             const result = parse ? JSON.parse(this.preChatSurvey) : this.preChatSurvey;
             this.scenarioMarker.completeScenario(TelemetryEvent.GetPreChatSurvey);
-            executionResult = {
-                data: result,
-                success: true
-            };
+            return result;
         } catch {
             this.scenarioMarker.failScenario(TelemetryEvent.GetPreChatSurvey);
-            executionResult = {
-                data: undefined,
-                success: false,
-                error: "GetPrechat survey could not be obtained"
-            }
         }
-        return executionResult;
     }
 
     public async getLiveChatConfig(optionalParams?: GetLiveChatConfigOptionalParams): Promise<ChatConfig> {
@@ -1734,7 +1724,6 @@ class OmnichannelChatSDK {
         let chatToken = this.chatToken;
         let chatId = chatToken.chatId as string;
         let sessionId = this.sessionId;
-        let executionResult: GetLiveChatTranscriptResponse;
 
         if (optionalParams.liveChatContext) {
             requestId = optionalParams.liveChatContext.requestId;
@@ -1773,29 +1762,19 @@ class OmnichannelChatSDK {
                 ChatId: chatId
             });
 
-            executionResult = {
-                data: transcriptResponse,
-                success: true
-            }
+            return transcriptResponse;
+
         } catch (error) {
             const telemetryData = {
                 RequestId: requestId,
                 ChatId: chatId
             };
 
-            executionResult = {
-                data: undefined,
-                error: "Live Chat Transcript Retrieval Failure",
-                success: false
-            }
-
             exceptionThrowers.throwLiveChatTranscriptRetrievalFailure(error, this.scenarioMarker, TelemetryEvent.GetLiveChatTranscript, telemetryData);
         }
-
-        return executionResult;
     }
 
-    public async createChatAdapter(optionalParams: ChatAdapterOptionalParams = {}): Promise<CreateChatAdapterResponse> {
+    public async createChatAdapter(optionalParams: ChatAdapterOptionalParams = {}): Promise<ChatAdapter> {
 
         if (platform.isNode() || platform.isReactNative()) {
             return Promise.reject('ChatAdapter is only supported on browser');
@@ -1808,25 +1787,18 @@ class OmnichannelChatSDK {
         }
 
         if (protocol === ChatAdapterProtocols.DirectLine) {
-            return {
-                data: createDirectLine(optionalParams, this.chatSDKConfig, this.liveChatVersion, ChatAdapterProtocols.DirectLine, this.telemetry as typeof AriaTelemetry, this.scenarioMarker),
-                success: true,
-            } as CreateChatAdapterResponse;
+
+            return createDirectLine(optionalParams, this.chatSDKConfig, this.liveChatVersion, ChatAdapterProtocols.DirectLine, this.telemetry as typeof AriaTelemetry, this.scenarioMarker);
         } else if (protocol === ChatAdapterProtocols.ACS || this.liveChatVersion === LiveChatVersion.V2) {
             const options = {
                 fileScan: optionalParams.ACSAdapter?.fileScan
             };
 
             const fileManager = new AMSFileManager(this.AMSClient as FramedClient, this.acsAdapterLogger, options);
-            return {
-                data: createACSAdapter(optionalParams, this.chatSDKConfig, this.liveChatVersion, ChatAdapterProtocols.ACS, this.telemetry as typeof AriaTelemetry, this.scenarioMarker, this.omnichannelConfig, this.chatToken, fileManager, this.ACSClient?.getChatClient() as ChatClient, this.acsAdapterLogger as ACSAdapterLogger),
-                success: true
-            };
+            return createACSAdapter(optionalParams, this.chatSDKConfig, this.liveChatVersion, ChatAdapterProtocols.ACS, this.telemetry as typeof AriaTelemetry, this.scenarioMarker, this.omnichannelConfig, this.chatToken, fileManager, this.ACSClient?.getChatClient() as ChatClient, this.acsAdapterLogger as ACSAdapterLogger);
+
         } else if (protocol === ChatAdapterProtocols.IC3 || this.liveChatVersion === LiveChatVersion.V1) {
-            return {
-                data: createIC3Adapter(optionalParams, this.chatSDKConfig, this.liveChatVersion, ChatAdapterProtocols.IC3, this.telemetry as typeof AriaTelemetry, this.scenarioMarker, this.chatToken, this.IC3Client, this.ic3ClientLogger as IC3ClientLogger),
-                success: true
-            };
+            return  createIC3Adapter(optionalParams, this.chatSDKConfig, this.liveChatVersion, ChatAdapterProtocols.IC3, this.telemetry as typeof AriaTelemetry, this.scenarioMarker, this.chatToken, this.IC3Client, this.ic3ClientLogger as IC3ClientLogger);
         }
 
         return Promise.reject(`ChatAdapter for protocol ${protocol} currently not supported`);
@@ -2207,6 +2179,8 @@ class OmnichannelChatSDK {
 
         const isPreChatEnabled = parseLowerCaseString(liveWSAndLiveChatEngJoin.msdyn_prechatenabled) === "true";
 
+        console.log(liveWSAndLiveChatEngJoin);
+
         if (isPreChatEnabled && liveWSAndLiveChatEngJoin.PreChatSurvey && liveWSAndLiveChatEngJoin.PreChatSurvey.trim().length > 0) {
             this.preChatSurvey = liveWSAndLiveChatEngJoin.PreChatSurvey;
             /* istanbul ignore next */
@@ -2217,10 +2191,6 @@ class OmnichannelChatSDK {
     private async setDataMaskingConfiguration(dataMaskingConfig: DataMaskingInfo) {
 
         if (dataMaskingConfig.setting.msdyn_maskforcustomer) {
-
-            console.log("******** DATA MASKING CONFIG ********");
-            console.log(dataMaskingConfig.dataMaskingRules);
-
             if (dataMaskingConfig.dataMaskingRules) {
                 for (const [key, value] of Object.entries(dataMaskingConfig.dataMaskingRules)) {
                     console.log(`${key}: ${value}`);

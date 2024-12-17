@@ -1,28 +1,15 @@
-
-export type OmnichannelGenericResponse = {
-	data : {} | undefined;
-	error? : string;
-	success: boolean;
-}
+import { createACSAdapter, createDirectLine, createIC3Adapter } from "../utils/chatAdapterCreators";
 
 export type MaskingRule = {
-    id: string;
-    regex: string;
-
+	id: string;
+	regex: string;
 }
-
 export type MaskingRules = {
 	rules: MaskingRule[];
 }
-
-// wraps an adaptive card that will be render by UI, no need to deconstruct the card in types
-export type GetPrechatSurveyResponse = OmnichannelGenericResponse;
-
-// Response from OCSDK is a string (JSON)
-export type GetLiveChatTranscriptResponse = {
-	data : string | undefined;
-	error? : string;
-	success: boolean;
-};
-
-export type CreateChatAdapterResponse = OmnichannelGenericResponse;
+export type GeneralResponse = {} | string | undefined;
+export type GetPreChatSurveyResponse = GeneralResponse;
+export type DirectLineAdapter = ReturnType<typeof createDirectLine>;
+export type ACSAdapter = ReturnType<typeof createACSAdapter>;
+export type IC3Adapter = ReturnType<typeof createIC3Adapter>;
+export type ChatAdapter = DirectLineAdapter | ACSAdapter | IC3Adapter;

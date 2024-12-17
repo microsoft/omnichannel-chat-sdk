@@ -2,7 +2,7 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 
-import { GetPrechatSurveyResponse, MaskingRule, MaskingRules } from "../src/types/response";
+import { GetPreChatSurveyResponse, MaskingRule, MaskingRules } from "../src/types/response";
 import { defaultLocaleId, getLocaleStringFromId } from "../src/utils/locale";
 
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
@@ -904,8 +904,8 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             }));
 
             await chatSDK.getLiveChatConfig({ useRuntimeCache: false });
-            const preChatSurvey : GetPrechatSurveyResponse = await chatSDK.getPreChatSurvey(false);
-            expect(preChatSurvey.data).toBe(samplePreChatSurvey);
+            const preChatSurvey : GetPreChatSurveyResponse = await chatSDK.getPreChatSurvey(false);
+            expect(preChatSurvey).toBe(samplePreChatSurvey);
         });
 
         it('ChatSDK.getPreChatSurvey() with preChat disabled should NOT return a pre chat survey', async () => {
@@ -930,8 +930,8 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             }));
 
             await chatSDK.getLiveChatConfig({ useRuntimeCache: false });
-            const preChatSurvey : GetPrechatSurveyResponse = await chatSDK.getPreChatSurvey(false);
-            expect(preChatSurvey.data).toBe(null);
+            const preChatSurvey : GetPreChatSurveyResponse = await chatSDK.getPreChatSurvey(false);
+            expect(preChatSurvey).toBe(null);
         });
 
         it('ChatSDK.getDataMaskingRules() should return active data masking rules', async () => {
