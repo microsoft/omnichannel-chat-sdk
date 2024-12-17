@@ -1,8 +1,9 @@
+import { expect, test } from '@playwright/test';
+
+import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
 import fetchTestSettings from '../utils/fetchTestSettings';
-import { test, expect } from '@playwright/test';
-import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChatWithPrechat');
@@ -133,6 +134,6 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithPrechat', () => {
         ]);
 
         const { preChatSurvey } = runtimeContext;
-        expect(typeof (preChatSurvey) === 'string').toBe(true);
+        expect(typeof (preChatSurvey.data) === 'string').toBe(true);
     });
 });
