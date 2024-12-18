@@ -1,9 +1,13 @@
+import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
 import AuthSettings from "../core/AuthSettings";
 import { CallingSDKLogger } from "../utils/loggers";
+import FramedlessClient from "@microsoft/omnichannel-amsclient/lib/FramedlessClient";
 
 export type VoiceVideoCallingOptionalParams={
     logger? : CallingSDKLogger | null;
 }
+
+export type AmsClient = FramedClient | FramedlessClient | null;
 
 export type LiveChatConfig = {
     DataMaskingInfo: DataMaskingInfo;
