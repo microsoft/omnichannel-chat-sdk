@@ -8,7 +8,7 @@ import { ChatWidgetLanguage, DataMaskingInfo, LiveWSAndLiveChatEngJoin, VoiceVid
 import { SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
 import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
 import { createCoreServicesOrgUrl, getCoreServicesGeoName, isCoreServicesOrgUrl, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
-import createVoiceVideoCalling, { VoiceVideoCallingProxy } from "./api/createVoiceVideoCalling";
+import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
 import { defaultLocaleId, getLocaleStringFromId } from "./utils/locale";
 import { getRuntimeId, isClientIdNotFoundErrorMessage, isCustomerMessage } from "./utils/utilities";
 import { loadScript, removeElementById, sleep } from "./utils/WebUtils";
@@ -57,7 +57,6 @@ import IGetChatTranscriptsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/I
 import IGetLWIDetailsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetLWIDetailsOptionalParams";
 import IGetQueueAvailabilityOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetQueueAvailabilityOptionalParams";
 import IInitializationInfo from "@microsoft/omnichannel-ic3core/lib/model/IInitializationInfo";
-import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import IOmnichannelConfiguration from "@microsoft/ocsdk/lib/Interfaces/IOmnichannelConfiguration";
 import IPerson from "@microsoft/omnichannel-ic3core/lib/model/IPerson";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
@@ -84,7 +83,6 @@ import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import PluggableLogger from "@microsoft/omnichannel-amsclient/lib/PluggableLogger";
 import PostChatContext from "./core/PostChatContext";
 import ProtocolType from "@microsoft/omnichannel-ic3core/lib/interfaces/ProtocoleType";
-import QueueAvailability from "@microsoft/ocsdk/lib/Model/QueueAvailability";
 import ScenarioMarker from "./telemetry/ScenarioMarker";
 import SetAuthTokenProviderOptionalParams from "./core/SetAuthTokenProviderOptionalParams";
 import StartChatOptionalParams from "./core/StartChatOptionalParams";

@@ -4,6 +4,7 @@ import { VoiceVideoCallingProxy } from "../api/createVoiceVideoCalling";
 import OmnichannelMessage from "../core/messaging/OmnichannelMessage";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
 import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
+import LiveChatContext from "../core/LiveChatContext";
 
 export type MaskingRule = {
 	id: string;
@@ -23,3 +24,4 @@ export type GetAgentAvailabilityResponse = QueueAvailability | undefined;
 export type GetVoiceVideoCallingResponse = VoiceVideoCallingProxy | undefined;
 export type UploadFileAttachmentResponse = IRawMessage | OmnichannelMessage;
 export type GetMessagesResponse = IMessage[] | OmnichannelMessage[] | undefined;
+export type GetCurrentLiveChatContextResponse = LiveChatContext | {};
