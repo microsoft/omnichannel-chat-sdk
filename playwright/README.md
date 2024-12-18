@@ -3,7 +3,8 @@
 ## Getting Started
 
 ### 1. Installation
-```
+
+```sh
 npm install
 ```
 
