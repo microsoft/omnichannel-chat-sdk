@@ -134,6 +134,6 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithPrechat', () => {
         ]);
 
         const { preChatSurvey } = runtimeContext;
-        expect(typeof (preChatSurvey.data) === 'string').toBe(true);
+        expect(typeof (preChatSurvey) === 'string').toBe(true);
     });
 });
