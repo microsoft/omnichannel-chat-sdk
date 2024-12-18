@@ -1139,22 +1139,21 @@ class OmnichannelChatSDK {
     }
 
     private transformMessage(message: ChatSDKMessage): ChatSDKMessage {
-
-        if (!this.isMaskingDisabled) {
-
-            let { content } = message;
-            let match;
-
-            for (const maskingRule of this.dataMaskingRules.rules) {
-                const regex = new RegExp(maskingRule.regex, 'g');
-                while ((match = regex.exec(content)) !== null) {
-                    const replaceStr = match[0].replace(/./g, this.maskingCharacter);
-                    content = content.replace(match[0], replaceStr);
-                }
-                match = null;
-            }
-            message.content = content;
+        if (this.isMaskingDisabled) {
+            return message;
         }
+        let { content } = message;
+        let match;
+
+        for (const maskingRule of this.dataMaskingRules.rules) {
+            const regex = new RegExp(maskingRule.regex, 'g');
+            while ((match = regex.exec(content)) !== null) {
+                const replaceStr = match[0].replace(/./g, this.maskingCharacter);
+                content = content.replace(match[0], replaceStr);
+            }
+            match = null;
+        }
+        message.content = content;
         return message;
     }
 
