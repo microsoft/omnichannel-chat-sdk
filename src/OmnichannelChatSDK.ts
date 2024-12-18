@@ -2,7 +2,7 @@
 
 import { ACSAdapterLogger, ACSClientLogger, AMSClientLogger, CallingSDKLogger, IC3ClientLogger, OCSDKLogger, createACSAdapterLogger, createACSClientLogger, createAMSClientLogger, createCallingSDKLogger, createIC3ClientLogger, createOCSDKLogger } from "./utils/loggers";
 import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
-import { ChatAdapter, GetLiveChatTranscriptResponse, GetPreChatSurveyResponse, MaskingRule, MaskingRules } from "./types/response";
+import { ChatAdapter, GetAgentAvailabilityResponse, GetCurrentLiveChatContextResponse, GetLiveChatTranscriptResponse, GetMessagesResponse, GetPreChatSurveyResponse, GetVoiceVideoCallingResponse, MaskingRule, MaskingRules, UploadFileAttachmentResponse } from "./types/response";
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import { ChatWidgetLanguage, DataMaskingInfo, LiveWSAndLiveChatEngJoin, VoiceVideoCallingOptionalParams } from "./types/config";
 import { SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
@@ -881,7 +881,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async getCurrentLiveChatContext(): Promise<LiveChatContext | {}> {
+    public async getCurrentLiveChatContext(): Promise<GetCurrentLiveChatContextResponse> {
         const chatToken = await this.getChatToken();
         const { requestId } = this;
 
@@ -1113,7 +1113,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async getMessages(): Promise<IMessage[] | OmnichannelMessage[] | undefined> {
+    public async getMessages(): Promise<GetMessagesResponse> {
         this.scenarioMarker.startScenario(TelemetryEvent.GetMessages, {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
@@ -1500,7 +1500,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async uploadFileAttachment(fileInfo: IFileInfo | File): Promise<IRawMessage | OmnichannelMessage> {
+    public async uploadFileAttachment(fileInfo: IFileInfo | File): Promise<UploadFileAttachmentResponse> {
         const amsClient = await this.getAMSClient();
         this.scenarioMarker.startScenario(TelemetryEvent.UploadFileAttachment, {
             RequestId: this.requestId,
@@ -1808,7 +1808,7 @@ class OmnichannelChatSDK {
         return this.callingOption.toString() !== CallingOptionsOptionSetNumber.NoCalling.toString();
     }
 
-    public async getVoiceVideoCalling(voiceVideoCallingOptionalParams: VoiceVideoCallingOptionalParams = {}): Promise<VoiceVideoCallingProxy | undefined> {
+    public async getVoiceVideoCalling(voiceVideoCallingOptionalParams: VoiceVideoCallingOptionalParams = {}): Promise<GetVoiceVideoCallingResponse> {
         this.scenarioMarker.startScenario(TelemetryEvent.GetVoiceVideoCalling);
 
         if (platform.isNode() || platform.isReactNative()) {
@@ -1989,7 +1989,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async getAgentAvailability(optionalParams: GetAgentAvailabilityOptionalParams = {}): Promise<QueueAvailability | undefined> {
+    public async getAgentAvailability(optionalParams: GetAgentAvailabilityOptionalParams = {}): Promise<GetAgentAvailabilityResponse> {
         const reportError = (response: string, message: string, chatId = "") => {
             const exceptionDetails: ChatSDKExceptionDetails = {
                 response,
