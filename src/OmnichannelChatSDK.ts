@@ -2177,8 +2177,6 @@ class OmnichannelChatSDK {
 
         const isPreChatEnabled = parseLowerCaseString(liveWSAndLiveChatEngJoin.msdyn_prechatenabled) === "true";
 
-        console.log(liveWSAndLiveChatEngJoin);
-
         if (isPreChatEnabled && liveWSAndLiveChatEngJoin.PreChatSurvey && liveWSAndLiveChatEngJoin.PreChatSurvey.trim().length > 0) {
             this.preChatSurvey = liveWSAndLiveChatEngJoin.PreChatSurvey;
             /* istanbul ignore next */
@@ -2191,7 +2189,6 @@ class OmnichannelChatSDK {
         if (dataMaskingConfig.setting.msdyn_maskforcustomer) {
             if (dataMaskingConfig.dataMaskingRules) {
                 for (const [key, value] of Object.entries(dataMaskingConfig.dataMaskingRules)) {
-                    console.log(`${key}: ${value}`);
                     this.dataMaskingRules.rules.push({
                         id: key,
                         regex: value
@@ -2213,9 +2210,7 @@ class OmnichannelChatSDK {
     }
 
     private async setPersistentChatConfiguration(liveWSAndLiveChatEngJoin: LiveWSAndLiveChatEngJoin) {
-
         const isChatReconnectEnabled = parseLowerCaseString(liveWSAndLiveChatEngJoin.msdyn_enablechatreconnect) === "true";
-
         if (liveWSAndLiveChatEngJoin.msdyn_conversationmode?.toString() === ConversationMode.PersistentChat.toString()) {
             this.isPersistentChat = true;
         }
