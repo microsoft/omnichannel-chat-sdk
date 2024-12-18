@@ -349,7 +349,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         expect(sendMessageResponse.status()).toBe(201);
     });
 
-    test('12345', async ({ page }) => {
+    test('ChatSDK.getMessages() should return a list of messages', async ({ page }) => {
         await page.goto(testPage);
 
         const content = "Hi";
