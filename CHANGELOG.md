@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- Missing type definitions for public API's reponses, removing any as response type
+- Defining explicit response types for void functions.
+- Defining a type for MaskingRules
+- Restructure for ChatConfig initialization and build of entities around it.
+
 ## [1.10.2] - 2024-12-06
 
 ### Added
