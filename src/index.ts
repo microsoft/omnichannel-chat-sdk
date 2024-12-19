@@ -1,3 +1,6 @@
+import { ACSAdapter, ChatAdapter, DirectLineAdapter, GeneralResponse, GetAgentAvailabilityResponse, GetCurrentLiveChatContextResponse, GetLiveChatTranscriptResponse, GetMessagesResponse, GetPreChatSurveyResponse, GetVoiceVideoCallingResponse, IC3Adapter, MaskingRule, MaskingRules, UploadFileAttachmentResponse } from "./types/response";
+import { AmsClient, ChatWidgetLanguage, DataMaskingInfo, LiveChatConfig, LiveWSAndLiveChatEngJoin, Setting, VoiceVideoCallingOptionalParams } from "./types/config";
+import { ChatSDKError, ChatSDKErrorName } from "./core/ChatSDKError";
 import {SDKProvider as OCSDKProvider, uuidv4} from "@microsoft/ocsdk";
 import { defaultLocaleId, defaultLocaleString, getLocaleIdFromString, getLocaleStringFromId } from "./utils/locale";
 import { isCustomerMessage, isSystemMessage } from "./utils/utilities";
@@ -11,7 +14,6 @@ import MessageContentType from "@microsoft/omnichannel-ic3core/lib/model/Message
 import MessageType from "@microsoft/omnichannel-ic3core/lib/model/MessageType";
 import OmnichannelChatSDK from "./OmnichannelChatSDK";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
-import { ChatSDKErrorName, ChatSDKError } from "./core/ChatSDKError";
 
 export {
     OmnichannelChatSDK,
@@ -32,7 +34,28 @@ export {
     getLocaleStringFromId,
     getLocaleIdFromString,
     defaultLocaleId,
-    defaultLocaleString
+    defaultLocaleString,
+    VoiceVideoCallingOptionalParams,
+    AmsClient,
+    LiveChatConfig,
+    ChatWidgetLanguage,
+    Setting,
+    DataMaskingInfo,
+    LiveWSAndLiveChatEngJoin,
+    MaskingRule,
+    MaskingRules,
+    GeneralResponse,
+    GetPreChatSurveyResponse,
+    GetLiveChatTranscriptResponse,
+    DirectLineAdapter,
+    ACSAdapter,
+    IC3Adapter,
+    ChatAdapter,
+    GetAgentAvailabilityResponse,
+    GetVoiceVideoCallingResponse,
+    UploadFileAttachmentResponse,
+    GetMessagesResponse,
+    GetCurrentLiveChatContextResponse
 }
 
 export default {
