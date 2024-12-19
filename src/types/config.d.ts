@@ -22,9 +22,7 @@ export type ChatWidgetLanguage = {
     msdyn_languagename: string;
 }
 
-export type DataMaskingRules = {
-    [key: string]: string;
-}
+export type DataMaskingRules = Record<string, string>;
 
 export type Setting = {
     msdyn_maskforcustomer: boolean;
