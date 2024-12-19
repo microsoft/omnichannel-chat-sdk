@@ -263,10 +263,13 @@ await chatSDK.endChat();
 It gets the Pre-Chat Survey from Live Chat Config. Pre-Chat Survey is in Adaptive Card format.
 
 `Option 1`
+
 ```ts
 const preChatSurvey = await getPreChatSurvey(); // Adaptive Cards JSON payload data
 ```
+
 `Option 2`
+
 ```ts
 const parseToJSON = false;
 const preChatSurvey = await getPreChatSurvey(parseToJSON); // Adaptive Cards payload data as string
@@ -291,9 +294,22 @@ const liveChatContext = await chatSDK.getCurrentLiveChatContext();
 ### Get Data Masking Rules
 
 It gets the active data masking rules from Live Chat Config.
+Returned type is defined as :
 
 ```ts
-const dataMaskingRules = await chatSDK.getDataMaskingRules();
+
+type MaskingRule = {
+ id: string;
+ regex: string;
+}
+
+type MaskingRules = {
+ rules: MaskingRule[];
+}
+```
+
+```ts
+const dataMaskingRules : MaskingRules = await chatSDK.getDataMaskingRules();
 ```
 
 ### Get Chat Reconnect Context
