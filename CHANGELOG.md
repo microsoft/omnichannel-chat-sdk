@@ -4,8 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.10.3] - 2024-12-19
+
 ### Fixed
-- Missing type definitions for public API's reponses, removing any as response type
+
+- Missing type definitions for public API's responses, removing any as response type
 - Defining explicit response types for void functions.
 - Defining a type for MaskingRules
 - Restructure for ChatConfig initialization and build of entities around it.
