@@ -2,9 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [1.10.4] - 2024-12-19
 
-### Fixed 
+### Fixed
+
 - types not included in external exports.
 
 ## [1.10.3] - 2024-12-19
