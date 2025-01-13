@@ -2018,6 +2018,10 @@ class OmnichannelChatSDK {
 
         try {
             const response = await this.OCClient.getAgentAvailability(this.requestId, getAgentAvailabilityOptionalParams);
+            
+            this.scenarioMarker.completeScenario(TelemetryEvent.GetAgentAvailability, {
+                RequestId: this.requestId
+            });
             return response;
         } catch (e) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any

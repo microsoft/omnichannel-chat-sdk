@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Update of missing telemetry events for exposed API's
+
 ## [1.10.4] - 2024-12-19
 
 ### Fixed
