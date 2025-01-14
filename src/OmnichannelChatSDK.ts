@@ -1023,10 +1023,6 @@ class OmnichannelChatSDK {
      */
     public async getPreChatSurvey(parse = true): Promise<GetPreChatSurveyResponse> {
         this.scenarioMarker.startScenario(TelemetryEvent.GetPreChatSurvey);
-
-        if (!this.isInitialized) {
-            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.GetPreChatSurvey);
-        }
         try {
             const result = parse ? JSON.parse(this.preChatSurvey) : this.preChatSurvey;
             this.scenarioMarker.completeScenario(TelemetryEvent.GetPreChatSurvey);
