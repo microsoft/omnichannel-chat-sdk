@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 - Update of missing telemetry events for exposed API's
+- Adding exception details for telemetry for upload attachments
+- Adding exception details for telemetry for Email Transcript
+- Adding exception details for telemetry for GetMessages / SendMessages
+- Adding validation to exposed API's to require validations before to be executed.
 
 ## [1.10.4] - 2024-12-19
 

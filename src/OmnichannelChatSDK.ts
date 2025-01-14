@@ -511,6 +511,10 @@ class OmnichannelChatSDK {
             ChatId: this.chatToken.chatId as string
         })
 
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.GetChatReconnectContext);
+        }
+
         let context: ChatReconnectContext = {
             reconnectId: null,
             redirectURL: null
@@ -838,6 +842,10 @@ class OmnichannelChatSDK {
 
         this.scenarioMarker.startScenario(TelemetryEvent.EndChat, cleanupMetadata);
 
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.EndChat);
+        }
+
         try {
 
             // calling close chat, internally will handle the session close
@@ -886,7 +894,11 @@ class OmnichannelChatSDK {
         this.scenarioMarker.startScenario(TelemetryEvent.GetCurrentLiveChatContext, {
             RequestId: requestId,
             ChatId: chatToken.chatId as string
-        })
+        });
+
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.GetCurrentLiveChatContext);
+        }
 
         const chatSession: LiveChatContext = {
             chatToken,
@@ -939,6 +951,10 @@ class OmnichannelChatSDK {
             RequestId: requestId,
             ChatId: chatId || '',
         });
+
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.GetConversationDetails);
+        }
 
         const getLWIDetailsOptionalParams: IGetLWIDetailsOptionalParams = {};
 
@@ -1007,6 +1023,10 @@ class OmnichannelChatSDK {
      */
     public async getPreChatSurvey(parse = true): Promise<GetPreChatSurveyResponse> {
         this.scenarioMarker.startScenario(TelemetryEvent.GetPreChatSurvey);
+
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.GetPreChatSurvey);
+        }
         try {
             const result = parse ? JSON.parse(this.preChatSurvey) : this.preChatSurvey;
             this.scenarioMarker.completeScenario(TelemetryEvent.GetPreChatSurvey);
@@ -1028,6 +1048,10 @@ class OmnichannelChatSDK {
         this.scenarioMarker.startScenario(TelemetryEvent.GetChatToken, {
             RequestId: this.requestId
         });
+
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.GetChatToken);
+        }
 
         if (!cached) {
             try {
@@ -1117,6 +1141,10 @@ class OmnichannelChatSDK {
             ChatId: this.chatToken.chatId as string
         });
 
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.GetMessages);
+        }
+
         try {
             const messages = await (this.conversation as (IConversation | ACSConversation))?.getMessages();
 
@@ -1126,10 +1154,11 @@ class OmnichannelChatSDK {
             });
 
             return messages;
-        } catch {
+        } catch(error) {
             this.scenarioMarker.failScenario(TelemetryEvent.GetMessages, {
                 RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string
+                ChatId: this.chatToken.chatId as string,
+                ExceptionDetails: JSON.stringify(error)
             });
         }
     }
@@ -1163,6 +1192,10 @@ class OmnichannelChatSDK {
             ChatId: this.chatToken.chatId as string
         });
 
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.SendMessages);
+        }
+
         this.transformMessage(message);
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
@@ -1190,7 +1223,8 @@ class OmnichannelChatSDK {
             } catch (error) {
                 this.scenarioMarker.failScenario(TelemetryEvent.SendMessages, {
                     RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
+                    ChatId: this.chatToken.chatId as string,
+                    ExceptionDetails: JSON.stringify(error)
                 });
 
                 throw new Error('ChatSDKSendMessageFailed');
@@ -1242,6 +1276,10 @@ class OmnichannelChatSDK {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
         });
+
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.OnNewMessage);
+        }
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
             const postedMessages = new Set();
@@ -1354,6 +1392,10 @@ class OmnichannelChatSDK {
             ChatId: this.chatToken.chatId as string
         });
 
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.SendTypingEvent);
+        }
+
         if (this.liveChatVersion === LiveChatVersion.V2) {
             try {
                 await this.OCClient.sendTypingIndicator(this.requestId, LiveChatVersion.V2, {
@@ -1404,6 +1446,10 @@ class OmnichannelChatSDK {
             ChatId: this.chatToken.chatId as string
         });
 
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.OnTypingEvent);
+        }
+
         if (this.liveChatVersion === LiveChatVersion.V2) {
             try {
                 (this.conversation as ACSConversation).onTypingEvent(onTypingEventCallback);
@@ -1451,6 +1497,10 @@ class OmnichannelChatSDK {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
         });
+
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.OnAgentEndSession);
+        }
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
             try {
@@ -1503,6 +1553,10 @@ class OmnichannelChatSDK {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
         });
+
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.UploadFileAttachment);
+        }
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
             const createObjectResponse: any = await amsClient?.createObject(this.chatToken?.chatId as string, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -1560,7 +1614,8 @@ class OmnichannelChatSDK {
 
                 this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
                     RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
+                    ChatId: this.chatToken.chatId as string,
+                    ExceptionDetails: JSON.stringify(error)
                 });
             }
 
@@ -1603,7 +1658,8 @@ class OmnichannelChatSDK {
 
                 this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
                     RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
+                    ChatId: this.chatToken.chatId as string,
+                    ExceptionDetails: JSON.stringify(error)
                 });
             }
 
@@ -1617,6 +1673,10 @@ class OmnichannelChatSDK {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
         });
+
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.DownloadFileAttachment);
+        }
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
             try {
@@ -1678,6 +1738,10 @@ class OmnichannelChatSDK {
             ChatId: chatId
         });
 
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.EmailLiveChatTranscript);
+        }
+
         try {
             if (this.authenticatedUserToken) {
                 emailTranscriptOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
@@ -1709,7 +1773,8 @@ class OmnichannelChatSDK {
             console.error(`OmnichannelChatSDK/emailLiveChatTranscript/error: ${error}`);
             this.scenarioMarker.failScenario(TelemetryEvent.EmailLiveChatTranscript, {
                 RequestId: requestId,
-                ChatId: chatId
+                ChatId: chatId,
+                ExceptionDetails: JSON.stringify(error)
             });
         }
     }
@@ -1737,6 +1802,10 @@ class OmnichannelChatSDK {
             RequestId: requestId,
             ChatId: chatId
         });
+
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.GetLiveChatTranscript);
+        }
 
         try {
             if (this.authenticatedUserToken) {
@@ -1808,6 +1877,10 @@ class OmnichannelChatSDK {
     public async getVoiceVideoCalling(voiceVideoCallingOptionalParams: VoiceVideoCallingOptionalParams = {}): Promise<GetVoiceVideoCallingResponse> {
         this.scenarioMarker.startScenario(TelemetryEvent.GetVoiceVideoCalling);
 
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.GetVoiceVideoCalling);
+        }
+
         if (platform.isNode() || platform.isReactNative()) {
             const message = "VoiceVideoCalling is only supported on browser";
             exceptionThrowers.throwUnsupportedPlatform(this.scenarioMarker, TelemetryEvent.GetVoiceVideoCalling, message);
@@ -1868,6 +1941,11 @@ class OmnichannelChatSDK {
             RequestId: this.requestId,
             ChatId: this.chatToken?.chatId as string,
         });
+
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.GetPostChatSurveyContext);
+        }
+
         let conversationId;
 
         try {
@@ -1955,6 +2033,10 @@ class OmnichannelChatSDK {
                         formsProLocale: agentFormsProLocale,
                         botFormsProLocale
                     }
+                    this.scenarioMarker.completeScenario(TelemetryEvent.GetPostChatSurveyContext, {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken?.chatId as string
+                    });
 
                     return Promise.resolve(postChatContext);
                 } else {
@@ -2006,6 +2088,10 @@ class OmnichannelChatSDK {
             RequestId: this.requestId
         });
 
+        if (!this.isInitialized) {
+            reportError("UninitializedChatSDK", "Chat SDK is not initialized.");
+        }
+
         if (this.conversation) {
             reportError("InvalidOperation", "GetAgentAvailability can only be called before a chat has started.", this.chatToken.chatId as string);
         }
@@ -2018,7 +2104,7 @@ class OmnichannelChatSDK {
 
         try {
             const response = await this.OCClient.getAgentAvailability(this.requestId, getAgentAvailabilityOptionalParams);
-            
+
             this.scenarioMarker.completeScenario(TelemetryEvent.GetAgentAvailability, {
                 RequestId: this.requestId
             });
