@@ -1220,7 +1220,6 @@ class OmnichannelChatSDK {
                 this.scenarioMarker.failScenario(TelemetryEvent.SendMessages, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: JSON.stringify(error)
                 });
 
                 throw new Error('ChatSDKSendMessageFailed');
@@ -1769,8 +1768,7 @@ class OmnichannelChatSDK {
             console.error(`OmnichannelChatSDK/emailLiveChatTranscript/error: ${error}`);
             this.scenarioMarker.failScenario(TelemetryEvent.EmailLiveChatTranscript, {
                 RequestId: requestId,
-                ChatId: chatId,
-                ExceptionDetails: JSON.stringify(error)
+                ChatId: chatId
             });
         }
     }
