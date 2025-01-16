@@ -1153,8 +1153,7 @@ class OmnichannelChatSDK {
         } catch(error) {
             this.scenarioMarker.failScenario(TelemetryEvent.GetMessages, {
                 RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string,
-                ExceptionDetails: JSON.stringify(error)
+                ChatId: this.chatToken.chatId as string
             });
         }
     }
@@ -1609,8 +1608,7 @@ class OmnichannelChatSDK {
 
                 this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
                     RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: JSON.stringify(error)
+                    ChatId: this.chatToken.chatId as string
                 });
             }
 
@@ -1653,8 +1651,7 @@ class OmnichannelChatSDK {
 
                 this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
                     RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: JSON.stringify(error)
+                    ChatId: this.chatToken.chatId as string
                 });
             }
 
