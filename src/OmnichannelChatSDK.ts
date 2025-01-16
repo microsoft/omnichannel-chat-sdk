@@ -1150,7 +1150,7 @@ class OmnichannelChatSDK {
             });
 
             return messages;
-        } catch(error) {
+        } catch {
             this.scenarioMarker.failScenario(TelemetryEvent.GetMessages, {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string
@@ -2095,7 +2095,6 @@ class OmnichannelChatSDK {
 
         try {
             const response = await this.OCClient.getAgentAvailability(this.requestId, getAgentAvailabilityOptionalParams);
-
             this.scenarioMarker.completeScenario(TelemetryEvent.GetAgentAvailability, {
                 RequestId: this.requestId
             });
