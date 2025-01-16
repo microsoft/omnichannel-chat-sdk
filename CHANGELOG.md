@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Update of missing telemetry events for exposed API's
+- Adding exception details for telemetry for Email Transcript
+- Adding exception details for telemetry for GetMessages / SendMessages
+- Adding validation to exposed API's to require validations before to be executed.
+
+## Changed
+
+- Uptake [@microsoft/oc4sdk@0.5.10](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.10)
+
 ## [1.10.4] - 2024-12-19
 
 ### Fixed
@@ -34,7 +45,7 @@ All notable changes to this project will be documented in this file.
 - uptake [azure/communication-chat@1.5.0](https://www.npmjs.com/package/@azure/communication-chat/v/1.5.0)
 - uptake [azure/communication-common@2.3.1](https://www.npmjs.com/package/@azure/communication-common/v/2.3.1)
 - uptake [acs_webchat-chat-adapter@0.0.35-beta.30](https://www.npmjs.com/package/acs_webchat-chat-adapter/v/0.0.35-beta.30)
-- Uptake [@microsoft/ocsdk@0.5.9](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.9)
+- Uptake [@microsoft/oc4sdk@0.5.9](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.9)
 
 ## [1.10.1] - 2024-11-11
 
