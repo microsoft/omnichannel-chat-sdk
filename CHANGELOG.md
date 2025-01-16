@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
 - Update of missing telemetry events for exposed API's
 - Adding exception details for telemetry for upload attachments
 - Adding exception details for telemetry for Email Transcript
