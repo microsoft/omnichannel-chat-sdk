@@ -53,6 +53,7 @@ Please make sure you have a chat widget configured before using this package or 
     - [Persistent Chat](#persistent-chat)
     - [Chat Reconnect with Authenticated User](#chat-reconnect-with-authenticated-user)
     - [Chat Reconnect with Unauthenticated User](#chat-reconnect-with-unauthenticated-user)
+    - [Handling chat Disconnect on Mobile platform](#handling-chat-disconnect-on-mobile-platform)
     - [Operating Hours](#operating-hours)
     - [Single Sign-on for Bots](/docs/scenarios/SINGLE_SIGN_ON_FOR_BOTS.md)
 - [Sample Apps](https://github.com/microsoft/omnichannel-chat-sdk-samples)
@@ -773,6 +774,29 @@ if (outOfOperatingHours === "True") {
     // Renders Custom Chat Widget
 }
 ```
+
+### Handling chat Disconnect on Mobile platform
+
+> On mobile platforms, where users often switch the app between foreground and background, it is important to verify if the chat is still active before allowing the user to send a message after returning from the background .
+
+```ts
+// 1. Register a listener for visbilitychange event
+window.addEventListener("visibilitychange", () => {
+// 2. verify if the browser is in the foreground by checking the document.hidden property
+    if (!document.hidden)  {
+//3. Check conversation state by making a call to getConversationDetails
+        const optionalParams = {
+            liveChatContext: {}, // EXISTING chat context data
+        };
+        const conversationDetails = await chatSDK.getConversationDetails(optionalParams);
+         if (conversationDetails?.state === LiveWorkItemState.WrapUp || conversationDetails?.state === LiveWorkItemState.Closed) {
+//4. Show disconnect notification to customer and disable the input box so that user cannot send a message            
+         }
+                   
+    }
+});
+```
+
 
 ### Using [BotFramework-WebChat](https://github.com/microsoft/BotFramework-WebChat)
 > :warning: Currently supported on web only
