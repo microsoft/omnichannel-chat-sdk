@@ -781,7 +781,7 @@ if (outOfOperatingHours === "True") {
 
 ```ts
 // 1. Register a listener for visbilitychange event
-window.addEventListener("visibilitychange", () => {
+window.addEventListener("visibilitychange", async () => {
 // 2. verify if the browser is in the foreground by checking the document.hidden property
     if (!document.hidden)  {
 //3. Check conversation state by making a call to getConversationDetails
