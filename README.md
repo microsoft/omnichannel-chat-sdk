@@ -789,7 +789,7 @@ window.addEventListener("visibilitychange", async () => {
             liveChatContext: {}, // EXISTING chat context data
         };
         const conversationDetails = await chatSDK.getConversationDetails(optionalParams);
-         if (conversationDetails?.state === LiveWorkItemState.WrapUp || conversationDetails?.state === LiveWorkItemState.Closed) {
+         if (conversationDetails?.state === "WrapUp" || conversationDetails?.state === "Closed") {
 //4. Show disconnect notification to customer and disable the input box so that user cannot send a message            
          }
                    
