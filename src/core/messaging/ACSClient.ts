@@ -191,7 +191,7 @@ export class ACSConversation {
                                 postedMessageIds.add(id);
                             }
                         } catch {
-                            // Ignore message processing failures
+                            console.warn('[ACSClient][registerOnNewMessage] Error occurred while processing messages with id : ', id);
                         }
 
                     }
