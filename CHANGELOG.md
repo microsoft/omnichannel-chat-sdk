@@ -4,8 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-### Fixed
+
+### Added
+
 - Fix for ACS client preventing new messages from being populated in the new message callback.
+- Updated chat adapter dependecy ,also created new logic for PI data scrubbing
 
 ## [1.10.5] - 2025-16-01
 

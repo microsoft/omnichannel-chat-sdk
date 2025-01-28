@@ -39,3 +39,13 @@ export const getRuntimeId = (externalRuntimeId : string | null ): string => {
     }
     return uuidv4();
 }
+
+export const isJsonObject = (input: string) => {
+    try {
+        JSON.parse(input);
+        return true;
+    } catch {
+        return false;
+    }
+}
+

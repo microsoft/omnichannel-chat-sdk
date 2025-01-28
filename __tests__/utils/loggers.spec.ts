@@ -308,6 +308,56 @@ describe('loggers', () => {
             expect(telemetry.info).toBeCalledTimes(1);
         });
 
+
+        it('ACSAdapterLogger.logEvent() with custom properties having PII data', () => {
+            const logger = new ACSAdapterLogger(omnichannelConfig);
+            telemetry.info.mockClear();
+            const eventData = {
+                Event: '',
+                CustomProperties: {
+                    "threadId": "19:123456@thread.v2",
+                    "sender": {
+                        "kind": "communicationUser",
+                        "communicationUserId": "8:acs:12345678"
+                    },
+                    "senderDisplayName": "Test User",
+                    "recipient": {
+                        "kind": "communicationUser",
+                        "communicationUserId": "8:acs:12345678"
+                    },
+                    "id": "1738036094447",
+                    "createdOn": "2025-01-28T03:48:14.447Z",
+                    "version": "1738036094447",
+                    "type": "Text",
+                    "message": "hi",
+                    "metadata": {
+                        "tags": "public",
+                        "deliveryMode": "bridged",
+                        "isBridged": "True"
+                    },
+                    "attachments": []
+                },
+                Description: {"message":"https://support.microsoft.com/files?workspace=asdasdfasdfasdfasdf","length":931,"senderDisplayName":"Test user","threadId":"19:123456@thread.v2","sender":{"kind":"communicationUser","communicationUserId":"8:acs:12345678"},"recipient":{"kind":"communicationUser","communicationUserId":"8:acs:12345678"},"id":"1737426610881","createdOn":"2025-01-21T02:30:10.881Z","version":"1737426610881","type":"Text","metadata":{"tags":"public","deliveryMode":"bridged","isBridged":"True"},"content":"https://support.microsoft.com/files?workspace=asdasdfasdfasdfasdf"}
+            };
+
+            logger.useTelemetry(telemetry as any);
+            logger.logEvent(LogLevel.INFO, eventData as any);
+            expect(telemetry.info).toHaveBeenCalledWith(expect.objectContaining({"ChatId": "", "ChatSDKRuntimeId": "", "Description":  "{\"message\":\"h**64 hidden**\",\"length\":931,\"senderDisplayName\":\"T**8 hidden**\",\"threadId\":\"19:123456@thread.v2\",\"sender\":{\"kind\":\"communicationUser\",\"communicationUserId\":\"8:acs:12345678\"},\"recipient\":{\"kind\":\"communicationUser\",\"communicationUserId\":\"8:acs:12345678\"},\"id\":1737426610881,\"createdOn\":\"2025-01-21T02:30:10.881Z\",\"version\":1737426610881,\"type\":\"Text\",\"metadata\":{\"tags\":\"public\",\"deliveryMode\":\"bridged\",\"isBridged\":\"True\"},\"content\":\"h**64 hidden**\"}","CustomProperties": "{\"threadId\":\"19:123456@thread.v2\",\"sender\":{\"kind\":\"communicationUser\",\"communicationUserId\":\"8:acs:12345678\"},\"senderDisplayName\":\"T**8 hidden**\",\"recipient\":{\"kind\":\"communicationUser\",\"communicationUserId\":\"8:acs:12345678\"},\"id\":1738036094447,\"createdOn\":\"2025-01-28T03:48:14.447Z\",\"version\":1738036094447,\"type\":\"Text\",\"message\":\"h**1 hidden**\",\"metadata\":{\"tags\":\"public\",\"deliveryMode\":\"bridged\",\"isBridged\":\"True\"},\"attachments\":[]}", "Event": "", "ExceptionDetails": "", "OrgId": "", "OrgUrl": "", "RequestId": "", "WidgetId": ""}),"occhatsdk_acsadapterevents");
+        });
+
+        it('ACSAdapterLogger.logEvent() with Exception details having PII data', () => {
+            const logger = new ACSAdapterLogger(omnichannelConfig);
+            telemetry.info.mockClear();
+            const eventData = {
+                Event: '',
+                ExceptionDetails:{"name":"RestError","code":"REQUEST_SEND_ERROR","request":{"url":"https://12345678-occhannels-acs.australia.communication.azure.com/chat/threads/19%3A123456%40thread.v2/messages?api-version=2021-09-07&startTime=2025-01-27T01%3A56%3A54.000Z","headers":{"accept":"application/json","x-ms-useragent":"acs-webchat-adapter-0.0.35-beta.30.1 azsdk-js-communication-chat/^1.3.2","x-ms-client-request-id":"12344557","authorization":"Bearer ey12312312312b12312312asdfasdfasfasdfasdfads"},"method":"GET","timeout":0,"disableKeepAlive":false,"streamResponseStatusCodes":{},"withCredentials":false,"tracingOptions":{"tracingContext":{"_contextMap":{}}},"requestId":"12345678","allowInsecureConnection":false,"enableBrowserStreams":false}}
+            };
+
+            logger.useTelemetry(telemetry as any);
+            logger.logEvent(LogLevel.INFO, eventData as any);
+            expect(telemetry.info).toHaveBeenCalledWith(expect.objectContaining({"ChatId": "", "ChatSDKRuntimeId": "", "Event": "", "ExceptionDetails": "{\"name\":\"RestError\",\"code\":\"REQUEST_SEND_ERROR\",\"request\":{\"url\":\"https://12345678-occhannels-acs.australia.communication.azure.com/chat/threads/19%3A123456%40thread.v2/messages?api-version=2021-09-07&startTime=2025-01-27T01%3A56%3A54.000Z\",\"headers\":{\"accept\":\"application/json\",\"x-ms-useragent\":\"acs-webchat-adapter-0.0.35-beta.30.1 azsdk-js-communication-chat/^1.3.2\",\"x-ms-client-request-id\":12344557,\"authorization\":\"B**50 hidden**\"},\"method\":\"GET\",\"timeout\":0,\"disableKeepAlive\":false,\"streamResponseStatusCodes\":{},\"withCredentials\":false,\"tracingOptions\":{\"tracingContext\":{\"_contextMap\":{}}},\"requestId\":12345678,\"allowInsecureConnection\":false,\"enableBrowserStreams\":false}}" , "OrgId": "", "OrgUrl": "", "RequestId": "", "WidgetId": ""}),"occhatsdk_acsadapterevents");
+        });
+
         it('ACSAdapterLogger.startScenario() should call ScenarioMarker.startScenario()', () => {
             const logger = new ACSAdapterLogger(omnichannelConfig);
 
