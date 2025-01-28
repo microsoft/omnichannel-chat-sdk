@@ -48,12 +48,12 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
             }
         }
 
-        if (metadata && metadata.amsMetadata && metadata.amsReferences || metadata.amsreferences) {
+        if (metadata && metadata.amsMetadata && metadata.amsReferences || metadata?.amsreferences) {
             try {
                 const data = JSON.parse(metadata.amsMetadata);
 
                 // "amsreferences" takes precedence
-                const references = JSON.parse(metadata.amsreferences || metadata.amsReferences);
+                const references = JSON.parse(metadata.amsreferences || metadata?.amsReferences);
                 const { fileName, contentType } = data[0];
 
                 // fileMetadata should be defined only when there's an attachment

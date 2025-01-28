@@ -170,27 +170,46 @@ export class ACSConversation {
         try {
             const pollForMessages = async (delay: number) => {
                 if (isReceivingNotifications) {
+                    console.error("ACS Return");
                     return;
                 }
 
                 try {
                     const messages = await this.getMessages();
+                    console.log('ACS Mmessages:');
+                    console.table(messages);
                     for (const message of messages.reverse()) {
-                        const { id, sender } = message;
-                        const customerMessageCondition = sender.displayName === ACSParticipantDisplayName.Customer;
+                        try {
 
-                        // Filter out customer messages
-                        if (customerMessageCondition) {
-                            continue;
+                            const { id, sender } = message;
+
+                            console.log('ACS Message:', message);
+                            console.log('ACS Sender id:', id);
+                            console.log('ACS Sender message:', sender.displayName);
+                            const customerMessageCondition = sender.displayName === ACSParticipantDisplayName.Customer;
+
+                            // Filter out customer messages
+                            if (customerMessageCondition) {
+                                console.error('ACS Baygon:', id);
+                                continue;
+                            }
+
+                            console.log("ACS PostMessageIds:");
+                            console.table(postedMessageIds);
+                            // Filter out duplicate messages
+                            console.log('ACS postedMessageIds:', id, postedMessageIds.has(id));
+                            if (!postedMessageIds.has(id)) {
+                                console.log("ACS New message:", message);
+                                onNewMessageCallback(message);
+                                postedMessageIds.add(id);
+                            }
+                        } catch (error) {
+                            console.error('ACS Iinternal FOR:', error);
                         }
 
-                        // Filter out duplicate messages
-                        if (!postedMessageIds.has(id)) {
-                            onNewMessageCallback(message);
-                            postedMessageIds.add(id);
-                        }
                     }
-                } catch {
+                } catch (error) {
+                    console.warn('ACS Polling error:', error);
                     // Ignore polling failures
                 }
 
@@ -205,21 +224,31 @@ export class ACSConversation {
             const listener = (event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
                 isReceivingNotifications = true;
 
+                console.log('ACS listener:');
+
                 const { id, sender } = event;
 
                 const customerMessageCondition = ((sender as CommunicationUserIdentifier).communicationUserId === (this.sessionInfo?.id as string));
                 const isChatMessageEditedEvent = Object.keys(event).includes("editedOn");
 
+                console.log('ACS listener: customerMessageCondition: ', customerMessageCondition);
+
                 // Filter out customer messages
                 if (customerMessageCondition) {
+                    console.log('ACS listener: customerMessageCondition: RETURN');
                     return;
                 }
+
+                console.log('ACS listener: postedMessageIds:');
+                console.table(postedMessageIds);
 
                 // Filter out duplicate messages
                 if (postedMessageIds.has(id) && !isChatMessageEditedEvent) {
+                    console.log('ACS listener: customerMessageCondition: RETURN 2 : , id:', id);
                     return;
                 }
 
+                console.log('ACS listener: New message:', id);
                 onNewMessageCallback(event);
                 postedMessageIds.add(id);
             }
