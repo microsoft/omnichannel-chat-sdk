@@ -176,19 +176,24 @@ export class ACSConversation {
                 try {
                     const messages = await this.getMessages();
                     for (const message of messages.reverse()) {
-                        const { id, sender } = message;
-                        const customerMessageCondition = sender.displayName === ACSParticipantDisplayName.Customer;
+                        try {
+                            const { id, sender } = message;
+                            const customerMessageCondition = sender.displayName === ACSParticipantDisplayName.Customer;
 
-                        // Filter out customer messages
-                        if (customerMessageCondition) {
-                            continue;
+                            // Filter out customer messages
+                            if (customerMessageCondition) {
+                                continue;
+                            }
+
+                            // Filter out duplicate messages
+                            if (!postedMessageIds.has(id)) {
+                                onNewMessageCallback(message);
+                                postedMessageIds.add(id);
+                            }
+                        } catch {
+                            console.warn('[ACSClient][registerOnNewMessage] Error occurred while processing messages');
                         }
 
-                        // Filter out duplicate messages
-                        if (!postedMessageIds.has(id)) {
-                            onNewMessageCallback(message);
-                            postedMessageIds.add(id);
-                        }
                     }
                 } catch {
                     // Ignore polling failures
@@ -201,7 +206,6 @@ export class ACSConversation {
 
             // Poll messages until WS established connection
             await pollForMessages(this.sessionInfo?.pollingInterval as number);
-
             const listener = (event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
                 isReceivingNotifications = true;
 
