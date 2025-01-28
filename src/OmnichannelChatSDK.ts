@@ -1295,7 +1295,6 @@ class OmnichannelChatSDK {
             try {
                 (this.conversation as ACSConversation)?.registerOnNewMessage((event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
                     const { id } = event;
-
                     const omnichannelMessage = createOmnichannelMessage(event, {
                         liveChatVersion: this.liveChatVersion,
                         debug: this.debug
@@ -1304,66 +1303,6 @@ class OmnichannelChatSDK {
                     if (!postedMessages.has(id)) {
                         onNewMessageCallback(omnichannelMessage);
                         postedMessages.add(id);
-                    }
-                });
-
-                this.scenarioMarker.completeScenario(TelemetryEvent.OnNewMessage, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-            } catch {
-                this.scenarioMarker.failScenario(TelemetryEvent.OnNewMessage, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-            }
-        } else {
-            const postedMessages = new Set();
-
-            if ((optionalParams as OnNewMessageOptionalParams).rehydrate) {
-                this.debug && console.log('[OmnichannelChatSDK][onNewMessage] rehydrate');
-                const messages = await this.getMessages() as IRawMessage[];
-                if (messages) {
-                    for (const message of messages.reverse()) {
-                        const { clientmessageid } = message;
-
-                        if (postedMessages.has(clientmessageid)) {
-                            continue;
-                        }
-
-                        postedMessages.add(clientmessageid);
-
-                        const omnichannelMessage = createOmnichannelMessage(message as IRawMessage, {
-                            liveChatVersion: this.liveChatVersion,
-                            debug: this.debug
-                        });
-
-                        onNewMessageCallback(omnichannelMessage);
-                    }
-                }
-            }
-
-            try {
-                this.conversation?.registerOnNewMessage((message: IRawMessage) => {
-                    const { clientmessageid, messageType } = message;
-
-                    // Filter out customer messages
-                    if (isCustomerMessage(message)) {
-                        return;
-                    }
-
-                    // Skip duplicates
-                    if (postedMessages.has(clientmessageid)) {
-                        return;
-                    }
-
-                    if (messageType !== MessageType.Typing) {
-                        const omnichannelMessage = createOmnichannelMessage(message as IRawMessage, {
-                            liveChatVersion: this.liveChatVersion,
-                            debug: this.debug
-                        });
-
-                        onNewMessageCallback(omnichannelMessage);
                     }
                 });
 
