@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Updated chat adapter dependecy ,also created new logic for PI data scrubbing
+
 ## [1.10.5] - 2025-16-01
 
 ### Added
