@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- Fix for ACS client preventing new messages from being populated in the new message callback.
+
 ## [1.10.5] - 2025-16-01
 
 ### Added
