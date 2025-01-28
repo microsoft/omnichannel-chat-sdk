@@ -7,6 +7,7 @@ import LogLevel from "../telemetry/LogLevel";
 import OmnichannelConfig from "../core/OmnichannelConfig";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import ScenarioType from "../telemetry/ScenarioType";
+import { redactPII, _exceptionDetailPIIKeys } from "./loggerUtils";
 
 export class IC3ClientLogger {
     private debug = false;
@@ -350,9 +351,19 @@ export class ACSAdapterLogger {
             ChatId: this.chatId
         };
 
+        if (event.CustomProperties) {
+            event.CustomProperties = JSON.stringify(redactPII(event.CustomProperties, false));
+        }
+        if (event.ExceptionDetails) {
+            event.ExceptionDetails = JSON.stringify(redactPII(event.ExceptionDetails, false, true, _exceptionDetailPIIKeys));
+        }
+        if (event.Description) {
+            event.Description = JSON.stringify(redactPII(event.Description, false, true));
+        }
+
         const additionalProperties: AWTEventData["properties"] = {
             ...event,
-            ExceptionDetails: event.ExceptionDetails ? JSON.stringify(event.ExceptionDetails) : '',
+            ExceptionDetails: event.ExceptionDetails || '',
         };
 
         switch (logLevel) {
@@ -398,6 +409,16 @@ export class ACSAdapterLogger {
             RequestId: this.requestId,
             ChatId: this.chatId
         };
+
+        if (additionalProperties.CustomProperties) {
+            additionalProperties.CustomProperties = JSON.stringify(redactPII(additionalProperties.CustomProperties, false));
+        }
+        if (additionalProperties.ExceptionDetails) {
+            additionalProperties.ExceptionDetails = JSON.stringify(redactPII(additionalProperties.ExceptionDetails, false, true, _exceptionDetailPIIKeys));
+        }
+        if (additionalProperties.Description) {
+            additionalProperties.Description = JSON.stringify(redactPII(additionalProperties.Description, false, true));
+        }
 
         this.scenarioMarker?.failScenario(event, { ...baseProperties, ...additionalProperties });
     }
