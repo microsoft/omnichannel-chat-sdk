@@ -1276,9 +1276,6 @@ class OmnichannelChatSDK {
         }
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
-
-            console.log("onNewMessageCallback :: 1");
-
             const postedMessages = new Set();
 
             if ((optionalParams as OnNewMessageOptionalParams).rehydrate) {
@@ -1287,7 +1284,6 @@ class OmnichannelChatSDK {
                 for (const message of messages.reverse()) {
                     const { id } = message;
                     if (postedMessages.has(id)) {
-                        console.log("Message removed :: ", id);
                         continue;
                     }
 
@@ -1297,24 +1293,17 @@ class OmnichannelChatSDK {
             }
 
             try {
-                console.log("ELOPEZANAYA ::: 3");
                 (this.conversation as ACSConversation)?.registerOnNewMessage((event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
-                    console.log("ELOPEZANAYA ::: 4, event:: ");
                     const { id } = event;
-
                     const omnichannelMessage = createOmnichannelMessage(event, {
                         liveChatVersion: this.liveChatVersion,
                         debug: this.debug
                     });
 
-                    console.log("ELOPEZANAYA ::: 5, messageid:: ", id);
                     if (!postedMessages.has(id)) {
-                        console.log("ELOPEZANAYA ::: 6, notify new messageid:: ", id);
                         onNewMessageCallback(omnichannelMessage);
                         postedMessages.add(id);
                     }
-                    console.log("ELOPEZANAYA ::: 7, messageid:: ", id);
-
                 });
 
                 this.scenarioMarker.completeScenario(TelemetryEvent.OnNewMessage, {
