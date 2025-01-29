@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix for missing tags from new messages due to double processing of messages.
+
 ### Added
 
 - Added push notification properties to session init optional params

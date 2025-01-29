@@ -1,5 +1,6 @@
-import AriaTelemetry from "../telemetry/AriaTelemetry";
 import { ACSAdapterLogger, ACSClientLogger, AMSClientLogger, CallingSDKLogger, IC3ClientLogger, OCSDKLogger } from "./loggers";
+
+import AriaTelemetry from "../telemetry/AriaTelemetry";
 import { isJsonObject } from "./utilities";
 
 export const _basePIIKeys = [
@@ -92,6 +93,7 @@ export function redactPII(input: unknown, redactAllNested = false, shouldClone =
             // Deep clone the object so we don't modify the original object
             // Using JSON.parse(JSON.stringify()) since we know this object will need to be stringified,
             // so if clone operation fails, then sending telemetry would fail anyways
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             let cloned: { [key: string]: any };
             if (shouldClone) {
                 cloned = JSON.parse(JSON.stringify(input));
