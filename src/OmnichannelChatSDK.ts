@@ -646,6 +646,14 @@ class OmnichannelChatSDK {
         sessionInitOptionalParams = this.populateInitChatOptionalParam(sessionInitOptionalParams, optionalParams, TelemetryEvent.StartChat);
         sessionInitOptionalParams.initContext!.isProactiveChat = !!optionalParams.isProactiveChat;
 
+        if (optionalParams.platform) {
+            sessionInitOptionalParams.initContext!.platform = optionalParams.platform;
+        }
+
+        if (optionalParams.handle) {
+            sessionInitOptionalParams.initContext!.handle = optionalParams.handle;
+        }
+
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
             sessionInitOptionalParams.reconnectId = this.reconnectId as string;
         } else if (this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat) {
