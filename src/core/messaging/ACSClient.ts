@@ -223,7 +223,6 @@ export class ACSConversation {
                 if (postedMessageIds.has(id) && !isChatMessageEditedEvent) {
                     return;
                 }
-
                 onNewMessageCallback(event);
                 postedMessageIds.add(id);
             }
