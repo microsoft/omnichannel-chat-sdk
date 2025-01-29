@@ -30,8 +30,6 @@ describe('createOmnichannelMessage', () => {
             liveChatVersion: LiveChatVersion.V2
         });
 
-        console.log("returned =>", omnichannelMessage);
-
         expect(omnichannelMessage.id).toBeDefined();
         expect(omnichannelMessage.messageid).toBe("id");
         expect(omnichannelMessage.clientmessageid).toBe(undefined);

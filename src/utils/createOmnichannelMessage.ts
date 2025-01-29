@@ -11,18 +11,14 @@ interface CreateOmnichannelMessageOptionalParams {
 }
 
 const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEvent | ChatMessageEditedEvent | ChatMessage, optionalParams: CreateOmnichannelMessageOptionalParams): OmnichannelMessage => {
-
+    optionalParams.debug && console.log(message);
+    // it seems there is a superposition sending messages between polling and websocket,
+    // so there is no point to override an already processed messagge
     if ("processed" in message) {
         return message as OmnichannelMessage;
     }
 
-    console.log("createOmnichannelMessage: ", message);
-
     const omnichannelMessage = {} as OmnichannelMessage;
-    omnichannelMessage.liveChatVersion = LiveChatVersion.V2;
-
-    optionalParams.debug && console.log(message);
-
     const { id, metadata, sequenceId } = message as any;  // eslint-disable-line  @typescript-eslint/no-explicit-any
 
     setMessageIdentifier(omnichannelMessage, id, sequenceId);
@@ -34,7 +30,7 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
     omnichannelMessage.processed = true;
     return omnichannelMessage as OmnichannelMessage;
 }
-const setMessageIdentifier = (omnichannelMessage: OmnichannelMessage, id: string, sequenceId:string) => {
+const setMessageIdentifier = (omnichannelMessage: OmnichannelMessage, id: string, sequenceId: string) => {
     omnichannelMessage.messageid = id;
     omnichannelMessage.clientmessageid = undefined;
     omnichannelMessage.sequenceId = sequenceId;
@@ -43,6 +39,7 @@ const setMessageIdentifier = (omnichannelMessage: OmnichannelMessage, id: string
 
 const setInitialDefaultValues = (omnichannelMessage: OmnichannelMessage, id: string) => {
 
+    omnichannelMessage.liveChatVersion = LiveChatVersion.V2;
     omnichannelMessage.id = id;
     omnichannelMessage.clientmessageid = undefined;
     omnichannelMessage.deliveryMode = undefined; // Backward compatibility
