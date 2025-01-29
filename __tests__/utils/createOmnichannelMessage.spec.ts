@@ -6,6 +6,7 @@ import PersonType from '@microsoft/omnichannel-ic3core/lib/model/PersonType';
 import createOmnichannelMessage from '../../src/utils/createOmnichannelMessage';
 
 describe('createOmnichannelMessage', () => {
+
     it('createOmnichannelMessage with LiveChatV2 messaging contracts should return OmnichannelMessage contracts', () => {
         const amsReferences = ['id'];
         const amsMetadata = [{fileName: 'fileName.ext', size: 0, contentType: 'type'}]
@@ -29,8 +30,10 @@ describe('createOmnichannelMessage', () => {
             liveChatVersion: LiveChatVersion.V2
         });
 
+        console.log("returned =>", omnichannelMessage);
+
         expect(omnichannelMessage.id).toBeDefined();
-        expect(omnichannelMessage.messageid).toBe(undefined);
+        expect(omnichannelMessage.messageid).toBe("id");
         expect(omnichannelMessage.clientmessageid).toBe(undefined);
         expect(omnichannelMessage.deliveryMode).toBe(undefined);
         expect(omnichannelMessage.content).toBe(sampleMessage.content);
@@ -78,7 +81,7 @@ describe('createOmnichannelMessage', () => {
         });
 
         expect(omnichannelMessage.id).toBeDefined();
-        expect(omnichannelMessage.messageid).toBe(undefined);
+        expect(omnichannelMessage.messageid).toBe("id");
         expect(omnichannelMessage.clientmessageid).toBe(undefined);
         expect(omnichannelMessage.deliveryMode).toBe(undefined);
         expect(omnichannelMessage.content).toBe(sampleMessage.content.message);
@@ -124,7 +127,7 @@ describe('createOmnichannelMessage', () => {
         });
 
         expect(omnichannelMessage.id).toBeDefined();
-        expect(omnichannelMessage.messageid).toBe(undefined);
+        expect(omnichannelMessage.messageid).toBe("id");
         expect(omnichannelMessage.clientmessageid).toBe(undefined);
         expect(omnichannelMessage.deliveryMode).toBe(undefined);
         expect(omnichannelMessage.content).toBe(sampleMessage.message);
@@ -166,7 +169,7 @@ describe('createOmnichannelMessage', () => {
         });
 
         expect(omnichannelMessage.id).toBeDefined();
-        expect(omnichannelMessage.messageid).toBe(undefined);
+        expect(omnichannelMessage.messageid).toBe("id");
         expect(omnichannelMessage.clientmessageid).toBe(undefined);
         expect(omnichannelMessage.deliveryMode).toBe(undefined);
         expect(omnichannelMessage.content).toBe(sampleMessage.content);

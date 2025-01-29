@@ -43,7 +43,7 @@ const setMessageIdentifier = (omnichannelMessage: OmnichannelMessage, id: string
 
 const setInitialDefaultValues = (omnichannelMessage: OmnichannelMessage, id: string) => {
 
-    omnichannelMessage.messageid = id;
+    omnichannelMessage.id = id;
     omnichannelMessage.clientmessageid = undefined;
     omnichannelMessage.deliveryMode = undefined; // Backward compatibility
     omnichannelMessage.properties = {}; // Backward compatibility
