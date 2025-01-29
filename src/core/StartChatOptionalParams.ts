@@ -16,4 +16,6 @@ export default interface StartChatOptionalParams {
     latitude?: string;
     longitude?: string;
     portalContactId?: string;
+    platform?: string;
+    handle?: string;
 }
