@@ -71,7 +71,6 @@ interface OmnichannelMessage {
     tags?: string[];
     fileMetadata?: IFileMetadata;
     resourceType?: ResourceType;
-    processed: boolean | undefined;
 }
 
 export default OmnichannelMessage;

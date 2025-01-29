@@ -14,7 +14,7 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
     optionalParams.debug && console.log(message);
     // it seems there is a superposition sending messages between polling and websocket,
     // so there is no point to override an already processed message
-    if ("processed" in message) {
+    if ("liveChatVersion" in message) {
         return message as OmnichannelMessage;
     }
 
@@ -27,7 +27,6 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
     setContent(message, omnichannelMessage);
     setMetadata(metadata, omnichannelMessage);
 
-    omnichannelMessage.processed = true;
     return omnichannelMessage as OmnichannelMessage;
 }
 const setMessageIdentifier = (omnichannelMessage: OmnichannelMessage, id: string, sequenceId: string) => {
