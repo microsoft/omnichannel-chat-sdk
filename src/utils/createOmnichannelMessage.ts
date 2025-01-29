@@ -13,7 +13,7 @@ interface CreateOmnichannelMessageOptionalParams {
 const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEvent | ChatMessageEditedEvent | ChatMessage, optionalParams: CreateOmnichannelMessageOptionalParams): OmnichannelMessage => {
     optionalParams.debug && console.log(message);
     // it seems there is a superposition sending messages between polling and websocket,
-    // so there is no point to override an already processed messagge
+    // so there is no point to override an already processed message
     if ("processed" in message) {
         return message as OmnichannelMessage;
     }
