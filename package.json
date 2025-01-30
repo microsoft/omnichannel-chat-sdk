@@ -44,8 +44,6 @@
     "typescript": "^5.4.2"
   },
   "dependencies": {
-    "@azure/communication-chat": "1.5.2",
-    "@azure/communication-common": "2.3.1",
     "@microsoft/ocsdk": "^0.5.11",
     "@microsoft/omnichannel-amsclient": "^0.1.6",
     "@microsoft/omnichannel-ic3core": "^0.1.4",
