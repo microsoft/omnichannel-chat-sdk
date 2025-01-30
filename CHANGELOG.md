@@ -8,6 +8,11 @@ All notable changes to this project will be documented in this file.
 
 - Added push notification properties to session init optional params
 
+### Fixed
+
+- Remove [azure/communication-chat@1.5.0](https://www.npmjs.com/package/@azure/communication-chat/v/1.5.0)
+- Remove [azure/communication-common@2.3.1](https://www.npmjs.com/package/@azure/communication-common/v/2.3.1)
+
 ## [1.10.6] - 2025-01-28
 
 ### Added
