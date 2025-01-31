@@ -14,7 +14,7 @@ import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
 import WebUtils from "./WebUtils";
 import createChannelDataEgressMiddleware from "../external/ACSAdapter/createChannelDataEgressMiddleware";
-import { createACSAdapter as createChatACSAdapter } from "acs_webchat-chat-adapter";
+import { createACSAdapter as createChatACSAdapter } from "@microsoft/botframework-webchat-adapter-azure-communication-chat";
 import createFileScanIngressMiddleware from "../external/ACSAdapter/createFileScanIngressMiddleware";
 import createFormatEgressTagsMiddleware from "../external/ACSAdapter/createFormatEgressTagsMiddleware";
 import createFormatIngressTagsMiddleware from "../external/ACSAdapter/createFormatIngressTagsMiddleware";

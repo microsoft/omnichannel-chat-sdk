@@ -11,7 +11,7 @@ const getIC3AdapterCDNUrl = (version = webChatIC3AdapterVersion): string => {
 }
 
 const getACSAdapterCDNUrl = (version = webChatACSAdapterVersion): string => {
-    const ACSAdapterCDNUrl = `https://unpkg.com/acs_webchat-chat-adapter@${version}/dist/chat-adapter.js`;
+    const ACSAdapterCDNUrl = `https://unpkg.com/@microsoft/botframework-webchat-adapter-azure-communication-chat@${version}/dist/chat-adapter.js`;
     return ACSAdapterCDNUrl;
 }
 
