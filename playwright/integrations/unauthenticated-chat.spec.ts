@@ -587,7 +587,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
 
         const [createChatAdapterResponse, runtimeContext] = await Promise.all([
             page.waitForResponse(response => {
-                return response.url().includes("https://unpkg.com/acs_webchat-chat-adapter");
+                return response.url().includes("https://unpkg.com/@microsoft/botframework-webchat-adapter-azure-communication-chat");
             }),
             await page.evaluate(async ({ omnichannelConfig, chatDuration }) => {
                 const { sleep } = window;

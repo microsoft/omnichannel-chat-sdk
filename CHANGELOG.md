@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file.
 
 - Added push notification properties to session init optional params
 
+### Changed
+
+- migrate [acs_webchat-chat-adapter@0.0.35-beta.30](https://www.npmjs.com/package/acs_webchat-chat-adapter/v/0.0.35-beta.30) to [@microsoft/botframework-webchat-adapter-azure-communication-chat@0.0.1-beta.1](https://www.npmjs.com/package/@microsoft/botframework-webchat-adapter-azure-communication-chat)
+
 ## [1.10.6] - 2025-01-28
 
 ### Added
