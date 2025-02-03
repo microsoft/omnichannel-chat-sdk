@@ -13,6 +13,7 @@ import LiveChatVersion from "../LiveChatVersion";
 import OmnichannelMessage from "./OmnichannelMessage";
 import createOmnichannelMessage from "../../utils/createOmnichannelMessage";
 import { defaultMessageTags } from "./MessageTags";
+import ACSGetMessagesOptionalParams from "./ACSClientGetMessagesOptionParams";
 
 enum ACSClientEvent {
     InitializeACSClient = 'InitializeACSClient',
@@ -89,10 +90,10 @@ export class ACSConversation {
         this.logger?.completeScenario(ACSClientEvent.InitializeACSConversation);
     }
 
-    public async getMessages(): Promise<OmnichannelMessage[]> {
+    public async getMessages(optionsParams: ACSGetMessagesOptionalParams = {}): Promise<OmnichannelMessage[] | ChatMessage[]> {
         this.logger?.startScenario(ACSClientEvent.GetMessages);
 
-        const messages: OmnichannelMessage[] = [];
+        const messages = [];
 
         try {
             const pagedAsyncIterableIterator = await (this.chatThreadClient as ChatThreadClient).listMessages();
@@ -106,11 +107,15 @@ export class ACSConversation {
                     continue;
                 }
 
-                const omnichannelMessage = createOmnichannelMessage(chatMessage as ChatMessage, {
-                    liveChatVersion: LiveChatVersion.V2
-                });
+                if (optionsParams?.skipConversion === true) {
+                    messages.push(chatMessage as ChatMessage)
+                } else {
+                    const omnichannelMessage = createOmnichannelMessage(chatMessage as ChatMessage, {
+                        liveChatVersion: LiveChatVersion.V2
+                    });
 
-                messages.push(omnichannelMessage);
+                    messages.push(omnichannelMessage as OmnichannelMessage);
+                }
 
                 nextMessage = await pagedAsyncIterableIterator.next();
             }
@@ -128,7 +133,7 @@ export class ACSConversation {
             throw new Error(ACSClientEvent.GetMessages);
         }
 
-        return messages;
+        return (optionsParams?.skipConversion === true) ? messages as ChatMessage[] : messages as OmnichannelMessage[];
     }
 
     public async getParticipants(): Promise<ChatParticipant[]> {
@@ -174,12 +179,11 @@ export class ACSConversation {
                 }
 
                 try {
-                    const messages = await this.getMessages();
+                    const messages = await this.getMessages({skipConversion: true});
                     for (const message of messages.reverse()) {
                         try {
-                            const { id, sender } = message;
-                            const customerMessageCondition = sender.displayName === ACSParticipantDisplayName.Customer;
-
+                            const { id, senderDisplayName } = message as ChatMessage;
+                            const customerMessageCondition = senderDisplayName === ACSParticipantDisplayName.Customer;
                             // Filter out customer messages
                             if (customerMessageCondition) {
                                 continue;
