@@ -7,6 +7,10 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Fix `ChatSDK.onNewMessages()` calling `createOmnichannelMessages()` twice during polling
 
+### Changed
+
+- Uptake [@microsoft/omnichannel-amsclient@0.1.7](https://www.npmjs.com/package/@microsoft/omnichannel-amsclient/v/0.1.7)
+
 ## [1.10.7] - 2025-01-30
 
 ### Added
@@ -31,7 +35,7 @@ All notable changes to this project will be documented in this file.
 
 ## Changed
 
-- Uptake [@microsoft/oc4sdk@0.5.10](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.10)
+- Uptake [@microsoft/ocsdk@0.5.10](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.10)
 
 ## [1.10.4] - 2024-12-19
 
@@ -63,7 +67,7 @@ All notable changes to this project will be documented in this file.
 - uptake [azure/communication-chat@1.5.0](https://www.npmjs.com/package/@azure/communication-chat/v/1.5.0)
 - uptake [azure/communication-common@2.3.1](https://www.npmjs.com/package/@azure/communication-common/v/2.3.1)
 - uptake [acs_webchat-chat-adapter@0.0.35-beta.30](https://www.npmjs.com/package/acs_webchat-chat-adapter/v/0.0.35-beta.30)
-- Uptake [@microsoft/oc4sdk@0.5.9](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.9)
+- Uptake [@microsoft/ocsdk@0.5.9](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.9)
 
 ## [1.10.1] - 2024-11-11
 
