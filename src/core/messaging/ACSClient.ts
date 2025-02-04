@@ -110,11 +110,9 @@ export class ACSConversation {
                 if (optionsParams?.skipConversion === true) {
                     messages.push(chatMessage as ChatMessage)
                 } else {
-                    const omnichannelMessage = createOmnichannelMessage(chatMessage as ChatMessage, {
+                    messages.push(createOmnichannelMessage(chatMessage as ChatMessage, {
                         liveChatVersion: LiveChatVersion.V2
-                    });
-
-                    messages.push(omnichannelMessage as OmnichannelMessage);
+                    }));
                 }
 
                 nextMessage = await pagedAsyncIterableIterator.next();
