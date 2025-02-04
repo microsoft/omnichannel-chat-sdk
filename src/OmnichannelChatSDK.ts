@@ -1157,7 +1157,7 @@ class OmnichannelChatSDK {
                 ChatId: this.chatToken.chatId as string
             });
 
-            return messages;
+            return messages as GetMessagesResponse;
         } catch {
             this.scenarioMarker.failScenario(TelemetryEvent.GetMessages, {
                 RequestId: this.requestId,
