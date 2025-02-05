@@ -10,9 +10,7 @@
         "typeRoots": ["./node_modules/@types", "./types"],
         "baseUrl": "./",
         "paths": {
-            "*": ["node_modules/*"],
-            "@azure/communication-chat": ["node_modules/@microsoft/botframework-webchat-adapter-azure-communication-chat/node_modules/@azure/communication-chat"],
-            "@azure/communication-signaling": ["node_modules/@microsoft/botframework-webchat-adapter-azure-communication-chat/node_modules/@azure/communication-signaling"],
+            "*": ["node_modules/*"]
         },
     },
     "include": [

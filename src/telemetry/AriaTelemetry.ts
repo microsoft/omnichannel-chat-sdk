@@ -672,7 +672,7 @@ class AriaTelemetry {
         const packagesInfo: NPMPackagesInfo = {
             OCSDK: require('@microsoft/ocsdk/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
             IC3Core: require('@microsoft/omnichannel-ic3core/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
-            ACSChat: require('@microsoft/botframework-webchat-adapter-azure-communication-chat/node_modules/@azure/communication-chat/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
+            ACSChat: require('@azure/communication-chat/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
             ACSCommon: require('@azure/communication-common/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
             AMSClient:  require('@microsoft/omnichannel-amsclient/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
         };
@@ -806,7 +806,7 @@ class AriaTelemetry {
             Event: '',
             ExceptionDetails: '',
             ElapsedTimeInMilliseconds: '',
-            ACSChatVersion: require('@microsoft/botframework-webchat-adapter-azure-communication-chat/node_modules/@azure/communication-chat/package.json').version // eslint-disable-line @typescript-eslint/no-var-requires
+            ACSChatVersion: require('@azure/communication-chat/package.json').version // eslint-disable-line @typescript-eslint/no-var-requires
         }
     }
 

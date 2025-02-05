@@ -20,9 +20,7 @@ module.exports = {
     "external/aria/"
   ],
   moduleNameMapper: {
-    '^axios$': require.resolve('axios'),
-    '^@azure/communication-chat$': '<rootDir>/node_modules/@microsoft/botframework-webchat-adapter-azure-communication-chat/node_modules/@azure/communication-chat',
-    '^@azure/communication-signaling$': '<rootDir>/node_modules/@microsoft/botframework-webchat-adapter-azure-communication-chat/node_modules/@azure/communication-signaling',
+    '^axios$': require.resolve('axios')
   },
   setupFiles: ["./jest.setup.jsdom.js"]
 };
