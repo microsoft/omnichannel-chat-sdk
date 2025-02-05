@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.10.8] - 2025-02-05
+
 ### Fixed
 - Fix `ChatSDK.onNewMessages()` calling `createOmnichannelMessages()` twice during polling
 
