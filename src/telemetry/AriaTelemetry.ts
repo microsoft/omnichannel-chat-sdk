@@ -1,10 +1,11 @@
-import { ariaTelemetryKey } from '../config/settings';
-import { AWTEventPriority } from '../external/aria/common/Enums';
-import { AWTLogManager, AWTLogger, AWTEventData, AWTLogConfiguration } from '../external/aria/webjs/AriaSDK';
-import LogLevel from '../telemetry/LogLevel';
-import ScenarioType from '../telemetry/ScenarioType';
+import { AWTEventData, AWTLogConfiguration, AWTLogManager, AWTLogger } from '../external/aria/webjs/AriaSDK';
 import { ic3ClientVersion, webChatACSAdapterVersion } from '../config/settings';
 import { isBrowser, isReactNative } from '../utils/platform';
+
+import { AWTEventPriority } from '../external/aria/common/Enums';
+import LogLevel from '../telemetry/LogLevel';
+import ScenarioType from '../telemetry/ScenarioType';
+import { ariaTelemetryKey } from '../config/settings';
 
 interface BaseContract {
     ChatSDKRuntimeId: string;
@@ -671,7 +672,7 @@ class AriaTelemetry {
         const packagesInfo: NPMPackagesInfo = {
             OCSDK: require('@microsoft/ocsdk/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
             IC3Core: require('@microsoft/omnichannel-ic3core/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
-            ACSChat: require('@azure/communication-chat/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
+            ACSChat: require('@microsoft/botframework-webchat-adapter-azure-communication-chat/node_modules/@azure/communication-chat/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
             ACSCommon: require('@azure/communication-common/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
             AMSClient:  require('@microsoft/omnichannel-amsclient/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
         };
@@ -805,7 +806,7 @@ class AriaTelemetry {
             Event: '',
             ExceptionDetails: '',
             ElapsedTimeInMilliseconds: '',
-            ACSChatVersion: require('@azure/communication-chat/package.json').version // eslint-disable-line @typescript-eslint/no-var-requires
+            ACSChatVersion: require('@microsoft/botframework-webchat-adapter-azure-communication-chat/node_modules/@azure/communication-chat/package.json').version // eslint-disable-line @typescript-eslint/no-var-requires
         }
     }
 
