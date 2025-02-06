@@ -1,10 +1,11 @@
-import { ariaTelemetryKey } from '../config/settings';
-import { AWTEventPriority } from '../external/aria/common/Enums';
-import { AWTLogManager, AWTLogger, AWTEventData, AWTLogConfiguration } from '../external/aria/webjs/AriaSDK';
-import LogLevel from '../telemetry/LogLevel';
-import ScenarioType from '../telemetry/ScenarioType';
+import { AWTEventData, AWTLogConfiguration, AWTLogManager, AWTLogger } from '../external/aria/webjs/AriaSDK';
 import { ic3ClientVersion, webChatACSAdapterVersion } from '../config/settings';
 import { isBrowser, isReactNative } from '../utils/platform';
+
+import { AWTEventPriority } from '../external/aria/common/Enums';
+import LogLevel from '../telemetry/LogLevel';
+import ScenarioType from '../telemetry/ScenarioType';
+import { ariaTelemetryKey } from '../config/settings';
 
 interface BaseContract {
     ChatSDKRuntimeId: string;

@@ -2,6 +2,7 @@ import { ACSAdapterLogger, IC3ClientLogger } from "./loggers";
 
 import ACSParticipantDisplayName from "../core/messaging/ACSParticipantDisplayName";
 import AMSFileManager from "../external/ACSAdapter/AMSFileManager";
+import { AdapterErrorEvent } from "../external/ACSAdapter/AdapterErrorEvent";
 import AriaTelemetry from "../telemetry/AriaTelemetry";
 import ChatAdapterOptionalParams from "../core/messaging/ChatAdapterOptionalParams";
 import { ChatClient } from "@azure/communication-chat";
@@ -9,19 +10,18 @@ import ChatSDKConfig from "../core/ChatSDKConfig";
 import IChatToken from "../external/IC3Adapter/IChatToken";
 import IIC3AdapterOptions from "../external/IC3Adapter/IIC3AdapterOptions";
 import LiveChatVersion from "../core/LiveChatVersion";
+import LogLevel from "../telemetry/LogLevel";
 import OmnichannelConfig from "../core/OmnichannelConfig";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
 import WebUtils from "./WebUtils";
 import createChannelDataEgressMiddleware from "../external/ACSAdapter/createChannelDataEgressMiddleware";
-import { createACSAdapter as createChatACSAdapter } from "acs_webchat-chat-adapter";
+import { createACSAdapter as createChatACSAdapter } from "@microsoft/botframework-webchat-adapter-azure-communication-chat";
 import createFileScanIngressMiddleware from "../external/ACSAdapter/createFileScanIngressMiddleware";
 import createFormatEgressTagsMiddleware from "../external/ACSAdapter/createFormatEgressTagsMiddleware";
 import createFormatIngressTagsMiddleware from "../external/ACSAdapter/createFormatIngressTagsMiddleware";
 import exceptionThrowers from "./exceptionThrowers";
 import urlResolvers from "./urlResolvers";
-import { AdapterErrorEvent } from "../external/ACSAdapter/AdapterErrorEvent";
-import LogLevel from "../telemetry/LogLevel";
 
 const createDirectLine = async (optionalParams: ChatAdapterOptionalParams, chatSDKConfig: ChatSDKConfig, liveChatVersion: LiveChatVersion, protocol: string, telemetry: typeof AriaTelemetry, scenarioMarker: ScenarioMarker): Promise<unknown> => {
     const options = optionalParams.DirectLine ? optionalParams.DirectLine.options : {};

@@ -74,7 +74,7 @@ describe("Chat Adapter Creators", () => {
     });
 
     it("createACSAdapter should return an Adapter", async () => {
-        jest.mock("acs_webchat-chat-adapter");
+        jest.mock("@microsoft/botframework-webchat-adapter-azure-communication-chat");
 
         const optionalParams = {
             ACSAdapter: {

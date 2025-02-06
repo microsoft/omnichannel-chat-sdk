@@ -1,7 +1,7 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  testPathIgnorePatterns : [
+  testPathIgnorePatterns: [
     "<rootDir>/samples/",
     "<rootDir>/playwright/"
   ],
@@ -20,7 +20,7 @@ module.exports = {
     "external/aria/"
   ],
   moduleNameMapper: {
-    '^axios$': require.resolve('axios'),
+    '^axios$': require.resolve('axios')
   },
   setupFiles: ["./jest.setup.jsdom.js"]
 };

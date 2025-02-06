@@ -15,7 +15,7 @@ module.exports = {
     "external/aria/"
   ],
   moduleNameMapper: {
-    '^axios$': require.resolve('axios'),
+    '^axios$': require.resolve('axios')
   },
   setupFiles: ["./jest.setup.node.js"]
 };
