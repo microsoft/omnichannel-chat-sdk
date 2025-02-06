@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.10.9] - 2025-02-06
+
 ### Changed
 
 - migrate [acs_webchat-chat-adapter@0.0.35-beta.30.1](https://www.npmjs.com/package/acs_webchat-chat-adapter/v/0.0.35-beta.30.1) to [@microsoft/botframework-webchat-adapter-azure-communication-chat@0.0.1-beta.1](https://www.npmjs.com/package/@microsoft/botframework-webchat-adapter-azure-communication-chat/v/0.0.1-beta.1)
