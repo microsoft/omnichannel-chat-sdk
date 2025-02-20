@@ -171,7 +171,7 @@ export class ACSConversation {
         const postedMessageIds = new Set();
 
         try {
-            const pollForMessages = async (prevDelay = 1, currentDelay = 1) => {
+            const pollForMessages = async (prevDelay = 0, currentDelay = 1) => {
                 if (isReceivingNotifications) {
                     return;
                 }
@@ -201,8 +201,13 @@ export class ACSConversation {
                     // Ignore polling failures
                 }
                 // Calculate next Fibonacci delay
-                const nextDelay = prevDelay + currentDelay;
+                let nextDelay = prevDelay + currentDelay;
 
+                if (nextDelay > 25) {
+                    nextDelay = 30;
+                }
+
+                //pooling interval: 1,1,2,3,5,8,13,21,
                 setTimeout(() => {
                     pollForMessages(currentDelay, nextDelay);
                 }, currentDelay * 1000);
