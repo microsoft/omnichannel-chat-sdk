@@ -5,6 +5,7 @@ import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEv
 import ACSChatMessageType from "./ACSChatMessageType";
 import ACSClientConfig from "./ACSClientConfig";
 import { ACSClientLogger } from "../../utils/loggers";
+import ACSGetMessagesOptionalParams from "./ACSClientGetMessagesOptionParams";
 import ACSParticipantDisplayName from "./ACSParticipantDisplayName";
 import ACSSessionInfo from "./ACSSessionInfo";
 import ChatSDKMessage from "./ChatSDKMessage";
@@ -13,7 +14,6 @@ import LiveChatVersion from "../LiveChatVersion";
 import OmnichannelMessage from "./OmnichannelMessage";
 import createOmnichannelMessage from "../../utils/createOmnichannelMessage";
 import { defaultMessageTags } from "./MessageTags";
-import ACSGetMessagesOptionalParams from "./ACSClientGetMessagesOptionParams";
 
 enum ACSClientEvent {
     InitializeACSClient = 'InitializeACSClient',
@@ -34,6 +34,10 @@ interface EventListenersMapping {
 
 export interface ParticipantMapping {
     [key: string]: ChatParticipant;
+}
+
+function* nextDelay() {
+    yield* [1000, 1000, 2000, 3000, 5000, 8000, 10000];
 }
 
 export class ACSConversation {
@@ -171,11 +175,11 @@ export class ACSConversation {
         const postedMessageIds = new Set();
 
         try {
-            const pollForMessages = async (delay: number) => {
+            const pollForMessages = async (delayGenerator: Generator<number, void, unknown>) => {
                 if (isReceivingNotifications) {
+                    console.log("Not receiving notifications, skipping polling");
                     return;
                 }
-
                 try {
                     const messages = await this.getMessages({skipConversion: true});
                     for (const message of messages.reverse()) {
@@ -201,13 +205,15 @@ export class ACSConversation {
                     // Ignore polling failures
                 }
 
+                const delay = delayGenerator.next();
                 setTimeout(() => {
-                    pollForMessages(delay);
-                }, delay);
+                    pollForMessages(delayGenerator);
+                }, delay.done === true ? 10000 : delay.value);
             };
 
             // Poll messages until WS established connection
-            await pollForMessages(this.sessionInfo?.pollingInterval as number);
+            const delayGenerator = nextDelay();
+            await pollForMessages(delayGenerator);
             const listener = (event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
                 isReceivingNotifications = true;
 
