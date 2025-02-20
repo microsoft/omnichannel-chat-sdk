@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## Added
+
+- Reduce polling interval with exponential backoff
+
 ## [1.10.10] - 2025-02-18
 
 ### Changed
