@@ -39,6 +39,7 @@ export interface ParticipantMapping {
 function* nextDelay() {
     yield* [1000, 1000, 2000, 3000, 5000, 8000, 10000];
 }
+
 export class ACSConversation {
     private logger: ACSClientLogger | null = null;
     private tokenCredential: AzureCommunicationTokenCredential;
