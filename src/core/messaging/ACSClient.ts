@@ -207,7 +207,7 @@ export class ACSConversation {
                     nextDelay = 30;
                 }
 
-                //pooling interval: 1,1,2,3,5,8,13,21,
+                //pooling interval: 0,1,1,2,3,5,8,13,21,30,30,30
                 setTimeout(() => {
                     pollForMessages(currentDelay, nextDelay);
                 }, currentDelay * 1000);
