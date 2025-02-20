@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## Added
+
+- Adding mechanism to fetch messages with incremental backoff time to avoid throttling while waiting for websocket to be ready.
+
 ## [1.10.10] - 2025-02-18
 
 ### Changed
