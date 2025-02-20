@@ -694,7 +694,7 @@ class OmnichannelChatSDK {
                     id: this.chatToken.visitorId || 'teamsvisitor',
                     threadId: this.chatToken.chatId,
                     environmentUrl: this.chatToken.acsEndpoint as string,
-                    pollingInterval: 30000
+                    pollingInterval: 1
                 };
 
                 // Temporarily disable token refresh mechanism

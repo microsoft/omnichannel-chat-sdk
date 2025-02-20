@@ -171,7 +171,7 @@ export class ACSConversation {
         const postedMessageIds = new Set();
 
         try {
-            const pollForMessages = async (delay: number) => {
+            const pollForMessages = async (prevDelay = 1, currentDelay = 1) => {
                 if (isReceivingNotifications) {
                     return;
                 }
@@ -200,10 +200,12 @@ export class ACSConversation {
                 } catch {
                     // Ignore polling failures
                 }
+                // Calculate next Fibonacci delay
+                const nextDelay = prevDelay + currentDelay;
 
                 setTimeout(() => {
-                    pollForMessages(delay);
-                }, delay);
+                    pollForMessages(currentDelay, nextDelay);
+                }, currentDelay * 1000);
             };
 
             // Poll messages until WS established connection
