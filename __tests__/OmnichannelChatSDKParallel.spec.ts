@@ -2354,7 +2354,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             chatSDK.conversation = {
                 disconnect: jest.fn(),
-                stopPooling : jest.fn()
+                stopPolling : jest.fn()
             };
 
             const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
@@ -2391,7 +2391,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             chatSDK.conversation = {
                 disconnect: jest.fn(),
-                stopPooling : jest.fn()
+                stopPolling : jest.fn()
             };
 
             const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
@@ -2430,7 +2430,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             chatSDK.conversation = {
                 disconnect: jest.fn(),
-                stopPooling : jest.fn()
+                stopPolling : jest.fn()
             };
 
             const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
@@ -2470,7 +2470,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             chatSDK.conversation = {
                 disconnect: jest.fn(),
-                stopPooling : jest.fn()
+                stopPolling : jest.fn()
             };
 
             const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
@@ -2508,7 +2508,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             chatSDK.conversation = {
                 disconnect: jest.fn(),
-                stopPooling : jest.fn()
+                stopPolling : jest.fn()
             };
 
             const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
@@ -2603,7 +2603,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.authenticatedUserToken = optionalParams.authenticatedUserToken;
             chatSDK.conversation = {
                 disconnect: jest.fn(),
-                stopPooling: jest.fn()
+                stopPolling: jest.fn()
             };
 
             const sessionCloseOptionalParams = {
@@ -2639,7 +2639,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             chatSDK.conversation = {
                 disconnect: jest.fn(),
-                stopPooling : jest.fn()
+                stopPolling : jest.fn()
             };
 
             const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');

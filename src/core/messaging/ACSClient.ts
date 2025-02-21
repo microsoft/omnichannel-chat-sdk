@@ -57,7 +57,7 @@ export class ACSConversation {
         this.eventListeners = {};
     }
 
-    public async stopPooling() : Promise<void>  {
+    public async stopPolling() : Promise<void>  {
         this.conversationEnded = true;
     }
 
