@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Update `ACSAdapterVersion` to reflect the correct version
+
 ## [1.10.12] - 2025-02-21
 
 ### Added
