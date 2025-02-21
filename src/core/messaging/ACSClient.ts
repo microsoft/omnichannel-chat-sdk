@@ -48,12 +48,17 @@ export class ACSConversation {
     private sessionInfo?: ACSSessionInfo;
     private participantsMapping?: ParticipantMapping;
     private eventListeners: EventListenersMapping;
+    private conversationEnded = false;
 
     constructor(tokenCredential: AzureCommunicationTokenCredential, chatClient: ChatClient, logger: ACSClientLogger | null = null) {
         this.logger = logger;
         this.tokenCredential = tokenCredential;
         this.chatClient = chatClient;
         this.eventListeners = {};
+    }
+
+    public async stopPolling() : Promise<void>  {
+        this.conversationEnded = true;
     }
 
     public async initialize(sessionInfo: ACSSessionInfo): Promise<void> {
@@ -170,16 +175,14 @@ export class ACSConversation {
 
     public async registerOnNewMessage(onNewMessageCallback: CallableFunction): Promise<void> {
         this.logger?.startScenario(ACSClientEvent.RegisterOnNewMessage);
-
-        let isReceivingNotifications = false;
         const postedMessageIds = new Set();
 
         try {
             const pollForMessages = async (delayGenerator: Generator<number, void, unknown>) => {
-                if (isReceivingNotifications) {
-                    console.log("Not receiving notifications, skipping polling");
+                if ( this.conversationEnded === true) {
                     return;
                 }
+
                 try {
                     const messages = await this.getMessages({skipConversion: true});
                     for (const message of messages.reverse()) {
@@ -215,8 +218,6 @@ export class ACSConversation {
             const delayGenerator = nextDelay();
             await pollForMessages(delayGenerator);
             const listener = (event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
-                isReceivingNotifications = true;
-
                 const { id, sender } = event;
 
                 const customerMessageCondition = ((sender as CommunicationUserIdentifier).communicationUserId === (this.sessionInfo?.id as string));
@@ -231,7 +232,6 @@ export class ACSConversation {
                 if (postedMessageIds.has(id) && !isChatMessageEditedEvent) {
                     return;
                 }
-
                 onNewMessageCallback(event);
                 postedMessageIds.add(id);
             }
