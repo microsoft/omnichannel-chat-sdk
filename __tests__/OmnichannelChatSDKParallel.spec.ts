@@ -2303,7 +2303,9 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
 
-            await chatSDK.initialize({ useParallelLoad: true }); while (chatSDK.AMSClient === null) {
+            await chatSDK.initialize({ useParallelLoad: true });
+
+            while (chatSDK.AMSClient === null) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
             }
 
@@ -2328,6 +2330,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
         });
 
         it('ChatSDK.endChat() should end conversation', async () => {
+
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
@@ -2350,7 +2353,8 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.startChat();
 
             chatSDK.conversation = {
-                disconnect: jest.fn()
+                disconnect: jest.fn(),
+                stopPooling : jest.fn()
             };
 
             const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
@@ -2386,7 +2390,8 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.startChat();
 
             chatSDK.conversation = {
-                disconnect: jest.fn()
+                disconnect: jest.fn(),
+                stopPooling : jest.fn()
             };
 
             const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
@@ -2424,7 +2429,8 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.startChat();
 
             chatSDK.conversation = {
-                disconnect: jest.fn()
+                disconnect: jest.fn(),
+                stopPooling : jest.fn()
             };
 
             const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
@@ -2440,6 +2446,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
         });
 
         it('ChatSDK.endChat() with optional params set as empty should call sessionClose', async () => {
+            //
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
@@ -2462,10 +2469,12 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.startChat();
 
             chatSDK.conversation = {
-                disconnect: jest.fn()
+                disconnect: jest.fn(),
+                stopPooling : jest.fn()
             };
 
             const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
+
             await chatSDK.endChat({});
 
             expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(1);
@@ -2498,7 +2507,8 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.startChat();
 
             chatSDK.conversation = {
-                disconnect: jest.fn()
+                disconnect: jest.fn(),
+                stopPooling : jest.fn()
             };
 
             const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
@@ -2592,7 +2602,8 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             chatSDK.authenticatedUserToken = optionalParams.authenticatedUserToken;
             chatSDK.conversation = {
-                disconnect: jest.fn()
+                disconnect: jest.fn(),
+                stopPooling: jest.fn()
             };
 
             const sessionCloseOptionalParams = {
@@ -2627,7 +2638,8 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             await chatSDK.startChat();
 
             chatSDK.conversation = {
-                disconnect: jest.fn()
+                disconnect: jest.fn(),
+                stopPooling : jest.fn()
             };
 
             const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
