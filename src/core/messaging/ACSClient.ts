@@ -57,7 +57,7 @@ export class ACSConversation {
         this.eventListeners = {};
     }
 
-    public async stopPooling() : Promise<void>  {
+    public async stopPolling() : Promise<void>  {
         this.conversationEnded = true;
     }
 
@@ -176,14 +176,14 @@ export class ACSConversation {
     public async registerOnNewMessage(onNewMessageCallback: CallableFunction): Promise<void> {
         this.logger?.startScenario(ACSClientEvent.RegisterOnNewMessage);
 
-        let isReceivingNotifications = false;
         const postedMessageIds = new Set();
 
         try {
             const pollForMessages = async (delayGenerator: Generator<number, void, unknown>) => {
-                if (isReceivingNotifications || this.conversationEnded === true) {
+                if (this.conversationEnded === true) {
                     return;
                 }
+
                 try {
                     const messages = await this.getMessages({skipConversion: true});
                     for (const message of messages.reverse()) {
@@ -219,10 +219,6 @@ export class ACSConversation {
             const delayGenerator = nextDelay();
             await pollForMessages(delayGenerator);
             const listener = (event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
-
-                // Stop polling after 10 seconds to ensure no message is lost
-                setTimeout(()=>isReceivingNotifications = true, 10000);
-
                 const { id, sender } = event;
 
                 const customerMessageCondition = ((sender as CommunicationUserIdentifier).communicationUserId === (this.sessionInfo?.id as string));

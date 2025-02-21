@@ -6,8 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Enabling LongPooling to continue 10 secs after websocket is set, to prevent messages lost.
-- Added stopPooling method to stop the long polling when ending the chat.
+- Enabling LongPolling to continue 10 secs after websocket is set, to prevent messages lost.
+- Added stopPolling method to stop the long polling when ending the chat.
 
 ## [1.10.11] - 2025-02-20
 
