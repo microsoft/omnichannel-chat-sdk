@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.10.12] - 2025-02-21
+
 ### Added
 
 - Enabling LongPolling to continue after websocket is set, to prevent messages lost. Polling will stop when conversation ends.
