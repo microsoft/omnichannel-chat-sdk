@@ -175,12 +175,12 @@ export class ACSConversation {
 
     public async registerOnNewMessage(onNewMessageCallback: CallableFunction): Promise<void> {
         this.logger?.startScenario(ACSClientEvent.RegisterOnNewMessage);
-
+        let isReceivingNotifications = false;
         const postedMessageIds = new Set();
 
         try {
             const pollForMessages = async (delayGenerator: Generator<number, void, unknown>) => {
-                if (this.conversationEnded === true) {
+                if (isReceivingNotifications || this.conversationEnded === true) {
                     return;
                 }
 
@@ -219,6 +219,8 @@ export class ACSConversation {
             const delayGenerator = nextDelay();
             await pollForMessages(delayGenerator);
             const listener = (event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
+                isReceivingNotifications = true;
+
                 const { id, sender } = event;
 
                 const customerMessageCondition = ((sender as CommunicationUserIdentifier).communicationUserId === (this.sessionInfo?.id as string));
