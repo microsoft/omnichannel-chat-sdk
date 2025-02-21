@@ -855,6 +855,7 @@ class OmnichannelChatSDK {
         }
 
         try {
+            await (this.conversation as ACSConversation)?.stopPooling();
 
             // calling close chat, internally will handle the session close
             await this.closeChat(endChatOptionalParams);
