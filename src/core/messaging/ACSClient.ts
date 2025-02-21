@@ -220,8 +220,8 @@ export class ACSConversation {
             await pollForMessages(delayGenerator);
             const listener = (event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
 
-                // Stop polling after 30 seconds to ensure no message is lost
-                setTimeout(()=>isReceivingNotifications = true, 30000);
+                // Stop polling after 10 seconds to ensure no message is lost
+                setTimeout(()=>isReceivingNotifications = true, 10000);
 
                 const { id, sender } = event;
 
