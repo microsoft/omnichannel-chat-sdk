@@ -2,7 +2,7 @@
  * This is a test JS file to test the SDK simulating an scenario, this is to test the SDK locally
  *  1.- Enable the JS in the ../index.html file
  *  2.- go to server and run `node app.js`
- *  3.- go to localhost:3000 and open the console
+ *  3.- go to localhost:8080 and open the console
  *
  * important : index.html wont run locally in the browser without a server behind , because there are security validations for AMS iframe.
  */
