@@ -3048,7 +3048,8 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             await chatSDK.startChat();
 
             chatSDK.conversation = {
-                disconnect: jest.fn()
+                disconnect: jest.fn(),
+                stopPooling: jest.fn()
             };
 
             const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
@@ -3079,7 +3080,8 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             await chatSDK.startChat();
 
             chatSDK.conversation = {
-                disconnect: jest.fn()
+                disconnect: jest.fn(),
+                stopPooling: jest.fn()
             };
 
             const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
@@ -3108,7 +3110,8 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             await chatSDK.startChat();
 
             chatSDK.conversation = {
-                disconnect: jest.fn()
+                disconnect: jest.fn(),
+                stopPooling: jest.fn()
             };
 
             const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
@@ -3139,7 +3142,8 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             await chatSDK.startChat();
 
             chatSDK.conversation = {
-                disconnect: jest.fn()
+                disconnect: jest.fn(),
+                stopPooling: jest.fn()
             };
 
             const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
@@ -3170,7 +3174,8 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             await chatSDK.startChat();
 
             chatSDK.conversation = {
-                disconnect: jest.fn()
+                disconnect: jest.fn(),
+                stopPooling: jest.fn()
             };
 
             const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
@@ -3200,6 +3205,9 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             chatSDK.AMSClient.initialize = jest.fn();
 
             await chatSDK.startChat();
+            chatSDK.conversation = {
+                stopPooling: jest.fn()
+            };
 
             try {
                 await chatSDK.endChat();
@@ -3250,7 +3258,8 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             chatSDK.authenticatedUserToken = optionalParams.authenticatedUserToken;
             chatSDK.conversation = {
-                disconnect: jest.fn()
+                disconnect: jest.fn(),
+                stopPooling: jest.fn()
             };
 
             const sessionCloseOptionalParams = {
