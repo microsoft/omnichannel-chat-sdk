@@ -1,3 +1,4 @@
 export default interface OnNewMessageOptionalParams {
-    rehydrate: boolean;
+    rehydrate?: boolean;
+    pollingInterval?: number;
 }
