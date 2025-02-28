@@ -7,6 +7,7 @@ import ACSClientConfig from "./ACSClientConfig";
 import { ACSClientLogger } from "../../utils/loggers";
 import ACSGetMessagesOptionalParams from "./ACSClientGetMessagesOptionParams";
 import ACSParticipantDisplayName from "./ACSParticipantDisplayName";
+import ACSRegisterOnNewMessageOptionalParams from "./ACSRegisterOnNewMessageOptionalParams";
 import ACSSessionInfo from "./ACSSessionInfo";
 import ChatSDKMessage from "./ChatSDKMessage";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
@@ -173,7 +174,7 @@ export class ACSConversation {
         return participants;
     }
 
-    public async registerOnNewMessage(onNewMessageCallback: CallableFunction): Promise<void> {
+    public async registerOnNewMessage(onNewMessageCallback: CallableFunction, optionalParams: ACSRegisterOnNewMessageOptionalParams = {}): Promise<void> {
         this.logger?.startScenario(ACSClientEvent.RegisterOnNewMessage);
         const postedMessageIds = new Set();
 
@@ -208,10 +209,11 @@ export class ACSConversation {
                     // Ignore polling failures
                 }
 
+                const defaultInterval = optionalParams.pollingInterval || 10000;
                 const delay = delayGenerator.next();
                 setTimeout(() => {
                     pollForMessages(delayGenerator);
-                }, delay.done === true ? 10000 : delay.value);
+                }, delay.done === true ? defaultInterval : delay.value);
             };
 
             // Poll messages until WS established connection
