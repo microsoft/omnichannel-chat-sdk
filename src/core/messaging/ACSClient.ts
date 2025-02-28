@@ -179,8 +179,9 @@ export class ACSConversation {
         const postedMessageIds = new Set();
 
         try {
+            // Initial polls with exponential backoff then poll every 10 seconds by default
             const pollForMessages = async (delayGenerator: Generator<number, void, unknown>) => {
-                if ( this.conversationEnded === true) {
+                if (this.conversationEnded === true) {
                     return;
                 }
 
@@ -216,7 +217,6 @@ export class ACSConversation {
                 }, delay.done === true ? defaultInterval : delay.value);
             };
 
-            // Poll messages until WS established connection
             const delayGenerator = nextDelay();
             await pollForMessages(delayGenerator);
             const listener = (event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
