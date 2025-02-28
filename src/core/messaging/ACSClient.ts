@@ -191,33 +191,31 @@ export class ACSConversation {
         try {
             // Initial polls with exponential backoff then poll every 10 seconds by default
             const pollForMessages = async (delayGenerator: Generator<number, void, unknown>) => {
-                if (this.keepPolling === false) {
-                    return;
-                }
+                if (this.keepPolling) {
+                    try {
+                        const messages = await this.getMessages({skipConversion: true});
+                        for (const message of messages.reverse()) {
+                            try {
+                                const { id, senderDisplayName } = message as ChatMessage;
+                                const customerMessageCondition = senderDisplayName === ACSParticipantDisplayName.Customer;
+                                // Filter out customer messages
+                                if (customerMessageCondition) {
+                                    continue;
+                                }
 
-                try {
-                    const messages = await this.getMessages({skipConversion: true});
-                    for (const message of messages.reverse()) {
-                        try {
-                            const { id, senderDisplayName } = message as ChatMessage;
-                            const customerMessageCondition = senderDisplayName === ACSParticipantDisplayName.Customer;
-                            // Filter out customer messages
-                            if (customerMessageCondition) {
-                                continue;
+                                // Filter out duplicate messages
+                                if (!postedMessageIds.has(id)) {
+                                    onNewMessageCallback(message);
+                                    postedMessageIds.add(id);
+                                }
+                            } catch {
+                                console.warn('[ACSClient][registerOnNewMessage] Error occurred while processing messages');
                             }
 
-                            // Filter out duplicate messages
-                            if (!postedMessageIds.has(id)) {
-                                onNewMessageCallback(message);
-                                postedMessageIds.add(id);
-                            }
-                        } catch {
-                            console.warn('[ACSClient][registerOnNewMessage] Error occurred while processing messages');
                         }
-
+                    } catch {
+                        // Ignore polling failures
                     }
-                } catch {
-                    // Ignore polling failures
                 }
 
                 const defaultInterval = optionalParams.pollingInterval || 10000;
