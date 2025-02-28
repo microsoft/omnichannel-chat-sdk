@@ -6,7 +6,7 @@ import exceptionThrowers from "../utils/exceptionThrowers";
 
 /**
  * On demand command to stop polling messages from `chatSDK.onNewMessage()` subscribers to not overload server.
- * 
+ *
  * @param isInitialized Whether Chat SDK has been initialized
  * @param scenarioMarker Scenario Marker object
  * @param liveChatVersion Live Chat version
@@ -16,7 +16,7 @@ import exceptionThrowers from "../utils/exceptionThrowers";
  */
 const stopPolling = async (isInitialized: boolean, scenarioMarker: ScenarioMarker, liveChatVersion: number, requestId: string, chatId: string, conversation: ACSConversation | null): Promise<void> => {
     scenarioMarker.startScenario(TelemetryEvent.StopPolling);
-    
+
     if (!isInitialized) {
         exceptionThrowers.throwUninitializedChatSDK(scenarioMarker, TelemetryEvent.StopPolling);
     }
