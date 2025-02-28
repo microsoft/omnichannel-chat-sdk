@@ -1,4 +1,3 @@
-import IConversation from "@microsoft/omnichannel-ic3core/lib/model/IConversation";
 import LiveChatVersion from "../core/LiveChatVersion";
 import { ACSConversation } from "../core/messaging/ACSClient";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
