@@ -26,6 +26,8 @@ enum ACSClientEvent {
     GetMessages = 'GetMessages',
     SendMessage = 'SendMessage',
     SendTyping = 'SendTyping',
+    StartPolling = 'StartPolling',
+    StopPolling = 'StopPolling',
     Disconnect = 'Disconnect'
 }
 
@@ -49,7 +51,7 @@ export class ACSConversation {
     private sessionInfo?: ACSSessionInfo;
     private participantsMapping?: ParticipantMapping;
     private eventListeners: EventListenersMapping;
-    private conversationEnded = false;
+    private keepPolling = false;
 
     constructor(tokenCredential: AzureCommunicationTokenCredential, chatClient: ChatClient, logger: ACSClientLogger | null = null) {
         this.logger = logger;
@@ -58,8 +60,16 @@ export class ACSConversation {
         this.eventListeners = {};
     }
 
+    public async startPolling() : Promise<void>  {
+        this.logger?.startScenario(ACSClientEvent.StartPolling);
+        this.keepPolling = true;
+        this.logger?.completeScenario(ACSClientEvent.StartPolling);
+    }
+
     public async stopPolling() : Promise<void>  {
-        this.conversationEnded = true;
+        this.logger?.startScenario(ACSClientEvent.StopPolling);
+        this.keepPolling = false;
+        this.logger?.completeScenario(ACSClientEvent.StopPolling);
     }
 
     public async initialize(sessionInfo: ACSSessionInfo): Promise<void> {
@@ -181,7 +191,7 @@ export class ACSConversation {
         try {
             // Initial polls with exponential backoff then poll every 10 seconds by default
             const pollForMessages = async (delayGenerator: Generator<number, void, unknown>) => {
-                if (this.conversationEnded === true) {
+                if (this.keepPolling === false) {
                     return;
                 }
 
@@ -377,6 +387,8 @@ export class ACSConversation {
                     this.chatClient.off(event as any, listener as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
                 });
             }
+
+            await this.stopPolling();
 
             this.logger?.completeScenario(ACSClientEvent.Disconnect);
         } catch {
