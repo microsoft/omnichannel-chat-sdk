@@ -188,6 +188,7 @@ describe('ACSClient', () => {
             pollingInterval: 1000,
         });
 
+        conversation.keepPolling = true;
         jest.spyOn(conversation, 'getMessages').mockResolvedValue([{id: 'id', sender: {displayName: 'name'}}]);
 
         (global as any).setTimeout = jest.fn();
