@@ -102,7 +102,7 @@ import loggerUtils from "./utils/loggerUtils";
 import { parseLowerCaseString } from "./utils/parsers";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import setOcUserAgent from "./utils/setOcUserAgent";
-import startPolling from "./commands/StartPolling";
+import startPolling from "./commands/startPolling";
 import stopPolling from "./commands/stopPolling";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
