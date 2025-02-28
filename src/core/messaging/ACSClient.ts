@@ -227,6 +227,7 @@ export class ACSConversation {
                 }, delay.done === true ? defaultInterval : delay.value);
             };
 
+            this.keepPolling = true;
             const delayGenerator = nextDelay();
             await pollForMessages(delayGenerator);
             const listener = (event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
