@@ -2059,7 +2059,7 @@ class OmnichannelChatSDK {
     }
 
     public async startPolling(): Promise<void> {
-        return await startPolling(this.isInitialized, this.scenarioMarker, this.liveChatVersion, this.requestId, this.chatToken.chatId as string, this.conversation as ACSConversation);
+        return startPolling(this.isInitialized, this.scenarioMarker, this.liveChatVersion, this.requestId, this.chatToken.chatId as string, this.conversation as ACSConversation);
     }
 
     private populateInitChatOptionalParam = (requestOptionalParams: ISessionInitOptionalParams | IGetQueueAvailabilityOptionalParams, optionalParams: StartChatOptionalParams | GetAgentAvailabilityOptionalParams, telemetryEvent: TelemetryEvent) => {
