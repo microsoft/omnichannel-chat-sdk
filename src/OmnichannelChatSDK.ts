@@ -102,6 +102,7 @@ import loggerUtils from "./utils/loggerUtils";
 import { parseLowerCaseString } from "./utils/parsers";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import setOcUserAgent from "./utils/setOcUserAgent";
+import startPolling from "./commands/StartPolling";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 
@@ -2055,6 +2056,10 @@ class OmnichannelChatSDK {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             reportError("GetAgentAvailabilityFailed", (e as any).message as string);
         }
+    }
+
+    public async startPolling(): Promise<void> {
+        return await startPolling(this.isInitialized, this.scenarioMarker, this.liveChatVersion, this.requestId, this.chatToken.chatId as string, this.conversation as ACSConversation);
     }
 
     private populateInitChatOptionalParam = (requestOptionalParams: ISessionInitOptionalParams | IGetQueueAvailabilityOptionalParams, optionalParams: StartChatOptionalParams | GetAgentAvailabilityOptionalParams, telemetryEvent: TelemetryEvent) => {
