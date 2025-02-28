@@ -4,7 +4,9 @@ import { ACSAdapterLogger, ACSClientLogger, AMSClientLogger, CallingSDKLogger, I
 import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
 import { AmsClient, ChatWidgetLanguage, DataMaskingInfo, LiveWSAndLiveChatEngJoin, VoiceVideoCallingOptionalParams } from "./types/config";
 import { ChatAdapter, GetAgentAvailabilityResponse, GetCurrentLiveChatContextResponse, GetLiveChatTranscriptResponse, GetMessagesResponse, GetPreChatSurveyResponse, GetVoiceVideoCallingResponse, MaskingRule, MaskingRules, UploadFileAttachmentResponse } from "./types/response";
+import { ChatClient, ChatMessage } from "@azure/communication-chat";
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
+import { MessagePrinterFactory, PrinterType } from "./utils/printers/MessagePrinterFactory";
 import { SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
 import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
 import { createCoreServicesOrgUrl, getCoreServicesGeoName, isCoreServicesOrgUrl, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
@@ -22,7 +24,6 @@ import AuthSettings from "./core/AuthSettings";
 import CallingOptionsOptionSetNumber from "./core/CallingOptionsOptionSetNumber";
 import ChatAdapterOptionalParams from "./core/messaging/ChatAdapterOptionalParams";
 import ChatAdapterProtocols from "./core/messaging/ChatAdapterProtocols";
-import { ChatClient } from "@azure/communication-chat";
 import ChatConfig from "./core/ChatConfig";
 import ChatReconnectContext from "./core/ChatReconnectContext";
 import ChatReconnectOptionalParams from "./core/ChatReconnectOptionalParams";
@@ -81,6 +82,7 @@ import OnNewMessageOptionalParams from "./core/messaging/OnNewMessageOptionalPar
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import PluggableLogger from "@microsoft/omnichannel-amsclient/lib/PluggableLogger";
 import PostChatContext from "./core/PostChatContext";
+import { PrintableMessage } from "./utils/printers/types/PrintableMessageType";
 import ProtocolType from "@microsoft/omnichannel-ic3core/lib/interfaces/ProtocoleType";
 import ScenarioMarker from "./telemetry/ScenarioMarker";
 import SetAuthTokenProviderOptionalParams from "./core/SetAuthTokenProviderOptionalParams";
@@ -103,6 +105,7 @@ import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import setOcUserAgent from "./utils/setOcUserAgent";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
+import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -1140,6 +1143,14 @@ class OmnichannelChatSDK {
         }
     }
 
+    private async recordMessages(messages: OmnichannelMessage[] | ChatMessage[] | IMessage[] ): Promise<void> {
+
+        for (const message of messages) {
+            this.scenarioMarker?.singleRecord("MessageReceived", MessagePrinterFactory.printifyMessage(message, PrinterType.Omnichannel));
+        }
+
+    }
+
     public async getMessages(): Promise<GetMessagesResponse> {
         this.scenarioMarker.startScenario(TelemetryEvent.GetMessages, {
             RequestId: this.requestId,
@@ -1152,6 +1163,8 @@ class OmnichannelChatSDK {
 
         try {
             const messages = await (this.conversation as (IConversation | ACSConversation))?.getMessages();
+
+            this.recordMessages(messages);
 
             this.scenarioMarker.completeScenario(TelemetryEvent.GetMessages, {
                 RequestId: this.requestId,

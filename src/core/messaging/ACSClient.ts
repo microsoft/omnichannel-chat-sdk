@@ -1,6 +1,7 @@
 import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
 import { ChatClient, ChatMessage, ChatParticipant, ChatThreadClient } from "@azure/communication-chat";
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
+import { MessagePrinterFactory, PrinterType } from "../../utils/printers/MessagePrinterFactory";
 
 import ACSChatMessageType from "./ACSChatMessageType";
 import ACSClientConfig from "./ACSClientConfig";
@@ -12,6 +13,7 @@ import ChatSDKMessage from "./ChatSDKMessage";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import LiveChatVersion from "../LiveChatVersion";
 import OmnichannelMessage from "./OmnichannelMessage";
+import { PrintableMessage } from "../../utils/printers/types/PrintableMessageType";
 import createOmnichannelMessage from "../../utils/createOmnichannelMessage";
 import { defaultMessageTags } from "./MessageTags";
 
@@ -39,7 +41,6 @@ export interface ParticipantMapping {
 function* nextDelay() {
     yield* [1000, 1000, 2000, 3000, 5000, 8000, 10000];
 }
-
 export class ACSConversation {
     private logger: ACSClientLogger | null = null;
     private tokenCredential: AzureCommunicationTokenCredential;
@@ -57,7 +58,7 @@ export class ACSConversation {
         this.eventListeners = {};
     }
 
-    public async stopPolling() : Promise<void>  {
+    public async stopPolling(): Promise<void> {
         this.conversationEnded = true;
     }
 
@@ -179,12 +180,12 @@ export class ACSConversation {
 
         try {
             const pollForMessages = async (delayGenerator: Generator<number, void, unknown>) => {
-                if ( this.conversationEnded === true) {
+                if (this.conversationEnded === true) {
                     return;
                 }
 
                 try {
-                    const messages = await this.getMessages({skipConversion: true});
+                    const messages = await this.getMessages({ skipConversion: true });
                     for (const message of messages.reverse()) {
                         try {
                             const { id, senderDisplayName } = message as ChatMessage;
@@ -196,6 +197,8 @@ export class ACSConversation {
 
                             // Filter out duplicate messages
                             if (!postedMessageIds.has(id)) {
+                                console.log('[ACSClient][registerOnNewMessage] Polling for messages', JSON.stringify(message));
+                                this.logger?.recordIndividualEvent("MessageReceivedFromPolling", MessagePrinterFactory.printifyMessage(message, PrinterType.Polling));
                                 onNewMessageCallback(message);
                                 postedMessageIds.add(id);
                             }
@@ -234,6 +237,8 @@ export class ACSConversation {
                 }
                 onNewMessageCallback(event);
                 postedMessageIds.add(id);
+                console.log('[ACSClient][registerOnNewMessage] Message received ::; WS => ', JSON.stringify(event));
+                this.logger?.recordIndividualEvent("MessageReceivedFromWebSocket", MessagePrinterFactory.printifyMessage(event, PrinterType.WebSocket));
             }
 
             this.chatClient?.on("chatMessageReceived", listener);

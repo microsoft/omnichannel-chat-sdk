@@ -1,3 +1,5 @@
+import { _exceptionDetailPIIKeys, redactPII } from "./loggerUtils";
+
 import { AWTEventData } from "../external/aria/webjs/AriaSDK";
 import AriaTelemetry from "../telemetry/AriaTelemetry";
 import ICallingSDKLogData from "../external/CallingSDK/ICallingSDKLogData";
@@ -7,7 +9,6 @@ import LogLevel from "../telemetry/LogLevel";
 import OmnichannelConfig from "../core/OmnichannelConfig";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import ScenarioType from "../telemetry/ScenarioType";
-import { redactPII, _exceptionDetailPIIKeys } from "./loggerUtils";
 
 export class IC3ClientLogger {
     private debug = false;
@@ -293,6 +294,15 @@ export class ACSClientLogger {
         };
 
         this.scenarioMarker?.completeScenario(event, { ...baseProperties, ...additionalProperties });
+    }
+
+    public recordIndividualEvent(event: string, additionalProperties: any = {}): void {  // eslint-disable-line @typescript-eslint/no-explicit-any
+        const baseProperties = {
+            RequestId: this.requestId,
+            ChatId: this.chatId
+        };
+
+        this.scenarioMarker?.singleRecord(event, { ...baseProperties, ...additionalProperties });
     }
 }
 
