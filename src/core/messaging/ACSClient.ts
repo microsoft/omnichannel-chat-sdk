@@ -52,6 +52,7 @@ export class ACSConversation {
     private participantsMapping?: ParticipantMapping;
     private eventListeners: EventListenersMapping;
     private keepPolling = false;
+    private pollingTimer: NodeJS.Timeout | number | null = null;
 
     constructor(tokenCredential: AzureCommunicationTokenCredential, chatClient: ChatClient, logger: ACSClientLogger | null = null) {
         this.logger = logger;
@@ -220,7 +221,7 @@ export class ACSConversation {
 
                 const defaultInterval = optionalParams.pollingInterval || 10000;
                 const delay = delayGenerator.next();
-                setTimeout(() => {
+                this.pollingTimer = setTimeout(() => {
                     pollForMessages(delayGenerator);
                 }, delay.done === true ? defaultInterval : delay.value);
             };
@@ -388,6 +389,9 @@ export class ACSConversation {
             }
 
             await this.stopPolling();
+            if (this.pollingTimer) {
+                clearTimeout(this.pollingTimer as number);
+            }
 
             this.logger?.completeScenario(ACSClientEvent.Disconnect);
         } catch {
