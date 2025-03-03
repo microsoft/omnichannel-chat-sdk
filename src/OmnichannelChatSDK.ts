@@ -1303,9 +1303,16 @@ class OmnichannelChatSDK {
             }
 
             try {
-                const registerOnNewMessageOptionalParams: ACSRegisterOnNewMessageOptionalParams = {};
+                const registerOnNewMessageOptionalParams: ACSRegisterOnNewMessageOptionalParams = {
+                    disablePolling: false
+                };
+
                 if (optionalParams?.pollingInterval) {
                     registerOnNewMessageOptionalParams.pollingInterval = optionalParams?.pollingInterval;
+                }
+
+                if (optionalParams?.disablePolling === true) {
+                    registerOnNewMessageOptionalParams.disablePolling = optionalParams?.disablePolling;
                 }
 
                 (this.conversation as ACSConversation)?.registerOnNewMessage((event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
