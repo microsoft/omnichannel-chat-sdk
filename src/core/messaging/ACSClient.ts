@@ -185,7 +185,7 @@ export class ACSConversation {
         return participants;
     }
 
-    public async registerOnNewMessage(onNewMessageCallback: CallableFunction, optionalParams: ACSRegisterOnNewMessageOptionalParams = {}): Promise<void> {
+    public async registerOnNewMessage(onNewMessageCallback: CallableFunction, optionalParams: ACSRegisterOnNewMessageOptionalParams = {disablePolling: false}): Promise<void> {
         this.logger?.startScenario(ACSClientEvent.RegisterOnNewMessage);
         const postedMessageIds = new Set();
 
@@ -228,7 +228,10 @@ export class ACSConversation {
 
             this.keepPolling = true;
             const delayGenerator = nextDelay();
-            await pollForMessages(delayGenerator);
+            if (optionalParams.disablePolling === false) {
+                await pollForMessages(delayGenerator);
+            }
+
             const listener = (event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
                 const { id, sender } = event;
 
