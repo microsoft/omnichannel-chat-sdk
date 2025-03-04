@@ -15,13 +15,13 @@ import exceptionThrowers from "../utils/exceptionThrowers";
  * @param conversation ACS Conversation object
  */
 const startPolling = async (isInitialized: boolean, scenarioMarker: ScenarioMarker, liveChatVersion: number, requestId: string, chatId: string, conversation: ACSConversation | null): Promise<void> => {
-    scenarioMarker.startScenario(TelemetryEvent.StartPolling);
-
     if (!isInitialized) {
         exceptionThrowers.throwUninitializedChatSDK(scenarioMarker, TelemetryEvent.StartPolling);
     }
 
     if (liveChatVersion === LiveChatVersion.V2) {
+        scenarioMarker.startScenario(TelemetryEvent.StartPolling);
+
         try {
             await conversation?.startPolling();
             scenarioMarker.completeScenario(TelemetryEvent.StartPolling);
