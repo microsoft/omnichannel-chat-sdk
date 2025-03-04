@@ -15,6 +15,7 @@ import platform, { isBrowser } from "./utils/platform";
 import validateSDKConfig, { defaultChatSDKConfig } from "./validators/SDKConfigValidators";
 
 import ACSParticipantDisplayName from "./core/messaging/ACSParticipantDisplayName";
+import ACSRegisterOnNewMessageOptionalParams from "./core/messaging/ACSRegisterOnNewMessageOptionalParams";
 import { AMSClientLoadStates } from "./utils/AMSClientLoadStates";
 import AMSFileManager from "./external/ACSAdapter/AMSFileManager";
 import AriaTelemetry from "./telemetry/AriaTelemetry";
@@ -101,6 +102,8 @@ import loggerUtils from "./utils/loggerUtils";
 import { parseLowerCaseString } from "./utils/parsers";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import setOcUserAgent from "./utils/setOcUserAgent";
+import startPolling from "./commands/startPolling";
+import stopPolling from "./commands/stopPolling";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 
@@ -855,8 +858,6 @@ class OmnichannelChatSDK {
         }
 
         try {
-            await (this.conversation as ACSConversation)?.stopPolling();
-
             // calling close chat, internally will handle the session close
             await this.closeChat(endChatOptionalParams);
 
@@ -1274,7 +1275,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async onNewMessage(onNewMessageCallback: CallableFunction, optionalParams: OnNewMessageOptionalParams | unknown = {}): Promise<void> {
+    public async onNewMessage(onNewMessageCallback: CallableFunction, optionalParams: OnNewMessageOptionalParams = {}): Promise<void> {
         this.scenarioMarker.startScenario(TelemetryEvent.OnNewMessage, {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
@@ -1287,7 +1288,7 @@ class OmnichannelChatSDK {
         if (this.liveChatVersion === LiveChatVersion.V2) {
             const postedMessages = new Set();
 
-            if ((optionalParams as OnNewMessageOptionalParams).rehydrate) {
+            if (optionalParams?.rehydrate) {
                 this.debug && console.log('[OmnichannelChatSDK][onNewMessage] rehydrate');
                 const messages = await this.getMessages() as OmnichannelMessage[];
                 for (const message of messages.reverse()) {
@@ -1302,6 +1303,18 @@ class OmnichannelChatSDK {
             }
 
             try {
+                const registerOnNewMessageOptionalParams: ACSRegisterOnNewMessageOptionalParams = {
+                    disablePolling: false
+                };
+
+                if (optionalParams?.pollingInterval) {
+                    registerOnNewMessageOptionalParams.pollingInterval = optionalParams?.pollingInterval;
+                }
+
+                if (optionalParams?.disablePolling === true) {
+                    registerOnNewMessageOptionalParams.disablePolling = optionalParams?.disablePolling;
+                }
+
                 (this.conversation as ACSConversation)?.registerOnNewMessage((event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
                     const { id } = event;
                     const omnichannelMessage = createOmnichannelMessage(event, {
@@ -1313,7 +1326,7 @@ class OmnichannelChatSDK {
                         onNewMessageCallback(omnichannelMessage);
                         postedMessages.add(id);
                     }
-                });
+                }, registerOnNewMessageOptionalParams);
 
                 this.scenarioMarker.completeScenario(TelemetryEvent.OnNewMessage, {
                     RequestId: this.requestId,
@@ -2051,6 +2064,14 @@ class OmnichannelChatSDK {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             reportError("GetAgentAvailabilityFailed", (e as any).message as string);
         }
+    }
+
+    public async startPolling(): Promise<void> {
+        return startPolling(this.isInitialized, this.scenarioMarker, this.liveChatVersion, this.requestId, this.chatToken.chatId as string, this.conversation as ACSConversation);
+    }
+
+    public async stopPolling(): Promise<void> {
+        return stopPolling(this.isInitialized, this.scenarioMarker, this.liveChatVersion, this.requestId, this.chatToken.chatId as string, this.conversation as ACSConversation);
     }
 
     private populateInitChatOptionalParam = (requestOptionalParams: ISessionInitOptionalParams | IGetQueueAvailabilityOptionalParams, optionalParams: StartChatOptionalParams | GetAgentAvailabilityOptionalParams, telemetryEvent: TelemetryEvent) => {

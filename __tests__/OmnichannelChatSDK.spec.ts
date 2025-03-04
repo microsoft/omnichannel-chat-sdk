@@ -2912,6 +2912,35 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             await chatSDK.onNewMessage(() => {});
 
+            expect(chatSDK.conversation.registerOnNewMessage.mock.calls[0][1].disablePolling).toBe(false);
+            expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(1);
+        });
+
+        it('ChatSDK.onNewMessage() with disablePolling flag should pass it to conversation.registerOnNewMessage()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn()
+            }
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                registerOnNewMessage: jest.fn()
+            }));
+
+            await chatSDK.startChat();
+
+            await chatSDK.onNewMessage(() => {}, {disablePolling: true});
+
+            expect(chatSDK.conversation.registerOnNewMessage.mock.calls[0][1].disablePolling).toBe(true);
             expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(1);
         });
 
