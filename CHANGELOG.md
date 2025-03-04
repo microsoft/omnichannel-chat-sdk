@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Add `disablePolling` flag for `onNewMessage` to stop polling
+
 ### Changed
 
 - Updake [@microsoft/botframework-webchat-adapter-azure-communication-chat@0.0.1-beta.2](https://www.npmjs.com/package/@microsoft/botframework-webchat-adapter-azure-communication-chat/v/0.0.1-beta.2)
