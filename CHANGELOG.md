@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.10.13] - 2025-03-04
+
 ### Added
 
 - Add `disablePolling` flag for `onNewMessage` to stop polling
