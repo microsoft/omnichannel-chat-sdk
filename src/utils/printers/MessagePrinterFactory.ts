@@ -12,8 +12,8 @@ export enum PrinterType {
 
 export class MessagePrinterFactory {
     static getPrinter(printerType: PrinterType) {
-        switch (printerType) {
-            case PrinterType.Polling:
+    switch (printerType) {
+        case PrinterType.Polling:
                 return PollingMessagePrinter;
             case PrinterType.WebSocket:
                 return WebSocketMessagePrinter;
