@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Add `disablePolling` flag for `onNewMessage` to stop polling
+
 ### Fixed
 
 - Update `ACSAdapterVersion` to reflect the correct version
