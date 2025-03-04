@@ -4,7 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## Added
+### Fixed
+
+- Update `ACSAdapterVersion` to reflect the correct version
+
+## [1.10.12] - 2025-02-21
+
+### Added
+
+- Enabling LongPolling to continue after websocket is set, to prevent messages lost. Polling will stop when conversation ends.
+- Added stopPolling method to stop the long polling when ending the chat.
+
+## [1.10.11] - 2025-02-20
+
+### Added
 
 - Reduce polling interval with exponential backoff
 

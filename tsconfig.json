@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
         "lib": ["es2018", "dom"],
+        "resolveJsonModule": true,
         "incremental": true,
         "sourceMap": true,
         "target": "es5",
