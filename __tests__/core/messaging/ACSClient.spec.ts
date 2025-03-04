@@ -202,6 +202,49 @@ describe('ACSClient', () => {
         expect(client.chatClient.on.mock.calls[1][0]).toEqual(chatMessageEditedEvent);
     });
 
+    it('ACSClient.conversation.registerOnNewMessage() with disablePolling set as \'true\' should NOT call ChatThreadClient.getMessages()', async () => {
+        const client: any = new ACSClient();
+        const config = {
+            token: 'token',
+            environmentUrl: 'url'
+        }
+
+        await client.initialize(config);
+
+        const chatThreadClient: any = {};
+        chatThreadClient.listParticipants = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+        chatThreadClient.listMessages = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+
+        client.chatClient = {};
+        client.chatClient.getChatThreadClient = jest.fn(() => chatThreadClient);
+        client.chatClient.startRealtimeNotifications = jest.fn();
+        client.chatClient.on = jest.fn();
+
+        const conversation = await client.joinConversation({
+            id: 'id',
+            threadId: 'threadId',
+            pollingInterval: 1000,
+        });
+
+        conversation.keepPolling = true;
+        jest.spyOn(conversation, 'getMessages').mockResolvedValue([{id: 'id', sender: {displayName: 'name'}}]);
+
+        (global as any).setTimeout = jest.fn();
+        await conversation.registerOnNewMessage(() => {}, {disablePolling: true});
+
+        expect(conversation.getMessages).toHaveBeenCalledTimes(0);
+    });
+
     it('ACSClient.conversation.registerOnThreadUpdate() should register to "participantsRemoved" event', async () => {
         const client: any = new ACSClient();
         const config = {
