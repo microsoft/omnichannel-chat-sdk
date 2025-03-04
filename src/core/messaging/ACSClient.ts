@@ -227,8 +227,8 @@ export class ACSConversation {
             };
 
             this.keepPolling = true;
-            const delayGenerator = nextDelay();
             if (optionalParams.disablePolling === false) {
+                const delayGenerator = nextDelay();
                 await pollForMessages(delayGenerator);
             }
 
