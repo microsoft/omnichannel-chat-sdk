@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- Updated getLivechatTranscript livechatcontect check for persistent chat
+- 
 ### Added
 
 - Add check for getConversation details before call onAgentEndSession call back since participant removed is not reliable
