@@ -1459,8 +1459,11 @@ class OmnichannelChatSDK {
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
             try {
-                (this.conversation as ACSConversation).registerOnThreadUpdate((event: ParticipantsRemovedEvent) => {
-                    onAgentEndSessionCallback(event);
+                (this.conversation as ACSConversation).registerOnThreadUpdate(async (event: ParticipantsRemovedEvent) => {
+                    const liveWorkItemDetails = await this.getConversationDetails();
+                    if (Object.keys(liveWorkItemDetails).length === 0 || liveWorkItemDetails.state == LiveWorkItemState.WrapUp || liveWorkItemDetails.state == LiveWorkItemState.Closed) {
+                        onAgentEndSessionCallback(event);
+                    }
                 });
 
                 this.scenarioMarker.completeScenario(TelemetryEvent.OnAgentEndSession, {
