@@ -1463,6 +1463,7 @@ class OmnichannelChatSDK {
                     const liveWorkItemDetails = await this.getConversationDetails();
                     if (Object.keys(liveWorkItemDetails).length === 0 || liveWorkItemDetails.state == LiveWorkItemState.WrapUp || liveWorkItemDetails.state == LiveWorkItemState.Closed) {
                         onAgentEndSessionCallback(event);
+                        this.stopPolling();
                     }
                 });
 
