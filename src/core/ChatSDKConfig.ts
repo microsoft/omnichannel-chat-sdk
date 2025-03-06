@@ -38,7 +38,8 @@ interface ChatSDKConfig {
     ic3Config?: IC3Config,
     chatAdapterConfig?: ChatAdapterConfig,
     internalConfig?: InternalChatSDKConfig,
-    ocUserAgent?: string[]
+    ocUserAgent?: string[],
+    useSessionInitV2?: boolean
 }
 
 export {

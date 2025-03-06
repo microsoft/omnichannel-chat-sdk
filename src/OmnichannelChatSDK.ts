@@ -103,6 +103,7 @@ import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import setOcUserAgent from "./utils/setOcUserAgent";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
+import FetchChatTokenResponse from "@microsoft/ocsdk/lib/Model/FetchChatTokenResponse";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -633,11 +634,12 @@ class OmnichannelChatSDK {
             }
         }
 
-        if (this.chatToken && Object.keys(this.chatToken).length === 0) {
+        if (!this.chatSDKConfig.useSessionInitV2 && this.chatToken && Object.keys(this.chatToken).length === 0) {
             await this.getChatToken(false);
         }
-
-        loggerUtils.setChatId(this.chatToken.chatId || '', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+        if (this.chatToken?.chatId) {
+            loggerUtils.setChatId(this.chatToken.chatId || '', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+        }
 
         let sessionInitOptionalParams: ISessionInitOptionalParams = {
             initContext: {} as InitContext
@@ -670,7 +672,11 @@ class OmnichannelChatSDK {
             // Skip session init when there's a valid live chat context
             if (!optionalParams.liveChatContext) {
                 try {
-                    await this.OCClient.sessionInit(this.requestId, sessionInitOptionalParams);
+                    const chatToken = await this.OCClient.sessionInit(this.requestId, sessionInitOptionalParams, this.chatSDKConfig.useSessionInitV2);
+                    if (chatToken) {
+                        this.setChatToken(chatToken);
+                        loggerUtils.setChatId(this.chatToken.chatId || '', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+                    }
                 } catch (error) {
                     const telemetryData = {
                         RequestId: this.requestId,
@@ -786,7 +792,12 @@ class OmnichannelChatSDK {
             }
         };
 
-        await Promise.all([sessionInitPromise(), messagingClientPromise(), attachmentClientPromise()]);
+        if (this.chatSDKConfig.useSessionInitV2) {
+            await sessionInitPromise();
+            await Promise.all([messagingClientPromise(), attachmentClientPromise()]);
+        } else {
+            await Promise.all([sessionInitPromise(), messagingClientPromise(), attachmentClientPromise()]);
+        }
 
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
             this.refreshTokenTimer = setInterval(async () => {
@@ -1078,26 +1089,7 @@ class OmnichannelChatSDK {
                 }
 
                 const chatToken = await this.OCClient.getChatToken(this.requestId, getChatTokenOptionalParams);
-                const { ChatId: chatId, Token: token, RegionGtms: regionGtms, ExpiresIn: expiresIn, VisitorId: visitorId, VoiceVideoCallToken: voiceVideoCallToken, ACSEndpoint: acsEndpoint, AttachmentConfiguration: attachmentConfiguration } = chatToken;
-                this.chatToken = {
-                    chatId,
-                    regionGTMS: JSON.parse(regionGtms),
-                    requestId: this.requestId,
-                    token,
-                    expiresIn,
-                    visitorId,
-                    voiceVideoCallToken,
-                    acsEndpoint,
-                };
-
-                if (attachmentConfiguration && attachmentConfiguration.AttachmentServiceEndpoint) {
-                    this.chatToken.amsEndpoint = attachmentConfiguration.AttachmentServiceEndpoint;
-                }
-
-                if (this.OCClient.sessionId) {
-                    this.sessionId = this.OCClient.sessionId;
-                }
-
+                this.setChatToken(chatToken)
                 this.scenarioMarker.completeScenario(TelemetryEvent.GetChatToken, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string
@@ -1122,6 +1114,28 @@ class OmnichannelChatSDK {
         }
 
         return this.chatToken;
+    }
+
+    public setChatToken(chatToken: FetchChatTokenResponse): void {
+        const { ChatId: chatId, Token: token, RegionGtms: regionGtms, ExpiresIn: expiresIn, VisitorId: visitorId, VoiceVideoCallToken: voiceVideoCallToken, ACSEndpoint: acsEndpoint, AttachmentConfiguration: attachmentConfiguration } = chatToken;
+        this.chatToken = {
+            chatId,
+            regionGTMS: JSON.parse(regionGtms as string),
+            requestId: this.requestId,
+            token,
+            expiresIn,
+            visitorId,
+            voiceVideoCallToken,
+            acsEndpoint,
+        };
+
+        if (attachmentConfiguration && attachmentConfiguration.AttachmentServiceEndpoint) {
+            this.chatToken.amsEndpoint = attachmentConfiguration.AttachmentServiceEndpoint;
+        }
+
+        if (this.OCClient.sessionId) {
+            this.sessionId = this.OCClient.sessionId;
+        }
     }
 
     public async getCallingToken(): Promise<string> {
