@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- Updated getLivechatTranscript livechatcontect check for persistent chat
+
 ## [1.10.13] - 2025-03-04
 
 ### Added
@@ -12,7 +16,6 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Updated getLivechatTranscript livechatcontect check for persistent chat
 - Updake [@microsoft/botframework-webchat-adapter-azure-communication-chat@0.0.1-beta.2](https://www.npmjs.com/package/@microsoft/botframework-webchat-adapter-azure-communication-chat/v/0.0.1-beta.2)
 
 ### Fixed
