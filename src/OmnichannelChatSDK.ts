@@ -1740,8 +1740,13 @@ class OmnichannelChatSDK {
         let sessionId = this.sessionId;
 
         if (optionalParams.liveChatContext) {
-            requestId = optionalParams.liveChatContext.requestId;
-            chatToken = optionalParams.liveChatContext.chatToken;
+            if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
+                requestId = this.requestId || optionalParams.liveChatContext.requestId;
+                chatToken = this.chatToken && Object.keys(this.chatToken).length > 0 ? this.chatToken : optionalParams.liveChatContext.chatToken;
+            } else {
+                requestId = optionalParams.liveChatContext.requestId;
+                chatToken = optionalParams.liveChatContext.chatToken;
+            }
             chatId = chatToken.chatId as string;
         }
 
