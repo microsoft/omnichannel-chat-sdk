@@ -5,6 +5,7 @@ import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
 import fetchTestSettings from '../utils/fetchTestSettings';
+import ResponseStatusCodes from '../utils/ResponseStatusCodes';
 
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('UnauthenticatedChat');
@@ -785,7 +786,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         const liveChatContextLiveWorkItemDetailsRequestUrl = `${runtimeContext.orgUrl}/${OmnichannelEndpoints.LiveChatLiveWorkItemDetailsPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${liveChatContext.requestId}?channelId=lcw`;
 
         expect(invalidLiveWorkItemDetailsRequest.url() === invalidLiveWorkItemDetailsRequestUrl).toBe(true);
-        expect(invalidLiveWorkItemDetailsResponse.status()).toBe(400);
+        expect(ResponseStatusCodes.OmnichannelEndpoints.LiveChatLiveWorkItemDetails.includes(invalidLiveWorkItemDetailsResponse.status())).toBe(true);
         expect(liveChatContextLiveWorkItemDetailsRequest.url() === liveChatContextLiveWorkItemDetailsRequestUrl).toBe(true);
         expect(liveChatContextLiveWorkItemDetailsResponse.status()).toBe(200);
         expect(invalidRequestIdConversationDetails).toEqual({});

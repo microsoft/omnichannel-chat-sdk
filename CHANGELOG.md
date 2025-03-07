@@ -2,7 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [unreleased]
+
+## [1.10.14] - 2025-03-06
+
+### Changed
+
+- Updated getLivechatTranscript livechatcontect check for persistent chat
+- 
+### Added
+
+- Add check for getConversation details before call onAgentEndSession call back since participant removed is not reliable
+
+## [1.10.13] - 2025-03-04
+
+### Added
+
+- Add `disablePolling` flag for `onNewMessage` to stop polling
+
+### Changed
+
+- Updake [@microsoft/botframework-webchat-adapter-azure-communication-chat@0.0.1-beta.2](https://www.npmjs.com/package/@microsoft/botframework-webchat-adapter-azure-communication-chat/v/0.0.1-beta.2)
 
 ### Fixed
 

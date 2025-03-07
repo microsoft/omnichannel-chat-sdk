@@ -4,6 +4,7 @@ import fetchTestSettings from '../utils/fetchTestSettings';
 import fetchAuthUrl from '../utils/fetchAuthUrl';
 import { test, expect } from '@playwright/test';
 import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
+import ResponseStatusCodes from '../utils/ResponseStatusCodes';
 
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('AuthenticatedChatWithChatReconnect');
@@ -547,7 +548,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
 
         expect(liveChatContext.reconnectId).toBeDefined();
         expect(invalidLiveWorkItemDetailsRequest.url() === invalidLiveWorkItemDetailsRequestUrl).toBe(true);
-        expect(invalidLiveWorkItemDetailsResponse.status()).toBe(400);
+        expect(ResponseStatusCodes.OmnichannelEndpoints.LiveChatAuthLiveWorkItemDetails.includes(invalidLiveWorkItemDetailsResponse.status())).toBe(true);
         expect(liveChatContextLiveWorkItemDetailsRequest.url() === liveChatContextLiveWorkItemDetailsRequestUrl).toBe(true);
         expect(liveChatContextLiveWorkItemDetailsResponse.status()).toBe(200);
         expect(invalidRequestIdConversationDetails).toEqual({});

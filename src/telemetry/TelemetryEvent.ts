@@ -42,8 +42,9 @@ enum TelemetryEvent {
     GetAgentAvailability = "GetAgentAvailability",
     GetGeolocation = "GetGeolocation",
     GetChatReconnectContextWithReconnectId = "GetChatReconnectContextWithReconnectId",
-    GetChatReconnectContextWithAuthToken = "GetChatReconnectContextWithAuthToken"
-
+    GetChatReconnectContextWithAuthToken = "GetChatReconnectContextWithAuthToken",
+    StartPolling = "StartPolling",
+    StopPolling = "StopPolling",
 }
 
 export default TelemetryEvent;

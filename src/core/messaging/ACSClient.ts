@@ -8,12 +8,12 @@ import ACSClientConfig from "./ACSClientConfig";
 import { ACSClientLogger } from "../../utils/loggers";
 import ACSGetMessagesOptionalParams from "./ACSClientGetMessagesOptionParams";
 import ACSParticipantDisplayName from "./ACSParticipantDisplayName";
+import ACSRegisterOnNewMessageOptionalParams from "./ACSRegisterOnNewMessageOptionalParams";
 import ACSSessionInfo from "./ACSSessionInfo";
 import ChatSDKMessage from "./ChatSDKMessage";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import LiveChatVersion from "../LiveChatVersion";
 import OmnichannelMessage from "./OmnichannelMessage";
-import { PrintableMessage } from "../../utils/printers/types/PrintableMessageType";
 import createOmnichannelMessage from "../../utils/createOmnichannelMessage";
 import { defaultMessageTags } from "./MessageTags";
 
@@ -27,6 +27,8 @@ enum ACSClientEvent {
     GetMessages = 'GetMessages',
     SendMessage = 'SendMessage',
     SendTyping = 'SendTyping',
+    StartPolling = 'StartPolling',
+    StopPolling = 'StopPolling',
     Disconnect = 'Disconnect'
 }
 
@@ -49,7 +51,8 @@ export class ACSConversation {
     private sessionInfo?: ACSSessionInfo;
     private participantsMapping?: ParticipantMapping;
     private eventListeners: EventListenersMapping;
-    private conversationEnded = false;
+    private keepPolling = false;
+    private pollingTimer: NodeJS.Timeout | number | null = null;
 
     constructor(tokenCredential: AzureCommunicationTokenCredential, chatClient: ChatClient, logger: ACSClientLogger | null = null) {
         this.logger = logger;
@@ -58,8 +61,16 @@ export class ACSConversation {
         this.eventListeners = {};
     }
 
-    public async stopPolling(): Promise<void> {
-        this.conversationEnded = true;
+    public async startPolling() : Promise<void>  {
+        this.logger?.startScenario(ACSClientEvent.StartPolling);
+        this.keepPolling = true;
+        this.logger?.completeScenario(ACSClientEvent.StartPolling);
+    }
+
+    public async stopPolling() : Promise<void>  {
+        this.logger?.startScenario(ACSClientEvent.StopPolling);
+        this.keepPolling = false;
+        this.logger?.completeScenario(ACSClientEvent.StopPolling);
     }
 
     public async initialize(sessionInfo: ACSSessionInfo): Promise<void> {
@@ -174,52 +185,53 @@ export class ACSConversation {
         return participants;
     }
 
-    public async registerOnNewMessage(onNewMessageCallback: CallableFunction): Promise<void> {
+    public async registerOnNewMessage(onNewMessageCallback: CallableFunction, optionalParams: ACSRegisterOnNewMessageOptionalParams = {disablePolling: false}): Promise<void> {
         this.logger?.startScenario(ACSClientEvent.RegisterOnNewMessage);
         const postedMessageIds = new Set();
 
         try {
+            // Initial polls with exponential backoff then poll every 10 seconds by default
             const pollForMessages = async (delayGenerator: Generator<number, void, unknown>) => {
-                if (this.conversationEnded === true) {
-                    return;
-                }
+                if (this.keepPolling) {
+                    try {
+                        const messages = await this.getMessages({skipConversion: true});
+                        for (const message of messages.reverse()) {
+                            try {
+                                const { id, senderDisplayName } = message as ChatMessage;
+                                const customerMessageCondition = senderDisplayName === ACSParticipantDisplayName.Customer;
+                                // Filter out customer messages
+                                if (customerMessageCondition) {
+                                    continue;
+                                }
 
-                try {
-                    const messages = await this.getMessages({ skipConversion: true });
-                    for (const message of messages.reverse()) {
-                        try {
-                            const { id, senderDisplayName } = message as ChatMessage;
-                            const customerMessageCondition = senderDisplayName === ACSParticipantDisplayName.Customer;
-                            // Filter out customer messages
-                            if (customerMessageCondition) {
-                                continue;
+                                // Filter out duplicate messages
+                                if (!postedMessageIds.has(id)) {
+                                    onNewMessageCallback(message);
+                                    postedMessageIds.add(id);
+                                }
+                            } catch {
+                                console.warn('[ACSClient][registerOnNewMessage] Error occurred while processing messages');
                             }
 
-                            // Filter out duplicate messages
-                            if (!postedMessageIds.has(id)) {
-                                console.log('[ACSClient][registerOnNewMessage] Polling for messages', JSON.stringify(message));
-                                this.logger?.recordIndividualEvent("MessageReceivedFromPolling", MessagePrinterFactory.printifyMessage(message, PrinterType.Polling));
-                                onNewMessageCallback(message);
-                                postedMessageIds.add(id);
-                            }
-                        } catch {
-                            console.warn('[ACSClient][registerOnNewMessage] Error occurred while processing messages');
                         }
-
+                    } catch {
+                        // Ignore polling failures
                     }
-                } catch {
-                    // Ignore polling failures
                 }
 
+                const defaultInterval = optionalParams.pollingInterval || 10000;
                 const delay = delayGenerator.next();
-                setTimeout(() => {
+                this.pollingTimer = setTimeout(() => {
                     pollForMessages(delayGenerator);
-                }, delay.done === true ? 10000 : delay.value);
+                }, delay.done === true ? defaultInterval : delay.value);
             };
 
-            // Poll messages until WS established connection
-            const delayGenerator = nextDelay();
-            await pollForMessages(delayGenerator);
+            await this.startPolling();
+            if (optionalParams.disablePolling === false) {
+                const delayGenerator = nextDelay();
+                await pollForMessages(delayGenerator);
+            }
+
             const listener = (event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
                 const { id, sender } = event;
 
@@ -379,6 +391,11 @@ export class ACSConversation {
                 listeners.forEach(listener => {
                     this.chatClient.off(event as any, listener as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
                 });
+            }
+
+            await this.stopPolling();
+            if (this.pollingTimer) {
+                clearTimeout(this.pollingTimer as number);
             }
 
             this.logger?.completeScenario(ACSClientEvent.Disconnect);
