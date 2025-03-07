@@ -13,7 +13,7 @@ const run = async () => {
     const omnichannelConfig = {
         orgId: "ce4db5f6-1c20-ee11-a66d-000d3a0a02f3",
         orgUrl: "https://m-ce4db5f6-1c20-ee11-a66d-000d3a0a02f3.ca.omnichannelengagementhub.com",
-        widgetId: "148d0ead-14d2-41ea-bfc9-f4d4287f060c",
+        widgetId: "148d0ead-14d2-41ea-bfc9-f4d4287f060c"
     }
 
     const { sleep } = window;

@@ -58,6 +58,7 @@ import IGetChatTranscriptsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/I
 import IGetLWIDetailsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetLWIDetailsOptionalParams";
 import IGetQueueAvailabilityOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetQueueAvailabilityOptionalParams";
 import IInitializationInfo from "@microsoft/omnichannel-ic3core/lib/model/IInitializationInfo";
+import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import IOmnichannelConfiguration from "@microsoft/ocsdk/lib/Interfaces/IOmnichannelConfiguration";
 import IPerson from "@microsoft/omnichannel-ic3core/lib/model/IPerson";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
@@ -83,7 +84,6 @@ import OnNewMessageOptionalParams from "./core/messaging/OnNewMessageOptionalPar
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import PluggableLogger from "@microsoft/omnichannel-amsclient/lib/PluggableLogger";
 import PostChatContext from "./core/PostChatContext";
-import { PrintableMessage } from "./utils/printers/types/PrintableMessageType";
 import ProtocolType from "@microsoft/omnichannel-ic3core/lib/interfaces/ProtocoleType";
 import ScenarioMarker from "./telemetry/ScenarioMarker";
 import SetAuthTokenProviderOptionalParams from "./core/SetAuthTokenProviderOptionalParams";
@@ -108,7 +108,6 @@ import startPolling from "./commands/startPolling";
 import stopPolling from "./commands/stopPolling";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
-import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -1146,6 +1145,12 @@ class OmnichannelChatSDK {
 
     private async recordMessages(messages: OmnichannelMessage[] | ChatMessage[] | IMessage[] ): Promise<void> {
 
+        if (messages?.length === 0) {
+            this.scenarioMarker?.singleRecord("MessageReceived", {
+                Message: "No messages to record",
+            });
+        }
+
         for (const message of messages) {
             this.scenarioMarker?.singleRecord("MessageReceived", MessagePrinterFactory.printifyMessage(message, PrinterType.Omnichannel));
         }
@@ -1164,7 +1169,6 @@ class OmnichannelChatSDK {
 
         try {
             const messages = await (this.conversation as (IConversation | ACSConversation))?.getMessages();
-
             this.recordMessages(messages);
 
             this.scenarioMarker.completeScenario(TelemetryEvent.GetMessages, {
