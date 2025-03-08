@@ -7,6 +7,7 @@ import IIC3SDKLogData from "../external/IC3Client/IIC3SDKLogData";
 import IOCSDKLogData from "../external/OCSDK/IOCSDKLogData";
 import LogLevel from "../telemetry/LogLevel";
 import OmnichannelConfig from "../core/OmnichannelConfig";
+import { PrintableMessage } from "./printers/types/PrintableMessageType";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import ScenarioType from "../telemetry/ScenarioType";
 
@@ -296,13 +297,14 @@ export class ACSClientLogger {
         this.scenarioMarker?.completeScenario(event, { ...baseProperties, ...additionalProperties });
     }
 
-    public recordIndividualEvent(event: string, additionalProperties: any = {}): void {  // eslint-disable-line @typescript-eslint/no-explicit-any
+    public recordIndividualEvent(event: string, additionalProperties: PrintableMessage): void {
         const baseProperties = {
             RequestId: this.requestId,
-            ChatId: this.chatId
+            ChatId: this.chatId,
+            CustomProperties: JSON.stringify(additionalProperties)
         };
-
-        this.scenarioMarker?.singleRecord(event, { ...baseProperties, ...additionalProperties });
+        console.log(`[ACSClientLogger][recordIndividualEvent] ${JSON.stringify(baseProperties)}`);
+        this.scenarioMarker?.singleRecord(event,  {...baseProperties} );
     }
 }
 

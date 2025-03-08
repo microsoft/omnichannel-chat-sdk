@@ -1145,14 +1145,31 @@ class OmnichannelChatSDK {
 
     private async recordMessages(messages: OmnichannelMessage[] | ChatMessage[] | IMessage[] ): Promise<void> {
 
-        if (messages?.length === 0) {
+        const baseProperties = {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string,
+        };
+
+        if (!messages || messages?.length === 0) {
             this.scenarioMarker?.singleRecord("MessageReceived", {
-                Message: "No messages to record",
+                ...baseProperties,
+                CustomProperties: "No messages received",
             });
+            return;
         }
 
-        for (const message of messages) {
-            this.scenarioMarker?.singleRecord("MessageReceived", MessagePrinterFactory.printifyMessage(message, PrinterType.Omnichannel));
+        try {
+            for (const message of messages) {
+                if (message) {
+                    this.scenarioMarker?.singleRecord("MessageReceived", {
+                        ...baseProperties,
+                        CustomProperties: JSON.stringify(MessagePrinterFactory.printifyMessage(message, PrinterType.Omnichannel)),
+                    });
+                }
+            }
+        } catch (error) {
+            // this is reachable when the chat is ended before all messages are recorded in telemetry
+            console.warn(`Error while recording messages: ${error}`);
         }
 
     }

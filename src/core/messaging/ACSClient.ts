@@ -206,6 +206,7 @@ export class ACSConversation {
 
                                 // Filter out duplicate messages
                                 if (!postedMessageIds.has(id)) {
+                                    this.logger?.recordIndividualEvent("MessageReceivedFromPolling", MessagePrinterFactory.printifyMessage(message, PrinterType.WebSocket));
                                     onNewMessageCallback(message);
                                     postedMessageIds.add(id);
                                 }
@@ -249,7 +250,6 @@ export class ACSConversation {
                 }
                 onNewMessageCallback(event);
                 postedMessageIds.add(id);
-                console.log('[ACSClient][registerOnNewMessage] Message received ::; WS => ', JSON.stringify(event));
                 this.logger?.recordIndividualEvent("MessageReceivedFromWebSocket", MessagePrinterFactory.printifyMessage(event, PrinterType.WebSocket));
             }
 

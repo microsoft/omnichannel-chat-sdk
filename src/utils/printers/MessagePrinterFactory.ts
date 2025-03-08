@@ -28,7 +28,7 @@ export class MessagePrinterFactory {
 
     }
 
-    static printifyMessage = async (message: MessageType, printerType: PrinterType): Promise<PrintableMessage> => {
+    static printifyMessage =  (message: MessageType, printerType: PrinterType): PrintableMessage => {
         const printer = this.getPrinter(printerType);
         switch (printerType) {
         case PrinterType.Polling:

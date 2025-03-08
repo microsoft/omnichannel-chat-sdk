@@ -10,15 +10,17 @@ export class WebSocketMessagePrinter {
             result.id = event.id;
             result.tags = [];
             result.isAdaptiveCard = event?.message?.includes('application/vnd.microsoft.card.adaptive');
-            if (!result.isAdaptiveCard) {
+            if (!result.isAdaptiveCard && event?.message) {
                 result.content = this.messageContentMetadata(event?.message);
             }
         }
-        console.log('[ACSClient][WebSocketMessagePrinter] Message received ::; WS => ', JSON.stringify(result));
         return result;
     }
 
-    static messageContentMetadata(message: string | undefined): string {
+    static messageContentMetadata(message: string): string {
+        if (!message) {
+            return '0';
+        }
         const first = message?.charAt(0);
         const last = message?.charAt(message?.length - 1);
         const size = message?.length;
