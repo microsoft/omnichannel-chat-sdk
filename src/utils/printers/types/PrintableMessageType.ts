@@ -3,4 +3,5 @@ export type PrintableMessage = {
     tags?: string[];
     isAdaptiveCard: boolean;
     content: string;
+    created?: Date
 };

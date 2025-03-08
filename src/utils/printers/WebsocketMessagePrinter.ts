@@ -7,12 +7,15 @@ export class WebSocketMessagePrinter {
     static printify(event: ChatMessageReceivedEvent | ChatMessageEditedEvent): PrintableMessage {
         const result: PrintableMessage = {} as PrintableMessage;
         if (event) {
+            console.log("WebSocketMessagePrinter", event);
+
             result.id = event.id;
             result.tags = [];
             result.isAdaptiveCard = event?.message?.includes('application/vnd.microsoft.card.adaptive');
             if (!result.isAdaptiveCard && event?.message) {
                 result.content = this.messageContentMetadata(event?.message);
             }
+            result.created = event.createdOn;
         }
         return result;
     }

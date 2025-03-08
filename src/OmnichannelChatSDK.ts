@@ -84,6 +84,7 @@ import OnNewMessageOptionalParams from "./core/messaging/OnNewMessageOptionalPar
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import PluggableLogger from "@microsoft/omnichannel-amsclient/lib/PluggableLogger";
 import PostChatContext from "./core/PostChatContext";
+import { PrintableMessage } from "./utils/printers/types/PrintableMessageType";
 import ProtocolType from "@microsoft/omnichannel-ic3core/lib/interfaces/ProtocoleType";
 import ScenarioMarker from "./telemetry/ScenarioMarker";
 import SetAuthTokenProviderOptionalParams from "./core/SetAuthTokenProviderOptionalParams";
@@ -1159,14 +1160,11 @@ class OmnichannelChatSDK {
         }
 
         try {
-            for (const message of messages) {
-                if (message) {
-                    this.scenarioMarker?.singleRecord("MessageReceived", {
-                        ...baseProperties,
-                        CustomProperties: JSON.stringify(MessagePrinterFactory.printifyMessage(message, PrinterType.Omnichannel)),
-                    });
-                }
-            }
+            const messageList = messages.map(m => MessagePrinterFactory.printifyMessage(m, PrinterType.Omnichannel));
+            this.scenarioMarker?.singleRecord("MessageReceivedFromGet", {
+                ...baseProperties,
+                CustomProperties: JSON.stringify(messageList)
+            });
         } catch (error) {
             // this is reachable when the chat is ended before all messages are recorded in telemetry
             console.warn(`Error while recording messages: ${error}`);

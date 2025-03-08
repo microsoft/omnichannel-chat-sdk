@@ -206,7 +206,7 @@ export class ACSConversation {
 
                                 // Filter out duplicate messages
                                 if (!postedMessageIds.has(id)) {
-                                    this.logger?.recordIndividualEvent("MessageReceivedFromPolling", MessagePrinterFactory.printifyMessage(message, PrinterType.WebSocket));
+                                    this.logger?.recordIndividualEvent("MessageReceivedFromPolling", MessagePrinterFactory.printifyMessage(message, PrinterType.Polling));
                                     onNewMessageCallback(message);
                                     postedMessageIds.add(id);
                                 }
