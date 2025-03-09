@@ -75,6 +75,7 @@ import LiveChatVersion from "./core/LiveChatVersion";
 import LiveWorkItemDetails from "./core/LiveWorkItemDetails";
 import LiveWorkItemState from "./core/LiveWorkItemState";
 import MessageContentType from "@microsoft/omnichannel-ic3core/lib/model/MessageContentType";
+import { MessageSource } from "./telemetry/MessageSource";
 import MessageType from "@microsoft/omnichannel-ic3core/lib/model/MessageType";
 import OmnichannelChatToken from "@microsoft/omnichannel-amsclient/lib/OmnichannelChatToken";
 import OmnichannelConfig from "./core/OmnichannelConfig";
@@ -1151,20 +1152,20 @@ class OmnichannelChatSDK {
         };
 
         if (!messages || messages?.length === 0) {
-            this.scenarioMarker?.singleRecord("MessageReceived", {
+            this.scenarioMarker?.singleRecord(TelemetryEvent.MessageReceived, {
                 ...baseProperties,
                 CustomProperties: "No messages received",
-                Source: "GetMessagesResponse"
+                Source: MessageSource.GetRestCall
             });
             return;
         }
 
         try {
             const messageList = messages.map(m => MessagePrinterFactory.printifyMessage(m, PrinterType.Omnichannel));
-            this.scenarioMarker?.singleRecord("MessageReceived", {
+            this.scenarioMarker?.singleRecord(TelemetryEvent.MessageReceived, {
                 ...baseProperties,
                 CustomProperties: JSON.stringify(messageList),
-                Source: "GetMessagesResponse"
+                Source: MessageSource.GetRestCall
             });
         } catch (error) {
             // this is reachable when the chat is ended before all messages are recorded in telemetry

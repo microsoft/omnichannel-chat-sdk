@@ -7,7 +7,6 @@ export class WebSocketMessagePrinter {
     static printify(event: ChatMessageReceivedEvent | ChatMessageEditedEvent): PrintableMessage {
         const result: PrintableMessage = {} as PrintableMessage;
         if (event) {
-            console.log("WebSocketMessagePrinter", event);
             result.id = event.id;
             result.tags = event?.metadata?.tags ? event.metadata.tags.replace(/"/g, "").split(",").filter((tag: string) => tag.length > 0) : [];
             result.bot = event?.metadata?.tags?.includes('public') ? false : true;
