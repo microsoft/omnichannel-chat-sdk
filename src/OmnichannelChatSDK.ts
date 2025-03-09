@@ -1143,7 +1143,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    private async recordMessages(messages: OmnichannelMessage[] | ChatMessage[] | IMessage[] ): Promise<void> {
+    private async recordMessages(messages: OmnichannelMessage[] | ChatMessage[] | IMessage[], requestId: string ): Promise<void> {
 
         const baseProperties = {
             RequestId: this.requestId,
@@ -1185,7 +1185,7 @@ class OmnichannelChatSDK {
 
         try {
             const messages = await (this.conversation as (IConversation | ACSConversation))?.getMessages();
-            this.recordMessages(messages);
+            this.recordMessages(messages, this.requestId);
 
             this.scenarioMarker.completeScenario(TelemetryEvent.GetMessages, {
                 RequestId: this.requestId,

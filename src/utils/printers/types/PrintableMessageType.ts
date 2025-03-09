@@ -1,7 +1,8 @@
 export type PrintableMessage = {
     id: string;
+    bot: boolean;
     tags?: string[];
-    isAdaptiveCard: boolean;
+    card: boolean;
     content: string;
     created?: Date
 };
