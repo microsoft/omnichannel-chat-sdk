@@ -206,7 +206,7 @@ export class ACSConversation {
 
                                 // Filter out duplicate messages
                                 if (!postedMessageIds.has(id)) {
-                                    this.logger?.recordIndividualEvent("MessageReceivedFromPolling", MessagePrinterFactory.printifyMessage(message, PrinterType.Polling));
+                                    this.logger?.recordIndividualEvent("MessageReceived", "Polling", MessagePrinterFactory.printifyMessage(message, PrinterType.Polling));
                                     onNewMessageCallback(message);
                                     postedMessageIds.add(id);
                                 }
@@ -250,7 +250,7 @@ export class ACSConversation {
                 }
                 onNewMessageCallback(event);
                 postedMessageIds.add(id);
-                this.logger?.recordIndividualEvent("MessageReceivedFromWebSocket", MessagePrinterFactory.printifyMessage(event, PrinterType.WebSocket));
+                this.logger?.recordIndividualEvent("MessageReceived","Websocket", MessagePrinterFactory.printifyMessage(event, PrinterType.WebSocket));
             }
 
             this.chatClient?.on("chatMessageReceived", listener);

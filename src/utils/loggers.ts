@@ -297,11 +297,12 @@ export class ACSClientLogger {
         this.scenarioMarker?.completeScenario(event, { ...baseProperties, ...additionalProperties });
     }
 
-    public recordIndividualEvent(event: string, additionalProperties: PrintableMessage): void {
+    public recordIndividualEvent(event: string, source:string, additionalProperties: PrintableMessage): void {
         const baseProperties = {
             RequestId: this.requestId,
             ChatId: this.chatId,
-            CustomProperties: JSON.stringify(additionalProperties)
+            CustomProperties: JSON.stringify(additionalProperties),
+            Source: source
         };
         console.log(`[ACSClientLogger][recordIndividualEvent] ${JSON.stringify(baseProperties)}`);
         this.scenarioMarker?.singleRecord(event,  {...baseProperties} );

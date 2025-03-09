@@ -84,7 +84,6 @@ import OnNewMessageOptionalParams from "./core/messaging/OnNewMessageOptionalPar
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import PluggableLogger from "@microsoft/omnichannel-amsclient/lib/PluggableLogger";
 import PostChatContext from "./core/PostChatContext";
-import { PrintableMessage } from "./utils/printers/types/PrintableMessageType";
 import ProtocolType from "@microsoft/omnichannel-ic3core/lib/interfaces/ProtocoleType";
 import ScenarioMarker from "./telemetry/ScenarioMarker";
 import SetAuthTokenProviderOptionalParams from "./core/SetAuthTokenProviderOptionalParams";
@@ -1155,15 +1154,17 @@ class OmnichannelChatSDK {
             this.scenarioMarker?.singleRecord("MessageReceived", {
                 ...baseProperties,
                 CustomProperties: "No messages received",
+                Source: "GetMessagesResponse"
             });
             return;
         }
 
         try {
             const messageList = messages.map(m => MessagePrinterFactory.printifyMessage(m, PrinterType.Omnichannel));
-            this.scenarioMarker?.singleRecord("MessageReceivedFromGet", {
+            this.scenarioMarker?.singleRecord("MessageReceived", {
                 ...baseProperties,
-                CustomProperties: JSON.stringify(messageList)
+                CustomProperties: JSON.stringify(messageList),
+                Source: "GetMessagesResponse"
             });
         } catch (error) {
             // this is reachable when the chat is ended before all messages are recorded in telemetry
