@@ -304,7 +304,6 @@ export class ACSClientLogger {
             CustomProperties: JSON.stringify(additionalProperties),
             Source: source
         };
-        console.log(`[ACSClientLogger][recordIndividualEvent] ${JSON.stringify(baseProperties)}`);
         this.scenarioMarker?.singleRecord(event,  {...baseProperties} );
     }
 }

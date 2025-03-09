@@ -60,8 +60,6 @@ class ScenarioMarker {
     }
 
     public singleRecord(event: string, additionalProperties: {}) : void {
-        console.log(`[ScenarioMarker][singleRecord] [event] ${event}`);
-        console.log(`[ScenarioMarker][singleRecord] ${JSON.stringify(additionalProperties)}`);
         const properties = {
             ChatSDKRuntimeId: this.runtimeId,
             Event: event,
@@ -70,7 +68,6 @@ class ScenarioMarker {
             WidgetId: this.omnichannelConfig.widgetId,
             ...additionalProperties
         };
-        console.log(`[ScenarioMarker][singleRecord] ${JSON.stringify(properties)}`);
         this.telemetry?.info(properties, this.scenarioType);
     }
 
