@@ -17,8 +17,6 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
     optionalParams.debug && console.log(message);
 
     if (optionalParams.liveChatVersion === LiveChatVersion.V2) {
-        console.log("Message to omnichannel ", message);
-
         const { id, content, metadata, sender, senderDisplayName, createdOn, editedOn } = message as any;  // eslint-disable-line  @typescript-eslint/no-explicit-any
 
         omnichannelMessage.id = id;
