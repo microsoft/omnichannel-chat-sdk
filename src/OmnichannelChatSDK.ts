@@ -678,7 +678,28 @@ class OmnichannelChatSDK {
             // Skip session init when there's a valid live chat context
             if (!optionalParams.liveChatContext) {
                 try {
-                    const chatToken = await this.OCClient.sessionInit(this.requestId, sessionInitOptionalParams, this.chatSDKConfig.useSessionInitV2);
+                    await this.OCClient.sessionInit(this.requestId, sessionInitOptionalParams, this.chatSDKConfig.useSessionInitV2);
+                } catch (error) {
+                    const telemetryData = {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken.chatId as string,
+                    };
+
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    if ((error as any)?.isAxiosError && (error as any).response?.headers?.errorcode?.toString() === OmnichannelErrorCodes.WidgetUseOutsideOperatingHour.toString()) {
+                        exceptionThrowers.throwWidgetUseOutsideOperatingHour(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
+                    }
+
+                    exceptionThrowers.throwConversationInitializationFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
+                }
+            }
+        };
+
+        const createConversationPromise = async () => {
+            // Skip session init when there's a valid live chat context
+            if (!optionalParams.liveChatContext) {
+                try {
+                    const chatToken = await this.OCClient.createConversation(this.requestId, sessionInitOptionalParams, this.chatSDKConfig.useSessionInitV2);
                     if (chatToken) {
                         this.setChatToken(chatToken);
                         loggerUtils.setChatId(this.chatToken.chatId || '', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
@@ -799,7 +820,7 @@ class OmnichannelChatSDK {
         };
 
         if (this.chatSDKConfig.useSessionInitV2) {
-            await sessionInitPromise();
+            await createConversationPromise();
             await Promise.all([messagingClientPromise(), attachmentClientPromise()]);
         } else {
             await Promise.all([sessionInitPromise(), messagingClientPromise(), attachmentClientPromise()]);
