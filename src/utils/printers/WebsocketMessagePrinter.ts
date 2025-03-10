@@ -1,6 +1,7 @@
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent } from "@azure/communication-chat";
 
 import { PrintableMessage } from "./types/PrintableMessageType";
+import { messageContentMetadata } from "../utilities";
 
 export class WebSocketMessagePrinter {
 
@@ -12,21 +13,10 @@ export class WebSocketMessagePrinter {
             result.bot = event?.metadata?.tags?.includes('public') ? false : true;
             result.card = event?.message?.includes('application/vnd.microsoft.card.adaptive');
             if (!result.card && event?.message) {
-                result.content = this.messageContentMetadata(event?.message);
+                result.content = messageContentMetadata(event?.message);
             }
             result.created = event.createdOn;
         }
         return result;
     }
-
-    static messageContentMetadata(message: string): string {
-        if (!message) {
-            return '0';
-        }
-        const first = message?.charAt(0);
-        const last = message?.charAt(message?.length - 1);
-        const size = message?.length;
-        return `${first}${size}${last}`;
-    }
-
 }
