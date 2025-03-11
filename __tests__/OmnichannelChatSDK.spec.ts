@@ -1986,8 +1986,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.isPersistentChat = true;
-            global.setInterval = jest.fn();
-
+            global.setInterval = jest.fn() as unknown as typeof setInterval;
             chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             await chatSDK.initialize();
@@ -3422,7 +3421,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             chatSDK.getChatToken = jest.fn();
             chatSDK.isPersistentChat = true;
             chatSDK.updateChatToken = jest.fn();
-            global.setInterval = jest.fn();
+            global.setInterval = jest.fn() as unknown as typeof setInterval;
 
             await chatSDK.initialize();
 
@@ -3460,7 +3459,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             chatSDK.getChatToken = jest.fn();
             chatSDK.isPersistentChat = true;
             chatSDK.liveChatVersion = LiveChatVersion.V1;
-            global.setInterval = jest.fn();
+            global.setInterval = jest.fn() as unknown as typeof setInterval;
 
             await chatSDK.initialize();
 

@@ -4,16 +4,25 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### Security
+
+- Uptake [@microsoft/ocsdk@0.5.12](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.12)
+- Uptake [@microsoft/omnichannel-ic3core@0.1.5](https://www.npmjs.com/package/@microsoft/omnichannel-ic3core/v/0.1.5)
+
 ### Added
 
 - Adding telemetry around receive message mechanisms, Rest, Websocket and Polling
+
+### Fixed
+
+- Additional types for stored timer Id.
 
 ## [1.10.14] - 2025-03-06
 
 ### Changed
 
 - Updated getLivechatTranscript livechatcontect check for persistent chat
-- 
+
 ### Added
 
 - Add check for getConversation details before call onAgentEndSession call back since participant removed is not reliable

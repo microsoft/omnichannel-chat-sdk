@@ -2731,7 +2731,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatToken = jest.fn();
             chatSDK.isPersistentChat = true;
             chatSDK.updateChatToken = jest.fn();
-            global.setInterval = jest.fn();
+            global.setInterval = jest.fn() as unknown as typeof setInterval;
 
             await chatSDK.initialize({ useParallelLoad: true });
             while (chatSDK.AMSClient === null) {
