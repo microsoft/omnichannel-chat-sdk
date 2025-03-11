@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### Added
+
+- Adding telemetry around receive message mechanisms, Rest, Websocket and Polling
+
 ## [1.10.14] - 2025-03-06
 
 ### Changed

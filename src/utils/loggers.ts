@@ -1,3 +1,5 @@
+import { _exceptionDetailPIIKeys, redactPII } from "./loggerUtils";
+
 import { AWTEventData } from "../external/aria/webjs/AriaSDK";
 import AriaTelemetry from "../telemetry/AriaTelemetry";
 import ICallingSDKLogData from "../external/CallingSDK/ICallingSDKLogData";
@@ -5,9 +7,9 @@ import IIC3SDKLogData from "../external/IC3Client/IIC3SDKLogData";
 import IOCSDKLogData from "../external/OCSDK/IOCSDKLogData";
 import LogLevel from "../telemetry/LogLevel";
 import OmnichannelConfig from "../core/OmnichannelConfig";
+import { PrintableMessage } from "./printers/types/PrintableMessageType";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import ScenarioType from "../telemetry/ScenarioType";
-import { redactPII, _exceptionDetailPIIKeys } from "./loggerUtils";
 
 export class IC3ClientLogger {
     private debug = false;
@@ -293,6 +295,16 @@ export class ACSClientLogger {
         };
 
         this.scenarioMarker?.completeScenario(event, { ...baseProperties, ...additionalProperties });
+    }
+
+    public recordIndividualEvent(event: string, source:string, additionalProperties: PrintableMessage): void {
+        const baseProperties = {
+            RequestId: this.requestId,
+            ChatId: this.chatId,
+            CustomProperties: JSON.stringify(additionalProperties),
+            Source: source
+        };
+        this.scenarioMarker?.singleRecord(event,  {...baseProperties} );
     }
 }
 

@@ -1,6 +1,7 @@
 import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
 import { ChatClient, ChatMessage, ChatParticipant, ChatThreadClient } from "@azure/communication-chat";
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
+import { MessagePrinterFactory, PrinterType } from "../../utils/printers/MessagePrinterFactory";
 
 import ACSChatMessageType from "./ACSChatMessageType";
 import ACSClientConfig from "./ACSClientConfig";
@@ -12,7 +13,9 @@ import ACSSessionInfo from "./ACSSessionInfo";
 import ChatSDKMessage from "./ChatSDKMessage";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import LiveChatVersion from "../LiveChatVersion";
+import { MessageSource } from "../../telemetry/MessageSource";
 import OmnichannelMessage from "./OmnichannelMessage";
+import TelemetryEvent from "../../telemetry/TelemetryEvent";
 import createOmnichannelMessage from "../../utils/createOmnichannelMessage";
 import { defaultMessageTags } from "./MessageTags";
 
@@ -42,7 +45,6 @@ export interface ParticipantMapping {
 function* nextDelay() {
     yield* [1000, 1000, 2000, 3000, 5000, 8000, 10000];
 }
-
 export class ACSConversation {
     private logger: ACSClientLogger | null = null;
     private tokenCredential: AzureCommunicationTokenCredential;
@@ -61,13 +63,13 @@ export class ACSConversation {
         this.eventListeners = {};
     }
 
-    public async startPolling() : Promise<void>  {
+    public async startPolling(): Promise<void> {
         this.logger?.startScenario(ACSClientEvent.StartPolling);
         this.keepPolling = true;
         this.logger?.completeScenario(ACSClientEvent.StartPolling);
     }
 
-    public async stopPolling() : Promise<void>  {
+    public async stopPolling(): Promise<void> {
         this.logger?.startScenario(ACSClientEvent.StopPolling);
         this.keepPolling = false;
         this.logger?.completeScenario(ACSClientEvent.StopPolling);
@@ -185,7 +187,7 @@ export class ACSConversation {
         return participants;
     }
 
-    public async registerOnNewMessage(onNewMessageCallback: CallableFunction, optionalParams: ACSRegisterOnNewMessageOptionalParams = {disablePolling: false}): Promise<void> {
+    public async registerOnNewMessage(onNewMessageCallback: CallableFunction, optionalParams: ACSRegisterOnNewMessageOptionalParams = { disablePolling: false }): Promise<void> {
         this.logger?.startScenario(ACSClientEvent.RegisterOnNewMessage);
         const postedMessageIds = new Set();
 
@@ -194,7 +196,7 @@ export class ACSConversation {
             const pollForMessages = async (delayGenerator: Generator<number, void, unknown>) => {
                 if (this.keepPolling) {
                     try {
-                        const messages = await this.getMessages({skipConversion: true});
+                        const messages = await this.getMessages({ skipConversion: true });
                         for (const message of messages.reverse()) {
                             try {
                                 const { id, senderDisplayName } = message as ChatMessage;
@@ -206,6 +208,7 @@ export class ACSConversation {
 
                                 // Filter out duplicate messages
                                 if (!postedMessageIds.has(id)) {
+                                    this.logger?.recordIndividualEvent(TelemetryEvent.MessageReceived, MessageSource.Polling, MessagePrinterFactory.printifyMessage(message, PrinterType.Polling));
                                     onNewMessageCallback(message);
                                     postedMessageIds.add(id);
                                 }
@@ -249,6 +252,7 @@ export class ACSConversation {
                 }
                 onNewMessageCallback(event);
                 postedMessageIds.add(id);
+                this.logger?.recordIndividualEvent(TelemetryEvent.MessageReceived, MessageSource.WebSocket, MessagePrinterFactory.printifyMessage(event, PrinterType.WebSocket));
             }
 
             this.chatClient?.on("chatMessageReceived", listener);

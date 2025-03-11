@@ -1,9 +1,10 @@
-import AriaTelemetry from "./AriaTelemetry";
+import {completeEvent, failEvent, startEvent} from './EventMarker';
+
 import { AWTEventData } from "../external/aria/webjs/AriaSDK";
+import AriaTelemetry from "./AriaTelemetry";
 import OmnichannelConfig from "../core/OmnichannelConfig";
 import ScenarioType from "./ScenarioType";
 import StopWatch from "./StopWatch";
-import {startEvent, failEvent, completeEvent} from './EventMarker';
 
 class ScenarioMarker {
     private debug: boolean;
@@ -58,6 +59,18 @@ class ScenarioMarker {
         this.telemetry?.info(properties, this.scenarioType);
     }
 
+    public singleRecord(event: string, additionalProperties: {}) : void {
+        const properties = {
+            ChatSDKRuntimeId: this.runtimeId,
+            Event: event,
+            OrgId: this.omnichannelConfig.orgId,
+            OrgUrl: this.omnichannelConfig.orgUrl,
+            WidgetId: this.omnichannelConfig.widgetId,
+            ...additionalProperties
+        };
+        this.telemetry?.info(properties, this.scenarioType);
+    }
+
     public failScenario(event: string, additionalProperties: AWTEventData["properties"] = {}): void {
         this.debug && console.log(`[ScenarioMarker][failScenario]`);
 
@@ -105,6 +118,7 @@ class ScenarioMarker {
 
         this.telemetry?.info(properties, this.scenarioType);
     }
+
 }
 
 export default ScenarioMarker;

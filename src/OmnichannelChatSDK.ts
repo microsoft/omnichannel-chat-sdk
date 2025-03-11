@@ -4,7 +4,9 @@ import { ACSAdapterLogger, ACSClientLogger, AMSClientLogger, CallingSDKLogger, I
 import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
 import { AmsClient, ChatWidgetLanguage, DataMaskingInfo, LiveWSAndLiveChatEngJoin, VoiceVideoCallingOptionalParams } from "./types/config";
 import { ChatAdapter, GetAgentAvailabilityResponse, GetCurrentLiveChatContextResponse, GetLiveChatTranscriptResponse, GetMessagesResponse, GetPreChatSurveyResponse, GetVoiceVideoCallingResponse, MaskingRule, MaskingRules, UploadFileAttachmentResponse } from "./types/response";
+import { ChatClient, ChatMessage } from "@azure/communication-chat";
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
+import { MessagePrinterFactory, PrinterType } from "./utils/printers/MessagePrinterFactory";
 import { SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
 import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
 import { createCoreServicesOrgUrl, getCoreServicesGeoName, isCoreServicesOrgUrl, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
@@ -23,7 +25,6 @@ import AuthSettings from "./core/AuthSettings";
 import CallingOptionsOptionSetNumber from "./core/CallingOptionsOptionSetNumber";
 import ChatAdapterOptionalParams from "./core/messaging/ChatAdapterOptionalParams";
 import ChatAdapterProtocols from "./core/messaging/ChatAdapterProtocols";
-import { ChatClient } from "@azure/communication-chat";
 import ChatConfig from "./core/ChatConfig";
 import ChatReconnectContext from "./core/ChatReconnectContext";
 import ChatReconnectOptionalParams from "./core/ChatReconnectOptionalParams";
@@ -57,6 +58,7 @@ import IGetChatTranscriptsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/I
 import IGetLWIDetailsOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetLWIDetailsOptionalParams";
 import IGetQueueAvailabilityOptionalParams from "@microsoft/ocsdk/lib/Interfaces/IGetQueueAvailabilityOptionalParams";
 import IInitializationInfo from "@microsoft/omnichannel-ic3core/lib/model/IInitializationInfo";
+import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import IOmnichannelConfiguration from "@microsoft/ocsdk/lib/Interfaces/IOmnichannelConfiguration";
 import IPerson from "@microsoft/omnichannel-ic3core/lib/model/IPerson";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
@@ -73,6 +75,7 @@ import LiveChatVersion from "./core/LiveChatVersion";
 import LiveWorkItemDetails from "./core/LiveWorkItemDetails";
 import LiveWorkItemState from "./core/LiveWorkItemState";
 import MessageContentType from "@microsoft/omnichannel-ic3core/lib/model/MessageContentType";
+import { MessageSource } from "./telemetry/MessageSource";
 import MessageType from "@microsoft/omnichannel-ic3core/lib/model/MessageType";
 import OmnichannelChatToken from "@microsoft/omnichannel-amsclient/lib/OmnichannelChatToken";
 import OmnichannelConfig from "./core/OmnichannelConfig";
@@ -1141,6 +1144,36 @@ class OmnichannelChatSDK {
         }
     }
 
+    private async recordMessages(messages: OmnichannelMessage[] | ChatMessage[] | IMessage[]): Promise<void> {
+
+        const baseProperties = {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string,
+        };
+
+        if (!messages || messages?.length === 0) {
+            this.scenarioMarker?.singleRecord(TelemetryEvent.MessageReceived, {
+                ...baseProperties,
+                CustomProperties: "No messages received",
+                Source: MessageSource.GetRestCall
+            });
+            return;
+        }
+
+        try {
+            const messageList = messages.map(m => MessagePrinterFactory.printifyMessage(m, PrinterType.Omnichannel));
+            this.scenarioMarker?.singleRecord(TelemetryEvent.MessageReceived, {
+                ...baseProperties,
+                CustomProperties: JSON.stringify(messageList),
+                Source: MessageSource.GetRestCall
+            });
+        } catch (error) {
+            // this is reachable when the chat is ended before all messages are recorded in telemetry
+            console.warn(`Error while recording messages: ${error}`);
+        }
+
+    }
+
     public async getMessages(): Promise<GetMessagesResponse> {
         this.scenarioMarker.startScenario(TelemetryEvent.GetMessages, {
             RequestId: this.requestId,
@@ -1153,6 +1186,7 @@ class OmnichannelChatSDK {
 
         try {
             const messages = await (this.conversation as (IConversation | ACSConversation))?.getMessages();
+            this.recordMessages(messages);
 
             this.scenarioMarker.completeScenario(TelemetryEvent.GetMessages, {
                 RequestId: this.requestId,
