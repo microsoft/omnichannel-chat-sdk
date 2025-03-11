@@ -678,7 +678,7 @@ class OmnichannelChatSDK {
             // Skip session init when there's a valid live chat context
             if (!optionalParams.liveChatContext) {
                 try {
-                    await this.OCClient.sessionInit(this.requestId, sessionInitOptionalParams, this.chatSDKConfig.useSessionInitV2);
+                    await this.OCClient.sessionInit(this.requestId, sessionInitOptionalParams);
                 } catch (error) {
                     const telemetryData = {
                         RequestId: this.requestId,
@@ -699,7 +699,7 @@ class OmnichannelChatSDK {
             // Skip session init when there's a valid live chat context
             if (!optionalParams.liveChatContext) {
                 try {
-                    const chatToken = await this.OCClient.createConversation(this.requestId, sessionInitOptionalParams, this.chatSDKConfig.useSessionInitV2);
+                    const chatToken = await this.OCClient.createConversation(this.requestId, sessionInitOptionalParams);
                     if (chatToken) {
                         this.setChatToken(chatToken);
                         loggerUtils.setChatId(this.chatToken.chatId || '', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
