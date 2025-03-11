@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added support for createConversation api which eleminates need for 2 api's when starting a conversation.
 - Adding telemetry around receive message mechanisms, Rest, Websocket and Polling
 
 ### Fixed
