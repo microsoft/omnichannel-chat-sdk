@@ -22,6 +22,10 @@ interface ChatReconnectConfig {
     disable: boolean;
 }
 
+interface CreateConversationConfig {
+    disable: boolean;
+}
+
 /**
  * Non-backward compatible configurations or experimentals. Subject to change any time. Internal use only.
  */
@@ -39,7 +43,7 @@ interface ChatSDKConfig {
     chatAdapterConfig?: ChatAdapterConfig,
     internalConfig?: InternalChatSDKConfig,
     ocUserAgent?: string[],
-    useSessionInitV2?: boolean
+    useCreateConversation?: CreateConversationConfig
 }
 
 export {

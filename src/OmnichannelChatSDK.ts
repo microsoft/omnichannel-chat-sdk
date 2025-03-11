@@ -640,7 +640,7 @@ class OmnichannelChatSDK {
             }
         }
 
-        if (!this.chatSDKConfig.useSessionInitV2 && this.chatToken && Object.keys(this.chatToken).length === 0) {
+        if (this.chatSDKConfig.useCreateConversation?.disable && this.chatToken && Object.keys(this.chatToken).length === 0) {
             await this.getChatToken(false);
         }
         if (this.chatToken?.chatId) {
@@ -819,7 +819,7 @@ class OmnichannelChatSDK {
             }
         };
 
-        if (this.chatSDKConfig.useSessionInitV2) {
+        if (!this.chatSDKConfig.useCreateConversation?.disable) {
             await createConversationPromise();
             await Promise.all([messagingClientPromise(), attachmentClientPromise()]);
         } else {
