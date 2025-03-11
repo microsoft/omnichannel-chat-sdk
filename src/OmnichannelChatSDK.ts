@@ -148,7 +148,7 @@ class OmnichannelChatSDK {
     private isPersistentChat = false;
     private isChatReconnect = false;
     private reconnectId: null | string = null;
-    private refreshTokenTimer: number | null = null;
+    private refreshTokenTimer: NodeJS.Timeout | string |number | null = null;
     private AMSClientLoadCurrentState: AMSClientLoadStates = AMSClientLoadStates.NOT_LOADED;
     private isMaskingDisabled = false;
     private maskingCharacter = "#";
