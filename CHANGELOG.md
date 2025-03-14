@@ -2,7 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
-## [unreleased]
+## [Unreleased]
+
+## [1.10.15] - 2025-03-11
 
 ### Security
 
