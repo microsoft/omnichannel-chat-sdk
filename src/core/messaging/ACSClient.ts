@@ -345,7 +345,7 @@ export class ACSConversation {
                 ExceptionDetails: JSON.stringify(exceptionDetails)
             });
 
-            throw new Error('SendMessageFailed');
+            throw error;
         }
     }
 
