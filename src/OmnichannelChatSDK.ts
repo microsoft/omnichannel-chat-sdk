@@ -1295,7 +1295,7 @@ class OmnichannelChatSDK {
                     ChatId: this.chatToken.chatId as string
                 });
             } catch (error) {
-                const exceptionDetails = {
+                const exceptionDetails: ChatSDKExceptionDetails = {
                     response: ChatSDKErrorName.ChatSDKSendMessageFailed,
                     errorObject: `${error}`
                 };
@@ -1339,7 +1339,7 @@ class OmnichannelChatSDK {
                     ChatId: this.chatToken.chatId as string
                 });
             } catch (error) {
-                const exceptionDetails = {
+                const exceptionDetails: ChatSDKExceptionDetails = {
                     response: ChatSDKErrorName.ChatSDKSendMessageFailed,
                     errorObject: `${error}`
                 };
