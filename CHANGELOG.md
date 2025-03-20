@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Issue when using setDebug leading to double load of AMS
+
 ## [1.10.15] - 2025-03-11
 
 ### Security

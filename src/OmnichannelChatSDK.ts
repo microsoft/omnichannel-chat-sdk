@@ -37,6 +37,7 @@ import ConversationMode from "./core/ConversationMode";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import EmailLiveChatTranscriptOptionaParams from "./core/EmailLiveChatTranscriptOptionalParams";
 import EndChatOptionalParams from "./core/EndChatOptionalParams";
+import FetchChatTokenResponse from "@microsoft/ocsdk/lib/Model/FetchChatTokenResponse";
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
 import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/FileSharingProtocolType";
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
@@ -109,7 +110,6 @@ import startPolling from "./commands/startPolling";
 import stopPolling from "./commands/stopPolling";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
-import FetchChatTokenResponse from "@microsoft/ocsdk/lib/Model/FetchChatTokenResponse";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -276,15 +276,17 @@ class OmnichannelChatSDK {
         try {
             if (this.liveChatVersion === LiveChatVersion.V2) {
                 this.ACSClient = new ACSClient(this.acsClientLogger);
-                this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADING;
+                if (this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED) {
 
-                this.AMSClient = await createAMSClient({
-                    framedMode: isBrowser(),
-                    multiClient: true,
-                    debug: false,
-                    logger: this.amsClientLogger as PluggableLogger
-                });
-                this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
+                    this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADING;
+                    this.AMSClient = await createAMSClient({
+                        framedMode: isBrowser(),
+                        multiClient: true,
+                        debug: false,
+                        logger: this.amsClientLogger as PluggableLogger
+                    });
+                    this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
+                }
             } else if (this.liveChatVersion === LiveChatVersion.V1) {
                 this.IC3Client = await this.getIC3Client();
             }
@@ -298,7 +300,6 @@ class OmnichannelChatSDK {
 
     private async parallelInitialization(optionalParams: InitializeOptionalParams = {}) {
         try {
-
             this.scenarioMarker.startScenario(TelemetryEvent.InitializeChatSDKParallel);
 
             if (this.isInitialized) {
@@ -359,13 +360,18 @@ class OmnichannelChatSDK {
 
             if (this.liveChatVersion === LiveChatVersion.V2) {
                 this.ACSClient = new ACSClient(this.acsClientLogger);
-                this.AMSClient = await createAMSClient({
-                    framedMode: isBrowser(),
-                    multiClient: true,
-                    debug: false,
-                    logger: this.amsClientLogger as PluggableLogger
-                });
-                this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
+
+                if (this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED) {
+                    this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADING;
+                    this.AMSClient = await createAMSClient({
+                        framedMode: isBrowser(),
+                        multiClient: true,
+                        debug: false,
+                        logger: this.amsClientLogger as PluggableLogger
+                    });
+                    this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
+                }
+
             } else if (this.liveChatVersion === LiveChatVersion.V1) {
                 this.IC3Client = await this.getIC3Client();
             }
