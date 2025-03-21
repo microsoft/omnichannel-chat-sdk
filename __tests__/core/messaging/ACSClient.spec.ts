@@ -394,7 +394,7 @@ describe('ACSClient', () => {
                 done: jest.fn()
             })),
         }));
-        chatThreadClient.sendMessage = jest.fn(() => Promise.reject());
+        chatThreadClient.sendMessage = jest.fn(() => Promise.reject(new Error('SendMessageFailed')));
 
         client.chatClient = {};
         client.chatClient.getChatThreadClient = jest.fn(() => chatThreadClient);

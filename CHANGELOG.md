@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- Added exception details for telemetry for SendMessage
+
 ## [1.10.15] - 2025-03-11
 
 ### Security
