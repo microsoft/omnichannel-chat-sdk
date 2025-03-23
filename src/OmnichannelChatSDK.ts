@@ -153,6 +153,7 @@ class OmnichannelChatSDK {
     private AMSClientLoadCurrentState: AMSClientLoadStates = AMSClientLoadStates.NOT_LOADED;
     private isMaskingDisabled = false;
     private maskingCharacter = "#";
+    private isAMSClientDisabled = false;
 
     constructor(omnichannelConfig: OmnichannelConfig, chatSDKConfig: ChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
@@ -241,6 +242,10 @@ class OmnichannelChatSDK {
 
     private async getAMSClient() : Promise<AmsClient> {
 
+        if (this.isAMSClientDisabled === true) {
+            throw new Error("AMSClient is disabled.");
+        }
+
         if (this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED && this.liveChatVersion === LiveChatVersion.V1) {
             return null;
         }
@@ -270,15 +275,27 @@ class OmnichannelChatSDK {
 
         this.ACSClient = new ACSClient(this.acsClientLogger);
 
-        this.isInitialized = true;
         this.scenarioMarker.completeScenario(TelemetryEvent.InitializeComponents);
+    }
+
+    public async enableAMSClient() : Promise<void> {
+        this.isAMSClientDisabled = false;
+        // only load ams client if the SDK is up and running, otherwise it will be loaded during initialization
+        if (this.isInitialized){
+            await this.loadAmsClient();
+        }
+    }
+
+    public async disableAMSClient() : Promise<void> {
+        // No need to remove the AMS client , the flag will ensure any action is not performed
+        this.isAMSClientDisabled = true;
     }
 
     private async loadAmsClient() : Promise<void> {
         this.scenarioMarker.startScenario(TelemetryEvent.InitializeMessagingClient);
         try {
             if (this.liveChatVersion === LiveChatVersion.V2) {
-                if (this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED) {
+                if (this.isAMSClientDisabled !== true && this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED) {
 
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADING;
                     this.AMSClient = await createAMSClient({
@@ -303,15 +320,11 @@ class OmnichannelChatSDK {
     private async parallelInitialization(optionalParams: InitializeOptionalParams = {}) {
         try {
             this.scenarioMarker.startScenario(TelemetryEvent.InitializeChatSDKParallel);
+            this.isAMSClientDisabled = !!optionalParams.disableAMSClient;
 
             if (this.isInitialized) {
                 this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDKParallel);
                 return this.liveChatConfig;
-            }
-
-            const supportedLiveChatVersions = [LiveChatVersion.V1, LiveChatVersion.V2];
-            if (!supportedLiveChatVersions.includes(this.liveChatVersion)) {
-                exceptionThrowers.throwUnsupportedLiveChatVersionFailure(new Error(ChatSDKErrorName.UnsupportedLiveChatVersion), this.scenarioMarker, TelemetryEvent.InitializeComponents);
             }
 
             this.useCoreServicesOrgUrlIfNotSet();
@@ -337,6 +350,7 @@ class OmnichannelChatSDK {
     private async sequentialInitialization(optionalParams: InitializeOptionalParams = {}) {
 
         this.scenarioMarker.startScenario(TelemetryEvent.InitializeChatSDK);
+        this.isAMSClientDisabled = !!optionalParams.disableAMSClient;
 
         if (this.isInitialized) {
             this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
@@ -371,7 +385,7 @@ class OmnichannelChatSDK {
             if (this.liveChatVersion === LiveChatVersion.V2) {
                 this.ACSClient = new ACSClient(this.acsClientLogger);
 
-                if (this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED) {
+                if (this.isAMSClientDisabled === false && this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED) {
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADING;
                     this.AMSClient = await createAMSClient({
                         framedMode: isBrowser(),
@@ -1592,11 +1606,22 @@ class OmnichannelChatSDK {
     }
 
     public async uploadFileAttachment(fileInfo: IFileInfo | File): Promise<UploadFileAttachmentResponse> {
-        const amsClient = await this.getAMSClient();
+
         this.scenarioMarker.startScenario(TelemetryEvent.UploadFileAttachment, {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
         });
+
+        if (this.isAMSClientDisabled === true) {
+            this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string,
+                ExceptionDetails : "AMSClient is disabled"
+            });
+            throw new Error('AMSClient is disabled. Please enable AMSClient to upload file attachments.');
+        }
+
+        const amsClient = await this.getAMSClient();
 
         if (!this.isInitialized) {
             exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.UploadFileAttachment);
@@ -1710,11 +1735,22 @@ class OmnichannelChatSDK {
     }
 
     public async downloadFileAttachment(fileMetadata: FileMetadata | IFileMetadata): Promise<Blob> {
-        const amsClient = await this.getAMSClient();
+
         this.scenarioMarker.startScenario(TelemetryEvent.DownloadFileAttachment, {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
         });
+
+        if (this.isAMSClientDisabled === true) {
+            this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string,
+                ExceptionDetails : "AMSClient is disabled"
+            });
+            throw new Error('AMSClient is disabled. Please enable AMSClient to download file attachments.');
+        }
+
+        const amsClient = await this.getAMSClient();
 
         if (!this.isInitialized) {
             exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.DownloadFileAttachment);
