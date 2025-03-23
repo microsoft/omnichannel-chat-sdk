@@ -212,12 +212,13 @@ class OmnichannelChatSDK {
 
     /* istanbul ignore next */
     public setDebug(flag: boolean): void {
-
         this.debug = flag;
-        this.getAMSClient().then((client) => client?.setDebug(flag));
-
         this.telemetry?.setDebug(flag);
         this.scenarioMarker.setDebug(flag);
+
+        if (this.AMSClient) {
+            this.AMSClient.setDebug(flag);
+        }
         loggerUtils.setDebug(flag, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
     }
 
@@ -267,6 +268,8 @@ class OmnichannelChatSDK {
             exceptionThrowers.throwUnsupportedLiveChatVersionFailure(new Error(ChatSDKErrorName.UnsupportedLiveChatVersion), this.scenarioMarker, TelemetryEvent.InitializeComponents);
         }
 
+        this.ACSClient = new ACSClient(this.acsClientLogger);
+
         this.isInitialized = true;
         this.scenarioMarker.completeScenario(TelemetryEvent.InitializeComponents);
     }
@@ -275,14 +278,13 @@ class OmnichannelChatSDK {
         this.scenarioMarker.startScenario(TelemetryEvent.InitializeMessagingClient);
         try {
             if (this.liveChatVersion === LiveChatVersion.V2) {
-                this.ACSClient = new ACSClient(this.acsClientLogger);
                 if (this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED) {
 
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADING;
                     this.AMSClient = await createAMSClient({
                         framedMode: isBrowser(),
                         multiClient: true,
-                        debug: false,
+                        debug: this.debug,
                         logger: this.amsClientLogger as PluggableLogger
                     });
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
@@ -307,10 +309,18 @@ class OmnichannelChatSDK {
                 return this.liveChatConfig;
             }
 
+            const supportedLiveChatVersions = [LiveChatVersion.V1, LiveChatVersion.V2];
+            if (!supportedLiveChatVersions.includes(this.liveChatVersion)) {
+                exceptionThrowers.throwUnsupportedLiveChatVersionFailure(new Error(ChatSDKErrorName.UnsupportedLiveChatVersion), this.scenarioMarker, TelemetryEvent.InitializeComponents);
+            }
+
             this.useCoreServicesOrgUrlIfNotSet();
             await Promise.all([this.loadInitComponents(), this.loadChatConfig(optionalParams)]);
             // this will load ams in the background, without holding the load
-            this.loadAmsClient();
+
+            if (!optionalParams.disableAMSClient) {
+                this.loadAmsClient();
+            }
 
             this.isInitialized = true;
             this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDKParallel);
@@ -366,7 +376,7 @@ class OmnichannelChatSDK {
                     this.AMSClient = await createAMSClient({
                         framedMode: isBrowser(),
                         multiClient: true,
-                        debug: false,
+                        debug: this.debug,
                         logger: this.amsClientLogger as PluggableLogger
                     });
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
