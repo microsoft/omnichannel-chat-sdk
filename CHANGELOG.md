@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Issue when using setDebug leading to double load of AMS
+- Add mechanism to load off sync AMS and to allow customer to opt-out during initialization
 
 ## [1.10.15] - 2025-03-11
 
