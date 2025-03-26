@@ -68,6 +68,12 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
                 // Suppress errors to keep chat flowing
             }
         }
+
+        // OriginalMessageId is used to track the original message id from the source messaging channel before bridging and any retries
+        if (metadata && metadata.OriginalMessageId) {
+            omnichannelMessage.properties.originalMessageId = metadata.OriginalMessageId;
+        }
+
     } else {
         const { clientmessageid } = message as IRawMessage;
         omnichannelMessage.id = clientmessageid as string;
