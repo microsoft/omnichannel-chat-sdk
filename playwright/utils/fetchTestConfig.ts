@@ -7,7 +7,10 @@ const fetchTestConfig = () => {
         return JSON.parse(process.env.testConfig);
     }
 
-    const testConfigFilePath = path.join(path.dirname(__dirname), 'test.config.yml');
+    // const testConfigFilePath = path.join(path.dirname(__dirname), 'test.config.yml');
+    const testConfigFilePath = path.join(path.dirname(__dirname), 'test.config.automation.yml');
+    // const testConfigFilePath = path.join(path.dirname(__dirname), 'test.config.prod.yml');
+    
     let testConfig = null;
     try {
         const fileData = fs.readFileSync(testConfigFilePath, 'utf8');

@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Added exception details for telemetry for SendMessage
 
+### Changed
+- Uptake [@microsoft/ocsdk@0.5.13](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.13)
+
 ## [1.10.15] - 2025-03-11
 
 ### Security
