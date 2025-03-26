@@ -31,7 +31,8 @@ export interface IPerson {
 }
 
 export interface IMessageProperties {
-    [id: string]: string;
+    OriginalMessageId?: string; // Original message id from the source messaging channel before bridging and any retries
+    [id: string]: string | undefined;
 }
 
 export enum FileSharingProtocolType {
