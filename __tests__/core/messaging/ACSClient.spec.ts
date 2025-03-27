@@ -341,6 +341,7 @@ describe('ACSClient', () => {
         await client.initialize(config);
 
         const chatThreadClient: any = {};
+        const sendMessageResponse = {id: '0'};
         chatThreadClient.listParticipants = jest.fn(() => ({
             next: jest.fn(() => ({
                 value: 'value',
@@ -353,7 +354,7 @@ describe('ACSClient', () => {
                 done: jest.fn()
             })),
         }));
-        chatThreadClient.sendMessage = jest.fn();
+        chatThreadClient.sendMessage = jest.fn(() => sendMessageResponse);
 
         client.chatClient = {};
         client.chatClient.getChatThreadClient = jest.fn(() => chatThreadClient);
@@ -365,11 +366,20 @@ describe('ACSClient', () => {
             pollingInterval: 1000,
         });
 
-        await conversation.sendMessage({
-            content: 'message',
+        const content = 'message';
+        const chatMessage = await conversation.sendMessage({
+            content
         });
 
         expect(chatThreadClient.sendMessage).toHaveBeenCalledTimes(1);
+        expect(chatMessage).toBeDefined();
+        expect(chatMessage.id).toBe(sendMessageResponse.id);
+        expect(chatMessage.content).toBe(content);
+        expect(chatMessage.tags.includes('FromCustomer')).toBe(true);
+        expect(chatMessage.tags.includes('ChannelId-lcw')).toBe(true);
+        expect(chatMessage.properties.tags.includes('FromCustomer')).toBe(true);
+        expect(chatMessage.properties.tags.includes('ChannelId-lcw')).toBe(true);
+        expect(chatMessage.timestamp).toBeDefined();
     });
 
     it('ACSClient.sendMessage() failure should throw an error', async () => {
@@ -394,7 +404,7 @@ describe('ACSClient', () => {
                 done: jest.fn()
             })),
         }));
-        chatThreadClient.sendMessage = jest.fn(() => Promise.reject());
+        chatThreadClient.sendMessage = jest.fn(() => Promise.reject(new Error('SendMessageFailed')));
 
         client.chatClient = {};
         client.chatClient.getChatThreadClient = jest.fn(() => chatThreadClient);

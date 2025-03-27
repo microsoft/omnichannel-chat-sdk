@@ -9,6 +9,14 @@ All notable changes to this project will be documented in this file.
 - Issue when using setDebug leading to double load of AMS
 - Add mechanism to load off sync AMS and to allow customer to opt-out during initialization
 
+### Added
+- Added exception details for telemetry for SendMessage
+- Expose `OriginalMessageId` to `ChatSDK.onNewMessage()` to handle message ordering
+- Update `ChatSDK.sendMessage()` to return `OmnichannelMessage`
+
+### Changed
+- Uptake [@microsoft/ocsdk@0.5.13](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.13)
+
 ## [1.10.15] - 2025-03-11
 
 ### Security

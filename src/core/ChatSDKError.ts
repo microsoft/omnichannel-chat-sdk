@@ -56,6 +56,8 @@ export enum ChatSDKErrorName {
     UndefinedAuthToken = "UndefinedAuthToken",
 
     UnknownAMSLoadState = "UnknownAMSLoadState",
+     /** Send message failure */
+    ChatSDKSendMessageFailed = "ChatSDKSendMessageFailed",
 
 }
 
