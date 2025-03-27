@@ -312,7 +312,7 @@ export class ACSConversation {
         }
     }
 
-    public async sendMessage(message: ChatSDKMessage): Promise<void> {
+    public async sendMessage(message: ChatSDKMessage): Promise<OmnichannelMessage> {
         this.logger?.startScenario(ACSClientEvent.SendMessage);
 
         if (!message.metadata) {
@@ -333,8 +333,26 @@ export class ACSConversation {
         }
 
         try {
-            await this.chatThreadClient?.sendMessage(sendMessageRequest, sendMessageOptions);
+            const response = await this.chatThreadClient?.sendMessage(sendMessageRequest, sendMessageOptions);
             this.logger?.completeScenario(ACSClientEvent.SendMessage);
+
+            if (response?.id) {
+                console.log(response?.id);
+                const chatMessage = {
+                    id: response?.id,
+                    content: message.content,
+                    sender: { communicationUserId: this.sessionInfo?.id as string },
+                    displayName: sendMessageOptions.senderDisplayName,
+                    metadata: {
+                        tags: defaultMessageTags.join(',')
+                    },
+                    createdOn: new Date(parseInt(response?.id)) || response?.id
+                };
+
+                return createOmnichannelMessage(chatMessage as any, { // eslint-disable-line @typescript-eslint/no-explicit-any
+                    liveChatVersion: LiveChatVersion.V2
+                });
+            }
         } catch (error) {
             const exceptionDetails = {
                 response: 'SendMessageFailed',
@@ -347,6 +365,8 @@ export class ACSConversation {
 
             throw error;
         }
+
+        return {} as OmnichannelMessage;
     }
 
     public async sendTyping(): Promise<void> {
