@@ -153,7 +153,7 @@ class OmnichannelChatSDK {
     private AMSClientLoadCurrentState: AMSClientLoadStates = AMSClientLoadStates.NOT_LOADED;
     private isMaskingDisabled = false;
     private maskingCharacter = "#";
-    private isAMSClientDisabled = false;
+    private isAMSClientAllowed = false;
 
     constructor(omnichannelConfig: OmnichannelConfig, chatSDKConfig: ChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
@@ -220,6 +220,7 @@ class OmnichannelChatSDK {
         if (this.AMSClient) {
             this.AMSClient.setDebug(flag);
         }
+
         loggerUtils.setDebug(flag, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
     }
 
@@ -242,8 +243,9 @@ class OmnichannelChatSDK {
 
     private async getAMSClient() : Promise<AmsClient> {
 
-        if (this.isAMSClientDisabled === true) {
-            throw new Error("AMSClient is disabled.");
+        //return null to do not break promisse creation
+        if (this.isAMSClientAllowed === false) {
+            return null;
         }
 
         if (this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED && this.liveChatVersion === LiveChatVersion.V1) {
@@ -274,29 +276,27 @@ class OmnichannelChatSDK {
         }
 
         this.ACSClient = new ACSClient(this.acsClientLogger);
-
         this.scenarioMarker.completeScenario(TelemetryEvent.InitializeComponents);
     }
 
-    public async enableAMSClient() : Promise<void> {
-        this.isAMSClientDisabled = false;
-        // only load ams client if the SDK is up and running, otherwise it will be loaded during initialization
-        if (this.isInitialized){
-            await this.loadAmsClient();
+    private isAMSLoadAllowed(): boolean {
+        // it will load AMS only if enabled for Customer or Agent support for attachments, based on configuration
+        if (this.liveChatConfig.LiveWSAndLiveChatEngJoin.msdyn_enablefileattachmentsforcustomers ||
+            this.liveChatConfig.LiveWSAndLiveChatEngJoin.msdyn_enablefileattachmentsforagents) {
+            if (this.liveChatVersion === LiveChatVersion.V2) {
+                //override of this value, since it will be needed to control access to attachment operations
+                this.isAMSClientAllowed = true;
+                return this.isAMSClientAllowed;
+            }
         }
-    }
-
-    public async disableAMSClient() : Promise<void> {
-        // No need to remove the AMS client , the flag will ensure any action is not performed
-        this.isAMSClientDisabled = true;
+        return this.isAMSClientAllowed;
     }
 
     private async loadAmsClient() : Promise<void> {
         this.scenarioMarker.startScenario(TelemetryEvent.InitializeMessagingClient);
         try {
-            if (this.liveChatVersion === LiveChatVersion.V2) {
-                if (this.isAMSClientDisabled !== true && this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED) {
-
+            if (this.isAMSLoadAllowed()) {
+                if (this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED) {
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADING;
                     this.AMSClient = await createAMSClient({
                         framedMode: isBrowser(),
@@ -306,8 +306,6 @@ class OmnichannelChatSDK {
                     });
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
                 }
-            } else if (this.liveChatVersion === LiveChatVersion.V1) {
-                this.IC3Client = await this.getIC3Client();
             }
 
             this.scenarioMarker.completeScenario(TelemetryEvent.InitializeMessagingClient);
@@ -320,7 +318,6 @@ class OmnichannelChatSDK {
     private async parallelInitialization(optionalParams: InitializeOptionalParams = {}) {
         try {
             this.scenarioMarker.startScenario(TelemetryEvent.InitializeChatSDKParallel);
-            this.isAMSClientDisabled = !!optionalParams.disableAMSClient;
 
             if (this.isInitialized) {
                 this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDKParallel);
@@ -331,9 +328,7 @@ class OmnichannelChatSDK {
             await Promise.all([this.loadInitComponents(), this.loadChatConfig(optionalParams)]);
             // this will load ams in the background, without holding the load
 
-            if (!optionalParams.disableAMSClient) {
-                this.loadAmsClient();
-            }
+            this.loadAmsClient();
 
             this.isInitialized = true;
             this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDKParallel);
@@ -350,7 +345,6 @@ class OmnichannelChatSDK {
     private async sequentialInitialization(optionalParams: InitializeOptionalParams = {}) {
 
         this.scenarioMarker.startScenario(TelemetryEvent.InitializeChatSDK);
-        this.isAMSClientDisabled = !!optionalParams.disableAMSClient;
 
         if (this.isInitialized) {
             this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDK);
@@ -385,7 +379,7 @@ class OmnichannelChatSDK {
             if (this.liveChatVersion === LiveChatVersion.V2) {
                 this.ACSClient = new ACSClient(this.acsClientLogger);
 
-                if (this.isAMSClientDisabled === false && this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED) {
+                if (this.isAMSLoadAllowed() && this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED) {
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADING;
                     this.AMSClient = await createAMSClient({
                         framedMode: isBrowser(),
@@ -417,12 +411,14 @@ class OmnichannelChatSDK {
      */
     public async initialize(optionalParams: InitializeOptionalParams = {}): Promise<ChatConfig> {
 
-        const { useParallelLoad } = optionalParams;
+        const { useSequentialLoad } = optionalParams;
 
-        if (useParallelLoad === true) {
-            return await this.parallelInitialization(optionalParams)
+        // default to use parallel load , and support for legacy definition
+        if ( useSequentialLoad ===  true) {
+            return await this.sequentialInitialization(optionalParams);
         }
-        return await this.sequentialInitialization(optionalParams);
+
+        return await this.parallelInitialization(optionalParams)
     }
 
     private async loadChatConfig(optionalParams: InitializeOptionalParams = {}) : Promise<void> {
@@ -1624,11 +1620,11 @@ class OmnichannelChatSDK {
             ChatId: this.chatToken.chatId as string
         });
 
-        if (this.isAMSClientDisabled === true) {
+        if (this.isAMSClientAllowed === false) {
             this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string,
-                ExceptionDetails : "AMSClient is disabled"
+                ExceptionDetails : "AMSClient is not loaded, please check widget configuration to allow attachments"
             });
             throw new Error('AMSClient is disabled. Please enable AMSClient to upload file attachments.');
         }
@@ -1753,13 +1749,13 @@ class OmnichannelChatSDK {
             ChatId: this.chatToken.chatId as string
         });
 
-        if (this.isAMSClientDisabled === true) {
+        if (this.isAMSClientAllowed === false) {
             this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string,
                 ExceptionDetails : "AMSClient is disabled"
             });
-            throw new Error('AMSClient is disabled. Please enable AMSClient to download file attachments.');
+            throw new Error('AMSClient is not loaded, Enable support for attachment scenarios in the widget configuration.');
         }
 
         const amsClient = await this.getAMSClient();

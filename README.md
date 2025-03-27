@@ -223,10 +223,14 @@ const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, cha
 
 const optionalParams = {
     getLiveChatConfigOptionalParams: {
-        sendCacheHeaders: false // Whether to send Cache-Control HTTP header to GetChatConfig call
+        sendCacheHeaders: false,// Whether to send Cache-Control HTTP header to GetChatConfig call
+        useSequentialLoad: false // Whether to use sequential load for chat config, if not present, by default uses parallel load for faster initialization
+
     }
 };
 
+
+// For the case when the widget doesnt have enabled support for attachments, AMS wont be loaded.
 await chatSDK.initialize(optionalParams);
 ```
 
