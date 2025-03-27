@@ -13,6 +13,7 @@
 **[Using Custom Chat Control](#using-custom-chat-control)**
 1. [Render Adaptive Cards](#render-adaptive-cards)
 1. [Upload File Validation](#upload-file-validation)
+1. [Render Messages in Order](#render-messages-in-order)
 
 ## Using Bot Framework Web Chat Control
 
@@ -499,3 +500,114 @@ fileSelector.onchange = async (event) => {
     });
 }
 ```
+
+### Render Messages in Order
+
+```js
+class CustomWidgetMessageRenderer {
+    constructor(chatSDK) {
+        this.chatSDK = chatSDK;
+        this.postedMessageIds = new Set();
+        this.postedOriginalMessageIds = new Set();
+        this.messages = new Map();
+        this.subscribers = [];
+    }
+
+    async initialize(options = {}) {
+        if (options.rehydrate) {
+            setTimeout(async () => {
+                const messages = await this.chatSDK.getMessages(); // Retrieve whole conversation messages
+                messages.forEach(message => {
+                    this.postMessage(message);
+                });
+            }, 500); // Prevent race conditions
+        }
+
+        await this.chatSDK.onNewMessage((message) => {
+            this.postMessage(message);
+        });
+    }
+
+    async sendMessage(content) {
+        const chatMessage = await this.chatSDK.sendMessage({content});
+        this.postMessage(chatMessage);
+    }
+
+    getMessages() { // Retrieve ordered messages
+        const messages = [...this.messages.values()];
+        messages.sort((a, b) => a.id - b.id); // Reorder messages in ascending order
+        return messages;
+    }
+
+    notifyChatTranscriptUpdate() {
+        const messages = this.getMessages();
+        this.subscribers.forEach(subscriber => {
+            subscriber(messages);
+        });
+    }
+
+    postMessage(newMessage) {
+        const isPostedMessageId = this.postedMessageIds.has(newMessage.id);
+        let isPostedOriginalMessageId = undefined;
+
+        if (newMessage && newMessage.metadata && newMessage.metadata.originalMessageId) { // Verify whether the message has originalMessageId
+            isPostedOriginalMessageId = this.postedOriginalMessageIds.has(newMessage.metadata.originalMessageId);
+        }
+
+        if (isPostedMessageId) {
+            const message = this.messages.get(newMessage.id);
+
+            // Update the message content of queue position message
+            if (newMessage?.tags.includes('queueposition')) {
+                this.messages.set(message.id, {...message, content: newMessage.content});
+                this.notifyChatTranscriptUpdate();
+            }
+        } else if (isPostedOriginalMessageId === false) { // Original message id takes precedence over message id
+            this.messages.set(newMessage.metadata.originalMessageId, {...newMessage, id: newMessage.metadata.originalMessageId}); // Replaces message id with originalMessageId
+
+            // Update posted message ids
+            this.postedMessageIds.add(newMessage.id);
+            this.postedOriginalMessageIds.add(newMessage.metadata.originalMessageId);
+            this.notifyChatTranscriptUpdate();
+        } else if (!isPostedMessageId) {
+            this.messages.set(newMessage.id, newMessage);
+            this.postedMessageIds.add(newMessage.id);
+            this.notifyChatTranscriptUpdate();
+        }
+    }
+
+    onChatTranscriptUpdate(subscriber) { // Subscribe to chat transcript update
+        this.subscribers.push(subscriber);
+    }
+}
+
+const useCustomWidgetMessageRenderer = async (chatSDK, options = {}) => {
+    const renderer = new CustomWidgetMessageRenderer(chatSDK);
+    const initializeOptions = {rehydrate: false};
+    if (options.rehydrate) {
+        initializeOptions.rehydrate = true;
+    }
+    await renderer.initialize(initializeOptions);
+    return renderer;
+};
+
+
+// ...
+
+const optionalParams = {
+    liveChatContext
+};
+
+await chatSDK.startChat();
+
+// Set rehydrate option to 'true' only if conversation is rehydrated from liveChatContext or any previously existing conversation (Persistent Chat, Chat Reconnect, etc)
+const renderer = await useCustomWidgetMessageRenderer(chatSDK, {
+    rehydrate: optionalParams.liveChatContext? true: false
+});
+
+// Event triggered on new message or when the array of messages have been reordered
+renderer.onChatTranscriptUpdate((messages) => {
+    // TODO: Add custom implementation to update UI with ordered messages
+});
+
+renderer.sendMessage("Sample message from customer");
