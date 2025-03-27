@@ -372,7 +372,6 @@ import {DeliveryMode, MessageContentType, MessageType, PersonType} from '@micros
 
 ...
 
-const displayName = "Contoso"
 const message = "Sample message from customer";
 const messageToSend = {
     content: message

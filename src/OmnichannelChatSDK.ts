@@ -1260,7 +1260,7 @@ class OmnichannelChatSDK {
         return message;
     }
 
-    public async sendMessage(message: ChatSDKMessage): Promise<void> {
+    public async sendMessage(message: ChatSDKMessage): Promise<OmnichannelMessage | void> {
         this.scenarioMarker.startScenario(TelemetryEvent.SendMessages, {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
@@ -1288,12 +1288,14 @@ class OmnichannelChatSDK {
             }
 
             try {
-                await (this.conversation as ACSConversation)?.sendMessage(sendMessageRequest);
+                const chatMessage = await (this.conversation as ACSConversation)?.sendMessage(sendMessageRequest);
 
                 this.scenarioMarker.completeScenario(TelemetryEvent.SendMessages, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string
                 });
+
+                return chatMessage;
             } catch (error) {
                 const exceptionDetails: ChatSDKExceptionDetails = {
                     response: ChatSDKErrorName.ChatSDKSendMessageFailed,
