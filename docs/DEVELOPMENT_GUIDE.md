@@ -395,6 +395,7 @@ return <ReactWebChat
 ```
 
 ## Using Custom Chat Control
+> ❗Minimum version of [@microsoft/omnichannel-chat-sdk@1.10.16](https://www.npmjs.com/package/@microsoft/omnichannel-chat-sdk/v/1.10.16) is required
 
 ### Render Adaptive Cards
 
@@ -598,7 +599,7 @@ const optionalParams = {
     liveChatContext
 };
 
-await chatSDK.startChat();
+await chatSDK.startChat(optionalParams);
 
 // Set rehydrate option to 'true' only if conversation is rehydrated from liveChatContext or any previously existing conversation (Persistent Chat, Chat Reconnect, etc)
 const renderer = await useCustomWidgetMessageRenderer(chatSDK, {
