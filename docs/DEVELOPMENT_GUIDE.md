@@ -395,7 +395,6 @@ return <ReactWebChat
 ```
 
 ## Using Custom Chat Control
-> ❗Minimum version of [@microsoft/omnichannel-chat-sdk@1.10.16](https://www.npmjs.com/package/@microsoft/omnichannel-chat-sdk/v/1.10.16) is required
 
 ### Render Adaptive Cards
 
@@ -503,6 +502,7 @@ fileSelector.onchange = async (event) => {
 ```
 
 ### Render Messages in Order
+> ❗Minimum version of [@microsoft/omnichannel-chat-sdk@1.10.16](https://www.npmjs.com/package/@microsoft/omnichannel-chat-sdk/v/1.10.16) is required
 
 ```js
 class CustomWidgetMessageRenderer {
