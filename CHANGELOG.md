@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.10.16] - 2025-03-27
+
 ### Added
 - Added exception details for telemetry for SendMessage
 - Expose `OriginalMessageId` to `ChatSDK.onNewMessage()` to handle message ordering
