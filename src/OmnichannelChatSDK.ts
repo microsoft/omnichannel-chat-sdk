@@ -256,12 +256,10 @@ class OmnichannelChatSDK {
             return this.AMSClient;
         case AMSClientLoadStates.LOADING:
             return await this.retryLoadAMSClient();
-
         case AMSClientLoadStates.ERROR:
         case AMSClientLoadStates.NOT_LOADED:
             await this.loadAmsClient();
             return this.AMSClient;
-
         default:
             return null;
         }
@@ -281,8 +279,8 @@ class OmnichannelChatSDK {
 
     private isAMSLoadAllowed(): boolean {
         // it will load AMS only if enabled for Customer or Agent support for attachments, based on configuration
-        if (this.liveChatConfig.LiveWSAndLiveChatEngJoin?.msdyn_enablefileattachmentsforcustomers === "true" ||
-            this.liveChatConfig.LiveWSAndLiveChatEngJoin?.msdyn_enablefileattachmentsforagents === "true" ) {
+        if (this.liveChatConfig?.LiveWSAndLiveChatEngJoin?.msdyn_enablefileattachmentsforcustomers === "true" ||
+            this.liveChatConfig?.LiveWSAndLiveChatEngJoin?.msdyn_enablefileattachmentsforagents === "true" ) {
             if (this.liveChatVersion === LiveChatVersion.V2) {
                 //override of this value, since it will be needed to control access to attachment operations
                 this.isAMSClientAllowed = true;
@@ -307,8 +305,6 @@ class OmnichannelChatSDK {
                     });
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
                 }
-            } else {
-                console.log("AMS NOT LOADED");
             }
 
             this.scenarioMarker.completeScenario(TelemetryEvent.InitializeMessagingClient);
