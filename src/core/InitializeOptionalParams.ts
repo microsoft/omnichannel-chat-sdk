@@ -14,18 +14,10 @@ interface InitializeOptionalParams {
     getLiveChatConfigOptionalParams?: GetLiveChatConfigOptionalParams;
 
     /**
-     * @deprecated
      * Indicates whether to load resources in parallel.
      * Not longer evaluated but was not removed for backward compatibility.
      */
     useParallelLoad?: boolean;
-
-    /**
-     * Indicates whether to load resources sequentially.
-     * If set to `true`, resources will be loaded one after another in sequence.
-     */
-    useSequentialLoad?: boolean;
-
 }
 
 export default InitializeOptionalParams

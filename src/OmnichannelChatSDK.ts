@@ -149,7 +149,7 @@ class OmnichannelChatSDK {
     private isPersistentChat = false;
     private isChatReconnect = false;
     private reconnectId: null | string = null;
-    private refreshTokenTimer: NodeJS.Timeout | string |number | null = null;
+    private refreshTokenTimer: NodeJS.Timeout | string | number | null = null;
     private AMSClientLoadCurrentState: AMSClientLoadStates = AMSClientLoadStates.NOT_LOADED;
     private isMaskingDisabled = false;
     private maskingCharacter = "#";
@@ -224,7 +224,7 @@ class OmnichannelChatSDK {
         loggerUtils.setDebug(flag, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
     }
 
-    private async retryLoadAMSClient() : Promise<AmsClient> {
+    private async retryLoadAMSClient(): Promise<AmsClient> {
         // Constants for retry logic
         const RETRY_DELAY_MS = 1000;
         const MAX_RETRY_COUNT = 5;
@@ -232,19 +232,22 @@ class OmnichannelChatSDK {
 
         while (retryCount < MAX_RETRY_COUNT) {
             if (this.AMSClient) {
+                console.log("AMSClient loaded successfully after retrying.");
                 return this.AMSClient;
             }
 
             await sleep(RETRY_DELAY_MS);
             retryCount++;
         }
+        console.error("Failed to load AMSClient after multiple attempts.");
         return null;
     }
 
-    private async getAMSClient() : Promise<AmsClient> {
+    private async getAMSClient(): Promise<AmsClient> {
 
         //return null to do not break promisse creation
         if (this.isAMSClientAllowed === false) {
+            console.log("AMSClient is not allowed, returning null");
             return null;
         }
 
@@ -252,20 +255,23 @@ class OmnichannelChatSDK {
             return null;
         }
         switch (this.AMSClientLoadCurrentState) {
-        case AMSClientLoadStates.LOADED:
-            return this.AMSClient;
-        case AMSClientLoadStates.LOADING:
-            return await this.retryLoadAMSClient();
-        case AMSClientLoadStates.ERROR:
-        case AMSClientLoadStates.NOT_LOADED:
-            await this.loadAmsClient();
-            return this.AMSClient;
-        default:
-            return null;
+            case AMSClientLoadStates.LOADED:
+                console.log("AMSClient is already loaded");
+                return this.AMSClient;
+            case AMSClientLoadStates.LOADING:
+                console.log("AMSClient is loading, waiting for it to be ready");
+                return await this.retryLoadAMSClient();
+            case AMSClientLoadStates.ERROR:
+            case AMSClientLoadStates.NOT_LOADED:
+                console.log("AMSClient is not loaded, loading now");
+                await this.loadAmsClient();
+                return this.AMSClient;
+            default:
+                return null;
         }
     }
 
-    private async loadInitComponents() : Promise<void>{
+    private async loadInitComponents(): Promise<void> {
         this.scenarioMarker.startScenario(TelemetryEvent.InitializeComponents);
 
         const supportedLiveChatVersions = [LiveChatVersion.V1, LiveChatVersion.V2];
@@ -280,7 +286,7 @@ class OmnichannelChatSDK {
     private isAMSLoadAllowed(): boolean {
         // it will load AMS only if enabled for Customer or Agent support for attachments, based on configuration
         if (this.liveChatConfig?.LiveWSAndLiveChatEngJoin?.msdyn_enablefileattachmentsforcustomers === "true" ||
-            this.liveChatConfig?.LiveWSAndLiveChatEngJoin?.msdyn_enablefileattachmentsforagents === "true" ) {
+            this.liveChatConfig?.LiveWSAndLiveChatEngJoin?.msdyn_enablefileattachmentsforagents === "true") {
             if (this.liveChatVersion === LiveChatVersion.V2) {
                 //override of this value, since it will be needed to control access to attachment operations
                 this.isAMSClientAllowed = true;
@@ -290,12 +296,13 @@ class OmnichannelChatSDK {
         return this.isAMSClientAllowed;
     }
 
-    private async loadAmsClient() : Promise<void> {
+    private async loadAmsClient(): Promise<void> {
         this.scenarioMarker.startScenario(TelemetryEvent.InitializeMessagingClient);
         try {
             if (this.isAMSLoadAllowed()) {
                 console.log("AMS ALLOWED");
                 if (this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED) {
+                    console.log("AMS NOT LOADED, LOADING NOW");
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADING;
                     this.AMSClient = await createAMSClient({
                         framedMode: isBrowser(),
@@ -305,6 +312,8 @@ class OmnichannelChatSDK {
                     });
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
                 }
+            } else {
+                console.log("AMS NOT ALLOWED");
             }
 
             this.scenarioMarker.completeScenario(TelemetryEvent.InitializeMessagingClient);
@@ -410,17 +419,15 @@ class OmnichannelChatSDK {
      */
     public async initialize(optionalParams: InitializeOptionalParams = {}): Promise<ChatConfig> {
 
-        const { useSequentialLoad } = optionalParams;
+        const { useParallelLoad } = optionalParams;
 
-        // default to use parallel load , and support for legacy definition
-        if ( useSequentialLoad ===  true) {
-            return await this.sequentialInitialization(optionalParams);
+        if (useParallelLoad === true) {
+            return await this.parallelInitialization(optionalParams)
         }
-
-        return await this.parallelInitialization(optionalParams)
+        return await this.sequentialInitialization(optionalParams);
     }
 
-    private async loadChatConfig(optionalParams: InitializeOptionalParams = {}) : Promise<void> {
+    private async loadChatConfig(optionalParams: InitializeOptionalParams = {}): Promise<void> {
         this.scenarioMarker.startScenario(TelemetryEvent.InitializeLoadChatConfig);
         const useCoreServices = isCoreServicesOrgUrl(this.omnichannelConfig.orgUrl);
 
@@ -828,7 +835,7 @@ class OmnichannelChatSDK {
             }
         };
 
-        const attachmentClientPromise = async () : Promise<void> => {
+        const attachmentClientPromise = async (): Promise<void> => {
             try {
                 const amsClient = await this.getAMSClient();
                 if (this.liveChatVersion === LiveChatVersion.V2) {
@@ -1623,7 +1630,7 @@ class OmnichannelChatSDK {
             this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string,
-                ExceptionDetails : "AMSClient is not loaded, please check widget configuration to allow attachments"
+                ExceptionDetails: "AMSClient is not loaded, please check widget configuration to allow attachments"
             });
             throw new Error('AMSClient is disabled. Please enable AMSClient to upload file attachments.');
         }
@@ -1752,7 +1759,7 @@ class OmnichannelChatSDK {
             this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string,
-                ExceptionDetails : "AMSClient is disabled"
+                ExceptionDetails: "AMSClient is disabled"
             });
             throw new Error('AMSClient is not loaded, Enable support for attachment scenarios in the widget configuration.');
         }
@@ -2358,7 +2365,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    private async setPrechatConfigurations(liveWSAndLiveChatEngJoin: LiveWSAndLiveChatEngJoin) : Promise<void> {
+    private async setPrechatConfigurations(liveWSAndLiveChatEngJoin: LiveWSAndLiveChatEngJoin): Promise<void> {
 
         const isPreChatEnabled = parseLowerCaseString(liveWSAndLiveChatEngJoin.msdyn_prechatenabled) === "true";
 
@@ -2369,7 +2376,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    private async setDataMaskingConfiguration(dataMaskingConfig: DataMaskingInfo) : Promise<void> {
+    private async setDataMaskingConfiguration(dataMaskingConfig: DataMaskingInfo): Promise<void> {
 
         if (dataMaskingConfig.setting.msdyn_maskforcustomer) {
             if (dataMaskingConfig.dataMaskingRules) {
@@ -2383,7 +2390,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    private async setAuthSettingConfig(authSettings: AuthSettings) : Promise<void> {
+    private async setAuthSettingConfig(authSettings: AuthSettings): Promise<void> {
 
         if (authSettings) {
             this.authSettings = authSettings;
@@ -2394,7 +2401,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    private async setPersistentChatConfiguration(liveWSAndLiveChatEngJoin: LiveWSAndLiveChatEngJoin) : Promise<void> {
+    private async setPersistentChatConfiguration(liveWSAndLiveChatEngJoin: LiveWSAndLiveChatEngJoin): Promise<void> {
         const isChatReconnectEnabled = parseLowerCaseString(liveWSAndLiveChatEngJoin.msdyn_enablechatreconnect) === "true";
         if (liveWSAndLiveChatEngJoin.msdyn_conversationmode?.toString() === ConversationMode.PersistentChat.toString()) {
             this.isPersistentChat = true;
@@ -2405,17 +2412,17 @@ class OmnichannelChatSDK {
         }
     }
 
-    private async setLocaleIdConfiguration(chatWidgetLanguage: ChatWidgetLanguage) : Promise<void> {
+    private async setLocaleIdConfiguration(chatWidgetLanguage: ChatWidgetLanguage): Promise<void> {
 
         this.localeId = chatWidgetLanguage.msdyn_localeid || defaultLocaleId;
     }
 
-    private async setCallingOptionConfiguration(liveWSAndLiveChatEngJoin: LiveWSAndLiveChatEngJoin) : Promise<void> {
+    private async setCallingOptionConfiguration(liveWSAndLiveChatEngJoin: LiveWSAndLiveChatEngJoin): Promise<void> {
         const { msdyn_callingoptions } = liveWSAndLiveChatEngJoin;
         this.callingOption = msdyn_callingoptions?.trim().length > 0 ? Number(msdyn_callingoptions) : CallingOptionsOptionSetNumber.NoCalling;
     }
 
-    private async setLiveChatVersionConfiguration(liveChatVersion: number) : Promise<void> {
+    private async setLiveChatVersionConfiguration(liveChatVersion: number): Promise<void> {
         this.liveChatVersion = liveChatVersion || LiveChatVersion.V2;
     }
 
@@ -2452,7 +2459,7 @@ class OmnichannelChatSDK {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private async buildConfigurations(liveChatConfig: any) : Promise<void> {
+    private async buildConfigurations(liveChatConfig: any): Promise<void> {
 
         const {
             DataMaskingInfo: dataMaskingConfig,
@@ -2515,7 +2522,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    private async setAuthTokenProvider(provider: ChatSDKConfig["getAuthToken"], optionalParams: SetAuthTokenProviderOptionalParams = {}) : Promise<void> {
+    private async setAuthTokenProvider(provider: ChatSDKConfig["getAuthToken"], optionalParams: SetAuthTokenProviderOptionalParams = {}): Promise<void> {
         this.scenarioMarker.startScenario(TelemetryEvent.GetAuthToken);
 
         this.chatSDKConfig.getAuthToken = provider;
@@ -2572,7 +2579,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    private useCoreServicesOrgUrlIfNotSet() : void {
+    private useCoreServicesOrgUrlIfNotSet(): void {
         /* Perform orgUrl conversion to CoreServices only if orgUrl is not a CoreServices orgUrl.
          * Feature should be enabled by default. `createCoreServicesOrgUrlAtRuntime` set to `false`
          * would disable the orgUrl conversion and should only be used as fallback only.
