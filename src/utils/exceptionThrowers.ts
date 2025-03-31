@@ -12,7 +12,8 @@
  * Stack trace should only be logged and not printed.
  */
 
-import { ChatSDKErrorName, ChatSDKError } from "../core/ChatSDKError";
+import { ChatSDKError, ChatSDKErrorName } from "../core/ChatSDKError";
+
 import ChatSDKExceptionDetails from "../core/ChatSDKExceptionDetails";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
@@ -39,7 +40,8 @@ export const throwChatSDKError = (chatSDKError: ChatSDKErrorName, e: unknown, sc
     throw new ChatSDKError(
         chatSDKError,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ((e as any)?.isAxiosError && (e as any)?.response?.status) ? (e as any)?.response?.status : undefined
+        ((e as any)?.isAxiosError && (e as any)?.response?.status) ? (e as any)?.response?.status : undefined,
+        exceptionDetails
     );
 }
 
