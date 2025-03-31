@@ -288,6 +288,7 @@ class OmnichannelChatSDK {
     }
 
     private evaluateAMSAvailability(): boolean {
+
         // it will load AMS only if enabled for Customer or Agent support for attachments, based on configuration
         if (this.liveChatConfig?.LiveWSAndLiveChatEngJoin?.msdyn_enablefileattachmentsforcustomers === "true" ||
             this.liveChatConfig?.LiveWSAndLiveChatEngJoin?.msdyn_enablefileattachmentsforagents === "true") {
@@ -308,12 +309,15 @@ class OmnichannelChatSDK {
                 if (this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED) {
                     console.log("AMS NOT LOADED, LOADING NOW");
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADING;
+                    console.time("ams_creation");
                     this.AMSClient = await createAMSClient({
                         framedMode: isBrowser(),
                         multiClient: true,
                         debug: this.debug,
                         logger: this.amsClientLogger as PluggableLogger
                     });
+                    console.timeEnd("ams_creation");
+                    console.log("AMS Loaded");
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
                 }
             } else {
@@ -1634,22 +1638,23 @@ class OmnichannelChatSDK {
             ChatId: this.chatToken.chatId as string
         });
 
-        if (this.isAMSClientAllowed === false) {
-            this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string,
-                ExceptionDetails: "AMSClient is not loaded, please check widget configuration to allow attachments"
-            });
-            throw new Error('AMSClient is disabled. Please enable AMSClient to upload file attachments.');
-        }
-
         if (!this.isInitialized) {
             exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.UploadFileAttachment);
         }
 
-        const amsClient = await this.getAMSClient();
-
         if (this.liveChatVersion === LiveChatVersion.V2) {
+
+            if (this.isAMSClientAllowed === false) {
+                this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string,
+                    ExceptionDetails: "AMSClient is not loaded, please check widget configuration to allow attachments"
+                });
+                throw new Error('AMSClient is disabled. Please enable AMSClient to upload file attachments.');
+            }
+
+            const amsClient = await this.getAMSClient();
+
             const createObjectResponse: any = await amsClient?.createObject(this.chatToken?.chatId as string, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
             const documentId = createObjectResponse.id;
             const uploadDocumentResponse: any = await amsClient?.uploadDocument(documentId, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -1769,19 +1774,18 @@ class OmnichannelChatSDK {
             exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.DownloadFileAttachment);
         }
 
-        if (this.isAMSClientAllowed === false) {
-            this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string,
-                ExceptionDetails: "AMSClient is disabled"
-            });
-            throw new Error('AMSClient is not loaded, Enable support for attachment scenarios in the widget configuration.');
-        }
-
-        const amsClient = await this.getAMSClient();
-
         if (this.liveChatVersion === LiveChatVersion.V2) {
             try {
+                if (this.isAMSClientAllowed === false) {
+                    this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken.chatId as string,
+                        ExceptionDetails: "AMSClient is disabled"
+                    });
+                    throw new Error('AMSClient is not loaded, Enable support for attachment scenarios in the widget configuration.');
+                }
+                const amsClient = await this.getAMSClient();
+
                 const response: any = await amsClient?.getViewStatus(fileMetadata);  // eslint-disable-line @typescript-eslint/no-explicit-any
                 const { view_location } = response;
                 const viewResponse: any = await amsClient?.getView(fileMetadata, view_location);  // eslint-disable-line @typescript-eslint/no-explicit-any
