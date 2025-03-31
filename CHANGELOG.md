@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file.
 
 - Load AMS based on config.
 
+### Fixed
+- Fix for methos receiving exceptionDetails , but not logging it in telemetry
+- Fix to prevent double load of AMS
+- Fix to prevent startchat to finish before AMS client loads. (latency detected, future work to be part of AMS client enhancements)
+
+
 ## [1.10.16] - 2025-03-27
 
 ### Added
