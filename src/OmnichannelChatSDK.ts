@@ -302,7 +302,6 @@ class OmnichannelChatSDK {
         this.scenarioMarker.startScenario(TelemetryEvent.InitializeMessagingClient);
         try {
             if (this.isAMSClientAllowed) {
-
                 if (this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED) {
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADING;
                     this.debug && console.time("ams_creation");
@@ -853,7 +852,6 @@ class OmnichannelChatSDK {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string,
                 };
-
                 exceptionThrowers.throwMessagingClientInitializationFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
             }
         };
@@ -1645,7 +1643,7 @@ class OmnichannelChatSDK {
                     ChatId: this.chatToken.chatId as string,
                     ExceptionDetails: "AMSClient is not loaded, please check widget configuration to allow attachments"
                 });
-                throw new Error('AMSClient is disabled. Please enable AMSClient to upload file attachments.');
+                exceptionThrowers.throwFeatureDisabled(this.scenarioMarker, TelemetryEvent.UploadFileAttachment, "Enable support for attachment upload and receive in the widget configuration.");
             }
 
             const amsClient = await this.getAMSClient();
@@ -1775,7 +1773,7 @@ class OmnichannelChatSDK {
                         ChatId: this.chatToken.chatId as string,
                         ExceptionDetails: "AMSClient is disabled"
                     });
-                    throw new Error('AMSClient is not loaded, Enable support for attachment scenarios in the widget configuration.');
+                    exceptionThrowers.throwFeatureDisabled(this.scenarioMarker, TelemetryEvent.DownloadFileAttachment, "Enable support for attachment upload and receive in the widget configuration.");
                 }
                 const amsClient = await this.getAMSClient();
 
