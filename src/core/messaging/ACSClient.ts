@@ -337,7 +337,6 @@ export class ACSConversation {
             this.logger?.completeScenario(ACSClientEvent.SendMessage);
 
             if (response?.id) {
-                console.log(response?.id);
                 const chatMessage = {
                     id: response?.id,
                     content: message.content,
