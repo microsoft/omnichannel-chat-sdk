@@ -313,7 +313,6 @@ class OmnichannelChatSDK {
                         logger: this.amsClientLogger as PluggableLogger
                     });
                     this.debug && console.timeEnd("ams_creation");
-                    console.log("AMS Loaded");
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
                 }
             }
@@ -1628,8 +1627,6 @@ class OmnichannelChatSDK {
     }
 
     public async uploadFileAttachment(fileInfo: IFileInfo | File): Promise<UploadFileAttachmentResponse> {
-
-        console.log("AMS : uploadFileAttachment");
 
         this.scenarioMarker.startScenario(TelemetryEvent.UploadFileAttachment, {
             RequestId: this.requestId,
