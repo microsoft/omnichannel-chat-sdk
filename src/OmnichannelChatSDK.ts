@@ -237,7 +237,6 @@ class OmnichannelChatSDK {
             await sleep(RETRY_DELAY_MS);
             retryCount++;
         }
-        console.error("Failed to load AMSClient after multiple attempts.");
         return null;
     }
 
@@ -857,9 +856,13 @@ class OmnichannelChatSDK {
         };
 
         if (!this.chatSDKConfig.useCreateConversation?.disable) {
+            console.log("useCreateConversation");
             await createConversationPromise();
-            await Promise.all([messagingClientPromise(), attachmentClientPromise()]);
+            await Promise.all([messagingClientPromise(),attachmentClientPromise()]);
+
         } else {
+            console.log("ELSE useCreateConversation");
+
             await Promise.all([sessionInitPromise(), messagingClientPromise(), attachmentClientPromise()]);
         }
 
@@ -1648,6 +1651,14 @@ class OmnichannelChatSDK {
 
             const amsClient = await this.getAMSClient();
 
+            if (amsClient === null || amsClient === undefined) {
+                this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string,
+                    ExceptionDetails: "AMSClient is not loaded, please check widget configuration to allow attachments"
+                });
+            }
+
             const createObjectResponse: any = await amsClient?.createObject(this.chatToken?.chatId as string, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
             const documentId = createObjectResponse.id;
             const uploadDocumentResponse: any = await amsClient?.uploadDocument(documentId, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -1776,6 +1787,14 @@ class OmnichannelChatSDK {
                     exceptionThrowers.throwFeatureDisabled(this.scenarioMarker, TelemetryEvent.DownloadFileAttachment, "Enable support for attachment upload and receive in the widget configuration.");
                 }
                 const amsClient = await this.getAMSClient();
+
+                if (amsClient === null || amsClient === undefined) {
+                    this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken.chatId as string,
+                        ExceptionDetails: "AMSClient is not loaded, please check widget configuration to allow attachments"
+                    });
+                }
 
                 const response: any = await amsClient?.getViewStatus(fileMetadata);  // eslint-disable-line @typescript-eslint/no-explicit-any
                 const { view_location } = response;
