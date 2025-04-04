@@ -1,5 +1,3 @@
-import ChatSDKExceptionDetails from "./ChatSDKExceptionDetails";
-
 /**
  * Enum of ChatSDK standard errors.
  *
@@ -61,17 +59,17 @@ export enum ChatSDKErrorName {
      /** Send message failure */
     ChatSDKSendMessageFailed = "ChatSDKSendMessageFailed",
 
+    AMSClientNotLoaded = "AMSClientNotLoaded",
+
 }
 
 export class ChatSDKError {
     public message: ChatSDKErrorName;
     public httpResponseStatusCode: number | undefined;
-    public exceptionDetails: ChatSDKExceptionDetails | undefined;
 
-    constructor(message: ChatSDKErrorName, httpResponseStatusCode?: number, exceptionDetails?: ChatSDKExceptionDetails) {
+    constructor(message: ChatSDKErrorName, httpResponseStatusCode?: number) {
         this.message = message;
         this.httpResponseStatusCode = httpResponseStatusCode;
-        this.exceptionDetails = exceptionDetails;
     }
 
     toString(): string {
