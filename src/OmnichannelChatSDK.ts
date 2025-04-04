@@ -442,7 +442,6 @@ class OmnichannelChatSDK {
             const { getLiveChatConfigOptionalParams } = optionalParams;
             await this.getChatConfig(getLiveChatConfigOptionalParams || {});
             // once we have the config, we can check if we need to load AMS
-            this.evaluateAMSAvailability();
         } catch (e) {
             exceptionThrowers.throwChatConfigRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.InitializeLoadChatConfig);
         }
@@ -2441,6 +2440,7 @@ class OmnichannelChatSDK {
 
             liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache);
             this.liveChatConfig = liveChatConfig;
+            this.evaluateAMSAvailability();
             this.buildConfigurations(liveChatConfig);
             /* istanbul ignore next */
             this.debug && console.log(`[OmnichannelChatSDK][getChatConfig][liveChatVersion] ${this.liveChatVersion}`);
