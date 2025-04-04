@@ -18,7 +18,7 @@ import ChatSDKExceptionDetails from "../core/ChatSDKExceptionDetails";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
 
-export const throwChatSDKError = (chatSDKError: ChatSDKErrorName, e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string} = {}, message = ""): void => {
+export const throwChatSDKError = (chatSDKError: ChatSDKErrorName, e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: { [key: string]: string } = {}, message?: string): void => {
     const exceptionDetails: ChatSDKExceptionDetails = {
         response: chatSDKError
     };
@@ -27,15 +27,14 @@ export const throwChatSDKError = (chatSDKError: ChatSDKErrorName, e: unknown, sc
         exceptionDetails.errorObject = `${e}`;
     }
 
+    if (message) {
+        exceptionDetails.message = message;
+    }
+
     scenarioMarker.failScenario(telemetryEvent, {
         ...telemetryData,
         ExceptionDetails: JSON.stringify(exceptionDetails)
     });
-
-    if (message) {
-        exceptionDetails.message = message;
-        console.error(message);
-    }
 
     throw new ChatSDKError(
         chatSDKError,
@@ -44,6 +43,10 @@ export const throwChatSDKError = (chatSDKError: ChatSDKErrorName, e: unknown, sc
         exceptionDetails
     );
 }
+
+export const throwAMSLoadFailure = (scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, message: string): void => {
+    throwChatSDKError(ChatSDKErrorName.AMSClientNotLoaded, undefined, scenarioMarker, telemetryEvent, {}, message);
+};
 
 export const throwScriptLoadFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
     throwChatSDKError(ChatSDKErrorName.ScriptLoadFailure, e, scenarioMarker, telemetryEvent);

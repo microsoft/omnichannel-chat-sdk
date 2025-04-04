@@ -11,6 +11,7 @@ import { SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
 import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
 import { createCoreServicesOrgUrl, getCoreServicesGeoName, isCoreServicesOrgUrl, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
 import { defaultLocaleId, getLocaleStringFromId } from "./utils/locale";
+import exceptionThrowers, { throwAMSLoadFailure } from "./utils/exceptionThrowers";
 import { getRuntimeId, isClientIdNotFoundErrorMessage, isCustomerMessage } from "./utils/utilities";
 import { loadScript, removeElementById, sleep } from "./utils/WebUtils";
 import platform, { isBrowser } from "./utils/platform";
@@ -99,7 +100,6 @@ import createTelemetry from "./utils/createTelemetry";
 import createVoiceVideoCalling from "./api/createVoiceVideoCalling";
 import { defaultMessageTags } from "./core/messaging/MessageTags";
 import exceptionSuppressors from "./utils/exceptionSuppressors";
-import exceptionThrowers from "./utils/exceptionThrowers";
 import { getLocationInfo } from "./utils/location";
 import { isCoreServicesOrgUrlDNSError } from "./utils/internalUtils";
 import loggerUtils from "./utils/loggerUtils";
@@ -1641,23 +1641,12 @@ class OmnichannelChatSDK {
         if (this.liveChatVersion === LiveChatVersion.V2) {
 
             if (this.isAMSClientAllowed === false) {
-                this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: "AMSClient is not loaded, please check widget configuration to allow attachments"
-                });
                 exceptionThrowers.throwFeatureDisabled(this.scenarioMarker, TelemetryEvent.UploadFileAttachment, "Enable support for attachment upload and receive in the widget configuration.");
             }
-
             const amsClient = await this.getAMSClient();
 
             if (amsClient === null || amsClient === undefined) {
-                this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: "AMSClient is null, no action can be perfored"
-                });
-                throw new Error('AMS client is null, no action can be performed');
+                throwAMSLoadFailure(this.scenarioMarker, TelemetryEvent.UploadFileAttachment, "AMS client is null, no action can be performed");
             }
 
             const createObjectResponse: any = await amsClient?.createObject(this.chatToken?.chatId as string, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -1712,7 +1701,6 @@ class OmnichannelChatSDK {
                 return messageToSend;
             } catch (error) {
                 console.error("OmnichannelChatSDK/uploadFileAttachment/sendMessage/error");
-
                 this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string
@@ -1790,12 +1778,7 @@ class OmnichannelChatSDK {
                 const amsClient = await this.getAMSClient();
 
                 if (amsClient === null || amsClient === undefined) {
-                    this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
-                        RequestId: this.requestId,
-                        ChatId: this.chatToken.chatId as string,
-                        ExceptionDetails: "AMS client is null, no action can be performed"
-                    });
-                    throw new Error('AMS client is null, no action can be performed');
+                    throwAMSLoadFailure(this.scenarioMarker, TelemetryEvent.DownloadFileAttachment, "AMS client is null, no action can be performed");
                 }
 
                 const response: any = await amsClient?.getViewStatus(fileMetadata);  // eslint-disable-line @typescript-eslint/no-explicit-any
