@@ -559,7 +559,7 @@ class CustomWidgetMessageRenderer {
             const message = this.messages.get(newMessage.id);
 
             // Update the message content of queue position message
-            if (newMessage?.tags.includes('queueposition')) {
+            if (newMessage && newMessage.tags && newMessage.tags.includes('queueposition')) {
                 this.messages.set(message.id, {...message, content: newMessage.content});
                 this.notifyChatTranscriptUpdate();
             }
