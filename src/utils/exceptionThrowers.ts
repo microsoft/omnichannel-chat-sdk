@@ -29,6 +29,7 @@ export const throwChatSDKError = (chatSDKError: ChatSDKErrorName, e: unknown, sc
 
     if (message) {
         exceptionDetails.message = message;
+        console.error(message);
     }
 
     scenarioMarker.failScenario(telemetryEvent, {
