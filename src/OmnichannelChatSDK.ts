@@ -1655,8 +1655,9 @@ class OmnichannelChatSDK {
                 this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: "AMSClient is not loaded, please check widget configuration to allow attachments"
+                    ExceptionDetails: "AMSClient is null, no action can be perfored"
                 });
+                throw new Error('AMS client is null, no action can be performed');
             }
 
             const createObjectResponse: any = await amsClient?.createObject(this.chatToken?.chatId as string, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -1792,8 +1793,9 @@ class OmnichannelChatSDK {
                     this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
                         RequestId: this.requestId,
                         ChatId: this.chatToken.chatId as string,
-                        ExceptionDetails: "AMSClient is not loaded, please check widget configuration to allow attachments"
+                        ExceptionDetails: "AMS client is null, no action can be performed"
                     });
+                    throw new Error('AMS client is null, no action can be performed');
                 }
 
                 const response: any = await amsClient?.getViewStatus(fileMetadata);  // eslint-disable-line @typescript-eslint/no-explicit-any
