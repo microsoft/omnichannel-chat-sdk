@@ -856,13 +856,9 @@ class OmnichannelChatSDK {
         };
 
         if (!this.chatSDKConfig.useCreateConversation?.disable) {
-            console.log("useCreateConversation");
             await createConversationPromise();
             await Promise.all([messagingClientPromise(),attachmentClientPromise()]);
-
         } else {
-            console.log("ELSE useCreateConversation");
-
             await Promise.all([sessionInitPromise(), messagingClientPromise(), attachmentClientPromise()]);
         }
 
