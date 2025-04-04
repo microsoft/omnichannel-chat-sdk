@@ -242,7 +242,7 @@ class OmnichannelChatSDK {
 
     private async getAMSClient(): Promise<AmsClient> {
 
-        //return null to do not break promisse creation
+        //return null to do not break promise creation
         if (this.isAMSClientAllowed === false) {
             return null;
         }

@@ -14,48 +14,49 @@ Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel
 Please make sure you have a chat widget configured before using this package or you can follow this [link](https://docs.microsoft.com/en-us/dynamics365/customer-service/add-chat-widget)
 
 ## Table of Contents
+
 - [Live Chat Widget vs. Chat SDK](#live-chat-widget-vs-chat-sdk)
 - [Releases](#releases)
 - [Installation](#installation)
 - [Installation on React Native](#installation-on-react-native)
 - [SDK Methods](#sdk-methods)
-    - [Initialization](#initialization)
-    - [Start Chat](#start-chat)
-    - [End Chat](#end-chat)
-    - [Get Pre-Chat Survey](#get-pre-chat-survey)
-    - [Get Live Chat Config](#get-live-chat-config)
-    - [Get Current Live Chat Context](#get-current-live-chat-context)
-    - [Get Data Masking Rules](#get-data-masking-rules)
-    - [Get Chat Reconnect Context](#get-chat-reconnect-context)
-    - [Get Conversation Details](#get-conversation-details)
-    - [Get Chat Token](#get-chat-token)
-    - [Get Calling Token](#get-calling-token)
-    - [Get Messages](#get-messages)
-    - [Send Messages](#send-messages)
-    - [On New Message](#on-new-message)
-    - [On Typing Event](#on-typing-event)
-    - [On Agent End Session](#on-agent-end-session)
-    - [Send Typing Event](#send-typing-event)
-    - [Email Live Chat Transcript](#email-live-chat-transcript)
-    - [Get Live Chat Transcript](#get-live-chat-transcript)
-    - [Upload File Attachment](#upload-file-attachment)
-    - [Download File Attachment](#download-file-attachment)
-    - [Create Chat Adapter](#create-chat-adapter)
-    - [Get Voice & Video Calling](#get-voice--video-calling)
-    - [Get Post Chat Survey Context](#get-post-chat-survey-context)
+  - [Initialization](#initialization)
+  - [Start Chat](#start-chat)
+  - [End Chat](#end-chat)
+  - [Get Pre-Chat Survey](#get-pre-chat-survey)
+  - [Get Live Chat Config](#get-live-chat-config)
+  - [Get Current Live Chat Context](#get-current-live-chat-context)
+  - [Get Data Masking Rules](#get-data-masking-rules)
+  - [Get Chat Reconnect Context](#get-chat-reconnect-context)
+  - [Get Conversation Details](#get-conversation-details)
+  - [Get Chat Token](#get-chat-token)
+  - [Get Calling Token](#get-calling-token)
+  - [Get Messages](#get-messages)
+  - [Send Messages](#send-messages)
+  - [On New Message](#on-new-message)
+  - [On Typing Event](#on-typing-event)
+  - [On Agent End Session](#on-agent-end-session)
+  - [Send Typing Event](#send-typing-event)
+  - [Email Live Chat Transcript](#email-live-chat-transcript)
+  - [Get Live Chat Transcript](#get-live-chat-transcript)
+  - [Upload File Attachment](#upload-file-attachment)
+  - [Download File Attachment](#download-file-attachment)
+  - [Create Chat Adapter](#create-chat-adapter)
+  - [Get Voice & Video Calling](#get-voice--video-calling)
+  - [Get Post Chat Survey Context](#get-post-chat-survey-context)
 - [Common Scenarios](#common-scenarios)
-    - [Using BotFramework-WebChat](#using-botframework-webchat)
-    - [Escalation to Voice & Video](#escalation-to-voice--video)
-    - [Pre-Chat Survey](#pre-chat-survey)
-    - [Post-Chat Survey](#post-chat-survey)
-    - [Reconnect to existing Chat](#reconnect-to-existing-chat)
-    - [Authenticated Chat](#authenticated-chat)
-    - [Persistent Chat](#persistent-chat)
-    - [Chat Reconnect with Authenticated User](#chat-reconnect-with-authenticated-user)
-    - [Chat Reconnect with Unauthenticated User](#chat-reconnect-with-unauthenticated-user)
-    - [Handling chat Disconnect on Mobile platform](#handling-chat-disconnect-on-mobile-platform)
-    - [Operating Hours](#operating-hours)
-    - [Single Sign-on for Bots](/docs/scenarios/SINGLE_SIGN_ON_FOR_BOTS.md)
+  - [Using BotFramework-WebChat](#using-botframework-webchat)
+  - [Escalation to Voice & Video](#escalation-to-voice--video)
+  - [Pre-Chat Survey](#pre-chat-survey)
+  - [Post-Chat Survey](#post-chat-survey)
+  - [Reconnect to existing Chat](#reconnect-to-existing-chat)
+  - [Authenticated Chat](#authenticated-chat)
+  - [Persistent Chat](#persistent-chat)
+  - [Chat Reconnect with Authenticated User](#chat-reconnect-with-authenticated-user)
+  - [Chat Reconnect with Unauthenticated User](#chat-reconnect-with-unauthenticated-user)
+  - [Handling chat Disconnect on Mobile platform](#handling-chat-disconnect-on-mobile-platform)
+  - [Operating Hours](#operating-hours)
+  - [Single Sign-on for Bots](/docs/scenarios/SINGLE_SIGN_ON_FOR_BOTS.md)
 - [Sample Apps](https://github.com/microsoft/omnichannel-chat-sdk-samples)
 - [Feature Comparisons](#feature-comparisons)
 - [Telemetry](#telemetry)
@@ -65,6 +66,7 @@ Please make sure you have a chat widget configured before using this package or 
 ## Live Chat Widget vs. Chat SDK
 
 Omnichannel offers a live chat widget (LCW) by default. You can use the Chat SDK to build your custom chat widget if:
+
 - You want to fully customize the user interface of the chat widget to conform with your branding.
 - You want to integrate Omnichannel into your mobile app using React Native.
 - You want to integrate additional functionalities that LCW does not offer.
@@ -151,31 +153,37 @@ npm install @microsoft/omnichannel-chat-sdk --save
 The following steps will be required to run Omnichannel Chat SDK on React Native:
 
 1. Install `node-libs-react-native`
+
     ```
     npm install node-libs-react-native --save-dev
     ```
 
 1. Install `react-native-randomBytes`
+
     ```
     npm install react-native-randombytes --save-dev
     ```
 
 1. Install `react-native-get-random-values`
+
     ```
     npm install react-native-get-random-values --save-dev
     ```
 
 1. Install `react-native-url-polyfill`
+
     ```
     npm install react-native-url-polyfill --save-dev
     ```
 
 1. Install `@azure/core-asynciterator-polyfill`
+
     ```
     npm install @azure/core-asynciterator-polyfill --save-dev
     ```
 
 1. Update *metro.config.js* to use React Native compatible Node Core modules
+
     ```ts
     module.exports = {
         // ...
@@ -190,6 +198,7 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
     ```
 
 1. Add the following *import* on top of your entry point file
+
     ```ts
     import 'node-libs-react-native/globals';
     import 'react-native-get-random-values';
@@ -230,7 +239,7 @@ const optionalParams = {
 };
 
 
-// For the case when the widget doesnt have enabled support for attachments, AMS wont be loaded.
+// For the case when the widget doesnt have enabled support for attachments, Upload/download operations wont be supported
 await chatSDK.initialize(optionalParams);
 ```
 
@@ -398,6 +407,7 @@ chatSDK.onNewMessage((message) => {
     console.log(message);
 }, optionalParams);
 ```
+
 ### On Typing Event
 
 It subscribes to an agent typing event.
@@ -516,6 +526,7 @@ try {
     }
 }
 ```
+
 ### Get Post Chat Survey Context
 
 It gets the participant type that should be used for the survey and both the default and bot survey details.
@@ -536,7 +547,7 @@ const agentAvailability = await chatSDK.getAgentAvailability();
 
 ### Pre-Chat Survey
 
-> See https://docs.microsoft.com/en-us/dynamics365/customer-service/configure-pre-chat-survey?tabs=customerserviceadmincenter on how to set up pre-conversation surveys
+> See <https://docs.microsoft.com/en-us/dynamics365/customer-service/configure-pre-chat-survey?tabs=customerserviceadmincenter> on how to set up pre-conversation surveys
 
 ```ts
     import * as AdaptiveCards, { Action } from "adaptivecards";
@@ -571,7 +582,7 @@ const agentAvailability = await chatSDK.getAgentAvailability();
 
 ### Post-Chat Survey
 
-> See https://docs.microsoft.com/en-us/dynamics365/customer-service/configure-post-conversation-survey?tabs=customerserviceadmincenter on how to set up post-conversation surveys
+> See <https://docs.microsoft.com/en-us/dynamics365/customer-service/configure-post-conversation-survey?tabs=customerserviceadmincenter> on how to set up post-conversation surveys
 
 > ❗ `chatSDK.getPostChatSurveyContext()` needs to be called before `chatSDK.endChat()` is called
 
@@ -630,7 +641,7 @@ messages.reverse().forEach((message: any) => renderMessage(message)); // Logic t
 
 ### Authenticated Chat
 
-> See https://docs.microsoft.com/en-us/dynamics365/customer-service/create-chat-auth-settings?tabs=customerserviceadmincenter#create-a-chat-authentication-setting-record on how to set up an authenticated chat
+> See <https://docs.microsoft.com/en-us/dynamics365/customer-service/create-chat-auth-settings?tabs=customerserviceadmincenter#create-a-chat-authentication-setting-record> on how to set up an authenticated chat
 
 ```ts
 const chatSDKConfig = {
@@ -653,7 +664,7 @@ await chatSDK.initialize();
 
 ### Persistent Chat
 
-> See https://docs.microsoft.com/en-us/dynamics365/customer-service/persistent-chat on how to set up persistent chat
+> See <https://docs.microsoft.com/en-us/dynamics365/customer-service/persistent-chat> on how to set up persistent chat
 
 ```ts
 const chatSDKConfig = {
@@ -677,9 +688,10 @@ await chatSDK.initialize();
 
 // from this point, this acts like a persistent chat
 ```
+
 ### Chat Reconnect with Authenticated User
 
-> See https://docs.microsoft.com/en-us/dynamics365/customer-service/configure-reconnect-chat?tabs=customerserviceadmincenter#enable-reconnection-to-a-previous-chat-session on how to set up chat reconnect
+> See <https://docs.microsoft.com/en-us/dynamics365/customer-service/configure-reconnect-chat?tabs=customerserviceadmincenter#enable-reconnection-to-a-previous-chat-session> on how to set up chat reconnect
 
 ```ts
 const chatSDKConfig = {
@@ -719,7 +731,7 @@ chatSDK.startChat();
 
 ### Chat Reconnect with Unauthenticated User
 
-> See https://docs.microsoft.com/en-us/dynamics365/customer-service/configure-reconnect-chat?tabs=customerserviceadmincenter#enable-reconnection-to-a-previous-chat-session on how to set up chat reconnect
+> See <https://docs.microsoft.com/en-us/dynamics365/customer-service/configure-reconnect-chat?tabs=customerserviceadmincenter#enable-reconnection-to-a-previous-chat-session> on how to set up chat reconnect
 
 ```ts
 const chatSDKConfig = {
@@ -763,7 +775,7 @@ if (chatReconnectContext.reconnectId) {
 
 ### Operating Hours
 
-> See https://docs.microsoft.com/en-us/dynamics365/customer-service/create-operating-hours?tabs=customerserviceadmincenter on how to set up operating hours
+> See <https://docs.microsoft.com/en-us/dynamics365/customer-service/create-operating-hours?tabs=customerserviceadmincenter> on how to set up operating hours
 
 ```ts
 const chatConfig = await chatSDK.getLiveChatConfig();
@@ -800,11 +812,12 @@ window.addEventListener("visibilitychange", async () => {
 });
 ```
 
-
 ### Using [BotFramework-WebChat](https://github.com/microsoft/BotFramework-WebChat)
+>
 > :warning: Currently supported on web only
 
 Minimum Requirement Checklist
+
 1. [ ] Initialize ChatSDK
 1. [ ] Start new conversation
 1. [ ] Create Chat Adapter
@@ -842,9 +855,10 @@ const store = createStore(
 ```
 
 ### Escalation to Voice & Video
+>
 > :warning: Currently supported on web only
 
-> See https://docs.microsoft.com/en-us/dynamics365/customer-service/call-options-visual-engagement on how to set up calling options
+> See <https://docs.microsoft.com/en-us/dynamics365/customer-service/call-options-visual-engagement> on how to set up calling options
 
 ```ts
 import OmnichannelChatSDK from '@microsoft/omnichannel-chat-sdk';
@@ -952,6 +966,7 @@ if (VoiceVideoCallingSDK) {
 ## Feature Comparisons
 
 ### Web
+
 | | Custom Control | WebChat Control |
 | --- | --- | --- |
 | **Features** | | |
@@ -963,6 +978,7 @@ if (VoiceVideoCallingSDK) {
 | Incoming messages handling | IC3 protocol message data | DirectLine activity data |
 
 ### React Native
+
 | | Custom Control | Gifted Chat Control | WebChat Control |
 | --- | --- | --- | --- |
 | **Features** | | | Currently not supported |
@@ -1011,7 +1027,7 @@ await chatSDK.initialize();
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
+the rights to use your contribution. For details, visit <https://cla.opensource.microsoft.com>.
 
 When you submit a pull request, a CLA bot will automatically determine whether you need to provide
 a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions
