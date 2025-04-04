@@ -40,6 +40,7 @@ describe('Omnichannel Chat SDK (Web)', () => {
     it('ChatSDK.startChat() with sendDefaultInitContext should pass getContext to OCClient.sessionInit()', async () => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
+        chatSDK["isAMSClientAllowed"] = true;
 
         await chatSDK.initialize({ useParallelLoad: true });
 
@@ -77,7 +78,7 @@ describe('Omnichannel Chat SDK (Web)', () => {
     it('ChatSDK.startChat() with sendDefaultInitContext should throw an error if not used on Web Platform', async () => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
-
+        chatSDK["isAMSClientAllowed"] = true;
         await chatSDK.initialize({ useParallelLoad: true });
 
         while (chatSDK.AMSClient === null) {
@@ -113,7 +114,7 @@ describe('Omnichannel Chat SDK (Web)', () => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
-
+        chatSDK["isAMSClientAllowed"] = true;
         await chatSDK.initialize({ useParallelLoad: true });
 
         while (chatSDK.AMSClient === null) {
@@ -142,7 +143,7 @@ describe('Omnichannel Chat SDK (Web)', () => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
-
+        chatSDK["isAMSClientAllowed"] = true;
         await chatSDK.initialize({ useParallelLoad: true });
 
         while (chatSDK.AMSClient === null) {
@@ -174,7 +175,7 @@ describe('Omnichannel Chat SDK (Web)', () => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
-
+        chatSDK["isAMSClientAllowed"] = true;
         await chatSDK.initialize({ useParallelLoad: true });
 
         while (chatSDK.AMSClient === null) {
