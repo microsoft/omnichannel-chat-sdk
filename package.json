@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/omnichannel-chat-sdk",
-  "version": "1.10.13-0",
+  "version": "1.10.17-0",
   "description": "Microsoft Omnichannel Chat SDK",
   "files": [
     "lib/**/*"
@@ -12,8 +12,9 @@
     "postbuild:tsc": "node ./scripts/copy_files.js",
     "prebuild:tsc": "eslint src --ext .ts",
     "test": "npm run test:jsdom && npm run test:node",
-    "test:jsdom": "jest --config jest.config.jsdom.js",
-    "test:node": "jest --config jest.config.node.js",
+    "test:jsdom": "jest --config jest.config.jsdom.js --verbose",
+    "test:node": "jest --config jest.config.node.js --verbose",
+    "watch": "tsc --watch",
     "lint": "eslint src --ext .ts"
   },
   "author": "Microsoft Corporation",
@@ -46,9 +47,9 @@
   "dependencies": {
     "@azure/communication-chat": "1.5.4",
     "@azure/communication-common": "2.3.1",
-    "@microsoft/botframework-webchat-adapter-azure-communication-chat": "^0.0.1-beta.1",
-    "@microsoft/ocsdk": "^0.5.11",
+    "@microsoft/botframework-webchat-adapter-azure-communication-chat": "^0.0.1-beta.2",
+    "@microsoft/ocsdk": "^0.5.13",
     "@microsoft/omnichannel-amsclient": "^0.1.8",
-    "@microsoft/omnichannel-ic3core": "^0.1.4"
+    "@microsoft/omnichannel-ic3core": "^0.1.5"
   }
 }

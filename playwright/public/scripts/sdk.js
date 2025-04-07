@@ -13,8 +13,8 @@ const run = async () => {
     const omnichannelConfig = {
         orgId: "",
         orgUrl: "",
-        widgetId: "",
-    }
+        widgetId: ""
+    };
 
     const { sleep } = window;
     const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
@@ -38,20 +38,23 @@ const run = async () => {
         runtimeContext.errorMessage = `${err.message}`;
         runtimeContext.errorObject = `${err}`;
     }
+    await sleep(30000);
 
-    await chatSDK.sendMessage({ "content": "help" });
+    await chatSDK.sendMessage({ "content": "hi" });
     await sleep(30000);
     console.log("*************** ALL MESSAGES ************************");
     console.table(await chatSDK.getMessages());
+
 
     console.log("*************** Pushed Messages ************************");
     console.table(messages);
     console.log("*************** ENDING CHAT MID FLY ************************");
 
+    await sleep(10000);
     await chatSDK.endChat();
 
 
-    await sleep(30000);
+    await sleep(60000);
     console.log("*************** ALL MESSAGES BEFORE END CHAT ************************");
     console.table(await chatSDK.getMessages());
 

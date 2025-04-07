@@ -8,6 +8,7 @@ const fetchTestConfig = () => {
     }
 
     const testConfigFilePath = path.join(path.dirname(__dirname), 'test.config.yml');
+
     let testConfig = null;
     try {
         const fileData = fs.readFileSync(testConfigFilePath, 'utf8');

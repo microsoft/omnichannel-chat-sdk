@@ -188,6 +188,7 @@ describe('ACSClient', () => {
             pollingInterval: 1000,
         });
 
+        conversation.keepPolling = true;
         jest.spyOn(conversation, 'getMessages').mockResolvedValue([{id: 'id', sender: {displayName: 'name'}}]);
 
         (global as any).setTimeout = jest.fn();
@@ -199,6 +200,49 @@ describe('ACSClient', () => {
         expect(client.chatClient.on).toHaveBeenCalledTimes(2);
         expect(client.chatClient.on.mock.calls[0][0]).toEqual(chatMessageReceivedEvent);
         expect(client.chatClient.on.mock.calls[1][0]).toEqual(chatMessageEditedEvent);
+    });
+
+    it('ACSClient.conversation.registerOnNewMessage() with disablePolling set as \'true\' should NOT call ChatThreadClient.getMessages()', async () => {
+        const client: any = new ACSClient();
+        const config = {
+            token: 'token',
+            environmentUrl: 'url'
+        }
+
+        await client.initialize(config);
+
+        const chatThreadClient: any = {};
+        chatThreadClient.listParticipants = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+        chatThreadClient.listMessages = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+
+        client.chatClient = {};
+        client.chatClient.getChatThreadClient = jest.fn(() => chatThreadClient);
+        client.chatClient.startRealtimeNotifications = jest.fn();
+        client.chatClient.on = jest.fn();
+
+        const conversation = await client.joinConversation({
+            id: 'id',
+            threadId: 'threadId',
+            pollingInterval: 1000,
+        });
+
+        conversation.keepPolling = true;
+        jest.spyOn(conversation, 'getMessages').mockResolvedValue([{id: 'id', sender: {displayName: 'name'}}]);
+
+        (global as any).setTimeout = jest.fn();
+        await conversation.registerOnNewMessage(() => {}, {disablePolling: true});
+
+        expect(conversation.getMessages).toHaveBeenCalledTimes(0);
     });
 
     it('ACSClient.conversation.registerOnThreadUpdate() should register to "participantsRemoved" event', async () => {
@@ -297,6 +341,7 @@ describe('ACSClient', () => {
         await client.initialize(config);
 
         const chatThreadClient: any = {};
+        const sendMessageResponse = {id: '0'};
         chatThreadClient.listParticipants = jest.fn(() => ({
             next: jest.fn(() => ({
                 value: 'value',
@@ -309,7 +354,7 @@ describe('ACSClient', () => {
                 done: jest.fn()
             })),
         }));
-        chatThreadClient.sendMessage = jest.fn();
+        chatThreadClient.sendMessage = jest.fn(() => sendMessageResponse);
 
         client.chatClient = {};
         client.chatClient.getChatThreadClient = jest.fn(() => chatThreadClient);
@@ -321,11 +366,20 @@ describe('ACSClient', () => {
             pollingInterval: 1000,
         });
 
-        await conversation.sendMessage({
-            content: 'message',
+        const content = 'message';
+        const chatMessage = await conversation.sendMessage({
+            content
         });
 
         expect(chatThreadClient.sendMessage).toHaveBeenCalledTimes(1);
+        expect(chatMessage).toBeDefined();
+        expect(chatMessage.id).toBe(sendMessageResponse.id);
+        expect(chatMessage.content).toBe(content);
+        expect(chatMessage.tags.includes('FromCustomer')).toBe(true);
+        expect(chatMessage.tags.includes('ChannelId-lcw')).toBe(true);
+        expect(chatMessage.properties.tags.includes('FromCustomer')).toBe(true);
+        expect(chatMessage.properties.tags.includes('ChannelId-lcw')).toBe(true);
+        expect(chatMessage.timestamp).toBeDefined();
     });
 
     it('ACSClient.sendMessage() failure should throw an error', async () => {
@@ -350,7 +404,7 @@ describe('ACSClient', () => {
                 done: jest.fn()
             })),
         }));
-        chatThreadClient.sendMessage = jest.fn(() => Promise.reject());
+        chatThreadClient.sendMessage = jest.fn(() => Promise.reject(new Error('SendMessageFailed')));
 
         client.chatClient = {};
         client.chatClient.getChatThreadClient = jest.fn(() => chatThreadClient);

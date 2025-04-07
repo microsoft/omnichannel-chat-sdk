@@ -95,6 +95,7 @@ describe('Omnichannel Chat SDK (Web), Sequential', () => {
 
         try {
             await chatSDK.startChat(optionalParams);
+            fail("Error expected");
         } catch (error : any ) {
             expect(error.message).toEqual(ChatSDKErrorName.UnsupportedPlatform);
             expect(console.error).toHaveBeenCalledWith("sendDefaultInitContext is only supported on browser");

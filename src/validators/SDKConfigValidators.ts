@@ -16,6 +16,9 @@ const defaultChatSDKConfig: ChatSDKConfig = {
     },
     chatReconnect: {
         disable: true,
+    },
+    useCreateConversation: {
+        disable: true,
     }
 };
 

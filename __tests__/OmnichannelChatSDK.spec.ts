@@ -521,6 +521,8 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             chatSDK.SDKProvider = SDKProvider;
 
             try {
+                chatSDK["isAMSClientAllowed"] = true;
+
                 await chatSDK.initialize();
                 fail();
             } catch (e: any ) {
@@ -537,6 +539,8 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             chatSDK.getChatConfig = jest.fn(() => {throw Error()});
 
             try {
+                chatSDK["isAMSClientAllowed"] = true;
+
                 await chatSDK.initialize();
                 fail();
             } catch (e: any ) {
@@ -552,6 +556,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const getLiveChatConfigOptionalParams = {
                 sendCacheHeaders: true
             };
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize({getLiveChatConfigOptionalParams});
 
@@ -585,6 +590,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             chatSDK.liveChatVersion = LiveChatVersion.V1;
 
             jest.spyOn(chatSDK, 'getIC3Client');
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
             await chatSDK.initialize();
@@ -790,6 +796,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.authSettings = {};
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -816,6 +823,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.authSettings = {};
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -847,6 +855,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.authSettings = {};
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -883,6 +892,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.authSettings = {};
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -920,6 +930,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.authSettings = {};
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -1014,6 +1025,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             };
 
             chatSDK.dataMaskingRules = { rules : [dataMaskingRule]} as MaskingRules;
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -1063,6 +1075,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             // global.fetch = jest.fn();
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -1092,6 +1105,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
         it('ChatSDK.startChat() should throw an error if OCClient.sessionInit() fails', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -1120,6 +1134,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
         it('ChatSDK.startChat() should not call OCClient.sessionInit() if OCClient.getChatToken() fails', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -1139,7 +1154,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
         it('ChatSDK.startChat() should throw a \'WidgetUseOutsideOperatingHour\' error if OCClient.sessionInit() fails with \'705\' error code', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
-
+            chatSDK["isAMSClientAllowed"] = true;
             await chatSDK.initialize();
 
             chatSDK.ACSClient.initialize = jest.fn();
@@ -1176,6 +1191,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.liveChatVersion = LiveChatVersion.V1;
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -1235,6 +1251,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
         it('ChatSDK.startChat() should throw an exception if ACSClient.initialize() fails', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -1265,6 +1282,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
         it('ChatSDK.startChat() should throw an exception if AMSClient.initialize() fails', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -1295,6 +1313,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
         it('ChatSDK.startChat() should throw an exception if ACSClient.joinConversation() fails', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -1325,6 +1344,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
         it('ChatSDK.startchat() with existing liveChatContext should not call OCClient.getChatToken() & OCClient.sessionInit()', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
             jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
@@ -1364,6 +1384,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
         it('ChatSDK.startChat() with invalid liveChatContext should throw an error', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
             jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
@@ -1397,6 +1418,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
         it('ChatSDK.startChat() with liveChatContext of a closed conversation should throw an error', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
             jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
@@ -1492,6 +1514,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.liveChatVersion = LiveChatVersion.V1;
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -1533,6 +1556,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -1556,6 +1580,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.liveChatVersion = LiveChatVersion.V1;
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -1600,6 +1625,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.liveChatVersion = LiveChatVersion.V1;
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -1662,6 +1688,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const oldGetChatConfig = chatSDK.getChatConfig;
 
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -1745,6 +1772,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
             chatSDK.liveChatVersion = LiveChatVersion.V1;
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -1826,6 +1854,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
         it('ChatSDK.getCurrentLiveChatContext() with empty chatToken should return an empty chat session data', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -1852,6 +1881,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
         it('ChatSDK.getConversationDetails() should call OCClient.getLWIDetails()', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -1874,6 +1904,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
         it('ChatSDK.getConversationDetails() should return "{}" and not throw exception if OCClient.getLWIDetails() fails ', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -1893,6 +1924,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -1942,6 +1974,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.isChatReconnect = true;
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -1986,9 +2019,9 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.isPersistentChat = true;
-            global.setInterval = jest.fn();
-
+            global.setInterval = jest.fn() as unknown as typeof setInterval;
             chatSDK.liveChatVersion = LiveChatVersion.V1;
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -2023,6 +2056,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
         it("ChatSDK.getConversationDetails() with liveChatContext should fetch conversation details from liveChatContext", async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -2087,6 +2121,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -2284,6 +2319,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -2354,6 +2390,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             chatSDK.liveChatVersion = LiveChatVersion.V1;
 
@@ -2400,6 +2437,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -2460,6 +2498,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -2523,6 +2562,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
 
+            chatSDK["isAMSClientAllowed"] = true;
             await chatSDK.initialize();
 
             chatSDK.OCClient = {
@@ -2551,6 +2591,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -2581,6 +2622,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -2615,6 +2657,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -2669,6 +2712,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
             chatSDK.ACSClient.initialize = jest.fn();
@@ -2718,6 +2762,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -2743,6 +2788,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -2793,6 +2839,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -2849,6 +2896,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             jest.spyOn(platform, 'isBrowser').mockReturnValue(false);
             jest.spyOn(chatSDK, 'getIC3Client');
             jest.spyOn(IC3SDKProvider, 'getSDK');
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -2892,6 +2940,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -2912,6 +2961,36 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             await chatSDK.onNewMessage(() => {});
 
+            expect(chatSDK.conversation.registerOnNewMessage.mock.calls[0][1].disablePolling).toBe(false);
+            expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(1);
+        });
+
+        it('ChatSDK.onNewMessage() with disablePolling flag should pass it to conversation.registerOnNewMessage()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn()
+            }
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                registerOnNewMessage: jest.fn()
+            }));
+
+            await chatSDK.startChat();
+
+            await chatSDK.onNewMessage(() => {}, {disablePolling: true});
+
+            expect(chatSDK.conversation.registerOnNewMessage.mock.calls[0][1].disablePolling).toBe(true);
             expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(1);
         });
 
@@ -2919,6 +2998,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -2957,6 +3037,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -2984,6 +3065,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
             chatSDK.liveChatVersion = LiveChatVersion.V1;
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -3009,6 +3091,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -3068,6 +3151,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -3098,6 +3182,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -3130,6 +3215,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -3162,6 +3248,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -3194,6 +3281,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -3228,6 +3316,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -3319,6 +3408,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.isPersistentChat = true;
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -3393,7 +3483,8 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             chatSDK.getChatToken = jest.fn();
             chatSDK.isPersistentChat = true;
             chatSDK.updateChatToken = jest.fn();
-            global.setInterval = jest.fn();
+            global.setInterval = jest.fn() as unknown as typeof setInterval;
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -3431,7 +3522,8 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             chatSDK.getChatToken = jest.fn();
             chatSDK.isPersistentChat = true;
             chatSDK.liveChatVersion = LiveChatVersion.V1;
-            global.setInterval = jest.fn();
+            global.setInterval = jest.fn() as unknown as typeof setInterval;
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -3526,6 +3618,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.isChatReconnect = true;
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -3555,6 +3648,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.isChatReconnect = true;
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
             chatSDK.ACSClient.initialize = jest.fn();
@@ -3593,6 +3687,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
             chatSDK.isChatReconnect = true;
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -3628,6 +3723,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.isChatReconnect = true;
             chatSDK.authenticatedUserToken = 'token';
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -3662,6 +3758,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.isChatReconnect = true;
             chatSDK.authenticatedUserToken = 'token';
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -3703,6 +3800,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.isChatReconnect = true;
             chatSDK.authenticatedUserToken = 'token';
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -3738,6 +3836,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.isChatReconnect = true;
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -3767,6 +3866,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.isChatReconnect = true;
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -3802,6 +3902,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.isChatReconnect = true;
             chatSDK.authenticatedUserToken = 'token';
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -3818,7 +3919,6 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.OCClient.getReconnectableChats).toHaveBeenCalledTimes(1);
         });
 
-
         it('ChatSDK.getChatReconnectContext() should fail if OCClient.getReconnectAvailability() fails', async () => {
             const chatSDKConfig = {
                 telemetry: {
@@ -3832,6 +3932,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.isChatReconnect = true;
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -3872,6 +3973,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -3913,6 +4015,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -3957,6 +4060,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -4004,6 +4108,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -4053,6 +4158,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -4104,6 +4210,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 
@@ -4159,6 +4266,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
             chatSDK.authSettings = {};
@@ -4201,6 +4309,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
             chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
 
             await chatSDK.initialize();
 

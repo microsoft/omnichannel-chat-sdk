@@ -49,3 +49,14 @@ export const isJsonObject = (input: string) => {
     }
 }
 
+export const messageContentMetadata = (message: string): string => {
+    if (!message || message.length === 0) {
+        // If the message is empty or null, return '0'
+        return '0';
+    }
+    const first = message?.charAt(0);
+    const last = message?.charAt(message?.length - 1);
+    const size = message?.length;
+    return `${first}${size}${last}`;
+}
+
