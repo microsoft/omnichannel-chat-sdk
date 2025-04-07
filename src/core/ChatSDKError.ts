@@ -61,7 +61,7 @@ export enum ChatSDKErrorName {
      /** Send message failure */
     ChatSDKSendMessageFailed = "ChatSDKSendMessageFailed",
 
-    AMSClientNotLoaded = "AMSClientNotLoaded",
+    AttachmentClientNotLoaded = "AttachmentClientNotLoaded",
 
 }
 

@@ -252,14 +252,14 @@ class OmnichannelChatSDK {
         }
         switch (this.AMSClientLoadCurrentState) {
         case AMSClientLoadStates.LOADED:
-            this.debug && console.log("AMSClient is already loaded");
+            this.debug && console.log("Attachment handler is already loaded");
             return this.AMSClient;
         case AMSClientLoadStates.LOADING:
-            this.debug && console.log("AMSClient is loading, waiting for it to be ready");
+            this.debug && console.log("Attachment handler is loading, waiting for it to be ready");
             return await this.retryLoadAMSClient();
         case AMSClientLoadStates.ERROR:
         case AMSClientLoadStates.NOT_LOADED:
-            this.debug && console.log("AMSClient is not loaded, loading now");
+            this.debug && console.log("Attachment handler is not loaded, loading now");
             await this.loadAmsClient();
             return this.AMSClient;
         default:
@@ -1641,7 +1641,7 @@ class OmnichannelChatSDK {
             const amsClient = await this.getAMSClient();
 
             if (amsClient === null || amsClient === undefined) {
-                throwAMSLoadFailure(this.scenarioMarker, TelemetryEvent.UploadFileAttachment, "AMS client is null, no action can be performed");
+                throwAMSLoadFailure(this.scenarioMarker, TelemetryEvent.UploadFileAttachment, "Attachment handler client is null, no action can be performed");
             }
 
             const createObjectResponse: any = await amsClient?.createObject(this.chatToken?.chatId as string, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -1773,7 +1773,7 @@ class OmnichannelChatSDK {
                 const amsClient = await this.getAMSClient();
 
                 if (amsClient === null || amsClient === undefined) {
-                    throwAMSLoadFailure(this.scenarioMarker, TelemetryEvent.DownloadFileAttachment, "AMS client is null, no action can be performed");
+                    throwAMSLoadFailure(this.scenarioMarker, TelemetryEvent.DownloadFileAttachment, "Attachment handler is null, no action can be performed");
                 }
 
                 const response: any = await amsClient?.getViewStatus(fileMetadata);  // eslint-disable-line @typescript-eslint/no-explicit-any

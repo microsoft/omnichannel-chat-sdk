@@ -77,24 +77,24 @@ Omnichannel offers a live chat widget (LCW) by default. You can use the Chat SDK
 | Feature | Live Chat Widget | Chat SDK | Notes |
 | -----  | ----- | ----- | ----- |
 | Bring Your Own Widget | ❌ | ✔ | |
-| Web Support | ✔ | ✔ |
-| React Native Support | ❌ | ✔ |
+| Web Support | ✔ | ✔ ||
+| React Native Support | ❌ | ✔ | |
 | Escalation to Voice & Video | ✔ | ✔ | Only supported on Web |
 | Co-browse | ✔ | 3rd party add-on | Only supported on Web |
 | Screen Sharing | ✔ | 3rd party add-on | Only supported on Web |
-| Authenticated Chat | ✔ | ✔ |
-| Pre-chat Survey | ✔ | ✔ |
-| Post-chat Survey | ✔ | ✔ |
-| Download Transcript | ✔ | ✔ |
-| Email Transcript | ✔ | ✔ |
-| Data Masking | ✔ | ✔ |
-| File Attachments | ✔ | ✔ |
-| Custom Context | ✔ | ✔ |
-| Proactive Chat | ✔ | BYOI **\*** |
-| Persistent Chat | ✔ | ✔ |
-| Chat Reconnect | ✔ | ✔ |
-| Operating Hours | ✔ | ✔ |
-| Get Agent Availability | ✔ | ✔ |
+| Authenticated Chat | ✔ | ✔ | |
+| Pre-chat Survey | ✔ | ✔ | |
+| Post-chat Survey | ✔ | ✔ | |
+| Download Transcript | ✔ | ✔ | |
+| Email Transcript | ✔ | ✔ | |
+| Data Masking | ✔ | ✔ | |
+| File Attachments | ✔ | ✔ | |
+| Custom Context | ✔ | ✔ | |
+| Proactive Chat | ✔ | BYOI **\*** | |
+| Persistent Chat | ✔ | ✔ | |
+| Chat Reconnect | ✔ | ✔ | |
+| Operating Hours | ✔ | ✔ | |
+| Get Agent Availability | ✔ | ✔ | |
 | Queue Position | ✔ | ✔ | No SDK method. Handled as *system message* |
 | Average Wait Time | ✔ | ✔ | No SDK method. Handled as *system message* |
 
@@ -144,7 +144,7 @@ New releases are published on a regular basis to ensure the product quality.
 
 ## Installation
 
-```
+```console
 npm install @microsoft/omnichannel-chat-sdk --save
 ```
 
@@ -154,31 +154,31 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
 
 1. Install `node-libs-react-native`
 
-    ```
+    ```console
     npm install node-libs-react-native --save-dev
     ```
 
 1. Install `react-native-randomBytes`
 
-    ```
+    ```console
     npm install react-native-randombytes --save-dev
     ```
 
 1. Install `react-native-get-random-values`
 
-    ```
+    ```console
     npm install react-native-get-random-values --save-dev
     ```
 
 1. Install `react-native-url-polyfill`
 
-    ```
+    ```console
     npm install react-native-url-polyfill --save-dev
     ```
 
 1. Install `@azure/core-asynciterator-polyfill`
 
-    ```
+    ```console
     npm install @azure/core-asynciterator-polyfill --save-dev
     ```
 
@@ -973,7 +973,7 @@ if (VoiceVideoCallingSDK) {
 | Chat Widget UI | Not provided | Basic chat client provided |
 | Data Masking | Embedded | Requires `Data Masking Middleware` implementation |
 | Send Typing indicator | Embedded | Requires `sendTypingIndicator` flag set to `true` |
-| PreChat Survey | Requires Adaptive Cards renderer | Requires Adaptive Cards renderer
+| PreChat Survey | Requires Adaptive Cards renderer | Requires Adaptive Cards renderer|
 | Display Attachments | Requires implementation | Basic interface provided & Customizable |
 | Incoming messages handling | IC3 protocol message data | DirectLine activity data |
 

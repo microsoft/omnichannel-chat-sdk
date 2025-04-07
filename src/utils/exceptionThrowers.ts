@@ -46,7 +46,7 @@ export const throwChatSDKError = (chatSDKError: ChatSDKErrorName, e: unknown, sc
 }
 
 export const throwAMSLoadFailure = (scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, message: string): void => {
-    throwChatSDKError(ChatSDKErrorName.AMSClientNotLoaded, undefined, scenarioMarker, telemetryEvent, {}, message);
+    throwChatSDKError(ChatSDKErrorName.AttachmentClientNotLoaded, undefined, scenarioMarker, telemetryEvent, {}, message);
 };
 
 export const throwScriptLoadFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
