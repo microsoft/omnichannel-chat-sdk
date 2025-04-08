@@ -12,12 +12,13 @@
  * Stack trace should only be logged and not printed.
  */
 
-import { ChatSDKErrorName, ChatSDKError } from "../core/ChatSDKError";
+import { ChatSDKError, ChatSDKErrorName } from "../core/ChatSDKError";
+
 import ChatSDKExceptionDetails from "../core/ChatSDKExceptionDetails";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
 
-export const throwChatSDKError = (chatSDKError: ChatSDKErrorName, e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string} = {}, message = ""): void => {
+export const throwChatSDKError = (chatSDKError: ChatSDKErrorName, e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: { [key: string]: string } = {}, message?: string): void => {
     const exceptionDetails: ChatSDKExceptionDetails = {
         response: chatSDKError
     };
@@ -26,22 +27,27 @@ export const throwChatSDKError = (chatSDKError: ChatSDKErrorName, e: unknown, sc
         exceptionDetails.errorObject = `${e}`;
     }
 
-    scenarioMarker.failScenario(telemetryEvent, {
-        ...telemetryData,
-        ExceptionDetails: JSON.stringify(exceptionDetails)
-    });
-
     if (message) {
         exceptionDetails.message = message;
         console.error(message);
     }
 
+    scenarioMarker.failScenario(telemetryEvent, {
+        ...telemetryData,
+        ExceptionDetails: JSON.stringify(exceptionDetails)
+    });
+
     throw new ChatSDKError(
         chatSDKError,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ((e as any)?.isAxiosError && (e as any)?.response?.status) ? (e as any)?.response?.status : undefined
+        ((e as any)?.isAxiosError && (e as any)?.response?.status) ? (e as any)?.response?.status : undefined,
+        exceptionDetails
     );
 }
+
+export const throwAMSLoadFailure = (scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, message: string): void => {
+    throwChatSDKError(ChatSDKErrorName.AttachmentClientNotLoaded, undefined, scenarioMarker, telemetryEvent, {}, message);
+};
 
 export const throwScriptLoadFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent): void => {
     throwChatSDKError(ChatSDKErrorName.ScriptLoadFailure, e, scenarioMarker, telemetryEvent);

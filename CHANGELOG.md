@@ -4,14 +4,28 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.10.17] 2025-04-07
+
+### Added
+
+- Load AMS based on config.
+
+### Fixed
+
+- Fix for methods receiving exceptionDetails , but not logging it in telemetry
+- Fix to prevent double load of AMS
+- Fix to prevent startchat to finish before AMS client loads. (latency detected, future work to be part of AMS client enhancements)
+
 ## [1.10.16] - 2025-03-27
 
 ### Added
+
 - Added exception details for telemetry for SendMessage
 - Expose `OriginalMessageId` to `ChatSDK.onNewMessage()` to handle message ordering
 - Update `ChatSDK.sendMessage()` to return `OmnichannelMessage`
 
 ### Changed
+
 - Uptake [@microsoft/ocsdk@0.5.13](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.13)
 
 ## [1.10.15] - 2025-03-11

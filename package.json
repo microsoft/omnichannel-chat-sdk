@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/omnichannel-chat-sdk",
-  "version": "1.10.17-0",
+  "version": "1.10.18-0",
   "description": "Microsoft Omnichannel Chat SDK",
   "files": [
     "lib/**/*"
@@ -12,8 +12,9 @@
     "postbuild:tsc": "node ./scripts/copy_files.js",
     "prebuild:tsc": "eslint src --ext .ts",
     "test": "npm run test:jsdom && npm run test:node",
-    "test:jsdom": "jest --config jest.config.jsdom.js",
-    "test:node": "jest --config jest.config.node.js",
+    "test:jsdom": "jest --config jest.config.jsdom.js --verbose",
+    "test:node": "jest --config jest.config.node.js --verbose",
+    "watch": "tsc --watch",
     "lint": "eslint src --ext .ts"
   },
   "author": "Microsoft Corporation",
