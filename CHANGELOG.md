@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.10.17] 2025-04-07
+
 ### Added
 
 - Load AMS based on config.
