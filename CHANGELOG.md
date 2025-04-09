@@ -2,7 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [1.10.18] 2025-04-09
+
+### Added
+
+- Uptake [@microsoft/ocsdk@0.5.14](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.14)
+- Support for multibot
 
 ## [1.10.17] 2025-04-07
 
