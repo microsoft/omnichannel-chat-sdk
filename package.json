@@ -48,7 +48,7 @@
     "@azure/communication-chat": "1.5.4",
     "@azure/communication-common": "2.3.1",
     "@microsoft/botframework-webchat-adapter-azure-communication-chat": "^0.0.1-beta.2",
-    "@microsoft/ocsdk": "^0.5.13",
+    "@microsoft/ocsdk": "^0.5.14",
     "@microsoft/omnichannel-amsclient": "^0.1.8",
     "@microsoft/omnichannel-ic3core": "^0.1.5"
   }
