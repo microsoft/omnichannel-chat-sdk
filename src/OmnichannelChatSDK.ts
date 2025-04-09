@@ -1153,7 +1153,7 @@ class OmnichannelChatSDK {
                     getChatTokenOptionalParams.refreshToken = optionalParams?.refreshToken;
                 }
 
-                if (this.botCSPId){
+                if (this.botCSPId) {
                     getChatTokenOptionalParams.MsOcBotApplicationId = this.botCSPId;
                 }
 
