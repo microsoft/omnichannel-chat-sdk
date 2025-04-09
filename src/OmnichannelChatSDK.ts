@@ -153,6 +153,7 @@ class OmnichannelChatSDK {
     private AMSClientLoadCurrentState: AMSClientLoadStates = AMSClientLoadStates.NOT_LOADED;
     private isMaskingDisabled = false;
     private maskingCharacter = "#";
+    private botCSPId: string | null = null;
     private isAMSClientAllowed = false;
 
     constructor(omnichannelConfig: OmnichannelConfig, chatSDKConfig: ChatSDKConfig = defaultChatSDKConfig) {
@@ -206,6 +207,10 @@ class OmnichannelChatSDK {
         if (this.chatSDKConfig.dataMasking) {
             this.isMaskingDisabled = this.chatSDKConfig.dataMasking.disable;
             this.maskingCharacter = this.chatSDKConfig.dataMasking.maskingCharacter;
+        }
+
+        if (omnichannelConfig.cpsBotId) {
+            this.botCSPId = omnichannelConfig.cpsBotId;
         }
 
         loggerUtils.setRequestId(this.requestId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
@@ -1146,6 +1151,10 @@ class OmnichannelChatSDK {
 
                 if (optionalParams?.refreshToken === true) {
                     getChatTokenOptionalParams.refreshToken = optionalParams?.refreshToken;
+                }
+
+                if (this.botCSPId) {
+                    getChatTokenOptionalParams.MsOcBotApplicationId = this.botCSPId;
                 }
 
                 const chatToken = await this.OCClient.getChatToken(this.requestId, getChatTokenOptionalParams);

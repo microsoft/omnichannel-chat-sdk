@@ -243,6 +243,47 @@ const optionalParams = {
 await chatSDK.initialize(optionalParams);
 ```
 
+## Passing cpsBotId on initialization
+
+cpsBotId in UUID format, when present will use v4 for GetchatToken. (Limited to enabled orgs) establishing the connection with Copilot Bot specified.
+
+### Scenarios
+
+- if bot id is present and valid, SDK will use `V4` for `GetchatToken` establishing the connection with the dessired Copilot Bot.
+- if bot Id is not present, flow will continue using `V2` for `GetchatToken`
+- if bot Id is not in valid format, expect a `400 HTTP Response Error Code`
+- if bot Id is not enabled for the workstream, expect `403 HTTP Response Error Code`
+
+```ts
+
+import OmnichannelChatSDK from '@microsoft/omnichannel-chat-sdk';
+
+const omnichannelConfig = {
+    orgUrl: "",
+    orgId: "",
+    widgetId: "",
+    cpsBotId: ""
+};
+
+const chatSDKConfig = { // Optional
+    dataMasking: {
+        disable: false,
+        maskingCharacter: '#'
+    }
+};
+
+const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+
+const optionalParams = {
+    getLiveChatConfigOptionalParams: {
+        sendCacheHeaders: false // Whether to send Cache-Control HTTP header to GetChatConfig call
+    }
+};
+
+await chatSDK.initialize(optionalParams);
+
+```
+
 ### Start Chat
 
 It starts an Omnichannel conversation.
