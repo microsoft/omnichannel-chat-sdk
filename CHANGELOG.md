@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Added "role" attribute for bot messages in onNewMessageCallback
+
 ## [1.10.18] 2025-04-09
 
 ### Added
