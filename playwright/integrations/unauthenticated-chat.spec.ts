@@ -795,7 +795,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         expect(liveChatContextConversationDetails.canRenderPostChat).toBeDefined();
     });
 
-    test('Verify `useCreateConversation.disable: false` triggers Create Conversation flow', async ({ page }) => {
+    test('ChatSDK.initialize() with ChatSDK Configuration "useCreateConversation" enabled should perform create conversation call', async ({ page }) => {
         await page.goto(testPage);
 
         const [conversationRequest, conversationResponse, runtimeContext] = await Promise.all([
