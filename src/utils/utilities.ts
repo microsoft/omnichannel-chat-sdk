@@ -23,6 +23,15 @@ export const isCustomerMessage = (message: any): boolean => { // eslint-disable-
     return conditionV1 || conditionV2 || false;
 }
 
+export const isBotMessage = (message: any): boolean => { // eslint-disable-line @typescript-eslint/no-explicit-any,  @typescript-eslint/explicit-module-boundary-types
+    const {messageType, properties} = message;
+
+    const conditionV1 = messageType === MessageType.UserMessage && (!properties.tags || Object.keys(properties.tags).length === 0);
+
+    const conditionV2 = message.tags && message.tags.length == 0;
+    return conditionV1 || conditionV2 || false;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
 export const isClientIdNotFoundErrorMessage = (e: any): boolean => {
     return e?.response?.status === 401

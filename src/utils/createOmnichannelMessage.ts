@@ -1,9 +1,10 @@
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent } from '@azure/communication-signaling';
-import OmnichannelMessage, { IFileMetadata, IPerson, MessageType, PersonType } from "../core/messaging/OmnichannelMessage";
+import OmnichannelMessage, { IFileMetadata, IPerson, MessageType, PersonType, Role } from "../core/messaging/OmnichannelMessage";
 
 import { ChatMessage } from "@azure/communication-chat";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
 import LiveChatVersion from '../core/LiveChatVersion';
+import { isBotMessage } from './utilities';
 
 interface CreateOmnichannelMessageOptionalParams {
     liveChatVersion: LiveChatVersion;
@@ -72,6 +73,10 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
         // OriginalMessageId is used to track the original message id from the source messaging channel before bridging and any retries
         if (metadata && metadata.OriginalMessageId) {
             omnichannelMessage.properties.originalMessageId = metadata.OriginalMessageId;
+        }
+
+        if(isBotMessage(omnichannelMessage)) {
+            omnichannelMessage.role =  Role.Bot;
         }
 
     } else {

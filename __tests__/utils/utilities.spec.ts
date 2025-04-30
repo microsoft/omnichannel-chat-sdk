@@ -3,7 +3,7 @@
  */
 
 import { getRuntimeId, isNotEmpty } from "../../src/utils/utilities";
-import { isClientIdNotFoundErrorMessage, isCustomerMessage, isSystemMessage } from "../../src/utils/utilities";
+import { isClientIdNotFoundErrorMessage, isCustomerMessage, isSystemMessage, isBotMessage} from "../../src/utils/utilities";
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const { MessageType } = require("../../src");
@@ -135,4 +135,61 @@ describe('Utilities', () => {
         expect(getRuntimeId(externalRuntimeId)).not.toBe(externalRuntimeId);
     });
 
+    it('utilities.isBotMessage() should return false if message is a system message', () => {
+        const message = {
+            content: 'system content',
+            messageType: MessageType.UserMessage,
+            properties: {
+                tags: ['system']
+            }
+        };
+        expect(isBotMessage(message)).toBe(false);
+    });
+
+    it('utilities.isBotMessage() should return false if message is a live agent message', () => {
+        const message = {
+            content: 'test content',
+            messageType: MessageType.UserMessage,
+            properties: {
+                tags: ['public']
+            }
+        };
+        expect(isBotMessage(message)).toBe(false);
+    });
+
+    it('utilities.isBotMessage() should return true if properties.tags is an empty', () => {
+        const message = {
+            messageType: MessageType.UserMessage,
+            properties: {
+                tags: ''
+            },
+            tags: ['random']
+        };
+
+        expect(isBotMessage(message)).toBe(true);
+    });
+
+    it('utilities.isBotMessage() should return true if message.tags is an empty', () => {
+        const message = {
+            messageType: MessageType.UserMessage,
+            properties: {
+                tags: ''
+            },
+            tags: []
+        };
+
+        expect(isBotMessage(message)).toBe(true);
+    });
+
+    it('utilities.isBotMessage() should not break if `properties.tags` property does not exist', () => {
+        const message = {
+            content: 'test',
+            messageType: MessageType.UserMessage,
+            properties: {}
+        }
+
+        const result = isBotMessage(message);
+        expect(result).toBeDefined();
+
+    });
 });
