@@ -794,4 +794,43 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         expect(liveChatContextConversationDetails.conversationId).toBeDefined();
         expect(liveChatContextConversationDetails.canRenderPostChat).toBeDefined();
     });
+
+    test('ChatSDK.initialize() with ChatSDK Configuration "useCreateConversation" enabled should perform create conversation call', async ({ page }) => {
+        await page.goto(testPage);
+
+        const [conversationRequest, conversationResponse, runtimeContext] = await Promise.all([
+            page.waitForRequest(request => {
+                return request.url().includes(OmnichannelEndpoints.LiveChatOrganization);
+            }),
+            page.waitForResponse(response => {
+                return response.url().includes(OmnichannelEndpoints.LiveChatOrganization);
+            }),
+            await page.evaluate(async ({ omnichannelConfig }) => {
+                const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, {
+                    useCreateConversation: {
+                        disable: false,
+                    }
+                });
+
+                await chatSDK.initialize();
+
+                const runtimeContext = {
+                    orgUrl: chatSDK.omnichannelConfig.orgUrl,
+                    requestId: chatSDK.requestId
+                };
+
+                await chatSDK.startChat();
+
+                await chatSDK.endChat();
+
+                return runtimeContext;
+            }, { omnichannelConfig })
+        ]);
+
+        const conversationRequestUrl = `${runtimeContext.orgUrl}/${OmnichannelEndpoints.LiveChatOrganization}/${omnichannelConfig.orgId}/widgetApp/${omnichannelConfig.widgetId}/conversation`;
+
+        expect(conversationRequest.url() === conversationRequestUrl).toBe(true);
+        expect(conversationResponse.status()).toBe(200);
+    });
 });
