@@ -1,6 +1,7 @@
 import ACSParticipantDisplayName from "../core/messaging/ACSParticipantDisplayName";
 import MessageType from "@microsoft/omnichannel-ic3core/lib/model/MessageType";
 import { uuidv4 } from "@microsoft/ocsdk";
+import { Role } from "../core/messaging/OmnichannelMessage";
 
 export const isSystemMessage = (message: any): boolean => { // eslint-disable-line @typescript-eslint/no-explicit-any,  @typescript-eslint/explicit-module-boundary-types
     const {messageType, properties} = message;
@@ -23,14 +24,21 @@ export const isCustomerMessage = (message: any): boolean => { // eslint-disable-
     return conditionV1 || conditionV2 || false;
 }
 
-export const isBotMessage = (message: any): boolean => { // eslint-disable-line @typescript-eslint/no-explicit-any,  @typescript-eslint/explicit-module-boundary-types
-    const {messageType, properties} = message;
+export const getMessageRole = (message: any): string => { // eslint-disable-line @typescript-eslint/no-explicit-any,  @typescript-eslint/explicit-module-boundary-types
+    const { messageType, properties, tags } = message;
 
-    const conditionV1 = messageType === MessageType.UserMessage && (!properties.tags || Object.keys(properties.tags).length === 0);
+    const isBotMessage = (messageType === MessageType.UserMessage && (!properties.tags || Object.keys(properties.tags).length === 0)) &&
+        (tags && tags.length === 0);
 
-    const conditionV2 = message.tags && message.tags.length == 0;
-    return conditionV1 || conditionV2 || false;
-}
+    const isAgentMessage = (messageType === MessageType.UserMessage && properties?.tags?.includes("public")) ||
+        (tags && tags.includes("public"));
+
+    if (isBotMessage) return Role.Bot;
+    if (isAgentMessage) return Role.Agent;
+    if (isSystemMessage(message)) return Role.System;
+    if (isCustomerMessage(message)) return Role.User;
+    return Role.Unknown;
+};
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
 export const isClientIdNotFoundErrorMessage = (e: any): boolean => {

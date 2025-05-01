@@ -2,8 +2,9 @@
  * @jest-environment node
  */
 
+import { Role } from "../../src/core/messaging/OmnichannelMessage";
 import { getRuntimeId, isNotEmpty } from "../../src/utils/utilities";
-import { isClientIdNotFoundErrorMessage, isCustomerMessage, isSystemMessage, isBotMessage} from "../../src/utils/utilities";
+import { isClientIdNotFoundErrorMessage, isCustomerMessage, isSystemMessage, getMessageRole} from "../../src/utils/utilities";
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const { MessageType } = require("../../src");
@@ -135,7 +136,7 @@ describe('Utilities', () => {
         expect(getRuntimeId(externalRuntimeId)).not.toBe(externalRuntimeId);
     });
 
-    it('utilities.isBotMessage() should return false if message is a system message', () => {
+    it('utilities.getMessageRole() should return `system` if message is a system message', () => {
         const message = {
             content: 'system content',
             messageType: MessageType.UserMessage,
@@ -143,10 +144,10 @@ describe('Utilities', () => {
                 tags: ['system']
             }
         };
-        expect(isBotMessage(message)).toBe(false);
+        expect(getMessageRole(message)).toBe(Role.System);
     });
 
-    it('utilities.isBotMessage() should return false if message is a live agent message', () => {
+    it('utilities.getMessageRole() should return `agent` if message is a live agent message', () => {
         const message = {
             content: 'test content',
             messageType: MessageType.UserMessage,
@@ -154,10 +155,24 @@ describe('Utilities', () => {
                 tags: ['public']
             }
         };
-        expect(isBotMessage(message)).toBe(false);
+        expect(getMessageRole(message)).toBe(Role.Agent);
     });
 
-    it('utilities.isBotMessage() should return true if properties.tags is an empty', () => {
+    it('utilities.getMessageRole() should return `user` if message is customer message', () => {
+        const message = {
+            content: 'test content',
+            messageType: MessageType.UserMessage,
+            properties: {
+                tags: ['ChannelId-lcw,FromCustomer']
+            },
+            sender: {
+                id: 'https://{host}/v1/users/ME/contacts/8:{uuid}'
+            }
+        };
+        expect(getMessageRole(message)).toBe(Role.User);
+    });
+
+    it('utilities.getMessageRole() should return `unknown` for random tags', () => {
         const message = {
             messageType: MessageType.UserMessage,
             properties: {
@@ -166,10 +181,10 @@ describe('Utilities', () => {
             tags: ['random']
         };
 
-        expect(isBotMessage(message)).toBe(true);
+        expect(getMessageRole(message)).toBe(Role.Unknown);
     });
 
-    it('utilities.isBotMessage() should return true if message.tags is an empty', () => {
+    it('utilities.getMessageRole() should return `bot` if message.tags is an empty', () => {
         const message = {
             messageType: MessageType.UserMessage,
             properties: {
@@ -178,17 +193,17 @@ describe('Utilities', () => {
             tags: []
         };
 
-        expect(isBotMessage(message)).toBe(true);
+        expect(getMessageRole(message)).toBe(Role.Bot);
     });
 
-    it('utilities.isBotMessage() should not break if `properties.tags` property does not exist', () => {
+    it('utilities.getMessageRole() should not break if `properties.tags` property does not exist', () => {
         const message = {
             content: 'test',
             messageType: MessageType.UserMessage,
             properties: {}
         }
 
-        const result = isBotMessage(message);
+        const result = getMessageRole(message);
         expect(result).toBeDefined();
 
     });

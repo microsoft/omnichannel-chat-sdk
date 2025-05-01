@@ -25,7 +25,11 @@ export enum PersonType {
 }
 
 export enum Role {
-    Bot = "bot"
+    Bot = "bot",
+    Agent = "agent",
+    System = "system",
+    User = "user",
+    Unknown = "unknown"
 }
 
 export interface IPerson {
