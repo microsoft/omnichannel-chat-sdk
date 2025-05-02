@@ -969,7 +969,11 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
         it('ChatSDK.startChat() should start an OC chat', async () => {
             // global.fetch = jest.fn();
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+                useCreateConversation: {
+                    disable: true
+                }
+            });
             chatSDK.getChatConfig = jest.fn();
             chatSDK["isAMSClientAllowed"] = true;
             await chatSDK.initialize({ useParallelLoad: true }); let retryCount = 0;
@@ -2549,6 +2553,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             chatSDK.OCClient = {};
             chatSDK.OCClient.sessionInit = jest.fn();
+            chatSDK.OCClient.createConversation = jest.fn();
             chatSDK.OCClient.sessionClose = jest.fn(() => Promise.reject());
             chatSDK.ACSClient.initialize = jest.fn();
             chatSDK.ACSClient.joinConversation = jest.fn();
@@ -2606,6 +2611,11 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             }));
 
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}'
+            }));
             jest.spyOn(chatSDK.OCClient, 'sessionClose').mockResolvedValue(Promise.resolve());
 
             await chatSDK.startChat();
@@ -2755,6 +2765,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.AMSClient.initialize = jest.fn();
 
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.OCClient, 'getReconnectableChats').mockResolvedValue(Promise.resolve({
                 reconnectid: 'reconnectid'
             }));
@@ -2869,6 +2880,9 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
                 },
                 chatReconnect: {
                     disable: false,
+                },
+                useCreateConversation: {
+                    disable: true
                 }
             };
 
@@ -2939,6 +2953,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.reconnectId = reconnectId;
 
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.OCClient, 'sessionClose').mockResolvedValue(Promise.resolve());
 
             await chatSDK.startChat();
