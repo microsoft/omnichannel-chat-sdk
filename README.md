@@ -854,7 +854,7 @@ window.addEventListener("visibilitychange", async () => {
 
 
 
-window.addEventListener('online', () => {
+window.addEventListener('online', async () => {
   // Re-establish chat connection
    const optionalParams = {
         liveChatContext: {}, // EXISTING chat context data
