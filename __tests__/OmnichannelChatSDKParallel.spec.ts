@@ -2350,6 +2350,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             }
 
             chatSDK.OCClient.sessionInit = jest.fn();
+            chatSDK.OCClient.createConversation = jest.fn();
             chatSDK.OCClient.sessionClose = jest.fn();
             chatSDK.ACSClient.initialize = jest.fn();
             chatSDK.ACSClient.joinConversation = jest.fn();
@@ -2387,6 +2388,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             }
 
             chatSDK.OCClient.sessionInit = jest.fn();
+            chatSDK.OCClient.createConversation = jest.fn();
             chatSDK.OCClient.sessionClose = jest.fn();
             chatSDK.ACSClient.initialize = jest.fn();
             chatSDK.ACSClient.joinConversation = jest.fn();
@@ -2426,6 +2428,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             }
 
             chatSDK.OCClient.sessionInit = jest.fn();
+            chatSDK.OCClient.createConversation = jest.fn();
             chatSDK.OCClient.sessionClose = jest.fn();
             chatSDK.ACSClient.initialize = jest.fn();
             chatSDK.ACSClient.joinConversation = jest.fn();
@@ -2466,6 +2469,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             }
 
             chatSDK.OCClient.sessionInit = jest.fn();
+            chatSDK.OCClient.createConversation = jest.fn();
             chatSDK.OCClient.sessionClose = jest.fn();
             chatSDK.ACSClient.initialize = jest.fn();
             chatSDK.ACSClient.joinConversation = jest.fn();
@@ -2504,6 +2508,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             }
 
             chatSDK.OCClient.sessionInit = jest.fn();
+            chatSDK.OCClient.createConversation = jest.fn();
             chatSDK.OCClient.sessionClose = jest.fn();
             chatSDK.ACSClient.initialize = jest.fn();
             chatSDK.ACSClient.joinConversation = jest.fn();
@@ -2635,6 +2640,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             }
 
             chatSDK.OCClient.sessionInit = jest.fn();
+            chatSDK.OCClient.createConversation = jest.fn();
             chatSDK.OCClient.sessionClose = jest.fn();
             chatSDK.ACSClient.initialize = jest.fn();
             chatSDK.ACSClient.joinConversation = jest.fn();
