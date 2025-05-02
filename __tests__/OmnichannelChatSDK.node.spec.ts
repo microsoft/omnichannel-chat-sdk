@@ -92,6 +92,7 @@ describe('Omnichannel Chat SDK (Node), Sequential', () => {
         chatSDK.AMSClient.initialize = jest.fn();
 
         chatSDK.OCClient.sessionInit = jest.fn();
+        chatSDK.OCClient.createConversation = jest.fn();
 
         await chatSDK.startChat();
 
@@ -124,6 +125,7 @@ describe('Omnichannel Chat SDK (Node), Sequential', () => {
         chatSDK.AMSClient.initialize = jest.fn();
 
         chatSDK.OCClient.sessionInit = jest.fn();
+        chatSDK.OCClient.createConversation = jest.fn();
 
         jest.spyOn(console, 'error');
 
