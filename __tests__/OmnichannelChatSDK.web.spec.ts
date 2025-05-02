@@ -75,7 +75,11 @@ describe('Omnichannel Chat SDK (Web), Sequential', () => {
     });
 
     it('ChatSDK.startChat() with sendDefaultInitContext should throw an error if not used on Web Platform', async () => {
-        const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+        const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+            useCreateConversation: {
+                disable: true,
+            }
+        });
         chatSDK.getChatConfig = jest.fn();
 
         await chatSDK.initialize();
@@ -107,13 +111,14 @@ describe('Omnichannel Chat SDK (Web), Sequential', () => {
     });
 
     it('ChatSDK.createChatAdapter() should be returned succesfully on Web platform', async () => {
-        const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+        const chatSDK = new OmnichannelChatSDK(omnichannelConfig ,);
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
 
         await chatSDK.initialize();
 
         chatSDK.OCClient.sessionInit = jest.fn();
+        chatSDK.OCClient.createConversation = jest.fn();
         chatSDK.ACSClient.initialize = jest.fn();
         chatSDK.ACSClient.joinConversation = jest.fn();
 
@@ -139,6 +144,7 @@ describe('Omnichannel Chat SDK (Web), Sequential', () => {
         await chatSDK.initialize();
 
         chatSDK.OCClient.sessionInit = jest.fn();
+        chatSDK.OCClient.createConversation = jest.fn();
         chatSDK.ACSClient.initialize = jest.fn();
         chatSDK.ACSClient.joinConversation = jest.fn();
 
@@ -168,6 +174,7 @@ describe('Omnichannel Chat SDK (Web), Sequential', () => {
 
         chatSDK.callingOption = CallingOptionsOptionSetNumber.NoCalling;
         chatSDK.OCClient.sessionInit = jest.fn();
+        chatSDK.OCClient.createConversation = jest.fn();
         chatSDK.ACSClient.initialize = jest.fn();
         chatSDK.ACSClient.joinConversation = jest.fn();
 
