@@ -831,9 +831,9 @@ if (outOfOperatingHours === "True") {
 }
 ```
 
-### Handling chat Disconnect on Mobile platform
+### Best Practices for Chat Session Management: Handling Disconnections and Network Instability
 
-> On mobile platforms, where users often switch the app between foreground and background, it is important to verify if the chat is still active before allowing the user to send a message after returning from the background .
+> When users switch away from a browser tab or move an browser app to the background, it's important to check if the chat session is still active before allowing message sending when user resumes. This applies to both mobile and desktop environments, as sessions can expire or disconnect when not actively used
 
 ```ts
 // 1. Register a listener for visbilitychange event
@@ -851,6 +851,25 @@ window.addEventListener("visibilitychange", async () => {
                    
     }
 });
+
+
+
+window.addEventListener('online', () => {
+  // Re-establish chat connection
+   const optionalParams = {
+        liveChatContext: {}, // EXISTING chat context data
+    };
+    const conversationDetails = await chatSDK.getConversationDetails(optionalParams);
+    if (conversationDetails?.state === "WrapUp" || conversationDetails?.state === "Closed") {
+          
+    }
+});
+
+window.addEventListener('offline', () => {
+  // Inform user of connectivity issues
+});
+
+
 ```
 
 ### Using [BotFramework-WebChat](https://github.com/microsoft/BotFramework-WebChat)
