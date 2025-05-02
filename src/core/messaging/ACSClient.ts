@@ -92,7 +92,7 @@ export class ACSConversation {
                 ExceptionDetails: JSON.stringify(exceptionDetails)
             });
 
-            throw new Error("GetChatThreadClientFailed");
+            throw new Error(JSON.stringify(exceptionDetails));
         }
 
         try {
@@ -107,7 +107,7 @@ export class ACSConversation {
                 ExceptionDetails: JSON.stringify(exceptionDetails)
             });
 
-            throw new Error(exceptionDetails.response);
+            throw new Error(JSON.stringify(exceptionDetails));
         }
 
         this.logger?.completeScenario(ACSClientEvent.InitializeACSConversation);
@@ -485,7 +485,7 @@ class ACSClient {
                 ExceptionDetails: JSON.stringify(exceptionDetails)
             });
 
-            throw new Error('CreateTokenCredentialFailed');
+            throw new Error( JSON.stringify(exceptionDetails));
         }
 
         try {
@@ -500,7 +500,7 @@ class ACSClient {
                 ExceptionDetails: JSON.stringify(exceptionDetails)
             });
 
-            throw new Error('CreateChatClientFailed');
+            throw new Error(JSON.stringify(exceptionDetails));
         }
 
         this.logger?.completeScenario(ACSClientEvent.InitializeACSClient);

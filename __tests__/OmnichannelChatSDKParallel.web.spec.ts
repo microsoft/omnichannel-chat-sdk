@@ -38,7 +38,11 @@ describe('Omnichannel Chat SDK (Web)', () => {
     });
 
     it('ChatSDK.startChat() with sendDefaultInitContext should pass getContext to OCClient.sessionInit()', async () => {
-        const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+        const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+            useCreateConversation: {
+                disable: true,
+            }
+        });
         chatSDK.getChatConfig = jest.fn();
         chatSDK["isAMSClientAllowed"] = true;
 
@@ -123,6 +127,7 @@ describe('Omnichannel Chat SDK (Web)', () => {
         }
 
         chatSDK.OCClient.sessionInit = jest.fn();
+        chatSDK.OCClient.createConversation = jest.fn();
         chatSDK.ACSClient.initialize = jest.fn();
         chatSDK.ACSClient.joinConversation = jest.fn();
 
@@ -141,7 +146,7 @@ describe('Omnichannel Chat SDK (Web)', () => {
     });
 
     it('ChatSDK.createChatAdapter() should not work if other protocol was set', async () => {
-        const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+        const chatSDK = new OmnichannelChatSDK(omnichannelConfig,);
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
         chatSDK["isAMSClientAllowed"] = true;
@@ -152,6 +157,7 @@ describe('Omnichannel Chat SDK (Web)', () => {
         }
 
         chatSDK.OCClient.sessionInit = jest.fn();
+        chatSDK.OCClient.createConversation = jest.fn();
         chatSDK.ACSClient.initialize = jest.fn();
         chatSDK.ACSClient.joinConversation = jest.fn();
 
@@ -185,6 +191,7 @@ describe('Omnichannel Chat SDK (Web)', () => {
 
         chatSDK.callingOption = CallingOptionsOptionSetNumber.NoCalling;
         chatSDK.OCClient.sessionInit = jest.fn();
+        chatSDK.OCClient.createConversation = jest.fn();
         chatSDK.ACSClient.initialize = jest.fn();
         chatSDK.ACSClient.joinConversation = jest.fn();
 

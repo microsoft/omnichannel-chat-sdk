@@ -18,7 +18,7 @@ const defaultChatSDKConfig: ChatSDKConfig = {
         disable: true,
     },
     useCreateConversation: {
-        disable: true,
+        disable: false,
     }
 };
 
