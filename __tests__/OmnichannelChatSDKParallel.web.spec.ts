@@ -38,7 +38,11 @@ describe('Omnichannel Chat SDK (Web)', () => {
     });
 
     it('ChatSDK.startChat() with sendDefaultInitContext should pass getContext to OCClient.sessionInit()', async () => {
-        const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+        const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+            useCreateConversation: {
+                disable: true,
+            }
+        });
         chatSDK.getChatConfig = jest.fn();
         chatSDK["isAMSClientAllowed"] = true;
 
@@ -76,7 +80,11 @@ describe('Omnichannel Chat SDK (Web)', () => {
     });
 
     it('ChatSDK.startChat() with sendDefaultInitContext should throw an error if not used on Web Platform', async () => {
-        const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+        const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+            useCreateConversation: {
+                disable: true,
+            }
+        });
         chatSDK.getChatConfig = jest.fn();
         chatSDK["isAMSClientAllowed"] = true;
         await chatSDK.initialize({ useParallelLoad: true });
@@ -112,7 +120,11 @@ describe('Omnichannel Chat SDK (Web)', () => {
     });
 
     it('ChatSDK.createChatAdapter() should be returned succesfully on Web platform', async () => {
-        const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+        const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+            useCreateConversation: {
+                disable: true,
+            }
+        });
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
         chatSDK["isAMSClientAllowed"] = true;
@@ -141,7 +153,11 @@ describe('Omnichannel Chat SDK (Web)', () => {
     });
 
     it('ChatSDK.createChatAdapter() should not work if other protocol was set', async () => {
-        const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+        const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+            useCreateConversation: {
+                disable: true,
+            }
+        });
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
         chatSDK["isAMSClientAllowed"] = true;
@@ -173,7 +189,11 @@ describe('Omnichannel Chat SDK (Web)', () => {
     });
 
     it('ChatSDK.getVoiceVideoCalling() should not work if callingOption is set to \'NoCalling\'', async () => {
-        const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+        const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+            useCreateConversation: {
+                disable: true,
+            }
+        });
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
         chatSDK["isAMSClientAllowed"] = true;
