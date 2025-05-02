@@ -1114,11 +1114,11 @@ describe('Omnichannel Chat SDK, Sequential', () => {
         });
 
         it('ChatSDK.startChat() should throw an error if OCClient.sessionInit() fails', async () => {
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfig), {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
                 useCreateConversation: {
                     disable: true,
                 }
-            };
+            });
             chatSDK.getChatConfig = jest.fn();
             chatSDK["isAMSClientAllowed"] = true;
 
