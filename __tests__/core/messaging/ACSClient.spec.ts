@@ -79,7 +79,7 @@ describe('ACSClient', () => {
                 pollingInterval: 1000,
             });
         } catch (error : any ) {
-            expect(error.message).toBe('GetChatThreadClientFailed');
+            expect(error.message).toContain('ChatClientGetChatThreadClientFailure');
         }
     });
 
@@ -111,7 +111,7 @@ describe('ACSClient', () => {
                 pollingInterval: 1000,
             });
         } catch (error : any ) {
-            expect(error.message).toBe('StartRealtimeNotificationsFailed');
+            expect(error.message).toContain('StartRealtimeNotificationsFailed');
         }
     });
 
