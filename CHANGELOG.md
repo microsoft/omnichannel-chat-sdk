@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Added "role" attribute for received messages
+
 ## [1.10.18] 2025-04-09
 
 ### Added

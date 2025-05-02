@@ -24,6 +24,14 @@ export enum PersonType {
     Bot = 2
 }
 
+export enum Role {
+    Bot = "bot",
+    Agent = "agent",
+    System = "system",
+    User = "user",
+    Unknown = "unknown"
+}
+
 export interface IPerson {
     displayName: string;
     id: string;
@@ -71,6 +79,7 @@ interface OmnichannelMessage {
     tags?: string[];
     fileMetadata?: IFileMetadata;
     resourceType?: ResourceType;
+    role?: string;
 }
 
 export default OmnichannelMessage;

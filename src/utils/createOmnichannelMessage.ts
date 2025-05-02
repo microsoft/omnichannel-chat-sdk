@@ -4,6 +4,7 @@ import OmnichannelMessage, { IFileMetadata, IPerson, MessageType, PersonType } f
 import { ChatMessage } from "@azure/communication-chat";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
 import LiveChatVersion from '../core/LiveChatVersion';
+import { getMessageRole } from './utilities';
 
 interface CreateOmnichannelMessageOptionalParams {
     liveChatVersion: LiveChatVersion;
@@ -74,6 +75,7 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
             omnichannelMessage.properties.originalMessageId = metadata.OriginalMessageId;
         }
 
+        omnichannelMessage.role = getMessageRole(omnichannelMessage);
     } else {
         const { clientmessageid } = message as IRawMessage;
         omnichannelMessage.id = clientmessageid as string;
