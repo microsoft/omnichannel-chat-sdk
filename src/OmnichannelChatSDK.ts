@@ -30,7 +30,7 @@ import ChatConfig from "./core/ChatConfig";
 import ChatReconnectContext from "./core/ChatReconnectContext";
 import ChatReconnectOptionalParams from "./core/ChatReconnectOptionalParams";
 import ChatSDKConfig from "./core/ChatSDKConfig";
-import { ChatSDKErrorName } from "./core/ChatSDKError";
+import { ChatSDKError, ChatSDKErrorName } from "./core/ChatSDKError";
 import ChatSDKExceptionDetails from "./core/ChatSDKExceptionDetails";
 import ChatSDKMessage from "./core/messaging/ChatSDKMessage";
 import ChatTranscriptBody from "./core/ChatTranscriptBody";
@@ -1351,7 +1351,10 @@ class OmnichannelChatSDK {
                     ExceptionDetails: JSON.stringify(exceptionDetails)
                 });
 
-                throw new Error(ChatSDKErrorName.ChatSDKSendMessageFailed);
+                throw new ChatSDKError(ChatSDKErrorName.ChatSDKSendMessageFailed, undefined, {
+                    response: ChatSDKErrorName.ChatSDKSendMessageFailed,
+                    errorObject: `${error}`
+                });
             }
         } else {
             const messageToSend: IRawMessage = {
