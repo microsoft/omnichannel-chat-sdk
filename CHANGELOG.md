@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.10.19] - 2025-05-02
+
 ### Added
 
 - Turned on new conversation api by default
