@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Turned on new conversation api by default
+- Added additional details from underlying component for sendMessage failure
 - Added "role" attribute for received messages
 
 ## [1.10.18] 2025-04-09
