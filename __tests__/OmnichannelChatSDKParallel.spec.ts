@@ -1774,6 +1774,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             chatSDK.OCClient = {
                 sessionInit: jest.fn(),
+                createConversation: jest.fn(),
                 sendTypingIndicator: jest.fn()
             }
 
@@ -1888,7 +1889,8 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             }
 
             chatSDK.OCClient = {
-                sessionInit: jest.fn()
+                sessionInit: jest.fn(),
+                createConversation: jest.fn()
             }
 
             chatSDK.AMSClient = {
@@ -1928,6 +1930,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.AMSClient.initialize = jest.fn();
 
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.OCClient, 'emailTranscript').mockResolvedValue(Promise.resolve());
 
             await chatSDK.startChat();
@@ -1965,6 +1968,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.AMSClient.initialize = jest.fn();
 
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.OCClient, 'emailTranscript').mockResolvedValue(Promise.resolve());
 
             await chatSDK.startChat();
@@ -2022,6 +2026,11 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             }));
 
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve({
+                ChatId: '',
+                Token: '',
+                RegionGtms: '{}'
+            }));
             jest.spyOn(chatSDK.OCClient, 'emailTranscript').mockResolvedValue(Promise.resolve());
 
             await chatSDK.startChat();
@@ -2265,7 +2274,8 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             }
 
             chatSDK.OCClient = {
-                sessionInit: jest.fn()
+                sessionInit: jest.fn(),
+                createConversation: jest.fn()
             }
 
             chatSDK.AMSClient = {
