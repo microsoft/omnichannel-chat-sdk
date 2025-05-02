@@ -38,7 +38,11 @@ describe('Omnichannel Chat SDK (Web), Sequential', () => {
     });
 
     it('ChatSDK.startChat() with sendDefaultInitContext should pass getContext to OCClient.sessionInit()', async () => {
-        const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+        const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+            useCreateConversation: {
+                disable: true,
+            }
+        });
         chatSDK.getChatConfig = jest.fn();
 
         await chatSDK.initialize();
