@@ -2,6 +2,8 @@
     "compilerOptions": {
         "lib": ["es2018", "dom"],
         "resolveJsonModule": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
         "incremental": true,
         "sourceMap": true,
         "target": "es5",

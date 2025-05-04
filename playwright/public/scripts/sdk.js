@@ -20,44 +20,76 @@ const run = async () => {
     const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
     const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
 
+
+
     await chatSDK.initialize();
 
     await chatSDK.startChat();
 
-    console.table(await chatSDK.getMessages());
 
     const messages = [];
 
     try {
+        await sleep(10000);
         chatSDK.onNewMessage((message) => {
             console.log("*************** New Message Alert ************************", JSON.stringify(message));
-
             messages.push(message);
         }, { rehydrate: true });
     } catch (err) {
         runtimeContext.errorMessage = `${err.message}`;
         runtimeContext.errorObject = `${err}`;
     }
-    await sleep(30000);
 
-    await chatSDK.sendMessage({ "content": "hi" });
-    await sleep(30000);
-    console.log("*************** ALL MESSAGES ************************");
-    console.table(await chatSDK.getMessages());
-
-
-    console.log("*************** Pushed Messages ************************");
-    console.table(messages);
-    console.log("*************** ENDING CHAT MID FLY ************************");
-
+    console.log("TURN OFFF THE LIGHTS NOW");
     await sleep(10000);
-    await chatSDK.endChat();
 
+    try {
+        console.table(await chatSDK.getMessages());
 
-    await sleep(60000);
-    console.log("*************** ALL MESSAGES BEFORE END CHAT ************************");
-    console.table(await chatSDK.getMessages());
+    } catch (error) {
+        console.log("*************** Error getting messages ************************", JSON.stringify(error));
 
+    }
+
+    try {
+        console.log("TURN ON THE LIGHTS NOW");
+
+        await sleep(10000);
+        await chatSDK.sendMessage({ "content": "hi" });
+    } catch (err) {
+        console.log("*************** Error sending message ************************", JSON.stringify(err));
+
+    }
+
+    try {
+        await sleep(5000);
+        console.log("*************** ALL MESSAGES ************************");
+        console.table(await chatSDK.getMessages());
+    } catch (error) {
+        console.log("*************** Error getting messages ************************", JSON.stringify(error));
+    }
+
+    try {
+
+        console.log("*************** Pushed Messages ************************");
+        console.table(messages);
+        console.log("*************** ENDING CHAT MID FLY ************************");
+    } catch (error) {
+        console.log("*************** Error getting messages ************************", JSON.stringify(error));
+    }
+
+    try {
+        await sleep(5000);
+        await chatSDK.endChat();
+
+        await sleep(5000);
+        console.log("*************** ALL MESSAGES BEFORE END CHAT ************************");
+        console.table(await chatSDK.getMessages());
+
+    } catch (error) {
+        console.log("*************** Error getting messages ************************", JSON.stringify(error));
+
+    }
 };
 
 run();
