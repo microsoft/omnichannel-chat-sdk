@@ -93,6 +93,7 @@ import SetAuthTokenProviderOptionalParams from "./core/SetAuthTokenProviderOptio
 import StartChatOptionalParams from "./core/StartChatOptionalParams";
 import TelemetryEvent from "./telemetry/TelemetryEvent";
 import { callingBundleVersion } from "./config/settings";
+import { gatekeeper, enableNetworkListeners } from "./gatekeeper/GateKeeper";
 import createAMSClient from "@microsoft/omnichannel-amsclient";
 import createOcSDKConfiguration from "./utils/createOcSDKConfiguration";
 import createOmnichannelMessage from "./utils/createOmnichannelMessage";
@@ -157,6 +158,7 @@ class OmnichannelChatSDK {
     private isAMSClientAllowed = false;
 
     constructor(omnichannelConfig: OmnichannelConfig, chatSDKConfig: ChatSDKConfig = defaultChatSDKConfig) {
+        enableNetworkListeners();
         this.debug = false;
         this.runtimeId = getRuntimeId(chatSDKConfig?.telemetry?.runtimeId ?? null);
         this.omnichannelConfig = omnichannelConfig;
@@ -415,12 +417,7 @@ class OmnichannelChatSDK {
         return this.liveChatConfig;
     }
 
-    /**
-     *
-     * @param optionalParams
-     * @param parallel if true , it will run in parallel (fastest version) with components loaded in the background
-     * @returns livechatConfig
-     */
+    @gatekeeper
     public async initialize(optionalParams: InitializeOptionalParams = {}): Promise<ChatConfig> {
 
         const { useParallelLoad } = optionalParams;
@@ -861,7 +858,7 @@ class OmnichannelChatSDK {
 
         if (!this.chatSDKConfig.useCreateConversation?.disable) {
             await createConversationPromise();
-            await Promise.all([messagingClientPromise(),attachmentClientPromise()]);
+            await Promise.all([messagingClientPromise(), attachmentClientPromise()]);
         } else {
             await Promise.all([sessionInitPromise(), messagingClientPromise(), attachmentClientPromise()]);
         }
@@ -1253,7 +1250,9 @@ class OmnichannelChatSDK {
 
     }
 
+    @gatekeeper
     public async getMessages(): Promise<GetMessagesResponse> {
+        console.log("********** GET MESSAGES STARTING ****************");
         this.scenarioMarker.startScenario(TelemetryEvent.GetMessages, {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
@@ -1304,7 +1303,9 @@ class OmnichannelChatSDK {
         return message;
     }
 
+    @gatekeeper
     public async sendMessage(message: ChatSDKMessage): Promise<OmnichannelMessage | void> {
+        console.log("********** SEND MESSAGE STARTING ****************");
         this.scenarioMarker.startScenario(TelemetryEvent.SendMessages, {
             RequestId: this.requestId,
             ChatId: this.chatToken.chatId as string
