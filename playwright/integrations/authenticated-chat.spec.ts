@@ -40,7 +40,10 @@ test.describe('AuthenticatedChat @AuthenticatedChat', () => {
                 const authToken = await response.text();
 
                 const chatSDKConfig = {
-                    getAuthToken: () => authToken
+                    getAuthToken: () => authToken,
+                    useCreateConversation: {
+                        disable: true,
+                    }
                 };
 
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);
@@ -100,7 +103,10 @@ test.describe('AuthenticatedChat @AuthenticatedChat', () => {
                 const authToken = await response.text();
 
                 const chatSDKConfig = {
-                    getAuthToken: () => authToken
+                    getAuthToken: () => authToken,
+                    useCreateConversation: {
+                        disable: true,
+                    }
                 };
 
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);

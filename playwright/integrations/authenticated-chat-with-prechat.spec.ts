@@ -40,7 +40,10 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPrechat', () => {
                 const authToken = await response.text();
 
                 const chatSDKConfig = {
-                    getAuthToken: () => authToken
+                    getAuthToken: () => authToken,
+                    useCreateConversation: {
+                        disable: true,
+                    }
                 };
 
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);

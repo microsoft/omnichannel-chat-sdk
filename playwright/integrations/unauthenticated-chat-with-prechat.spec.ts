@@ -27,10 +27,13 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithPrechat', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatSessionInitPath);
             }),
-            await page.evaluate(async ({ omnichannelConfig, optionalParams, chatDuration }) => {
-                const { sleep } = window;
+            await page.evaluate(async ({ omnichannelConfig, optionalParams }) => {
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
-                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, {
+                    useCreateConversation: {
+                        disable: true,
+                    }
+                });
                 const runtimeContext = {};
 
                 await chatSDK.initialize();
@@ -44,15 +47,13 @@ test.describe('UnauthenticatedChat @UnauthenticatedChatWithPrechat', () => {
 
                 runtimeContext.preChatSurvey = preChatSurveyRes;
 
-                await sleep(chatDuration);
-
                 await chatSDK.endChat();
 
                 return runtimeContext;
             }, { omnichannelConfig, optionalParams, chatDuration: testSettings.chatDuration })
         ]);
 
-        const { requestId, preChatSurvey } = runtimeContext;
+        const { requestId } = runtimeContext;
         const sessionInitRequestUrl = `${runtimeContext.orgUrl}/${OmnichannelEndpoints.LiveChatSessionInitPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
         const prechatSurveyBody = JSON.parse(optionalParams.preChatResponse.Survey);
         expect(prechatSurveyBody.Name).toEqual('OmnichannelSurvey');
