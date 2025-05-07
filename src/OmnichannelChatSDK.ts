@@ -861,10 +861,10 @@ class OmnichannelChatSDK {
 
         if (!this.chatSDKConfig.useCreateConversation?.disable) {
             await createConversationPromise();
-            await Promise.all([messagingClientPromise(),attachmentClientPromise()]);
         } else {
-            await Promise.all([sessionInitPromise(), messagingClientPromise(), attachmentClientPromise()]);
+            await sessionInitPromise(); // Await the session initialization
         }
+        await Promise.all([messagingClientPromise(),attachmentClientPromise()]);
 
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
             this.refreshTokenTimer = setInterval(async () => {
@@ -968,6 +968,9 @@ class OmnichannelChatSDK {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string
             };
+            if (error instanceof ChatSDKError) {
+                exceptionThrowers.throwConversationClosureFailure(new Error(JSON.stringify(error.exceptionDetails)), this.scenarioMarker, TelemetryEvent.EndChat, telemetryData);
+            }
             exceptionThrowers.throwConversationClosureFailure(error, this.scenarioMarker, TelemetryEvent.EndChat, telemetryData);
         }
     }
