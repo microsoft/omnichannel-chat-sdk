@@ -106,7 +106,11 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
             await page.evaluate(async ({ omnichannelConfig, chatDuration }) => {
                 const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
-                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, {
+                    useCreateConversation: {
+                        disable: true,
+                    }
+                });
 
                 await chatSDK.initialize();
 
@@ -154,7 +158,11 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
             await page.evaluate(async ({ omnichannelConfig, customContext, chatDuration }) => {
                 const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
-                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, {
+                    useCreateConversation: {
+                        disable: true,
+                    }
+                });
 
                 await chatSDK.initialize();
 
@@ -239,7 +247,11 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         const [_, liveWorkItemDetailsRequest, liveWorkItemDetailsResponse, runtimeContext] = await Promise.all([
             await page.evaluate(async ({ omnichannelConfig }) => {
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
-                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, {
+                    useCreateConversation: {
+                        disable: true,
+                    }
+                });
 
                 await chatSDK.initialize();
 
@@ -265,7 +277,11 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
             await page.evaluate(async ({ omnichannelConfig, chatDuration }) => {
                 const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK, runtimeContext } = window;
-                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, {
+                    useCreateConversation: {
+                        disable: true,
+                    }
+                });
 
                 await chatSDK.initialize();
 
@@ -644,7 +660,11 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
             await page.evaluate(async ({ omnichannelConfig, chatDuration }) => {
                 const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
-                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, {
+                    useCreateConversation: {
+                        disable: true,
+                    }
+                });
 
                 await chatSDK.initialize();
 

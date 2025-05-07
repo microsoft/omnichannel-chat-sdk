@@ -187,6 +187,9 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
                     chatReconnect: {
                         disable: false,
                     },
+                    useCreateConversation: {
+                        disable: true,
+                    }
                 };
 
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);
@@ -224,6 +227,9 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
                     chatReconnect: {
                         disable: false,
                     },
+                    useCreateConversation: {
+                        disable: true,
+                    }
                 };
 
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);

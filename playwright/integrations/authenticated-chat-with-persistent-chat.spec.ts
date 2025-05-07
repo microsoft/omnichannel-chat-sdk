@@ -94,6 +94,9 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
                     persistentChat: {
                         disable: false,
                     },
+                    useCreateConversation: {
+                        disable: true,
+                    }
                 };
 
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);
@@ -137,6 +140,9 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
                     persistentChat: {
                         disable: false
                     },
+                    useCreateConversation: {
+                        disable: true,
+                    }
                 };
 
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);
