@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- Added additions details to endChat ExceptionDetails
+- Splited sessionInit promize to its own to avoid ACS initialize 
+
 ## [1.10.19] - 2025-05-02
 
 ### Added
