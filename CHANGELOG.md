@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Mapped id to OriginalMessage ID for backward compatibility once the bridging is removed
 - Added additions details to endChat ExceptionDetails
 - Splited sessionInit promize to its own to avoid ACS initialize 
 
