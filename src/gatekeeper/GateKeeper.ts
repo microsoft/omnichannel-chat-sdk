@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import exceptionThrowers from "../utils/exceptionThrowers";
+
 let isOffline = false;
 
 export function gatekeeper(target: any, key: string, descriptor: PropertyDescriptor) {
@@ -10,7 +12,8 @@ export function gatekeeper(target: any, key: string, descriptor: PropertyDescrip
         console.log("Current offline status:", isOffline);
         if (isOffline) {
             console.warn("Method called while offline:", key, args);
-            throw new Error("Method cannot be called while offline.");
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.SendMessages);
+            return;
         }
         console.log("Method is online, proceeding:", key, args);
         const result = originalMethod.apply(this, args);
@@ -29,8 +32,4 @@ export function enableNetworkListeners() {
         console.warn("************ Online event triggered ***************");
         isOffline = false;
     });
-}
-
-export function hey(){
-    console.log("hello");
 }
