@@ -155,9 +155,17 @@ class OmnichannelChatSDK {
     private maskingCharacter = "#";
     private botCSPId: string | null = null;
     private isAMSClientAllowed = false;
+    private debugSDK = false;
+    private debugAMS = false;
+    private debugACS = false;
+    private detailedDebugEnabled = false;
 
     constructor(omnichannelConfig: OmnichannelConfig, chatSDKConfig: ChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
+        this.debugSDK = false;
+        this.debugAMS = false;
+        this.debugACS = false;
+        this.detailedDebugEnabled = false;
         this.runtimeId = getRuntimeId(chatSDKConfig?.telemetry?.runtimeId ?? null);
         this.omnichannelConfig = omnichannelConfig;
         this.chatSDKConfig = {
@@ -222,6 +230,7 @@ class OmnichannelChatSDK {
      */
     /* istanbul ignore next */
     public setDebug(flag: boolean): void {
+        this.detailedDebugEnabled = false;
         this.debug = flag;
         this.telemetry?.setDebug(flag);
         this.scenarioMarker.setDebug(flag);
@@ -241,16 +250,19 @@ class OmnichannelChatSDK {
      */
     /* istanbul ignore next */
     public setDebugDetailed(flagSDK: boolean, flagAcs?:boolean, flagAttachment?: boolean): void {
+        this.detailedDebugEnabled = true;
         this.debug = flagSDK;
+        this.debugACS = flagAcs === true
+        this.debugAMS = flagAttachment === true;
+
         this.telemetry?.setDebug(flagSDK);
         this.scenarioMarker.setDebug(flagSDK);
 
         if (this.AMSClient) {
-            this.AMSClient.setDebug(flagAttachment !== undefined ? flagAttachment : flagSDK);
-            this.amsClientLogger?.setDebug(flagAttachment !== undefined ? flagAttachment : flagSDK);
+            this.AMSClient.setDebug(this.debugAMS);
         }
 
-        loggerUtils.setDebugDetailed(flagSDK, flagAcs, flagAttachment, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger);
+        loggerUtils.setDebugDetailed(this.debug, this.debugACS, this.debugAMS, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger);
     }
 
     private async retryLoadAMSClient(): Promise<AmsClient> {
@@ -336,7 +348,7 @@ class OmnichannelChatSDK {
                     this.AMSClient = await createAMSClient({
                         framedMode: isBrowser(),
                         multiClient: true,
-                        debug: this.debug,
+                        debug: (this.detailedDebugEnabled ? this.debugAMS : this.debug),
                         logger: this.amsClientLogger as PluggableLogger
                     });
                     this.debug && console.timeEnd("ams_creation");
@@ -419,7 +431,7 @@ class OmnichannelChatSDK {
                     this.AMSClient = await createAMSClient({
                         framedMode: isBrowser(),
                         multiClient: true,
-                        debug: this.debug,
+                        debug: (this.detailedDebugEnabled ? this.debugAMS : this.debug),
                         logger: this.amsClientLogger as PluggableLogger
                     });
                     this.debug && console.timeEnd("ams_seq_creation");
@@ -1474,7 +1486,7 @@ class OmnichannelChatSDK {
                     const { id } = event;
                     const omnichannelMessage = createOmnichannelMessage(event, {
                         liveChatVersion: this.liveChatVersion,
-                        debug: this.debug
+                        debug: (this.detailedDebugEnabled ? this.debugACS : this.debug),
                     });
 
                     if (!postedMessages.has(id)) {
