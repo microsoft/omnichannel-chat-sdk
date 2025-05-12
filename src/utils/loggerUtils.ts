@@ -50,6 +50,24 @@ export const setDebug = (flag: boolean, ocSdkLogger?: OCSDKLogger | null, acsCli
     ic3ClientLogger?.setDebug(flag);
 }
 
+export const setDebugDetailed = (flag: boolean, flagAcs?: boolean, flagAttachment?: boolean, ocSdkLogger?: OCSDKLogger | null, acsClientLogger?: ACSClientLogger | null, acsAdapterLogger?: ACSAdapterLogger | null, callingSdkLogger?: CallingSDKLogger | null, amsClientLogger?: AMSClientLogger | null): void => {
+
+    if (flag !== undefined) {
+        ocSdkLogger?.setDebug(flag);
+        callingSdkLogger?.setDebug(flag);
+    }
+
+    if (flagAcs !== undefined) {
+        acsClientLogger?.setDebug(flag);
+        acsAdapterLogger?.setDebug(flag);
+    }
+
+    if (flagAttachment !== undefined) {
+        amsClientLogger?.setDebug(flag);
+    }
+
+}
+
 export const setChatId = (chatId: string, ocSdkLogger?: OCSDKLogger | null, acsClientLogger?: ACSClientLogger | null, acsAdapterLogger?: ACSAdapterLogger | null, callingSdkLogger?: CallingSDKLogger | null, amsClientLogger?: AMSClientLogger | null, ic3ClientLogger: IC3ClientLogger | null = null): void => {
     ocSdkLogger?.setChatId(chatId);
     acsClientLogger?.setChatId(chatId);
@@ -156,6 +174,7 @@ export default {
     setRuntimeId,
     setRequestId,
     setDebug,
+    setDebugDetailed,
     setChatId,
     redactPII
 }

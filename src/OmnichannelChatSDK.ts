@@ -6,6 +6,7 @@ import { AmsClient, ChatWidgetLanguage, DataMaskingInfo, LiveWSAndLiveChatEngJoi
 import { ChatAdapter, GetAgentAvailabilityResponse, GetCurrentLiveChatContextResponse, GetLiveChatTranscriptResponse, GetMessagesResponse, GetPreChatSurveyResponse, GetVoiceVideoCallingResponse, MaskingRule, MaskingRules, UploadFileAttachmentResponse } from "./types/response";
 import { ChatClient, ChatMessage } from "@azure/communication-chat";
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
+import { ChatSDKError, ChatSDKErrorName } from "./core/ChatSDKError";
 import { MessagePrinterFactory, PrinterType } from "./utils/printers/MessagePrinterFactory";
 import { SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
 import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
@@ -30,7 +31,6 @@ import ChatConfig from "./core/ChatConfig";
 import ChatReconnectContext from "./core/ChatReconnectContext";
 import ChatReconnectOptionalParams from "./core/ChatReconnectOptionalParams";
 import ChatSDKConfig from "./core/ChatSDKConfig";
-import { ChatSDKError, ChatSDKErrorName } from "./core/ChatSDKError";
 import ChatSDKExceptionDetails from "./core/ChatSDKExceptionDetails";
 import ChatSDKMessage from "./core/messaging/ChatSDKMessage";
 import ChatTranscriptBody from "./core/ChatTranscriptBody";
@@ -216,6 +216,10 @@ class OmnichannelChatSDK {
         loggerUtils.setRequestId(this.requestId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
     }
 
+    /**
+     * @param flag Flag to enable/disable debug log telemetry, will be applied to all components
+     * @description Set the debug flag to enable/disable debug log telemetry
+     */
     /* istanbul ignore next */
     public setDebug(flag: boolean): void {
         this.debug = flag;
@@ -227,6 +231,26 @@ class OmnichannelChatSDK {
         }
 
         loggerUtils.setDebug(flag, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+    }
+
+    /**
+     * @description Allow to target specific components to enable/disable debug log telemetry, reducing the noise in the logs.
+     * @param flagSDK Flag to enable disable SDK debug log telemetry
+     * @param flagAcs Flag to enable/disable debugg log telemetry for Acs components (ACSClient and ACSAdapter)
+     * @param flagAttachment Flag to enable/disable debug log telemetry for Attachment components)
+     */
+    /* istanbul ignore next */
+    public setDebugDetailed(flagSDK: boolean, flagAcs?:boolean, flagAttachment?: boolean): void {
+        this.debug = flagSDK;
+        this.telemetry?.setDebug(flagSDK);
+        this.scenarioMarker.setDebug(flagSDK);
+
+        if (this.AMSClient) {
+            this.AMSClient.setDebug(flagAttachment !== undefined ? flagAttachment : flagSDK);
+            this.amsClientLogger?.setDebug(flagAttachment !== undefined ? flagAttachment : flagSDK);
+        }
+
+        loggerUtils.setDebugDetailed(flagSDK, flagAcs, flagAttachment, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger);
     }
 
     private async retryLoadAMSClient(): Promise<AmsClient> {
