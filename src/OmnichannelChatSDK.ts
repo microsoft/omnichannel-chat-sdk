@@ -2206,7 +2206,7 @@ class OmnichannelChatSDK {
                     ChatId: this.chatToken?.chatId as string,
                     ExceptionDetails: "Post Chat Survey is disabled. Please check the Omnichannel Administration Portal."
                 });
-                return Promise.reject("Post Chat is disabled from admin side.");
+                return Promise.reject("Post Chat is disabled from admin side, or chat doesnt have a survey as part of their configuration.");
             }
         } catch (ex) {
             this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {
