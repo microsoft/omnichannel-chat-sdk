@@ -1024,8 +1024,8 @@ class OmnichannelChatSDK {
         let sessionId = this.sessionId;
 
         if (optionalParams.liveChatContext) {
-            requestId = optionalParams.liveChatContext.requestId || this.requestId;
-            chatToken = optionalParams.liveChatContext.chatToken || this.chatToken;
+            requestId = optionalParams.liveChatContext.requestId;
+            chatToken = optionalParams.liveChatContext.chatToken;
             chatId = chatToken.chatId as string;
         }
 
