@@ -22,9 +22,28 @@ export const throwChatSDKError = (chatSDKError: ChatSDKErrorName, e: unknown, sc
     const exceptionDetails: ChatSDKExceptionDetails = {
         response: chatSDKError
     };
-
     if (e) {
-        exceptionDetails.errorObject = `${e}`;
+        if (typeof e === "object" && e !== null && "response" in e) {
+            const { message, code, response } = e as {
+                message?: string;
+                code?: string;
+                response?: {
+                    status?: number;
+                    statusText?: string;
+                    headers?: Record<string, unknown>;
+                    data?: unknown;
+                };
+            };
+            exceptionDetails.errorObject = JSON.stringify({
+                status: response?.status,
+                headers: response?.headers,
+                data: response?.data,
+                message,
+                code
+            });
+        } else {
+            exceptionDetails.errorObject = String(e);
+        }
     }
 
     if (message) {
