@@ -35,6 +35,7 @@ import ChatSDKExceptionDetails from "./core/ChatSDKExceptionDetails";
 import ChatSDKMessage from "./core/messaging/ChatSDKMessage";
 import ChatTranscriptBody from "./core/ChatTranscriptBody";
 import ConversationMode from "./core/ConversationMode";
+import DebugOptionalParams from "./core/DebugOptionalParams";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import EmailLiveChatTranscriptOptionaParams from "./core/EmailLiveChatTranscriptOptionalParams";
 import EndChatOptionalParams from "./core/EndChatOptionalParams";
@@ -249,14 +250,14 @@ class OmnichannelChatSDK {
      * @param flagAttachment Flag to enable/disable debug log telemetry for Attachment components)
      */
     /* istanbul ignore next */
-    public setDebugDetailed(flagSDK: boolean, flagAcs?:boolean, flagAttachment?: boolean): void {
+    public setDebugDetailed(optionalParams :  DebugOptionalParams): void {
         this.detailedDebugEnabled = true;
-        this.debug = flagSDK;
-        this.debugACS = flagAcs === true
-        this.debugAMS = flagAttachment === true;
+        this.debug = optionalParams?.flagSDK === true;
+        this.debugACS = optionalParams?.flagACS === true
+        this.debugAMS = optionalParams?.flagAttachment === true;
 
-        this.telemetry?.setDebug(flagSDK);
-        this.scenarioMarker.setDebug(flagSDK);
+        this.telemetry?.setDebug(this.debug);
+        this.scenarioMarker.setDebug(this.debug);
 
         if (this.AMSClient) {
             this.AMSClient.setDebug(this.debugAMS);
