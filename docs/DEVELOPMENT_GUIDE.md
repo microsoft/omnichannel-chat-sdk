@@ -551,8 +551,8 @@ class CustomWidgetMessageRenderer {
         const isPostedMessageId = this.postedMessageIds.has(newMessage.id);
         let isPostedOriginalMessageId = undefined;
 
-        if (newMessage && newMessage.metadata && newMessage.metadata.originalMessageId) { // Verify whether the message has originalMessageId
-            isPostedOriginalMessageId = this.postedOriginalMessageIds.has(newMessage.metadata.originalMessageId);
+        if (newMessage && newMessage.properties && newMessage.properties.originalMessageId) { // Verify whether the message has originalMessageId
+            isPostedOriginalMessageId = this.postedOriginalMessageIds.has(newMessage.properties.originalMessageId);
         }
 
         if (isPostedMessageId) {
@@ -564,11 +564,11 @@ class CustomWidgetMessageRenderer {
                 this.notifyChatTranscriptUpdate();
             }
         } else if (isPostedOriginalMessageId === false) { // Original message id takes precedence over message id
-            this.messages.set(newMessage.metadata.originalMessageId, {...newMessage, id: newMessage.metadata.originalMessageId}); // Replaces message id with originalMessageId
+            this.messages.set(newMessage.properties.originalMessageId, {...newMessage, id: newMessage.properties.originalMessageId}); // Replaces message id with originalMessageId
 
             // Update posted message ids
             this.postedMessageIds.add(newMessage.id);
-            this.postedOriginalMessageIds.add(newMessage.metadata.originalMessageId);
+            this.postedOriginalMessageIds.add(newMessage.properties.originalMessageId);
             this.notifyChatTranscriptUpdate();
         } else if (!isPostedMessageId) {
             this.messages.set(newMessage.id, newMessage);
