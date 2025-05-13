@@ -1,4 +1,3 @@
-import { is } from "core-js/core/object";
 import { isBrowser } from "./platform";
 
 const whitelistedUrls = [
@@ -25,8 +24,8 @@ const isUrlWhitelisted = (url: string) => {
 
 export const shouldUseFramedMode = () => {
     if (isBrowser()) {
-        const domain = window.location.origin || '';    
-        return isUrlWhitelisted(domain)? false: true; // Framed mode is used when domain is not whitelisted
+        const domain = window.location.origin || '';
+        return isUrlWhitelisted(domain) ? false : true; // Framed mode is used when domain is not whitelisted
     }
 
     return isBrowser();
