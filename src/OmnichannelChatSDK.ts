@@ -516,7 +516,7 @@ class OmnichannelChatSDK {
         //Only when exist a recconectId as part of the URL params
         if (optionalParams.reconnectId) {
             try {
-                const reconnectAvailabilityResponse = await this.OCClient.getReconnectAvailability(optionalParams.reconnectId);
+                const reconnectAvailabilityResponse = await this.OCClient.getReconnectAvailability(optionalParams.reconnectId, { requestId: this.requestId });
                 // isReconnectAvailable , indicates if the chat is still valid, or the token has expired
                 if (reconnectAvailabilityResponse && !reconnectAvailabilityResponse.isReconnectAvailable) {
                     if (reconnectAvailabilityResponse.reconnectRedirectionURL) {
@@ -559,6 +559,10 @@ class OmnichannelChatSDK {
             exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.GetChatReconnectContext);
         }
 
+        if (!this.requestId) {
+            this.requestId = uuidv4();
+        }
+
         let context: ChatReconnectContext = {
             reconnectId: null,
             redirectURL: null
@@ -592,6 +596,10 @@ class OmnichannelChatSDK {
 
         if (!this.isInitialized) {
             exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.StartChat);
+        }
+
+        if (!this.requestId) {
+            this.requestId = uuidv4();
         }
 
         const shouldReinitIC3Client = !platform.isNode() && !platform.isReactNative() && !this.IC3Client && this.liveChatVersion === LiveChatVersion.V1;
@@ -1022,6 +1030,11 @@ class OmnichannelChatSDK {
         let chatId = chatToken.chatId as string;
         let reconnectId = this.reconnectId;
         let sessionId = this.sessionId;
+
+        if (!this.requestId) {
+            this.requestId = uuidv4();
+            requestId = this.requestId;
+        }
 
         if (optionalParams.liveChatContext) {
             requestId = optionalParams.liveChatContext.requestId;
@@ -1914,6 +1927,12 @@ class OmnichannelChatSDK {
         if (optionalParams.liveChatContext?.sessionId) {
             sessionId = optionalParams.liveChatContext.sessionId;
             this.OCClient.sessionId = sessionId;
+        }
+
+        if (!chatId) {
+            throw new ChatSDKError(ChatSDKErrorName.LiveChatTranscriptRetrievalFailure, undefined, {
+                response: ChatSDKErrorName.LiveChatTranscriptRetrievalFailure,
+                errorObject: "ChatId is not defined" });
         }
 
         this.scenarioMarker.startScenario(TelemetryEvent.GetLiveChatTranscript, {
