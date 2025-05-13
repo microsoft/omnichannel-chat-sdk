@@ -6,6 +6,7 @@ import { AmsClient, ChatWidgetLanguage, DataMaskingInfo, LiveWSAndLiveChatEngJoi
 import { ChatAdapter, GetAgentAvailabilityResponse, GetCurrentLiveChatContextResponse, GetLiveChatTranscriptResponse, GetMessagesResponse, GetPreChatSurveyResponse, GetVoiceVideoCallingResponse, MaskingRule, MaskingRules, UploadFileAttachmentResponse } from "./types/response";
 import { ChatClient, ChatMessage } from "@azure/communication-chat";
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
+import { ChatSDKError, ChatSDKErrorName } from "./core/ChatSDKError";
 import { MessagePrinterFactory, PrinterType } from "./utils/printers/MessagePrinterFactory";
 import { SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
 import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
@@ -30,11 +31,11 @@ import ChatConfig from "./core/ChatConfig";
 import ChatReconnectContext from "./core/ChatReconnectContext";
 import ChatReconnectOptionalParams from "./core/ChatReconnectOptionalParams";
 import ChatSDKConfig from "./core/ChatSDKConfig";
-import { ChatSDKError, ChatSDKErrorName } from "./core/ChatSDKError";
 import ChatSDKExceptionDetails from "./core/ChatSDKExceptionDetails";
 import ChatSDKMessage from "./core/messaging/ChatSDKMessage";
 import ChatTranscriptBody from "./core/ChatTranscriptBody";
 import ConversationMode from "./core/ConversationMode";
+import DebugOptionalParams from "./core/DebugOptionalParams";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
 import EmailLiveChatTranscriptOptionaParams from "./core/EmailLiveChatTranscriptOptionalParams";
 import EndChatOptionalParams from "./core/EndChatOptionalParams";
@@ -155,9 +156,17 @@ class OmnichannelChatSDK {
     private maskingCharacter = "#";
     private botCSPId: string | null = null;
     private isAMSClientAllowed = false;
+    private debugSDK = false;
+    private debugAMS = false;
+    private debugACS = false;
+    private detailedDebugEnabled = false;
 
     constructor(omnichannelConfig: OmnichannelConfig, chatSDKConfig: ChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
+        this.debugSDK = false;
+        this.debugAMS = false;
+        this.debugACS = false;
+        this.detailedDebugEnabled = false;
         this.runtimeId = getRuntimeId(chatSDKConfig?.telemetry?.runtimeId ?? null);
         this.omnichannelConfig = omnichannelConfig;
         this.chatSDKConfig = {
@@ -216,8 +225,13 @@ class OmnichannelChatSDK {
         loggerUtils.setRequestId(this.requestId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
     }
 
+    /**
+     * @param flag Flag to enable/disable debug log telemetry, will be applied to all components
+     * @description Set the debug flag to enable/disable debug log telemetry
+     */
     /* istanbul ignore next */
     public setDebug(flag: boolean): void {
+        this.detailedDebugEnabled = false;
         this.debug = flag;
         this.telemetry?.setDebug(flag);
         this.scenarioMarker.setDebug(flag);
@@ -227,6 +241,29 @@ class OmnichannelChatSDK {
         }
 
         loggerUtils.setDebug(flag, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+    }
+
+    /**
+     * @description Allow to target specific components to enable/disable debug log telemetry, reducing the noise in the logs.
+     * @param flagSDK Flag to enable disable SDK debug log telemetry
+     * @param flagAcs Flag to enable/disable debugg log telemetry for Acs components (ACSClient and ACSAdapter)
+     * @param flagAttachment Flag to enable/disable debug log telemetry for Attachment components)
+     */
+    /* istanbul ignore next */
+    public setDebugDetailed(optionalParams :  DebugOptionalParams): void {
+        this.detailedDebugEnabled = true;
+        this.debug = optionalParams?.flagSDK === true;
+        this.debugACS = optionalParams?.flagACS === true
+        this.debugAMS = optionalParams?.flagAttachment === true;
+
+        this.telemetry?.setDebug(this.debug);
+        this.scenarioMarker.setDebug(this.debug);
+
+        if (this.AMSClient) {
+            this.AMSClient.setDebug(this.debugAMS);
+        }
+
+        loggerUtils.setDebugDetailed(this.debug, this.debugACS, this.debugAMS, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger);
     }
 
     private async retryLoadAMSClient(): Promise<AmsClient> {
@@ -312,7 +349,7 @@ class OmnichannelChatSDK {
                     this.AMSClient = await createAMSClient({
                         framedMode: isBrowser(),
                         multiClient: true,
-                        debug: this.debug,
+                        debug: (this.detailedDebugEnabled ? this.debugAMS : this.debug),
                         logger: this.amsClientLogger as PluggableLogger
                     });
                     this.debug && console.timeEnd("ams_creation");
@@ -395,7 +432,7 @@ class OmnichannelChatSDK {
                     this.AMSClient = await createAMSClient({
                         framedMode: isBrowser(),
                         multiClient: true,
-                        debug: this.debug,
+                        debug: (this.detailedDebugEnabled ? this.debugAMS : this.debug),
                         logger: this.amsClientLogger as PluggableLogger
                     });
                     this.debug && console.timeEnd("ams_seq_creation");
@@ -1453,7 +1490,7 @@ class OmnichannelChatSDK {
                     const { id } = event;
                     const omnichannelMessage = createOmnichannelMessage(event, {
                         liveChatVersion: this.liveChatVersion,
-                        debug: this.debug
+                        debug: (this.detailedDebugEnabled ? this.debugACS : this.debug),
                     });
 
                     if (!postedMessages.has(id)) {
@@ -2172,7 +2209,7 @@ class OmnichannelChatSDK {
                     ChatId: this.chatToken?.chatId as string,
                     ExceptionDetails: "Post Chat Survey is disabled. Please check the Omnichannel Administration Portal."
                 });
-                return Promise.reject("Post Chat is disabled from admin side.");
+                return Promise.reject("Post Chat is disabled from admin side, or chat doesnt have a survey as part of their configuration.");
             }
         } catch (ex) {
             this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {

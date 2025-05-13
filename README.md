@@ -54,7 +54,7 @@ Please make sure you have a chat widget configured before using this package or 
   - [Persistent Chat](#persistent-chat)
   - [Chat Reconnect with Authenticated User](#chat-reconnect-with-authenticated-user)
   - [Chat Reconnect with Unauthenticated User](#chat-reconnect-with-unauthenticated-user)
-  - [Best Practices for Chat Session Management: Handling Disconnections and Network Instability](#best-practices-for-chat-session-management:-handling-disconnections-and-network-instability)
+  - [Best Practices for Chat Session Management: Handling Disconnections and Network Instabilit(#best-practices-for-chat-session-management:-handling-disconnections-and-network-instability)
   - [Operating Hours](#operating-hours)
   - [Single Sign-on for Bots](/docs/scenarios/SINGLE_SIGN_ON_FOR_BOTS.md)
 - [Sample Apps](https://github.com/microsoft/omnichannel-chat-sdk-samples)
@@ -625,7 +625,9 @@ const agentAvailability = await chatSDK.getAgentAvailability();
 
 > See <https://docs.microsoft.com/en-us/dynamics365/customer-service/configure-post-conversation-survey?tabs=customerserviceadmincenter> on how to set up post-conversation surveys
 
-> ❗ `chatSDK.getPostChatSurveyContext()` needs to be called before `chatSDK.endChat()` is called
+__NOTE : It should be called ONLY when the chat contains a post-survey as part of their configuration, otherwise it will throw an error.__
+
+> ❗ `chatSDK.getPostChatSurveyContext()` needs to be called before `chatSDK.endChat()` is called.
 
 ```ts
 // 1. Start chat
