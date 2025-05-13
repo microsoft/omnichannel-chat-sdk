@@ -2133,7 +2133,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve({
-                "chatId": "chatId"
+                "ChatId": "ChatId"
             }));
             jest.spyOn(chatSDK.OCClient, 'getChatTranscripts').mockResolvedValue(Promise.resolve());
 
