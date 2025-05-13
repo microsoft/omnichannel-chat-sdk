@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Uptake new oc sdk with changes  to requestId
 - Added Finally to solve cleanup issues while closing chat 
 - Update new OC sdk for correlation id implementation
 
