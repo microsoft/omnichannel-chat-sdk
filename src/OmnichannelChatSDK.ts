@@ -110,6 +110,7 @@ import startPolling from "./commands/startPolling";
 import stopPolling from "./commands/stopPolling";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
+import { shouldUseFramedMode } from "./utils/AMSClientUtils";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -310,7 +311,7 @@ class OmnichannelChatSDK {
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADING;
                     this.debug && console.time("ams_creation");
                     this.AMSClient = await createAMSClient({
-                        framedMode: isBrowser(),
+                        framedMode: shouldUseFramedMode(),
                         multiClient: true,
                         debug: this.debug,
                         logger: this.amsClientLogger as PluggableLogger
