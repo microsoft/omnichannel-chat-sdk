@@ -17,10 +17,12 @@ import { ChatSDKError, ChatSDKErrorName } from "../core/ChatSDKError";
 import ChatSDKExceptionDetails from "../core/ChatSDKExceptionDetails";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
+import { isNetworkOffline } from "../listeners/NetworkListener";
 
 export const throwChatSDKError = (chatSDKError: ChatSDKErrorName, e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: { [key: string]: string } = {}, message?: string): void => {
     const exceptionDetails: ChatSDKExceptionDetails = {
-        response: chatSDKError
+        response: chatSDKError,
+        isNetworkOffline: isNetworkOffline()
     };
     if (e) {
         if (typeof e === "object" && e !== null && "response" in e) {

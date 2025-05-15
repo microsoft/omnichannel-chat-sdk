@@ -50,6 +50,7 @@
     "@microsoft/botframework-webchat-adapter-azure-communication-chat": "^0.0.1-beta.2",
     "@microsoft/ocsdk": "^0.5.16",
     "@microsoft/omnichannel-amsclient": "^0.1.8",
-    "@microsoft/omnichannel-ic3core": "^0.1.5"
+    "@microsoft/omnichannel-ic3core": "^0.1.5",
+    "@react-native-community/netinfo": "^11.4.1"
   }
 }

@@ -103,6 +103,7 @@ import { defaultMessageTags } from "./core/messaging/MessageTags";
 import exceptionSuppressors from "./utils/exceptionSuppressors";
 import { getLocationInfo } from "./utils/location";
 import { isCoreServicesOrgUrlDNSError } from "./utils/internalUtils";
+import { isNetworkOffline } from "./listeners/NetworkListener";
 import loggerUtils from "./utils/loggerUtils";
 import { parseLowerCaseString } from "./utils/parsers";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
@@ -522,7 +523,7 @@ class OmnichannelChatSDK {
 
         } catch (error) {
             const exceptionDetails = {
-                response: "OCClientGetReconnectableChatsFailed"
+                response: "OCClientGetReconnectableChatsFailed",
             }
             const telemetryData = {
                 RequestId: this.requestId,
@@ -578,7 +579,7 @@ class OmnichannelChatSDK {
                     ExceptionDetails: JSON.stringify(exceptionDetails)
                 });
 
-                console.error(`OmnichannelChatSDK/GetChatReconnectContextWithReconnectId/error ${error}`);
+                console.error(`OmnichannelChatSDK/GetChatReconnectContextWithReconnectId/offline:${isNetworkOffline()}/error ${error}`);
             }
         }
         //here the context contains recconnectionId if valid, or redirectionURL if not valid

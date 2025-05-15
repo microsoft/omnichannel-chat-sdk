@@ -1,8 +1,9 @@
-import LiveChatVersion from "../core/LiveChatVersion";
 import { ACSConversation } from "../core/messaging/ACSClient";
+import LiveChatVersion from "../core/LiveChatVersion";
 import ScenarioMarker from "../telemetry/ScenarioMarker";
 import TelemetryEvent from "../telemetry/TelemetryEvent";
 import exceptionThrowers from "../utils/exceptionThrowers";
+import { isNetworkOffline } from "../listeners/NetworkListener";
 
 /**
  * On demand command to start polling messages from `chatSDK.onNewMessage()` subscribers when polling was previously halted.

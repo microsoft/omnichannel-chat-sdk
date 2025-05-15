@@ -5,6 +5,7 @@ import AriaTelemetry from "./AriaTelemetry";
 import OmnichannelConfig from "../core/OmnichannelConfig";
 import ScenarioType from "./ScenarioType";
 import StopWatch from "./StopWatch";
+import { isNetworkOffline } from '../listeners/NetworkListener';
 
 class ScenarioMarker {
     private debug: boolean;
@@ -88,7 +89,9 @@ class ScenarioMarker {
             OrgId: this.omnichannelConfig.orgId,
             OrgUrl: this.omnichannelConfig.orgUrl,
             WidgetId: this.omnichannelConfig.widgetId,
-            ElapsedTimeInMilliseconds: stopWatch!.stop(), // eslint-disable-line @typescript-eslint/no-non-null-assertion
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            ElapsedTimeInMilliseconds: stopWatch!.stop(),
+            isNetworkOffline: isNetworkOffline(),
             ...additionalProperties
         };
 
