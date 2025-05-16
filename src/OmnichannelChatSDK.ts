@@ -12,6 +12,7 @@ import { SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
 import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
 import { createCoreServicesOrgUrl, getCoreServicesGeoName, isCoreServicesOrgUrl, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
 import { defaultLocaleId, getLocaleStringFromId } from "./utils/locale";
+import { enableNetworkListeners, isNetworkOffline } from "./listeners/NetworkListener";
 import exceptionThrowers, { throwAMSLoadFailure } from "./utils/exceptionThrowers";
 import { getRuntimeId, isClientIdNotFoundErrorMessage, isCustomerMessage } from "./utils/utilities";
 import { loadScript, removeElementById, sleep } from "./utils/WebUtils";
@@ -103,7 +104,6 @@ import { defaultMessageTags } from "./core/messaging/MessageTags";
 import exceptionSuppressors from "./utils/exceptionSuppressors";
 import { getLocationInfo } from "./utils/location";
 import { isCoreServicesOrgUrlDNSError } from "./utils/internalUtils";
-import { isNetworkOffline } from "./listeners/NetworkListener";
 import loggerUtils from "./utils/loggerUtils";
 import { parseLowerCaseString } from "./utils/parsers";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
@@ -163,6 +163,7 @@ class OmnichannelChatSDK {
     private detailedDebugEnabled = false;
 
     constructor(omnichannelConfig: OmnichannelConfig, chatSDKConfig: ChatSDKConfig = defaultChatSDKConfig) {
+        enableNetworkListeners();
         this.debug = false;
         this.debugSDK = false;
         this.debugAMS = false;
@@ -1400,7 +1401,8 @@ class OmnichannelChatSDK {
             } catch (error) {
                 const exceptionDetails: ChatSDKExceptionDetails = {
                     response: ChatSDKErrorName.ChatSDKSendMessageFailed,
-                    errorObject: `${error}`
+                    errorObject: `${error}`,
+                    isNetworkOffline : isNetworkOffline()
                 };
                 this.scenarioMarker.failScenario(TelemetryEvent.SendMessages, {
                     RequestId: this.requestId,
@@ -1410,7 +1412,8 @@ class OmnichannelChatSDK {
 
                 throw new ChatSDKError(ChatSDKErrorName.ChatSDKSendMessageFailed, undefined, {
                     response: ChatSDKErrorName.ChatSDKSendMessageFailed,
-                    errorObject: `${error}`
+                    errorObject: `${error}`,
+                    isNetworkOffline: isNetworkOffline()
                 });
             }
         } else {
@@ -1447,7 +1450,9 @@ class OmnichannelChatSDK {
             } catch (error) {
                 const exceptionDetails: ChatSDKExceptionDetails = {
                     response: ChatSDKErrorName.ChatSDKSendMessageFailed,
-                    errorObject: `${error}`
+                    errorObject: `${error}`,
+                    isNetworkOffline: isNetworkOffline()
+
                 };
                 this.scenarioMarker.failScenario(TelemetryEvent.SendMessages, {
                     RequestId: this.requestId,
@@ -1473,17 +1478,23 @@ class OmnichannelChatSDK {
         if (this.liveChatVersion === LiveChatVersion.V2) {
             const postedMessages = new Set();
 
+            console.log("LOPEZ :: optional :: ", optionalParams?.rehydrate);
             if (optionalParams?.rehydrate) {
                 this.debug && console.log('[OmnichannelChatSDK][onNewMessage] rehydrate');
                 const messages = await this.getMessages() as OmnichannelMessage[];
-                for (const message of messages.reverse()) {
-                    const { id } = message;
-                    if (postedMessages.has(id)) {
-                        continue;
-                    }
 
-                    postedMessages.add(id);
-                    onNewMessageCallback(message);
+                // this is needed, because during minimification, messages reverse includes a length, and throws
+                // an error accessing length to an undefined object
+                if (messages !== undefined && messages?.length > 0) {
+                    for (const message of messages?.reverse()) {
+                        const { id } = message;
+                        if (postedMessages.has(id)) {
+                            continue;
+                        }
+
+                        postedMessages.add(id);
+                        onNewMessageCallback(message);
+                    }
                 }
             }
 
@@ -2247,7 +2258,8 @@ class OmnichannelChatSDK {
         const reportError = (response: string, message: string, chatId = "") => {
             const exceptionDetails: ChatSDKExceptionDetails = {
                 response,
-                message
+                message,
+                isNetworkOffline: isNetworkOffline()
             };
 
             this.scenarioMarker.failScenario(TelemetryEvent.GetAgentAvailability, {

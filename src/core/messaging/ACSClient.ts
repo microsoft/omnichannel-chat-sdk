@@ -18,6 +18,7 @@ import OmnichannelMessage from "./OmnichannelMessage";
 import TelemetryEvent from "../../telemetry/TelemetryEvent";
 import createOmnichannelMessage from "../../utils/createOmnichannelMessage";
 import { defaultMessageTags } from "./MessageTags";
+import { isNetworkOffline } from "../../listeners/NetworkListener";
 
 enum ACSClientEvent {
     InitializeACSClient = 'InitializeACSClient',
@@ -197,7 +198,8 @@ export class ACSConversation {
                 if (this.keepPolling) {
                     try {
                         const messages = await this.getMessages({ skipConversion: true });
-                        for (const message of messages.reverse()) {
+                        console.log("LOPEZ:2");
+                        for (const message of messages?.reverse()) {
                             try {
                                 const { id, senderDisplayName } = message as ChatMessage;
                                 const customerMessageCondition = senderDisplayName === ACSParticipantDisplayName.Customer;
@@ -355,7 +357,8 @@ export class ACSConversation {
         } catch (error) {
             const exceptionDetails = {
                 response: 'SendMessageFailed',
-                errorObject: `${error}`
+                errorObject: `${error}`,
+                isNetworkOffline: isNetworkOffline()
             };
 
             this.logger?.failScenario(ACSClientEvent.SendMessage, {
@@ -377,7 +380,8 @@ export class ACSConversation {
         } catch (error) {
             const exceptionDetails = {
                 response: 'SendTypingFailed',
-                errorObject: `${error}`
+                errorObject: `${error}`,
+                isNetworkOffline: isNetworkOffline()
             };
 
             this.logger?.failScenario(ACSClientEvent.SendTyping, {
@@ -478,7 +482,8 @@ class ACSClient {
         } catch (error) {
             const exceptionDetails = {
                 response: 'CreateTokenCredentialFailure',
-                errorObject: `${error}`
+                errorObject: `${error}`,
+                isNetworkOffline: isNetworkOffline()
             };
 
             this.logger?.failScenario(ACSClientEvent.InitializeACSClient, {
@@ -493,7 +498,8 @@ class ACSClient {
         } catch (error) {
             const exceptionDetails = {
                 response: 'CreateChatClientFailure',
-                errorObject: `${error}`
+                errorObject: `${error}`,
+                isNetworkOffline: isNetworkOffline()
             };
 
             this.logger?.failScenario(ACSClientEvent.InitializeACSClient, {
