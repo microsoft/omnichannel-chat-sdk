@@ -7,6 +7,7 @@ let webOfflineHandler: (() => void) | undefined;
 let webOnlineHandler: (() => void) | undefined;
 
 export async function enableNetworkListeners() {
+    disableNetworkListeners(); // trick to prevent multiple listeners from being added
     isOffline = false;
 
     console.warn("*********** Network listeners enabled ************");

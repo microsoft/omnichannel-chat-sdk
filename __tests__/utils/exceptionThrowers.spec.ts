@@ -13,12 +13,13 @@ describe('exceptionThrowers', () => {
 
         const expectedExceptionDetails = {
             response: chatSDKError,
-            errorObject: `${e}`,
-            isNetworkOffline: false
+            isNetworkOffline: false,
+            errorObject: `${e}`
         };
 
         try {
             exceptionThrowers.throwChatSDKError(chatSDKError, e, scenarioMarker, telemetryEvent);
+            fail("Expected error to be thrown");
         } catch (e : any) {
             expect(e.message).toBe(chatSDKError);
             expect(scenarioMarker.failScenario.mock.calls[0][1].ExceptionDetails).toBe(JSON.stringify(expectedExceptionDetails));
@@ -33,11 +34,13 @@ describe('exceptionThrowers', () => {
         const telemetryEvent: any = "TestEvent";
 
         const expectedExceptionDetails = {
-            response: chatSDKError
+            response: chatSDKError,
+            isNetworkOffline: false
         };
 
         try {
             exceptionThrowers.throwChatSDKError(chatSDKError, undefined, scenarioMarker, telemetryEvent);
+            fail("Expected error to be thrown");
         } catch (e : any) {
             expect(e.message).toBe(chatSDKError);
             expect(scenarioMarker.failScenario.mock.calls[0][1].ExceptionDetails).toBe(JSON.stringify(expectedExceptionDetails));
@@ -57,6 +60,7 @@ describe('exceptionThrowers', () => {
 
         try {
             exceptionThrowers.throwChatSDKError(chatSDKError, undefined, scenarioMarker, telemetryEvent, telemetryData);
+            fail("Expected error to be thrown");
         } catch (e : any) {
             expect(e.message).toBe(chatSDKError);
             expect(scenarioMarker.failScenario.mock.calls[0][1].chatId).toBeDefined();
@@ -78,6 +82,7 @@ describe('exceptionThrowers', () => {
 
         try {
             exceptionThrowers.throwChatSDKError(chatSDKError, undefined, scenarioMarker, telemetryEvent, {}, message);
+            fail("Expected error to be thrown");
         } catch (e : any) {
             expect(e.message).toBe(chatSDKError);
             expect(console.error).toHaveBeenCalledWith(message);
