@@ -198,7 +198,6 @@ export class ACSConversation {
                 if (this.keepPolling) {
                     try {
                         const messages = await this.getMessages({ skipConversion: true });
-                        console.log("LOPEZ:2");
                         for (const message of messages?.reverse()) {
                             try {
                                 const { id, senderDisplayName } = message as ChatMessage;
