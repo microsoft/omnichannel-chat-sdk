@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import exceptionThrowers from "../../src/utils/exceptionThrowers"
+import { isNetworkOffline } from "../../src/listeners/NetworkListener";
 
 describe('exceptionThrowers', () => {
     it('throwChatSDKError() should throw exception properly', () => {
@@ -13,7 +14,8 @@ describe('exceptionThrowers', () => {
 
         const expectedExceptionDetails = {
             response: chatSDKError,
-            errorObject: `${e}`
+            errorObject: `${e}`,
+            isNetworkOffline: false
         };
 
         try {

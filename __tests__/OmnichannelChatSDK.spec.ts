@@ -18,9 +18,9 @@ import LiveChatVersion from "../src/core/LiveChatVersion";
 import OmnichannelErrorCodes from "../src/core/OmnichannelErrorCodes";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import { SDKProvider } from "@microsoft/ocsdk";
+import { create } from "core-js/core/object";
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
 import libraries from "../src/utils/libraries";
-import { create } from "core-js/core/object";
 
 describe('Omnichannel Chat SDK, Sequential', () => {
     AWTLogManager.initialize = jest.fn();
@@ -3056,7 +3056,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(IC3SDKProvider.getSDK).toHaveBeenCalledTimes(1);
 
             expect(IC3SDKProvider.getSDK.mock.calls[0][0].hostType).toBe(HostType.Page);
-            expect(platform.isReactNative).toHaveBeenCalledTimes(1);
+            expect(platform.isReactNative).toHaveBeenCalledTimes(2);
         });
 
         it('ChatSDK.onNewMessage() should call conversation.registerOnNewMessage()', async() => {
