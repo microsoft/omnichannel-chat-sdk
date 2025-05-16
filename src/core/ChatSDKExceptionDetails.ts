@@ -9,6 +9,7 @@ interface ChatSDKExceptionDetails {
     response: string;
     message?: string;
     errorObject?: string;
+    isNetworkOffline?: boolean;
 }
 
 export default ChatSDKExceptionDetails;
