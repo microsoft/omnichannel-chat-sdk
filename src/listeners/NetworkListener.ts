@@ -23,17 +23,20 @@ export async function enableNetworkListeners() {
         };
         window.addEventListener("offline", webOfflineHandler);
         window.addEventListener("online", webOnlineHandler);
-    } /*else {
+    } else {
         try {
-            console.warn("*********** Network listeners enabled for mobile ************");
-            const NetInfo = (await import("@react-native-community/netinfo")).default;
-            unsubscribe = NetInfo.addEventListener((state: { isConnected: boolean | null }) => {
-                isOffline = !state.isConnected || state.isConnected === null;
-            });
+            if (platform.isReactNative()) {
+                console.warn("*********** Network listeners enabled for mobile ************");
+                // eslint-disable-next-line @typescript-eslint/no-var-requires
+                const NetInfo = require("@react-native-community/netinfo").default;
+                unsubscribe = NetInfo.addEventListener((state: { isConnected: boolean | null }) => {
+                    isOffline = !state.isConnected || state.isConnected === null;
+                });
+            }
         } catch (e) {
             console.warn("NetInfo not available. Network events will not be handled.", e);
         }
-    }*/
+    }
 }
 
 export function disableNetworkListeners() {

@@ -51,5 +51,8 @@
     "@microsoft/ocsdk": "^0.5.16",
     "@microsoft/omnichannel-amsclient": "^0.1.8",
     "@microsoft/omnichannel-ic3core": "^0.1.5"
+  },
+  "peerDependencies": {
+    "@react-native-community/netinfo": "^11.4.1"
   }
 }
