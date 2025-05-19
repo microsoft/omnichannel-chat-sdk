@@ -381,7 +381,11 @@ class OmnichannelChatSDK {
             this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDKParallel);
         } catch (error) {
             // Handle the error appropriately
-            this.scenarioMarker.failScenario(TelemetryEvent.InitializeChatSDKParallel);
+            const telemetryData = {
+                RequestId: this.requestId,
+                ExceptionDetails:(error instanceof ChatSDKError) ? JSON.stringify(error.exceptionDetails) : `${error}`
+            }
+            this.scenarioMarker.failScenario(TelemetryEvent.InitializeChatSDKParallel, telemetryData);
             throw error;
         }
 
