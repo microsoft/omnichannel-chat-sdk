@@ -435,7 +435,7 @@ class OmnichannelChatSDK {
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADING;
                     this.debug && console.time("ams_seq_creation");
                     this.AMSClient = await createAMSClient({
-                        framedMode: isBrowser(),
+                        framedMode: shouldUseFramedMode(),
                         multiClient: true,
                         debug: (this.detailedDebugEnabled ? this.debugAMS : this.debug),
                         logger: this.amsClientLogger as PluggableLogger
