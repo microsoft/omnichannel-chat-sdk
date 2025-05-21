@@ -1,6 +1,6 @@
 import { isBrowser } from "./platform";
 
-const whitelistedUrls = [
+export const whitelistedUrls = [
     "https://oc-cdn-ppe2.azureedge.net",
     "https://oc-cdn-public.azureedge.net",
     "https://oc-cdn-public-sam.azureedge.net",
@@ -18,7 +18,7 @@ const whitelistedUrls = [
     "https://ocprodocprodnamgs.blob.core.usgovcloudapi.net"
 ];
 
-const isUrlWhitelisted = (url: string) => {
+export const isUrlWhitelisted = (url: string) => {
     return whitelistedUrls.includes(url);
 };
 
