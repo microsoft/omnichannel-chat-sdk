@@ -16,11 +16,11 @@ describe("AMSClientUtils", () => {
         expect(isUrlWhitelisted(url)).toBe(false);
     });
 
-    it("shouldUseFramedMode() should return 'true' on node platform", () => {
+    it("shouldUseFramedMode() should return 'false' on node platform", () => {
         expect(shouldUseFramedMode()).toBe(false);
     });
 
-    it("shouldUseFramedMode() should return 'true' on React Native platform", () => {
+    it("shouldUseFramedMode() should return 'false' on React Native platform", () => {
         (global as any).window = undefined;
         
         (global as any).navigator = {};
