@@ -17,6 +17,10 @@ All notable changes to this project will be documented in this file.
 - Added additions details to endChat ExceptionDetails
 - Splited sessionInit promize to its own to avoid ACS initialize 
 
+## Changed
+
+- Attachment client performance load improvements on whitelisted urls
+
 ## [1.10.19] - 2025-05-02
 
 ### Added
