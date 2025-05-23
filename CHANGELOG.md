@@ -17,6 +17,10 @@ All notable changes to this project will be documented in this file.
 - Added additions details to endChat ExceptionDetails
 - Splited sessionInit promize to its own to avoid ACS initialize 
 
+### Changed
+
+- Uptake [@microsoft/omnichannel-amsclient@0.1.9](https://www.npmjs.com/package/@microsoft/omnichannel-amsclient/v/0.1.9)
+
 ## [1.10.19] - 2025-05-02
 
 ### Added
