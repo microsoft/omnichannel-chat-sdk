@@ -22,8 +22,8 @@ export const isUrlWhitelisted = (url: string) => {
     return whitelistedUrls.includes(url);
 };
 
-export const shouldUseFramedMode = () => {
-    if (isBrowser()) {
+export const shouldUseFramedMode = (disableWhitelistedUrls = true) => {
+    if (isBrowser() && disableWhitelistedUrls === false) {
         const domain = window.location.origin || '';
         return isUrlWhitelisted(domain) ? false : true; // Framed mode is used when domain is not whitelisted
     }

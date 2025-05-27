@@ -28,7 +28,7 @@ describe("AMSClientUtils", () => {
             (window as any).location = {
                 origin: url,
             };
-            expect(shouldUseFramedMode()).toBe(false);
+            expect(shouldUseFramedMode(false)).toBe(false);
         }
     });
 
@@ -38,6 +38,6 @@ describe("AMSClientUtils", () => {
         (window as any).location = {
             origin: url,
         };
-        expect(shouldUseFramedMode()).toBe(true);
+        expect(shouldUseFramedMode(false)).toBe(true);
     });
 });
