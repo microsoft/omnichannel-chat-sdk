@@ -32,6 +32,16 @@ describe("AMSClientUtils", () => {
         }
     });
 
+    it("shouldUseFramedMode() should return 'true' if whitelisted URLs check is disabled", () => {
+        for (const url of whitelistedUrls) {
+            delete (window as any).location;
+            (window as any).location = {
+                origin: url,
+            };
+            expect(shouldUseFramedMode(true)).toBe(true);
+        }
+    });
+
     it("shouldUseFramedMode() should return 'true' if URL is not whitelisted", () => {
         const url = "https://contoso.com";
         delete (window as any).location;
@@ -39,5 +49,14 @@ describe("AMSClientUtils", () => {
             origin: url,
         };
         expect(shouldUseFramedMode(false)).toBe(true);
+    });
+
+    it("shouldUseFramedMode() should still return 'true' if URL is not whitelisted & whitelisted URLs check is disabled", () => {
+        const url = "https://contoso.com";
+        delete (window as any).location;
+        (window as any).location = {
+            origin: url,
+        };
+        expect(shouldUseFramedMode(true)).toBe(true);
     });
 });
