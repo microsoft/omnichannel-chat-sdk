@@ -2,20 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [1.11.0] - 2025-05-27
 
 ### Fixed
 
 - added failure exception details to initialize parallel
 - Uptake new oc sdk with changes  to requestId
-- Added Finally to solve cleanup issues while closing chat 
+- Added Finally to solve cleanup issues while closing chat
 - Update new OC sdk for correlation id implementation
 
 ### Added
 
 - Mapped id to OriginalMessage ID for backward compatibility once the bridging is removed
 - Added additions details to endChat ExceptionDetails
-- Splited sessionInit promize to its own to avoid ACS initialize 
+- Splited sessionInit promize to its own to avoid ACS initialize
 
 ### Changed
 
