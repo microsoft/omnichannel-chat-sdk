@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 
-import { whitelistedUrls, isUrlWhitelisted, shouldUseFramedMode } from "../../src/utils/AMSClientUtils";
+import { whitelistedUrls, isUrlWhitelisted, shouldUseFramedMode, retrieveRegionBasedUrl } from "../../src/utils/AMSClientUtils";
 
 describe("AMSClientUtils", () => {
     it("isUrlWhitelisted() should return 'true' if URL is whitelisted", () => {
@@ -28,11 +28,19 @@ describe("AMSClientUtils", () => {
         (global.navigator as any).product = 'ReactNative';
 
         expect(shouldUseFramedMode()).toBe(false);
-    });    
+    });
+
+    it("retrieveRegionBasedUrl() should return '' on node platform", () => {
+        for (const url of whitelistedUrls) {
+            const widgetSnippetBaseUrl = url;
+            const regionBasedUrl = retrieveRegionBasedUrl(widgetSnippetBaseUrl);
+            expect(regionBasedUrl).toBe('');
+        }
+    });
 
     afterEach(() => {
         if (global.navigator) {
             (global as any).navigator = undefined;
         }
-    });    
+    });
 });

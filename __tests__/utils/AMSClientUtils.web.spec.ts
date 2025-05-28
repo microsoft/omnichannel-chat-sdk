@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { whitelistedUrls, isUrlWhitelisted, shouldUseFramedMode } from "../../src/utils/AMSClientUtils";
+import { whitelistedUrls, isUrlWhitelisted, shouldUseFramedMode, retrieveRegionBasedUrl } from "../../src/utils/AMSClientUtils";
 
 describe("AMSClientUtils", () => {
     const { location } = window;
@@ -58,5 +58,13 @@ describe("AMSClientUtils", () => {
             origin: url,
         };
         expect(shouldUseFramedMode(true)).toBe(true);
+    });
+
+    it("retrieveRegionBasedUrl() should return '' on node platform", () => {
+        for (const url of whitelistedUrls) {
+            const widgetSnippetBaseUrl = url;
+            const regionBasedUrl = retrieveRegionBasedUrl(widgetSnippetBaseUrl);
+            expect(regionBasedUrl).toBe(`${url}/livechatwidget/v2scripts/ams`);
+        }
     });
 });
