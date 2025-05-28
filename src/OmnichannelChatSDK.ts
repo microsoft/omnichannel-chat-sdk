@@ -133,6 +133,7 @@ class OmnichannelChatSDK {
     private dynamicsLocationCode: string | null = null;
     private chatToken: IChatToken;
     private liveChatConfig: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    private widgetSnippetBaseUrl = '';
     private liveChatVersion: number;
     private dataMaskingRules: MaskingRules = { rules: [] };
     private authSettings: AuthSettings | null = null;
@@ -2070,17 +2071,10 @@ class OmnichannelChatSDK {
             exceptionThrowers.throwFeatureDisabled(this.scenarioMarker, TelemetryEvent.GetVoiceVideoCalling, message);
         }
 
-        const chatConfig = await this.getLiveChatConfig();
-        const { LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin } = chatConfig;
-        const { msdyn_widgetsnippet } = liveWSAndLiveChatEngJoin;
-
-        // Find src attribute with its url in code snippet
-        const widgetSnippetSourceRegex = new RegExp(`src="(https:\\/\\/[\\w-.]+)[\\w-.\\/]+"`);
-        const result = msdyn_widgetsnippet.match(widgetSnippetSourceRegex);
-        if (result && result.length) {
+        if (this.widgetSnippetBaseUrl && this.widgetSnippetBaseUrl.length) {
             return new Promise(async (resolve) => { // eslint-disable-line no-async-promise-executor
                 // When there is new calling version, release new omni-channel chat sdk version with updated calling version
-                const LiveChatWidgetLibCDNUrl = `${result[1]}/livechatwidget/v2scripts/callingsdk/${callingBundleVersion}/CallingBundle.js`;
+                const LiveChatWidgetLibCDNUrl = `${this.widgetSnippetBaseUrl}/livechatwidget/v2scripts/callingsdk/${callingBundleVersion}/CallingBundle.js`;
 
                 this.telemetry?.setCDNPackages({
                     VoiceVideoCalling: LiveChatWidgetLibCDNUrl
@@ -2509,6 +2503,17 @@ class OmnichannelChatSDK {
         this.liveChatVersion = liveChatVersion || LiveChatVersion.V2;
     }
 
+    private async setWidgetSnippetBaseUrl(liveWSAndLiveChatEngJoin: LiveWSAndLiveChatEngJoin): Promise<void> {
+        const widgetSnippetSourceRegex = new RegExp(`src="(https:\\/\\/[\\w-.]+)[\\w-.\\/]+"`);
+        const { msdyn_widgetsnippet } = liveWSAndLiveChatEngJoin;
+        if (msdyn_widgetsnippet) { // Find src attribute with its url in code snippet
+            const result = msdyn_widgetsnippet.match(widgetSnippetSourceRegex);
+            if (result && result.length) {
+                this.widgetSnippetBaseUrl = result[1];
+            }
+        }
+    }
+
     private async getChatConfig(optionalParams: GetLiveChatConfigOptionalParams = {}): Promise<ChatConfig> {
         const { sendCacheHeaders } = optionalParams;
         const bypassCache = sendCacheHeaders === true;
@@ -2560,7 +2565,8 @@ class OmnichannelChatSDK {
             this.setPersistentChatConfiguration(liveWSAndLiveChatEngJoin),
             this.setCallingOptionConfiguration(liveWSAndLiveChatEngJoin),
             this.setLocaleIdConfiguration(chatWidgetLanguage),
-            this.setLiveChatVersionConfiguration(liveChatVersion)
+            this.setLiveChatVersionConfiguration(liveChatVersion),
+            this.setWidgetSnippetBaseUrl(liveWSAndLiveChatEngJoin)
         ]);
     }
 
