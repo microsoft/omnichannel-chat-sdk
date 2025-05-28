@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Attachment client performance load improvements on whitelisted urls
+- Attachment client performance load improvements on whitelisted urls & region based url
 
 ## [1.11.0] - 2025-05-27
 
