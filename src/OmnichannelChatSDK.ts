@@ -349,7 +349,7 @@ class OmnichannelChatSDK {
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADING;
                     this.debug && console.time("ams_creation");
                     this.AMSClient = await createAMSClient({
-                        framedMode: shouldUseFramedMode(),
+                        framedMode: shouldUseFramedMode(this.chatSDKConfig?.internalConfig?.disableAMSWhitelistedUrls === false ? false : true),
                         multiClient: true,
                         debug: (this.detailedDebugEnabled ? this.debugAMS : this.debug),
                         logger: this.amsClientLogger as PluggableLogger
@@ -436,7 +436,7 @@ class OmnichannelChatSDK {
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADING;
                     this.debug && console.time("ams_seq_creation");
                     this.AMSClient = await createAMSClient({
-                        framedMode: shouldUseFramedMode(),
+                        framedMode: shouldUseFramedMode(this.chatSDKConfig?.internalConfig?.disableAMSWhitelistedUrls === false ? false : true),
                         multiClient: true,
                         debug: (this.detailedDebugEnabled ? this.debugAMS : this.debug),
                         logger: this.amsClientLogger as PluggableLogger
