@@ -60,11 +60,17 @@ describe("AMSClientUtils", () => {
         expect(shouldUseFramedMode(true)).toBe(true);
     });
 
+    it("retrieveRegionBasedUrl() with '' as widget snippet base url should return ''", () => {
+        const widgetSnippetBaseUrl = "";
+        const regionBasedUrl = retrieveRegionBasedUrl(widgetSnippetBaseUrl);
+        expect(regionBasedUrl).toBe("");
+    });
+
     it("retrieveRegionBasedUrl() should return region based url accordingly", () => {
         for (const url of whitelistedUrls) {
             const widgetSnippetBaseUrl = url;
             const regionBasedUrl = retrieveRegionBasedUrl(widgetSnippetBaseUrl);
-            expect(regionBasedUrl).toBe(`${url}/livechatwidget/v2scripts/ams`);
+            expect(regionBasedUrl).toBe(`${widgetSnippetBaseUrl}/livechatwidget/v2scripts/ams`);
         }
     });
 });
