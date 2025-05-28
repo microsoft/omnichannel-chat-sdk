@@ -30,3 +30,12 @@ export const shouldUseFramedMode = (disableWhitelistedUrls = true) => {
 
     return isBrowser();
 };
+
+export const retrieveRegionBasedUrl = (widgetSnippetBaseUrl: string) => {
+    if (isBrowser()) {
+        const regionBasedUrl = `${widgetSnippetBaseUrl}/livechatwidget/v2scripts/ams`;
+        return regionBasedUrl;
+    }
+
+    return '';
+};
