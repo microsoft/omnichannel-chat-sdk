@@ -60,7 +60,7 @@ describe("AMSClientUtils", () => {
         expect(shouldUseFramedMode(true)).toBe(true);
     });
 
-    it("retrieveRegionBasedUrl() should return '' on node platform", () => {
+    it("retrieveRegionBasedUrl() should return region based url accordingly", () => {
         for (const url of whitelistedUrls) {
             const widgetSnippetBaseUrl = url;
             const regionBasedUrl = retrieveRegionBasedUrl(widgetSnippetBaseUrl);
