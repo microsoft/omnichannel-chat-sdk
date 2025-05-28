@@ -111,7 +111,7 @@ import startPolling from "./commands/startPolling";
 import stopPolling from "./commands/stopPolling";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
-import { shouldUseFramedMode } from "./utils/AMSClientUtils";
+import { retrieveRegionBasedUrl, shouldUseFramedMode } from "./utils/AMSClientUtils";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -348,11 +348,14 @@ class OmnichannelChatSDK {
                 if (this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED) {
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADING;
                     this.debug && console.time("ams_creation");
+                    const disableAMSWhitelistedUrls = this.chatSDKConfig?.internalConfig?.disableAMSWhitelistedUrls === false ? false : true;
+                    const disableAMSRegionBasedUrl = this.chatSDKConfig?.internalConfig?.disableAMSRegionBasedUrl === false ? false : true;
                     this.AMSClient = await createAMSClient({
-                        framedMode: shouldUseFramedMode(this.chatSDKConfig?.internalConfig?.disableAMSWhitelistedUrls === false ? false : true),
+                        framedMode: shouldUseFramedMode(disableAMSWhitelistedUrls),
                         multiClient: true,
                         debug: (this.detailedDebugEnabled ? this.debugAMS : this.debug),
-                        logger: this.amsClientLogger as PluggableLogger
+                        logger: this.amsClientLogger as PluggableLogger,
+                        baseUrl: shouldUseFramedMode(disableAMSWhitelistedUrls) && !disableAMSRegionBasedUrl ? retrieveRegionBasedUrl(this.widgetSnippetBaseUrl) : ''
                     });
                     this.debug && console.timeEnd("ams_creation");
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
@@ -435,11 +438,14 @@ class OmnichannelChatSDK {
                 if (this.isAMSClientAllowed && this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED) {
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADING;
                     this.debug && console.time("ams_seq_creation");
+                    const disableAMSWhitelistedUrls = this.chatSDKConfig?.internalConfig?.disableAMSWhitelistedUrls === false ? false : true;
+                    const disableAMSRegionBasedUrl = this.chatSDKConfig?.internalConfig?.disableAMSRegionBasedUrl === false ? false : true;
                     this.AMSClient = await createAMSClient({
-                        framedMode: shouldUseFramedMode(this.chatSDKConfig?.internalConfig?.disableAMSWhitelistedUrls === false ? false : true),
+                        framedMode: shouldUseFramedMode(disableAMSWhitelistedUrls),
                         multiClient: true,
                         debug: (this.detailedDebugEnabled ? this.debugAMS : this.debug),
-                        logger: this.amsClientLogger as PluggableLogger
+                        logger: this.amsClientLogger as PluggableLogger,
+                        baseUrl: shouldUseFramedMode(disableAMSWhitelistedUrls) && !disableAMSRegionBasedUrl ? retrieveRegionBasedUrl(this.widgetSnippetBaseUrl) : ''
                     });
                     this.debug && console.timeEnd("ams_seq_creation");
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;

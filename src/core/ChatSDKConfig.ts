@@ -32,7 +32,8 @@ interface CreateConversationConfig {
  */
 interface InternalChatSDKConfig {
     createCoreServicesOrgUrlAtRuntime?: boolean;
-    disableAMSWhitelistedUrls?: boolean
+    disableAMSWhitelistedUrls?: boolean;
+    disableAMSRegionBasedUrl?: boolean;
 }
 
 interface ChatSDKConfig {
