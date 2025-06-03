@@ -29,6 +29,10 @@ build({
     outfile: 'dist/lib.js',
     format: "cjs",
     platform: "browser",
+    external: [
+        'react-native',
+        '@react-native-community/netinfo'
+    ],
     plugins: [
         polyfillNode({
             polyfills: {
