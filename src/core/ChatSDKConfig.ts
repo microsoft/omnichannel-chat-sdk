@@ -28,9 +28,12 @@ interface CreateConversationConfig {
 
 /**
  * Non-backward compatible configurations or experimentals. Subject to change any time. Internal use only.
+ * It should not be used by external clients unless explicitly stated in case fallback is needed.
  */
 interface InternalChatSDKConfig {
     createCoreServicesOrgUrlAtRuntime?: boolean;
+    disableAMSWhitelistedUrls?: boolean;
+    disableAMSRegionBasedUrl?: boolean;
 }
 
 interface ChatSDKConfig {

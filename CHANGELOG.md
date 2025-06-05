@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Uptake [@microsoft/omnichannel-amsclient@0.1.10](https://www.npmjs.com/package/@microsoft/omnichannel-amsclient/v/0.1.10)
+- Attachment client performance load improvements on whitelisted urls & region based url
 
 ## [1.11.0] - 2025-05-27
 

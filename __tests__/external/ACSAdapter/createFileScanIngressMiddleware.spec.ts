@@ -42,6 +42,7 @@ describe('createFileScanIngressMiddleware', () => {
             scan
         };
 
+        (global as any).window = {};
         (global as any).window.chatAdapter = {
             fileManager: {
                 fileScanner: {
