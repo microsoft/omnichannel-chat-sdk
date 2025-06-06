@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.11.1] - 2025-06-05
+
 ### Changed
 
 - Uptake [@microsoft/omnichannel-amsclient@0.1.10](https://www.npmjs.com/package/@microsoft/omnichannel-amsclient/v/0.1.10)
