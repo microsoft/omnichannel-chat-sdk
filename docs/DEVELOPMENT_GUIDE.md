@@ -399,7 +399,7 @@ return <ReactWebChat
 ### Render Adaptive Cards
 
 ```js
-import * as AdaptiveCards, { Action } from "adaptivecards";
+import * as AdaptiveCards from "adaptivecards";
 
 // ...
 
@@ -407,47 +407,34 @@ ChatSDK.onNewMessage((message: any) => {
     const {content} = message;
 
     // Adaptive Cards
-    if (content && content.includes('URIObject')) {
-        const parser = DOMParser();
-        const xmlDoc = parser.parseFromString(content, 'text/xml');
+    if (content) {
+        if (message.content.includes(`"contentType"`) || message.content.includes(`"suggestedActions"`)) {
+            try {
+                const data = JSON.parse(message.content);
+                if (data.suggestedActions) { // Suggested actions handler
+                    // ...
+                } else {
+                    if (data.attachments.length > 0) {
+                        const adaptiveCard = new AdaptiveCards.AdaptiveCard();
+                        adaptiveCard.parse(data.attachments[0].content);
 
-        if (xmlDoc.getElementsByTagName(HTMLConstants.tagParseError).length > 0) {
-            console.warn(`[AdaptiveCard] Unable to parse XML`);
-            return;
+                        adaptiveCard.onExecuteAction = async (action: any) => { // Adaptive Card event handler
+                            const submittedCardResponse = action.data;
+                            const content = JSON.stringify({value: submittedCardResponse});
+                            const response = await chatSDK?.sendMessage({content, metadata: {
+                                "microsoft.azure.communication.chat.bot.contenttype": "azurebotservice.adaptivecard"
+                            }});
+                        };
+
+                        const renderedCard = adaptiveCard.render(); // Renders as HTML element
+
+                        // Logic to add renderedCard in the DOM
+                    }
+                }
+            } catch (error) {
+                console.log('Failed to parse message');
+            }
         }
-
-        if (xmlDoc.documentElement.nodeName !== 'URIObject') {
-            console.warn(`[AdaptiveCard] Wrong XML schema`);
-            return;
-        }
-
-        const swiftElement = xmlDoc.getElementsByTagName('Swift')[0];
-        const base64Data: any = swiftElement.getAttribute('b64');
-        const data = this.b64DecodeUnicode(base64Data);
-
-        if (!data) {
-            console.warn(`[AdaptiveCard] Data is empty`);
-            return;
-        }
-
-        const jsonData = JSON.parse(data);
-        const { type } = jsonData;
-
-        // Check if it's adaptive card
-        if (!type.includes('message/card')) {
-            return;
-        }
-
-        const adaptiveCard = new AdaptiveCards.AdaptiveCard();
-        adaptiveCard.parse(jsonData);
-
-        adaptiveCard.onExecuteAction = async (action) => { // Adaptive Card event handler
-            // ...
-        }
-
-        const renderedCard = adaptiveCard.render(); // Renders as HTML element
-
-        // Logic to add renderedCard in the DOM
     }
 });
 ```
