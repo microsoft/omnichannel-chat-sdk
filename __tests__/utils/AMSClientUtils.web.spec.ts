@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { whitelistedUrls, isUrlWhitelisted, shouldUseFramedMode, retrieveRegionBasedUrl } from "../../src/utils/AMSClientUtils";
+import { whitelistedUrls, isUrlWhitelisted, shouldUseFramedMode, regionBasedSupportedUrls, isRegionBasedUrlSupported, retrieveRegionBasedUrl } from "../../src/utils/AMSClientUtils";
 
 describe("AMSClientUtils", () => {
     const { location } = window;
@@ -58,6 +58,27 @@ describe("AMSClientUtils", () => {
             origin: url,
         };
         expect(shouldUseFramedMode(true)).toBe(true);
+    });
+
+    it("isRegionBasedUrlSupported() should return 'true' if URL is supported", () => {
+        for (const url of regionBasedSupportedUrls) {
+            const isSupported = isRegionBasedUrlSupported(url);
+            expect(isSupported).toBe(true);
+        }
+    });
+
+    it("isRegionBasedUrlSupported() should return 'false' if URL is not supported", () => {
+        const unsupportedUrl = [
+            "https://ocprodocprodnamgs.blob.core.usgovcloudapi.net",
+            "https://microsoft.com",
+            "https://bing.com",
+            "https://contoso.com"
+        ];
+
+        for (const url of unsupportedUrl) {
+            const isSupported = isRegionBasedUrlSupported(url);
+            expect(isSupported).toBe(false);
+        }
     });
 
     it("retrieveRegionBasedUrl() with '' as widget snippet base url should return ''", () => {
