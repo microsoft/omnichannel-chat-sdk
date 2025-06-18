@@ -94,4 +94,18 @@ describe("AMSClientUtils", () => {
             expect(regionBasedUrl).toBe(`${widgetSnippetBaseUrl}/livechatwidget/v2scripts/ams`);
         }
     });
+
+    it("retrieveRegionBasedUrl() should return '' if widget snippet base url is not supported", () => {
+        const unsupportedUrl = [
+            "https://ocprodocprodnamgs.blob.core.usgovcloudapi.net",
+            "https://microsoft.com",
+            "https://bing.com",
+            "https://contoso.com"
+        ];
+
+        for (const url of unsupportedUrl) {
+            const regionBasedUrl = retrieveRegionBasedUrl(url);
+            expect(regionBasedUrl).toBe("");
+        }
+    });
 });
