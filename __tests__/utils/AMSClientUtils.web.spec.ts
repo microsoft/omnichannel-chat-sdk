@@ -88,7 +88,7 @@ describe("AMSClientUtils", () => {
     });
 
     it("retrieveRegionBasedUrl() should return region based url accordingly", () => {
-        for (const url of whitelistedUrls) {
+        for (const url of regionBasedSupportedUrls) {
             const widgetSnippetBaseUrl = url;
             const regionBasedUrl = retrieveRegionBasedUrl(widgetSnippetBaseUrl);
             expect(regionBasedUrl).toBe(`${widgetSnippetBaseUrl}/livechatwidget/v2scripts/ams`);

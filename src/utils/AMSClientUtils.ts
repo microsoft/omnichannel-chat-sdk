@@ -53,7 +53,8 @@ export const isRegionBasedUrlSupported = (widgetSnippetBaseUrl: string) => {
 }
 
 export const retrieveRegionBasedUrl = (widgetSnippetBaseUrl: string) => {
-    if (isBrowser() && widgetSnippetBaseUrl) {
+    const isUrlSupported = isRegionBasedUrlSupported(widgetSnippetBaseUrl);
+    if (isBrowser() && widgetSnippetBaseUrl && isUrlSupported) {
         const regionBasedUrl = `${widgetSnippetBaseUrl}/livechatwidget/v2scripts/ams`;
         return regionBasedUrl;
     }
