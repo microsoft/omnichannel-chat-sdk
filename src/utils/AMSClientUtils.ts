@@ -35,6 +35,12 @@ export const regionBasedSupportedUrls = [
     "https://oc-cdn-ocprod.azureedge.net"
 ];
 
+const regionBasedUrlSupportedVersions = [
+    "0.1.8",
+    "0.1.9",
+    "0.1.10"
+];
+
 export const isUrlWhitelisted = (url: string) => {
     return whitelistedUrls.includes(url);
 };
@@ -52,9 +58,15 @@ export const isRegionBasedUrlSupported = (widgetSnippetBaseUrl: string) => {
     return regionBasedSupportedUrls.includes(widgetSnippetBaseUrl);
 }
 
+export const isRegionBasedUrlVersionSupported = () => {
+    const version = require('@microsoft/omnichannel-amsclient/package.json').version // eslint-disable-line @typescript-eslint/no-var-requires
+    return regionBasedUrlSupportedVersions.includes(version);
+}
+
 export const retrieveRegionBasedUrl = (widgetSnippetBaseUrl: string) => {
     const isUrlSupported = isRegionBasedUrlSupported(widgetSnippetBaseUrl);
-    if (isBrowser() && widgetSnippetBaseUrl && isUrlSupported) {
+    const isVersionSupported = isRegionBasedUrlVersionSupported();
+    if (isBrowser() && widgetSnippetBaseUrl && isUrlSupported && isVersionSupported) {
         const regionBasedUrl = `${widgetSnippetBaseUrl}/livechatwidget/v2scripts/ams`;
         return regionBasedUrl;
     }
