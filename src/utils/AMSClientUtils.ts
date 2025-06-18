@@ -35,7 +35,7 @@ export const regionBasedSupportedUrls = [
     "https://oc-cdn-ocprod.azureedge.net"
 ];
 
-const regionBasedUrlSupportedVersions = [
+export const regionBasedUrlSupportedVersions = [
     "0.1.8",
     "0.1.9",
     "0.1.10"
