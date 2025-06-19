@@ -439,8 +439,8 @@ class OmnichannelChatSDK {
                 if (this.isAMSClientAllowed && this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED) {
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADING;
                     this.debug && console.time("ams_seq_creation");
-                    const disableAMSWhitelistedUrls = this.chatSDKConfig?.internalConfig?.disableAMSWhitelistedUrls === false ? false : true;
-                    const disableAMSRegionBasedUrl = this.chatSDKConfig?.internalConfig?.disableAMSRegionBasedUrl === false ? false : true;
+                    const disableAMSWhitelistedUrls = this.chatSDKConfig?.internalConfig?.disableAMSWhitelistedUrls !== false;
+                    const disableAMSRegionBasedUrl = this.chatSDKConfig?.internalConfig?.disableAMSRegionBasedUrl !== false;
                     this.AMSClient = await createAMSClient({
                         framedMode: shouldUseFramedMode(disableAMSWhitelistedUrls),
                         multiClient: true,
