@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- Enable Region Based Attachment Client Support
+
 ## [1.11.1] - 2025-06-05
 
 ### Changed
