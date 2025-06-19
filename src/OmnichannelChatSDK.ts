@@ -349,7 +349,7 @@ class OmnichannelChatSDK {
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADING;
                     this.debug && console.time("ams_creation");
                     const disableAMSWhitelistedUrls = this.chatSDKConfig?.internalConfig?.disableAMSWhitelistedUrls !== false;
-                    const disableAMSRegionBasedUrl = this.chatSDKConfig?.internalConfig?.disableAMSRegionBasedUrl !== false;
+                    const disableAMSRegionBasedUrl = this.chatSDKConfig?.internalConfig?.disableAMSRegionBasedUrl === true;
                     const framedMode = shouldUseFramedMode(disableAMSWhitelistedUrls);
                     this.AMSClient = await createAMSClient({
                         framedMode,
@@ -440,7 +440,7 @@ class OmnichannelChatSDK {
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADING;
                     this.debug && console.time("ams_seq_creation");
                     const disableAMSWhitelistedUrls = this.chatSDKConfig?.internalConfig?.disableAMSWhitelistedUrls !== false;
-                    const disableAMSRegionBasedUrl = this.chatSDKConfig?.internalConfig?.disableAMSRegionBasedUrl !== false;
+                    const disableAMSRegionBasedUrl = this.chatSDKConfig?.internalConfig?.disableAMSRegionBasedUrl === true;
                     const framedMode = shouldUseFramedMode(disableAMSWhitelistedUrls);
                     this.AMSClient = await createAMSClient({
                         framedMode,
