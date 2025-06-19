@@ -441,12 +441,13 @@ class OmnichannelChatSDK {
                     this.debug && console.time("ams_seq_creation");
                     const disableAMSWhitelistedUrls = this.chatSDKConfig?.internalConfig?.disableAMSWhitelistedUrls !== false;
                     const disableAMSRegionBasedUrl = this.chatSDKConfig?.internalConfig?.disableAMSRegionBasedUrl !== false;
+                    const framedMode = shouldUseFramedMode(disableAMSWhitelistedUrls);
                     this.AMSClient = await createAMSClient({
-                        framedMode: shouldUseFramedMode(disableAMSWhitelistedUrls),
+                        framedMode,
                         multiClient: true,
                         debug: (this.detailedDebugEnabled ? this.debugAMS : this.debug),
                         logger: this.amsClientLogger as PluggableLogger,
-                        baseUrl: shouldUseFramedMode(disableAMSWhitelistedUrls) && !disableAMSRegionBasedUrl ? retrieveRegionBasedUrl(this.widgetSnippetBaseUrl) : ''
+                        baseUrl: framedMode && !disableAMSRegionBasedUrl ? retrieveRegionBasedUrl(this.widgetSnippetBaseUrl) : ''
                     });
                     this.debug && console.timeEnd("ams_seq_creation");
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
