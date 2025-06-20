@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Uptake [@microsoft/botframework-webchat-adapter-azure-communication-chat@0.0.1-beta.4](https://www.npmjs.com/package/@microsoft/botframework-webchat-adapter-azure-communication-chat/v/0.0.1-beta.4)
+
 ## [1.11.1] - 2025-06-05
 
 ### Changed
