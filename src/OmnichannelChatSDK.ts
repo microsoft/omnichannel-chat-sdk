@@ -349,7 +349,7 @@ class OmnichannelChatSDK {
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADING;
                     this.debug && console.time("ams_creation");
                     const disableAMSWhitelistedUrls = this.chatSDKConfig?.internalConfig?.disableAMSWhitelistedUrls !== false;
-                    const disableAMSRegionBasedUrl = this.chatSDKConfig?.internalConfig?.disableAMSRegionBasedUrl !== false;
+                    const disableAMSRegionBasedUrl = this.chatSDKConfig?.internalConfig?.disableAMSRegionBasedUrl === true;
                     const framedMode = shouldUseFramedMode(disableAMSWhitelistedUrls);
                     this.AMSClient = await createAMSClient({
                         framedMode,
@@ -439,14 +439,15 @@ class OmnichannelChatSDK {
                 if (this.isAMSClientAllowed && this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED) {
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADING;
                     this.debug && console.time("ams_seq_creation");
-                    const disableAMSWhitelistedUrls = this.chatSDKConfig?.internalConfig?.disableAMSWhitelistedUrls === false ? false : true;
-                    const disableAMSRegionBasedUrl = this.chatSDKConfig?.internalConfig?.disableAMSRegionBasedUrl === false ? false : true;
+                    const disableAMSWhitelistedUrls = this.chatSDKConfig?.internalConfig?.disableAMSWhitelistedUrls !== false;
+                    const disableAMSRegionBasedUrl = this.chatSDKConfig?.internalConfig?.disableAMSRegionBasedUrl === true;
+                    const framedMode = shouldUseFramedMode(disableAMSWhitelistedUrls);
                     this.AMSClient = await createAMSClient({
-                        framedMode: shouldUseFramedMode(disableAMSWhitelistedUrls),
+                        framedMode,
                         multiClient: true,
                         debug: (this.detailedDebugEnabled ? this.debugAMS : this.debug),
                         logger: this.amsClientLogger as PluggableLogger,
-                        baseUrl: shouldUseFramedMode(disableAMSWhitelistedUrls) && !disableAMSRegionBasedUrl ? retrieveRegionBasedUrl(this.widgetSnippetBaseUrl) : ''
+                        baseUrl: framedMode && !disableAMSRegionBasedUrl ? retrieveRegionBasedUrl(this.widgetSnippetBaseUrl) : ''
                     });
                     this.debug && console.timeEnd("ams_seq_creation");
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
