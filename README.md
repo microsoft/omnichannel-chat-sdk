@@ -150,7 +150,7 @@ npm install @microsoft/omnichannel-chat-sdk --save
 
 ## Installation on React Native
 
-**Important:**  
+***Important:***  
 - For React Native versions **below 0.71**: Steps 1, 2, 3 are **required for both Android and iOS**.
 - For React Native versions **0.71 and above**: Steps 1, 2, 3 are **required only for iOS** (not needed for Android).
 
