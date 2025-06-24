@@ -196,7 +196,7 @@ npm install @microsoft/omnichannel-chat-sdk --save
 
 Below 0.71 version you need to add all above libraries.
 
-**Additional file changes required for both Android and iOS.**
+**Required file changes**
 1. In metro.config.js
 - Update *metro.config.js* to use React Native compatible Node Core modules.
     ```ts
