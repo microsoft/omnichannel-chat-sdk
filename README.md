@@ -150,28 +150,16 @@ npm install @microsoft/omnichannel-chat-sdk --save
 
 ## Installation on React Native
 
-***Important:***  
+***Important Note:***  
+- For React Native versions **0.71 and above**: Steps 1, 2, 3 are **required only for iOS**. Not needed for Android.
 - For React Native versions **below 0.71**: Steps 1, 2, 3 are **required for both Android and iOS**.
-- For React Native versions **0.71 and above**: Steps 1, 2, 3 are **required only for iOS** (not needed for Android).
-
-**Summary Table:**
-
-| React Native Version    | Library Required in versions     |   iOS   |  Android  |
-|-------------------------|----------------------------------|---------|-----------|
-|   0.71 and above        | react-native-get-random-values   | ✅ Yes  | ❌ No      |
-|                         | react-native-randombytes         | ✅ Yes  | ❌ No      |
-|                         | react-native-get-random-values   | ✅ Yes  | ❌ No      |
-|-------------------------|----------------------------------|---------|-----------|
-|   Below 0.71            | react-native-get-random-values   | ✅ Yes  | ✅ Yes     |
-|                         | react-native-randombytes         | ✅ Yes  | ✅ Yes     |
-|                         | react-native-get-random-values   | ✅ Yes  | ✅ Yes     |
-
+  
 ### Steps
 
-1. Install `react-native-get-random-values`
+1. Install `node-libs-react-native`
 
     ```console
-    npm install react-native-get-random-values --save-dev
+    npm install node-libs-react-native --save-dev
     ```
 
 2. Install `react-native-randombytes`
@@ -195,6 +183,26 @@ npm install @microsoft/omnichannel-chat-sdk --save
     ```console
     npm install @azure/core-asynciterator-polyfill --save-dev
     ```
+**iOS and Android Platforms**
+
+| Libraries                      |     0.71 and above  |   Below 0.71        |
+|--------------------------------|-------------------------------------------|
+|                                |   iOS   |  Android  |   iOS   |  Android  |
+| node-libs-react-native         | ✅ Yes  | ❌ No      | ✅ Yes  | ✅ Yes     |
+| react-native-randombytes       | ✅ Yes  | ❌ No      | ✅ Yes  | ✅ Yes     |
+| react-native-get-random-values | ✅ Yes  | ❌ No      | ✅ Yes  | ✅ Yes     |
+
+
+
+| React Native Version    | Library Required in versions     |   iOS   |  Android  |
+|-------------------------|----------------------------------|---------|-----------|
+|   0.71 and above        | node-libs-react-native           | ✅ Yes  | ❌ No      |
+|                         | react-native-randombytes         | ✅ Yes  | ❌ No      |
+|                         | react-native-get-random-values   | ✅ Yes  | ❌ No      |
+|-------------------------|----------------------------------|---------|-----------|
+|   Below 0.71            | node-libs-react-native           | ✅ Yes  | ✅ Yes     |
+|                         | react-native-randombytes         | ✅ Yes  | ✅ Yes     |
+|                         | react-native-get-random-values   | ✅ Yes  | ✅ Yes     |
 
 **Additional file changes required for both Android and iOS.**
 1. In metro.config.js
@@ -225,7 +233,6 @@ npm install @microsoft/omnichannel-chat-sdk --save
       },
     };
    ```
-
 2. Add the following *import* on top of your entry point file
 
     ```ts
