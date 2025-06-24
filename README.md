@@ -156,18 +156,18 @@ npm install @microsoft/omnichannel-chat-sdk --save
 
 **Summary Table:**
 
-| React Native Version    | Library                          | Library Required?          |
-|-------------------------|----------------------------------|----------------------------|
-|                         |                                  |   iOS      |   Android     |
-|-------------------------|----------------------------------|----------------------------|
-| Below 0.71              | react-native-get-random-values   | ✅ Yes  | ❌ No             |
-|                         | react-native-randombytes         | ✅ Yes  | ❌ No             |
-|                         | react-native-get-random-values   | ✅ Yes  | ❌ No             |
-|-------------------------|----------------------------------|----------------------------|
-| 0.71 and above          | react-native-get-random-values   | ✅ Yes  | ✅ Yes            |
-|                         | react-native-randombytes         | ✅ Yes  | ✅ Yes            |
-|                         | react-native-get-random-values   | ✅ Yes  | ✅ Yes            |
-|-------------------------|----------------------------------|----------------------------|
+| React Native Version    | Library Reqyuired in versions    |         |           |
+|-------------------------|----------------------------------|---------|-----------|
+|                         |                                  |   iOS   |   Android |
+|-------------------------|----------------------------------|---------|-----------|
+| Below 0.71              | react-native-get-random-values   | ✅ Yes  | ❌ No      |
+|                         | react-native-randombytes         | ✅ Yes  | ❌ No      |
+|                         | react-native-get-random-values   | ✅ Yes  | ❌ No      |
+|-------------------------|----------------------------------|---------|------------|
+| 0.71 and above          | react-native-get-random-values   | ✅ Yes  | ✅ Yes      |
+|                         | react-native-randombytes         | ✅ Yes  | ✅ Yes      |
+|                         | react-native-get-random-values   | ✅ Yes  | ✅ Yes       |
+|-------------------------|----------------------------------|---------|------------|
 ### Steps
 
 1. Install `react-native-get-random-values`
