@@ -185,24 +185,18 @@ npm install @microsoft/omnichannel-chat-sdk --save
     ```
 **iOS and Android Platforms**
 
-|       Libraries                |   0.71 and above   |   Below 0.71        |
-|--------------------------------|--------------------|---------------------|
-|                                |   iOS   Android    |   iOS   Android     |
-| node-libs-react-native         | ✅ Yes   ❌ No      | ✅ Yes   ✅ Yes     |
-| react-native-randombytes       | ✅ Yes   ❌ No      | ✅ Yes   ✅ Yes     |
-| react-native-get-random-values | ✅ Yes   ❌ No      | ✅ Yes   ✅ Yes     |
+|  React Native Version |           Libraries            |   iOS   | Android   |
+| ----------------------- | -------------------------------- | --------- | ----------- |
+| 0.71 and above        |                                |         |          | 
+|                       | node-libs-react-native         | ✅ Yes  | ❌ No     |
+|                       | react-native-randombytes       | ✅ Yes  | ❌ No     |
+|                       | react-native-get-random-values | ✅ Yes  | ❌ No     | 
+|-----------------------|--------------------------------|-------- |-----------|
+| Below 0.71            |                                |         |           | 
+|                       | node-libs-react-native         | ✅ Yes  | ✅ Yes    |
+|                       | react-native-randombytes       | ✅ Yes  | ✅ Yes    |
+|                       | react-native-get-random-values | ✅ Yes  | ✅ Yes    | 
 
-
-
-| React Native Version    | Library Required in versions     |   iOS   |  Android  |
-|-------------------------|----------------------------------|---------|-----------|
-|   0.71 and above        | node-libs-react-native           | ✅ Yes  | ❌ No      |
-|                         | react-native-randombytes         | ✅ Yes  | ❌ No      |
-|                         | react-native-get-random-values   | ✅ Yes  | ❌ No      |
-|-------------------------|----------------------------------|---------|-----------|
-|   Below 0.71            | node-libs-react-native           | ✅ Yes  | ✅ Yes     |
-|                         | react-native-randombytes         | ✅ Yes  | ✅ Yes     |
-|                         | react-native-get-random-values   | ✅ Yes  | ✅ Yes     |
 
 **Additional file changes required for both Android and iOS.**
 1. In metro.config.js
