@@ -150,19 +150,11 @@ npm install @microsoft/omnichannel-chat-sdk --save
 
 ## Installation on React Native
 
-The following steps will be required to run Omnichannel Chat SDK on React Native:
+**Important:**  
+- For React Native versions **below 0.71**: Steps 1, 2, 3 are **required for both Android and iOS**.
+- For React Native versions **0.71 and above**: Steps 1, 2, 3 are **required only for iOS** (not needed for Android).
 
-1. Install `node-libs-react-native`
-
-    ```console
-    npm install node-libs-react-native --save-dev
-    ```
-
-1. Install `react-native-randomBytes`
-
-    ```console
-    npm install react-native-randombytes --save-dev
-    ```
+### Steps
 
 1. Install `react-native-get-random-values`
 
@@ -170,19 +162,38 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
     npm install react-native-get-random-values --save-dev
     ```
 
-1. Install `react-native-url-polyfill`
+2. Install `react-native-randombytes`
+    ```console
+    npm install react-native-randombytes --save-dev
+    ```
+
+3. Install `react-native-get-random-values`
+    ```console
+    npm install react-native-get-random-values --save-dev
+    ```
+
+**Summary Table:**
+
+| React Native Version     | Platform  | Are these steps required? |
+|-------------------------|-----------|--------------------------|
+| Below 0.71              | Android   | ✅ Yes                   |
+| Below 0.71              | iOS       | ✅ Yes                   |
+| 0.71 and above          | Android   | ❌ No                    |
+| 0.71 and above          | iOS       | ✅ Yes                   |
+
+4. Install `react-native-url-polyfill`
 
     ```console
     npm install react-native-url-polyfill --save-dev
     ```
 
-1. Install `@azure/core-asynciterator-polyfill`
+5. Install `@azure/core-asynciterator-polyfill`
 
     ```console
     npm install @azure/core-asynciterator-polyfill --save-dev
     ```
 
-1. Update *metro.config.js* to use React Native compatible Node Core modules
+6. Update *metro.config.js* to use React Native compatible Node Core modules
 
     ```ts
     module.exports = {
@@ -197,7 +208,7 @@ The following steps will be required to run Omnichannel Chat SDK on React Native
     };
     ```
 
-1. Add the following *import* on top of your entry point file
+7. Add the following *import* on top of your entry point file
 
     ```ts
     import 'node-libs-react-native/globals';
