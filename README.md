@@ -150,19 +150,31 @@ npm install @microsoft/omnichannel-chat-sdk --save
 
 ## Installation on React Native
 
-The following steps will be required to run Omnichannel Chat SDK on React Native:
+**Important:**  
+- For React Native versions **below 0.71**: The following steps are **required for both Android and iOS**.
+- For React Native versions **0.71 and above**: These steps are **required only for iOS** (not needed for Android).
 
-1. Install `node-libs-react-native`
+### Steps
 
-    ```console
-    npm install node-libs-react-native --save-dev
-    ```
-
-1. Install `react-native-randomBytes`
-
+1. Install `react-native-randombytes`
     ```console
     npm install react-native-randombytes --save-dev
     ```
+
+2. Install `react-native-get-random-values`
+    ```console
+    npm install react-native-get-random-values --save-dev
+    ```
+
+**Summary Table:**
+
+| React Native Version     | Platform  | Are these steps required? |
+|-------------------------|-----------|--------------------------|
+| Below 0.71              | Android   | ✅ Yes                   |
+| Below 0.71              | iOS       | ✅ Yes                   |
+| 0.71 and above          | Android   | ❌ No                    |
+| 0.71 and above          | iOS       | ✅ Yes                   |
+
 
 1. Install `react-native-get-random-values`
 
