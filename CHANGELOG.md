@@ -4,8 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-### Added
+### Changed
 
+- Enable Region Based Attachment Client Support
 - Uptake [@microsoft/botframework-webchat-adapter-azure-communication-chat@0.0.1-beta.4](https://www.npmjs.com/package/@microsoft/botframework-webchat-adapter-azure-communication-chat/v/0.0.1-beta.4)
 - Uptake [@microsoft/ocsdk@0.5.17](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.17)
 
