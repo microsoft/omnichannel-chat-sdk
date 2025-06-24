@@ -185,12 +185,12 @@ npm install @microsoft/omnichannel-chat-sdk --save
     ```
 **iOS and Android Platforms**
 
-|       Libraries                |   0.71 and above    |   Below 0.71        |
-|--------------------------------|---------------------|---------------------|
-|                                |   iOS   |  Android  |   iOS   |  Android  |
-| node-libs-react-native         | ✅ Yes  | ❌ No      | ✅ Yes  | ✅ Yes     |
-| react-native-randombytes       | ✅ Yes  | ❌ No      | ✅ Yes  | ✅ Yes     |
-| react-native-get-random-values | ✅ Yes  | ❌ No      | ✅ Yes  | ✅ Yes     |
+|       Libraries                |   0.71 and above   |   Below 0.71        |
+|--------------------------------|--------------------|---------------------|
+|                                |   iOS   Android    |   iOS   Android     |
+| node-libs-react-native         | ✅ Yes   ❌ No      | ✅ Yes   ✅ Yes     |
+| react-native-randombytes       | ✅ Yes   ❌ No      | ✅ Yes   ✅ Yes     |
+| react-native-get-random-values | ✅ Yes   ❌ No      | ✅ Yes   ✅ Yes     |
 
 
 
