@@ -191,11 +191,14 @@ npm install @microsoft/omnichannel-chat-sdk --save
 |                       | node-libs-react-native         | ✅ Yes  | ❌ No     |
 |                       | react-native-randombytes       | ✅ Yes  | ❌ No     |
 |                       | react-native-get-random-values | ✅ Yes  | ❌ No     | 
-|-----------------------|--------------------------------|-------- |-----------|
+|                       | react-native-url-polyfill      | ✅ Yes  |  ✅ Yes     |
+|                       | @azure/core-asynciterator-polyfill     | ✅ Yes  |  ✅ Yes      |
 | Below 0.71            |                                |         |           | 
 |                       | node-libs-react-native         | ✅ Yes  | ✅ Yes    |
 |                       | react-native-randombytes       | ✅ Yes  | ✅ Yes    |
 |                       | react-native-get-random-values | ✅ Yes  | ✅ Yes    | 
+|                       | react-native-url-polyfill      | ✅ Yes  |  ✅ Yes     |
+|                       | @azure/core-asynciterator-polyfill     | ✅ Yes  |  ✅ Yes      |
 
 
 **Additional file changes required for both Android and iOS.**
