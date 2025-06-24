@@ -215,7 +215,6 @@ Below 0.71 version you need to add all above libraries.
 - If you encounter a crypto issue on iOS, particularly the error "crypto.getRandomValues() not supported," you should install crypto-browserify and stream-browserify, then add the following lines to your *metro.config.js* file.
    
    ```ts
-    const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
     const config = {
       resolver: {
         extraNodeModules: {
