@@ -158,14 +158,14 @@ npm install @microsoft/omnichannel-chat-sdk --save
 
 | React Native Version    | Library Required in versions     |    iOS  |  Android  |
 |-------------------------|----------------------------------|---------|-----------|
-| Below 0.71              | react-native-get-random-values   | ✅ Yes  | ❌ No      |
+| Below 0.71              | react-native-get-random-values   | ✅ Yes  | ✅ Yes      |
+|                         | react-native-randombytes         | ✅ Yes  | ✅ Yes      |
+|                         | react-native-get-random-values   | ✅ Yes  | ✅ Yes    |
+|-------------------------|----------------------------------|---------|------------|
+| 0.71 and above          | react-native-get-random-values   | ✅ Yes  | ❌ No     |
 |                         | react-native-randombytes         | ✅ Yes  | ❌ No      |
-|                         | react-native-get-random-values   | ✅ Yes  | ❌ No      |
-|-------------------------|----------------------------------|---------|------------|
-| 0.71 and above          | react-native-get-random-values   | ✅ Yes  | ✅ Yes     |
-|                         | react-native-randombytes         | ✅ Yes  | ✅ Yes     |
-|                         | react-native-get-random-values   | ✅ Yes  | ✅ Yes     |
-|-------------------------|----------------------------------|---------|------------|
+|                         | react-native-get-random-values   | ✅ Yes  | ❌ No     |
+
 ### Steps
 
 1. Install `react-native-get-random-values`
