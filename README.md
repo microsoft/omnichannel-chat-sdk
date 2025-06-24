@@ -154,6 +154,20 @@ npm install @microsoft/omnichannel-chat-sdk --save
 - For React Native versions **below 0.71**: Steps 1, 2, 3 are **required for both Android and iOS**.
 - For React Native versions **0.71 and above**: Steps 1, 2, 3 are **required only for iOS** (not needed for Android).
 
+**Summary Table:**
+
+| React Native Version    | Library                          | Library Required?          |
+|-------------------------|----------------------------------|----------------------------|
+|                         |                                  |   iOS      |   Android     |
+|-------------------------|----------------------------------|----------------------------|
+| Below 0.71              | react-native-get-random-values   | ✅ Yes  | ❌ No             |
+|                         | react-native-randombytes         | ✅ Yes  | ❌ No             |
+|                         | react-native-get-random-values   | ✅ Yes  | ❌ No             |
+|-------------------------|----------------------------------|----------------------------|
+| 0.71 and above          | react-native-get-random-values   | ✅ Yes  | ✅ Yes            |
+|                         | react-native-randombytes         | ✅ Yes  | ✅ Yes            |
+|                         | react-native-get-random-values   | ✅ Yes  | ✅ Yes            |
+|-------------------------|----------------------------------|----------------------------|
 ### Steps
 
 1. Install `react-native-get-random-values`
@@ -171,16 +185,7 @@ npm install @microsoft/omnichannel-chat-sdk --save
     ```console
     npm install react-native-get-random-values --save-dev
     ```
-
-**Summary Table:**
-
-| React Native Version     | Platform  | Are these steps required? |
-|-------------------------|-----------|--------------------------|
-| Below 0.71              | Android   | ✅ Yes                   |
-| Below 0.71              | iOS       | ✅ Yes                   |
-| 0.71 and above          | Android   | ❌ No                    |
-| 0.71 and above          | iOS       | ✅ Yes                   |
-
+    
 4. Install `react-native-url-polyfill`
 
     ```console
