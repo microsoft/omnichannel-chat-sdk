@@ -156,15 +156,15 @@ npm install @microsoft/omnichannel-chat-sdk --save
 
 **Summary Table:**
 
-| React Native Version    | Library Required in versions     |    iOS  |  Android  |
+| React Native Version    | Library Required in versions     |   iOS   |  Android  |
 |-------------------------|----------------------------------|---------|-----------|
-| Below 0.71              | react-native-get-random-values   | ✅ Yes  | ✅ Yes      |
-|                         | react-native-randombytes         | ✅ Yes  | ✅ Yes      |
-|                         | react-native-get-random-values   | ✅ Yes  | ✅ Yes    |
-|-------------------------|----------------------------------|---------|------------|
-| 0.71 and above          | react-native-get-random-values   | ✅ Yes  | ❌ No     |
+|   0.71 and above        | react-native-get-random-values   | ✅ Yes  | ❌ No      |
 |                         | react-native-randombytes         | ✅ Yes  | ❌ No      |
-|                         | react-native-get-random-values   | ✅ Yes  | ❌ No     |
+|                         | react-native-get-random-values   | ✅ Yes  | ❌ No      |
+|-------------------------|----------------------------------|---------|-----------|
+|   Below 0.71            | react-native-get-random-values   | ✅ Yes  | ✅ Yes     |
+|                         | react-native-randombytes         | ✅ Yes  | ✅ Yes     |
+|                         | react-native-get-random-values   | ✅ Yes  | ✅ Yes     |
 
 ### Steps
 
@@ -196,22 +196,37 @@ npm install @microsoft/omnichannel-chat-sdk --save
     npm install @azure/core-asynciterator-polyfill --save-dev
     ```
 
-6. Update *metro.config.js* to use React Native compatible Node Core modules
-
+**Additional file changes required for both Android and iOS.**
+1. In metro.config.js
+- Update *metro.config.js* to use React Native compatible Node Core modules.
     ```ts
-    module.exports = {
-        // ...
-        resolver: {
-            extraNodeModules: {
-                ...require('node-libs-react-native'),
-                net: require.resolve('node-libs-react-native/mock/net'),
-                tls: require.resolve('node-libs-react-native/mock/tls')
-            }
-        }
+    const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+    const nodeLibs = require('node-libs-react-native'); // Import node-libs-react-native
+    const config = {
+      resolver: {
+        extraNodeModules: {
+          ...nodeLibs,
+          net: require.resolve('node-libs-react-native/mock/net'),
+          tls: require.resolve('node-libs-react-native/mock/tls'),
+        },
+      },
     };
     ```
+- If you encounter a crypto issue on iOS, particularly the error "crypto.getRandomValues() not supported," you should install crypto-browserify and stream-browserify, then add the following lines to your *metro.config.js* file.
+   
+   ```ts
+    const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+    const config = {
+      resolver: {
+        extraNodeModules: {
+          crypto: require.resolve("crypto-browserify"),
+          stream: require.resolve("stream-browserify"),
+        },
+      },
+    };
+   ```
 
-7. Add the following *import* on top of your entry point file
+2. Add the following *import* on top of your entry point file
 
     ```ts
     import 'node-libs-react-native/globals';
