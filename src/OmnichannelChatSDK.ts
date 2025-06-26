@@ -63,7 +63,6 @@ import IGetQueueAvailabilityOptionalParams from "@microsoft/ocsdk/lib/Interfaces
 import IInitializationInfo from "@microsoft/omnichannel-ic3core/lib/model/IInitializationInfo";
 import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import IOmnichannelConfiguration from "@microsoft/ocsdk/lib/Interfaces/IOmnichannelConfiguration";
-import IPerson from "@microsoft/omnichannel-ic3core/lib/model/IPerson";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
 import IRawThread from "@microsoft/omnichannel-ic3core/lib/interfaces/IRawThread";
 import IReconnectableChatsParams from "@microsoft/ocsdk/lib/Interfaces/IReconnectableChatsParams";
