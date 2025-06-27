@@ -320,11 +320,9 @@ class OmnichannelChatSDK {
         // it will load AMS only if enabled for Customer or Agent support for attachments, based on configuration
         if (this.liveChatConfig?.LiveWSAndLiveChatEngJoin?.msdyn_enablefileattachmentsforcustomers === "true" ||
             this.liveChatConfig?.LiveWSAndLiveChatEngJoin?.msdyn_enablefileattachmentsforagents === "true") {
-            if (this.liveChatVersion === LiveChatVersion.V2) {
-                //override of this value, since it will be needed to control access to attachment operations
-                this.isAMSClientAllowed = true;
-                return this.isAMSClientAllowed;
-            }
+            //override of this value, since it will be needed to control access to attachment operations
+            this.isAMSClientAllowed = true;
+            return this.isAMSClientAllowed;
         }
         return this.isAMSClientAllowed;
     }
@@ -719,7 +717,7 @@ class OmnichannelChatSDK {
             await this.getChatToken(false);
         }
         if (this.chatToken?.chatId) {
-            loggerUtils.setChatId(this.chatToken.chatId || '', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+            loggerUtils.setChatId(this.chatToken.chatId || '', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger);
         }
 
         let sessionInitOptionalParams: ISessionInitOptionalParams = {
@@ -777,7 +775,7 @@ class OmnichannelChatSDK {
                     const chatToken = await this.OCClient.createConversation(this.requestId, sessionInitOptionalParams);
                     if (chatToken) {
                         this.setChatToken(chatToken);
-                        loggerUtils.setChatId(this.chatToken.chatId || '', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+                        loggerUtils.setChatId(this.chatToken.chatId || '', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger);
                     }
                 } catch (error) {
                     const telemetryData = {
@@ -796,14 +794,13 @@ class OmnichannelChatSDK {
         };
 
         const messagingClientPromise = async () => {
-            if (this.liveChatVersion === LiveChatVersion.V2) {
-                const chatAdapterConfig = {
-                    token: this.chatToken.token,
-                    id: this.chatToken.visitorId || 'teamsvisitor',
-                    threadId: this.chatToken.chatId,
-                    environmentUrl: this.chatToken.acsEndpoint as string,
-                    pollingInterval: 30000
-                };
+            const chatAdapterConfig = {
+                token: this.chatToken.token,
+                id: this.chatToken.visitorId || 'teamsvisitor',
+                threadId: this.chatToken.chatId,
+                environmentUrl: this.chatToken.acsEndpoint as string,
+                pollingInterval: 30000
+            };
 
                 // Temporarily disable token refresh mechanism
                 // const tokenRefresher = async (): Promise<string> => {
@@ -845,49 +842,16 @@ class OmnichannelChatSDK {
 
                     exceptionThrowers.throwMessagingClientConversationJoinFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
                 }
-            } else {
-                try {
-                    await this.IC3Client.initialize({
-                        token: this.chatToken.token,
-                        regionGtms: this.chatToken.regionGTMS,
-                        visitor: true
-                    });
-                } catch (error) {
-                    const telemetryData = {
-                        RequestId: this.requestId,
-                        ChatId: this.chatToken.chatId as string,
-                    };
-
-                    exceptionThrowers.throwMessagingClientInitializationFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
-                }
-
-                try {
-                    this.conversation = await this.IC3Client.joinConversation(this.chatToken.chatId);
-                    this.scenarioMarker.completeScenario(TelemetryEvent.StartChat, {
-                        RequestId: this.requestId,
-                        ChatId: this.chatToken.chatId as string
-                    });
-                } catch (error) {
-                    const telemetryData = {
-                        RequestId: this.requestId,
-                        ChatId: this.chatToken.chatId as string,
-                    };
-
-                    exceptionThrowers.throwMessagingClientConversationJoinFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
-                }
-            }
         };
 
         const attachmentClientPromise = async (): Promise<void> => {
             try {
-                if (this.liveChatVersion === LiveChatVersion.V2) {
-                    if (!this.isAMSClientAllowed) return;
-                    // will wait till the AMSClient is loaded, and then initialize it
-                    this.debug && console.time("ams_promise_initialization");
-                    const amsClient = await this.getAMSClient();
-                    await amsClient?.initialize({ chatToken: this.chatToken as OmnichannelChatToken });
-                    this.debug && console.timeEnd("ams_promise_initialization");
-                }
+                if (!this.isAMSClientAllowed) return;
+                // will wait till the AMSClient is loaded, and then initialize it
+                this.debug && console.time("ams_promise_initialization");
+                const amsClient = await this.getAMSClient();
+                await amsClient?.initialize({ chatToken: this.chatToken as OmnichannelChatToken });
+                this.debug && console.timeEnd("ams_promise_initialization");
             } catch (error) {
                 const telemetryData = {
                     RequestId: this.requestId,
@@ -981,12 +945,6 @@ class OmnichannelChatSDK {
                 this.requestId = uuidv4();
                 this.chatToken = {};
                 this.reconnectId = null;
-
-                if (this.IC3Client) {
-                    this.IC3Client.dispose();
-                    !platform.isNode() && !platform.isReactNative() && removeElementById(this.IC3Client.id);
-                    this.IC3Client = null;
-                }
 
                 if (this.OCClient.sessionId) {
                     this.OCClient.sessionId = null;
@@ -1174,7 +1132,7 @@ class OmnichannelChatSDK {
         return this.getChatConfig({ sendCacheHeaders: optionalParams?.sendCacheHeaders || false });
     }
 
-    public async getChatToken(cached = true, optionalParams?: GetChatTokenOptionalParams): Promise<IChatToken> {
+    public async getChatToken(cached = true, optionalParams?: GetChatTokenOptionalParams): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
         this.scenarioMarker.startScenario(TelemetryEvent.GetChatToken, {
             RequestId: this.requestId
         });
@@ -1365,90 +1323,44 @@ class OmnichannelChatSDK {
 
         this.transformMessage(message);
 
-        if (this.liveChatVersion === LiveChatVersion.V2) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const sendMessageRequest: any = {
-                content: message.content,
-            }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const sendMessageRequest: any = {
+            content: message.content,
+        }
 
-            sendMessageRequest.metadata = {
-                widgetId: this.omnichannelConfig.widgetId,
-                clientMessageId: Date.now().toString()
-            }
+        sendMessageRequest.metadata = {
+            widgetId: this.omnichannelConfig.widgetId,
+            clientMessageId: Date.now().toString()
+        }
 
-            if (message.metadata) {
-                sendMessageRequest.metadata = { ...sendMessageRequest.metadata, ...message.metadata };
-            }
+        if (message.metadata) {
+            sendMessageRequest.metadata = { ...sendMessageRequest.metadata, ...message.metadata };
+        }
 
-            try {
-                const chatMessage = await (this.conversation as ACSConversation)?.sendMessage(sendMessageRequest);
+        try {
+            const chatMessage = await (this.conversation as ACSConversation)?.sendMessage(sendMessageRequest);
 
-                this.scenarioMarker.completeScenario(TelemetryEvent.SendMessages, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
+            this.scenarioMarker.completeScenario(TelemetryEvent.SendMessages, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
 
-                return chatMessage;
-            } catch (error) {
-                const exceptionDetails: ChatSDKExceptionDetails = {
-                    response: ChatSDKErrorName.ChatSDKSendMessageFailed,
-                    errorObject: `${error}`
-                };
-                this.scenarioMarker.failScenario(TelemetryEvent.SendMessages, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: JSON.stringify(exceptionDetails)
-                });
-
-                throw new ChatSDKError(ChatSDKErrorName.ChatSDKSendMessageFailed, undefined, {
-                    response: ChatSDKErrorName.ChatSDKSendMessageFailed,
-                    errorObject: `${error}`
-                });
-            }
-        } else {
-            const messageToSend: IRawMessage = {
-                content: message.content,
-                timestamp: new Date(),
-                contentType: MessageContentType.Text,
-                deliveryMode: DeliveryMode.Bridged,
-                messageType: MessageType.UserMessage,
-                properties: undefined,
-                tags: [...defaultMessageTags],
-                sender: {
-                    displayName: "Customer",
-                    id: "customer",
-                    type: PersonType.User
-                }
+            return chatMessage;
+        } catch (error) {
+            const exceptionDetails: ChatSDKExceptionDetails = {
+                response: ChatSDKErrorName.ChatSDKSendMessageFailed,
+                errorObject: `${error}`
             };
+            this.scenarioMarker.failScenario(TelemetryEvent.SendMessages, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string,
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
 
-            if (message.tags) {
-                messageToSend.tags = message.tags;
-            }
-
-            if (message.timestamp) {
-                messageToSend.timestamp = message.timestamp;
-            }
-
-            try {
-                await (this.conversation as IConversation).sendMessage(messageToSend);
-
-                this.scenarioMarker.completeScenario(TelemetryEvent.SendMessages, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-            } catch (error) {
-                const exceptionDetails: ChatSDKExceptionDetails = {
-                    response: ChatSDKErrorName.ChatSDKSendMessageFailed,
-                    errorObject: `${error}`
-                };
-                this.scenarioMarker.failScenario(TelemetryEvent.SendMessages, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: JSON.stringify(exceptionDetails)
-                });
-
-                throw new Error(ChatSDKErrorName.ChatSDKSendMessageFailed);
-            }
+            throw new ChatSDKError(ChatSDKErrorName.ChatSDKSendMessageFailed, undefined, {
+                response: ChatSDKErrorName.ChatSDKSendMessageFailed,
+                errorObject: `${error}`
+            });
         }
     }
 
@@ -1673,9 +1585,7 @@ class OmnichannelChatSDK {
             exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.UploadFileAttachment);
         }
 
-        if (this.liveChatVersion === LiveChatVersion.V2) {
-
-            if (this.isAMSClientAllowed === false) {
+        if (this.isAMSClientAllowed === false) {
                 exceptionThrowers.throwFeatureDisabled(this.scenarioMarker, TelemetryEvent.UploadFileAttachment, "Enable support for attachment upload and receive in the widget configuration.");
             }
             const amsClient = await this.getAMSClient();
@@ -1743,50 +1653,7 @@ class OmnichannelChatSDK {
             }
 
             return {} as OmnichannelMessage;
-        } else {
-            let fileMetadata: IFileMetadata;
-
-            if (platform.isReactNative() || platform.isNode()) {
-                fileMetadata = await (this.conversation as IConversation)!.sendFileData(fileInfo as IFileInfo, FileSharingProtocolType.AmsBasedFileSharing);
-            } else {
-                fileMetadata = await (this.conversation as IConversation)!.uploadFile(fileInfo as File, FileSharingProtocolType.AmsBasedFileSharing);
-            }
-
-            const messageToSend: IRawMessage = {
-                content: "",
-                timestamp: new Date(),
-                contentType: MessageContentType.Text,
-                deliveryMode: DeliveryMode.Bridged,
-                messageType: MessageType.UserMessage,
-                tags: [...defaultMessageTags],
-                sender: {
-                    displayName: "Customer",
-                    id: "customer",
-                    type: PersonType.User,
-                },
-                fileMetadata: fileMetadata
-            };
-
-            try {
-                await this.conversation!.sendFileMessage(fileMetadata, messageToSend);
-
-                this.scenarioMarker.completeScenario(TelemetryEvent.UploadFileAttachment, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-
-                return messageToSend;
-            } catch (error) {
-                console.error(`OmnichannelChatSDK/uploadFileAttachment/error: ${error}`);
-
-                this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-            }
-
-            return {} as OmnichannelMessage;
-        }
+    }
     }
 
     public async downloadFileAttachment(fileMetadata: FileMetadata | IFileMetadata): Promise<Blob> {
@@ -1800,9 +1667,8 @@ class OmnichannelChatSDK {
             exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.DownloadFileAttachment);
         }
 
-        if (this.liveChatVersion === LiveChatVersion.V2) {
-            try {
-                if (this.isAMSClientAllowed === false) {
+        try {
+            if (this.isAMSClientAllowed === false) {
                     this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
                         RequestId: this.requestId,
                         ChatId: this.chatToken.chatId as string,
@@ -1831,23 +1697,7 @@ class OmnichannelChatSDK {
                 });
                 throw new Error('DownloadFileAttachmentFailed');
             }
-        } else {
-            try {
-                const downloadedFile = await (this.conversation as IConversation)!.downloadFile(fileMetadata as IFileMetadata);
-                this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-                return downloadedFile;
-            } catch (error) {
-                console.error(`OmnichannelChatSDK/downloadFileAttachment/error: ${error}`);
-                this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-                throw new Error('DownloadFileAttachmentFailed');
-            }
-        }
+    }
     }
 
     public async emailLiveChatTranscript(body: ChatTranscriptBody, optionalParams: EmailLiveChatTranscriptOptionaParams = {}): Promise<void> {
