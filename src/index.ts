@@ -1,4 +1,4 @@
-import { ACSAdapter, ChatAdapter, DirectLineAdapter, GeneralResponse, GetAgentAvailabilityResponse, GetCurrentLiveChatContextResponse, GetLiveChatTranscriptResponse, GetMessagesResponse, GetPreChatSurveyResponse, GetVoiceVideoCallingResponse, IC3Adapter, MaskingRule, MaskingRules, UploadFileAttachmentResponse } from "./types/response";
+import { ACSAdapter, ChatAdapter, DirectLineAdapter, GeneralResponse, GetAgentAvailabilityResponse, GetCurrentLiveChatContextResponse, GetLiveChatTranscriptResponse, GetMessagesResponse, GetPreChatSurveyResponse, GetVoiceVideoCallingResponse, MaskingRule, MaskingRules, UploadFileAttachmentResponse } from "./types/response";
 import { AmsClient, ChatWidgetLanguage, DataMaskingInfo, LiveChatConfig, LiveWSAndLiveChatEngJoin, Setting, VoiceVideoCallingOptionalParams } from "./types/config";
 import { ChatSDKError, ChatSDKErrorName } from "./core/ChatSDKError";
 import {SDKProvider as OCSDKProvider, uuidv4} from "@microsoft/ocsdk";
@@ -7,7 +7,6 @@ import { isCustomerMessage, isSystemMessage } from "./utils/utilities";
 
 import ChatSDKMessage from "./core/messaging/ChatSDKMessage";
 import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode";
-import {SDKProvider as IC3SDKProvider} from '@microsoft/omnichannel-ic3core';
 import IFileInfo from "@microsoft/omnichannel-ic3core/lib/interfaces/IFileInfo";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
 import MessageContentType from "@microsoft/omnichannel-ic3core/lib/model/MessageContentType";
@@ -17,7 +16,6 @@ import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 
 export {
     OmnichannelChatSDK,
-    IC3SDKProvider,
     OCSDKProvider,
     uuidv4,
     ChatSDKMessage,
@@ -49,7 +47,6 @@ export {
     GetLiveChatTranscriptResponse,
     DirectLineAdapter,
     ACSAdapter,
-    IC3Adapter,
     ChatAdapter,
     GetAgentAvailabilityResponse,
     GetVoiceVideoCallingResponse,
@@ -60,6 +57,5 @@ export {
 
 export default {
     OmnichannelChatSDK,
-    ic3sdk: { IC3SDKProvider },
     ocsdk: { OCSDKProvider, uuidv4 }
 };

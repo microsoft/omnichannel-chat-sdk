@@ -4,7 +4,7 @@
  * @jest-environment jsdom
  */
 
-import { createACSAdapter, createDirectLine, createIC3Adapter } from "../../src/utils/chatAdapterCreators";
+import { createACSAdapter, createDirectLine } from "../../src/utils/chatAdapterCreators";
 
 import { ACSAdapterLogger } from "../../src/utils/loggers";
 import LiveChatVersion from "../../src/core/LiveChatVersion";
@@ -140,68 +140,6 @@ describe("Chat Adapter Creators", () => {
 
         try {
             await createACSAdapter(optionalParams, chatSDKConfig, LiveChatVersion.V2, "ACS", telemetry, scenarioMarker, omnichannelConfig, chatToken, fileManager, chatClient, logger);
-            fail("Failure expected");
-        } catch (e: any) {
-            expect(e.message).toBe('ChatAdapterInitializationFailure');
-        }
-    });
-
-    it("createIC3Adapter() should throw an exception if script load fails", async () => {
-        const optionalParams = {
-            IC3Adapter: {
-                options: {}
-            }
-        };
-
-        const chatSDKConfig = {};
-        const telemetry: any = {
-            setCDNPackages: jest.fn()
-        };
-
-        const scenarioMarker: any = {
-            startScenario: jest.fn(),
-            failScenario: jest.fn()
-        };
-
-        const chatToken = {};
-        const ic3Client: any = jest.fn();
-        const logger: any = jest.fn();
-
-        WebUtils.loadScript = () => { throw Error() }
-
-        try {
-            await createIC3Adapter(optionalParams, chatSDKConfig, LiveChatVersion.V2, "ACS", telemetry, scenarioMarker, chatToken, ic3Client, logger);
-            fail("Failure expected");
-        } catch (e: any) {
-            expect(e.message).toBe('ScriptLoadFailure');
-        }
-    });
-
-    it("createIC3Adapter() should throw an exception if object failed to be created", async () => {
-        const optionalParams = {
-            IC3Adapter: {
-                options: {}
-            }
-        };
-
-        const chatSDKConfig = {};
-        const telemetry: any = {
-            setCDNPackages: jest.fn()
-        };
-
-        const scenarioMarker: any = {
-            startScenario: jest.fn(),
-            failScenario: jest.fn()
-        };
-
-        const chatToken = {};
-        const ic3Client: any = jest.fn();
-        const logger: any = jest.fn();
-
-        (WebUtils as any).loadScript = () => { Promise.resolve() };
-
-        try {
-            await createIC3Adapter(optionalParams, chatSDKConfig, LiveChatVersion.V2, "ACS", telemetry, scenarioMarker, chatToken, ic3Client, logger);
             fail("Failure expected");
         } catch (e: any) {
             expect(e.message).toBe('ChatAdapterInitializationFailure');
