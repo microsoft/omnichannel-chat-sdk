@@ -1,4 +1,4 @@
-import { ACSAdapterLogger, IC3ClientLogger } from "./loggers";
+import { ACSAdapterLogger } from "./loggers";
 
 import ACSParticipantDisplayName from "../core/messaging/ACSParticipantDisplayName";
 import AMSFileManager from "../external/ACSAdapter/AMSFileManager";
@@ -7,8 +7,6 @@ import AriaTelemetry from "../telemetry/AriaTelemetry";
 import ChatAdapterOptionalParams from "../core/messaging/ChatAdapterOptionalParams";
 import { ChatClient } from "@azure/communication-chat";
 import ChatSDKConfig from "../core/ChatSDKConfig";
-import IChatToken from "../external/IC3Adapter/IChatToken";
-import IIC3AdapterOptions from "../external/IC3Adapter/IIC3AdapterOptions";
 import LiveChatVersion from "../core/LiveChatVersion";
 import LogLevel from "../telemetry/LogLevel";
 import OmnichannelConfig from "../core/OmnichannelConfig";
@@ -49,7 +47,7 @@ const createDirectLine = async (optionalParams: ChatAdapterOptionalParams, chatS
     }
 };
 
-const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatSDKConfig: ChatSDKConfig, liveChatVersion: LiveChatVersion, protocol: string, telemetry: typeof AriaTelemetry, scenarioMarker: ScenarioMarker, omnichannelConfig: OmnichannelConfig, chatToken: IChatToken, fileManager: AMSFileManager, chatClient: ChatClient, logger: ACSAdapterLogger): Promise<unknown> => {
+const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatSDKConfig: ChatSDKConfig, liveChatVersion: LiveChatVersion, protocol: string, telemetry: typeof AriaTelemetry, scenarioMarker: ScenarioMarker, omnichannelConfig: OmnichannelConfig, chatToken: any, fileManager: AMSFileManager, chatClient: ChatClient, logger: ACSAdapterLogger): Promise<unknown> => { // eslint-disable-line @typescript-eslint/no-explicit-any
     const adapterParams = optionalParams.ACSAdapter;
     const options = adapterParams ? adapterParams.options : {};
 
@@ -114,49 +112,12 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
     }
 };
 
-const createIC3Adapter = async (optionalParams: ChatAdapterOptionalParams, chatSDKConfig: ChatSDKConfig, liveChatVersion: LiveChatVersion, protocol: string, telemetry: typeof AriaTelemetry, scenarioMarker: ScenarioMarker, chatToken: IChatToken, ic3Client: any, logger: IC3ClientLogger): Promise<unknown> => { // eslint-disable-line @typescript-eslint/no-explicit-any,  @typescript-eslint/explicit-module-boundary-types
-    const options = optionalParams.IC3Adapter ? optionalParams.IC3Adapter.options : {};
-    const ic3AdapterCDNUrl = urlResolvers.resolveChatAdapterUrl(chatSDKConfig, liveChatVersion, protocol);
-
-    telemetry?.setCDNPackages({
-        IC3Adapter: ic3AdapterCDNUrl
-    });
-
-    scenarioMarker.startScenario(TelemetryEvent.CreateIC3Adapter);
-
-    try {
-        await WebUtils.loadScript(ic3AdapterCDNUrl);
-    } catch (error) {
-        exceptionThrowers.throwScriptLoadFailure(error, scenarioMarker, TelemetryEvent.CreateACSAdapter);
-    }
-
-    const adapterConfig: IIC3AdapterOptions = {
-        chatToken: chatToken,
-        userDisplayName: 'Customer',
-        userId: chatToken.visitorId || 'teamsvisitor',
-        sdkURL: urlResolvers.resolveIC3ClientUrl(chatSDKConfig),
-        sdk: ic3Client,
-        ...options // overrides
-    };
-
-    try {
-        const adapter = new window.Microsoft.BotFramework.WebChat.IC3Adapter(adapterConfig);
-        adapter.logger = logger;
-        scenarioMarker.completeScenario(TelemetryEvent.CreateIC3Adapter);
-        return adapter;
-    } catch (error) {
-        exceptionThrowers.throwChatAdapterInitializationFailure(error, scenarioMarker, TelemetryEvent.CreateIC3Adapter)
-    }
-};
-
 export default {
     createDirectLine,
-    createACSAdapter,
-    createIC3Adapter
+    createACSAdapter
 };
 
 export {
     createDirectLine,
-    createACSAdapter,
-    createIC3Adapter
+    createACSAdapter
 };

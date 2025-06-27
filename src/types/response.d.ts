@@ -1,5 +1,5 @@
 import QueueAvailability from "@microsoft/ocsdk/lib/Model/QueueAvailability";
-import { createACSAdapter, createDirectLine, createIC3Adapter } from "../utils/chatAdapterCreators";
+import { createACSAdapter, createDirectLine } from "../utils/chatAdapterCreators";
 import { VoiceVideoCallingProxy } from "../api/createVoiceVideoCalling";
 import OmnichannelMessage from "../core/messaging/OmnichannelMessage";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
