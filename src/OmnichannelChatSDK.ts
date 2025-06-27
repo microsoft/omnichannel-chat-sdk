@@ -923,7 +923,27 @@ class OmnichannelChatSDK {
         } else {
             await sessionInitPromise(); // Await the session initialization
         }
-        await Promise.all([messagingClientPromise(),attachmentClientPromise()]);
+
+        try {
+            await Promise.all([messagingClientPromise(),attachmentClientPromise()]);
+        } catch (error) {
+            // If conversation joining fails after conversation was created, clean up the conversation
+            if (error instanceof ChatSDKError &&
+                error.message === ChatSDKErrorName.MessagingClientConversationJoinFailure &&
+                !this.chatSDKConfig.useCreateConversation?.disable) {
+                try {
+                    const sessionCloseOptionalParams: ISessionCloseOptionalParams = {};
+                    if (this.authenticatedUserToken) {
+                        sessionCloseOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
+                    }
+                    await this.OCClient.sessionClose(this.requestId, sessionCloseOptionalParams);
+                } catch (cleanupError) {
+                    // Log cleanup failure but don't change the original error being thrown
+                    console.error('Failed to cleanup conversation after MessagingClientConversationJoinFailure:', cleanupError);
+                }
+            }
+            throw error; // Re-throw the original error
+        }
 
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
             this.refreshTokenTimer = setInterval(async () => {
