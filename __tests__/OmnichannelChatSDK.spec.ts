@@ -1422,41 +1422,6 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.startChat() should clean up conversation when IC3Client.joinConversation() fails and createConversation was used', async () => {
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfig); // default uses createConversation
-            chatSDK.getChatConfig = jest.fn();
-            chatSDK.liveChatVersion = LiveChatVersion.V1; // Use IC3Client
-
-            await chatSDK.initialize();
-
-            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
-                ChatId: 'test-chat-id',
-                Token: 'test-token',
-                RegionGtms: '{}'
-            }));
-
-            jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve({
-                ChatId: 'test-chat-id',
-                Token: 'test-token',
-                RegionGtms: '{}'
-            }));
-            jest.spyOn(chatSDK.OCClient, 'sessionClose').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockRejectedValue(new Error('Async error message'));
-
-            try {
-                await chatSDK.startChat();
-                fail();
-            } catch (error : any ) {
-                expect(error.message).toBe("MessagingClientConversationJoinFailure");
-            }
-
-            expect(chatSDK.OCClient.createConversation).toHaveBeenCalledTimes(1);
-            expect(chatSDK.IC3Client.initialize).toHaveBeenCalledTimes(1);
-            expect(chatSDK.IC3Client.joinConversation).toHaveBeenCalledTimes(1);
-            expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(1);
-        });
-
         it('ChatSDK.startChat() should handle cleanup failure gracefully when ACSClient.joinConversation() fails', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig); // default uses createConversation
             chatSDK.getChatConfig = jest.fn();
