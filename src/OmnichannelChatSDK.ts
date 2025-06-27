@@ -939,6 +939,13 @@ class OmnichannelChatSDK {
                     await this.OCClient.sessionClose(this.requestId, sessionCloseOptionalParams);
                 } catch (cleanupError) {
                     // Log cleanup failure but don't change the original error being thrown
+                    const cleanupTelemetryData = {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken?.chatId as string,
+                        Event: 'ConversationCleanupFailure',
+                        ExceptionDetails: String(cleanupError)
+                    };
+                    this.telemetry?.error(cleanupTelemetryData);
                     console.error('Failed to cleanup conversation after MessagingClientConversationJoinFailure:', cleanupError);
                 }
             }

@@ -1496,6 +1496,58 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(console.error).toHaveBeenCalledWith('Failed to cleanup conversation after MessagingClientConversationJoinFailure:', expect.any(Error));
         });
 
+        it('ChatSDK.startChat() should log telemetry when conversation cleanup fails after MessagingClientConversationJoinFailure', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig); // default uses createConversation
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: 'test-chat-id',
+                Token: 'test-token',
+                RegionGtms: '{}'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve({
+                ChatId: 'test-chat-id',
+                Token: 'test-token',
+                RegionGtms: '{}'
+            }));
+            // Make sessionClose fail to trigger the cleanup error telemetry
+            jest.spyOn(chatSDK.OCClient, 'sessionClose').mockRejectedValue(new Error('Cleanup failed'));
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockRejectedValue(new Error('Async error message'));
+            jest.spyOn(chatSDK.AMSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            
+            // Spy on telemetry error logging
+            const telemetryErrorSpy = jest.spyOn(AriaTelemetry, 'error');
+            jest.spyOn(console, 'error').mockImplementation(() => {});
+
+            try {
+                await chatSDK.startChat();
+                fail();
+            } catch (error : any ) {
+                expect(error.message).toBe("MessagingClientConversationJoinFailure");
+            }
+
+            expect(chatSDK.OCClient.createConversation).toHaveBeenCalledTimes(1);
+            expect(chatSDK.ACSClient.initialize).toHaveBeenCalledTimes(1);
+            expect(chatSDK.ACSClient.joinConversation).toHaveBeenCalledTimes(1);
+            expect(chatSDK.AMSClient.initialize).toHaveBeenCalledTimes(1);
+            expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(1);
+            
+            // Verify telemetry error logging was called for cleanup failure
+            expect(telemetryErrorSpy).toHaveBeenCalledTimes(2);
+            expect(telemetryErrorSpy).toHaveBeenNthCalledWith(2, {
+                RequestId: expect.any(String),
+                ChatId: 'test-chat-id',
+                Event: 'ConversationCleanupFailure',
+                ExceptionDetails: expect.stringContaining('Cleanup failed')
+            });
+            expect(console.error).toHaveBeenCalledWith('Failed to cleanup conversation after MessagingClientConversationJoinFailure:', expect.any(Error));
+        });
+
         it('ChatSDK.startchat() with existing liveChatContext should not call OCClient.getChatToken() & OCClient.sessionInit()', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
                 useCreateConversation: {
