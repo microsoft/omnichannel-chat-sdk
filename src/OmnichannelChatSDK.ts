@@ -938,12 +938,19 @@ class OmnichannelChatSDK {
                     }
                     await this.OCClient.sessionClose(this.requestId, sessionCloseOptionalParams);
                 } catch (cleanupError) {
-                    // Log cleanup failure but don't change the original error being thrown
+                    // Log cleanup failure following the same ExceptionDetails pattern as exceptionThrowers
+                    const exceptionDetails: ChatSDKExceptionDetails = {
+                        response: 'ConversationCleanupFailure'
+                    };
+                    if (cleanupError) {
+                        exceptionDetails.errorObject = String(cleanupError);
+                    }
+
                     const cleanupTelemetryData = {
                         RequestId: this.requestId,
                         ChatId: this.chatToken?.chatId as string,
                         Event: 'ConversationCleanupFailure',
-                        ExceptionDetails: String(cleanupError)
+                        ExceptionDetails: JSON.stringify(exceptionDetails)
                     };
                     this.telemetry?.error(cleanupTelemetryData);
                 }
