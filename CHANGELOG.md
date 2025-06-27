@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix conversation cleanup when MessagingClientConversationJoinFailure occurs to prevent orphaned conversations
+
 ## [1.11.2] - 2025-06-24
 
 ### Changed
