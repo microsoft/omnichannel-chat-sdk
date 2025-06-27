@@ -63,7 +63,6 @@ import IGetQueueAvailabilityOptionalParams from "@microsoft/ocsdk/lib/Interfaces
 import IInitializationInfo from "@microsoft/omnichannel-ic3core/lib/model/IInitializationInfo";
 import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import IOmnichannelConfiguration from "@microsoft/ocsdk/lib/Interfaces/IOmnichannelConfiguration";
-import IPerson from "@microsoft/omnichannel-ic3core/lib/model/IPerson";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
 import IRawThread from "@microsoft/omnichannel-ic3core/lib/interfaces/IRawThread";
 import IReconnectableChatsParams from "@microsoft/ocsdk/lib/Interfaces/IReconnectableChatsParams";
@@ -1556,27 +1555,6 @@ class OmnichannelChatSDK {
                 });
 
                 await (this.conversation as ACSConversation).sendTyping();
-
-                this.scenarioMarker.completeScenario(TelemetryEvent.SendTypingEvent, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-            } catch (error) {
-                this.scenarioMarker.failScenario(TelemetryEvent.SendTypingEvent, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-
-                throw new Error('SendTypingFailure');
-            }
-        } else {
-            const typingPayload = `{isTyping: 0}`;
-
-            try {
-                await (this.conversation as IConversation)!.indicateTypingStatus(0);
-                const members: IPerson[] = await (this.conversation as IConversation)!.getMembers();
-                const botMembers = members.filter((member: IPerson) => member.type === PersonType.Bot);
-                await (this.conversation as IConversation)!.sendMessageToBot(botMembers[0].id, { payload: typingPayload });
 
                 this.scenarioMarker.completeScenario(TelemetryEvent.SendTypingEvent, {
                     RequestId: this.requestId,

@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- Clean up `ChatSDK.sendTypingEvent()` unused code path
+
 ## [1.11.2] - 2025-06-24
 
 ### Changed
