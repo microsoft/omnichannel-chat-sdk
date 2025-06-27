@@ -946,7 +946,6 @@ class OmnichannelChatSDK {
                         ExceptionDetails: String(cleanupError)
                     };
                     this.telemetry?.error(cleanupTelemetryData);
-                    console.error('Failed to cleanup conversation after MessagingClientConversationJoinFailure:', cleanupError);
                 }
             }
             throw error; // Re-throw the original error

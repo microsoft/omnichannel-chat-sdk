@@ -1493,7 +1493,6 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.ACSClient.joinConversation).toHaveBeenCalledTimes(1);
             expect(chatSDK.AMSClient.initialize).toHaveBeenCalledTimes(1);
             expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(1);
-            expect(console.error).toHaveBeenCalledWith('Failed to cleanup conversation after MessagingClientConversationJoinFailure:', expect.any(Error));
         });
 
         it('ChatSDK.startChat() should log telemetry when conversation cleanup fails after MessagingClientConversationJoinFailure', async () => {
@@ -1545,7 +1544,6 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 Event: 'ConversationCleanupFailure',
                 ExceptionDetails: expect.stringContaining('Cleanup failed')
             });
-            expect(console.error).toHaveBeenCalledWith('Failed to cleanup conversation after MessagingClientConversationJoinFailure:', expect.any(Error));
         });
 
         it('ChatSDK.startchat() with existing liveChatContext should not call OCClient.getChatToken() & OCClient.sessionInit()', async() => {
