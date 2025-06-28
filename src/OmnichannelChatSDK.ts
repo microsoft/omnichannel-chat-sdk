@@ -411,8 +411,7 @@ class OmnichannelChatSDK {
             exceptionThrowers.throwChatConfigRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
 
-        const supportedLiveChatVersions = [LiveChatVersion.V2];
-        if (!supportedLiveChatVersions.includes(this.liveChatVersion)) {
+        if (this.liveChatVersion !== LiveChatVersion.V2) {
             exceptionThrowers.throwUnsupportedLiveChatVersionFailure(new Error(ChatSDKErrorName.UnsupportedLiveChatVersion), this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
 

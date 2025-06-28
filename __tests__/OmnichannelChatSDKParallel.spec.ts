@@ -134,41 +134,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             }
         });
 
-        it('ChatSDK should be able to pick custom ic3ClientVersion if set', async () => {
 
-            const chatSDKConfig = {
-                ic3Config: {
-                    ic3ClientVersion: 'version'
-                }
-            };
-
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfigGlobal, chatSDKConfig);
-            const url = chatSDK.resolveIC3ClientUrl();
-
-            expect(url).toBe(libraries.getIC3ClientCDNUrl(chatSDKConfig.ic3Config.ic3ClientVersion));
-        });
-
-        it('ChatSDK should be able to pick custom ic3ClientCDNUrl if set', async () => {
-
-            const chatSDKConfig = {
-                ic3Config: {
-                    ic3ClientVersion: 'version',
-                    ic3ClientCDNUrl: 'cdn'
-                }
-            };
-
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfigGlobal, chatSDKConfig);
-            const url = chatSDK.resolveIC3ClientUrl();
-
-            expect(url).toBe(chatSDKConfig.ic3Config.ic3ClientCDNUrl);
-        });
-
-        it('ChatSDK should pick the default ic3ClientCDNUrl if no ic3Config is set', async () => {
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfigGlobal);
-            const url = chatSDK.resolveIC3ClientUrl();
-
-            expect(url).toBe(libraries.getIC3ClientCDNUrl());
-        });
 
         it('ChatSDK should be able to pick custom webChatACSAdapterVersion if set', async () => {
 
