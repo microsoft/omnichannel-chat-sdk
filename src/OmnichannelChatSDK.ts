@@ -102,7 +102,6 @@ import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import setOcUserAgent from "./utils/setOcUserAgent";
 import startPolling from "./commands/startPolling";
 import stopPolling from "./commands/stopPolling";
-import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 import { retrieveRegionBasedUrl, shouldUseFramedMode } from "./utils/AMSClientUtils";
 
@@ -2240,10 +2239,6 @@ class OmnichannelChatSDK {
             this.setLiveChatVersionConfiguration(liveChatVersion),
             this.setWidgetSnippetBaseUrl(liveWSAndLiveChatEngJoin)
         ]);
-    }
-
-    private resolveChatAdapterUrl(protocol: string): string {
-        return urlResolvers.resolveChatAdapterUrl(this.chatSDKConfig, this.liveChatVersion, protocol);
     }
 
     private async updateChatToken(newToken: string, newRegionGTMS: IRegionGtms): Promise<void> {

@@ -23,7 +23,7 @@ import urlResolvers from "./urlResolvers";
 
 const createDirectLine = async (optionalParams: ChatAdapterOptionalParams, chatSDKConfig: ChatSDKConfig, liveChatVersion: LiveChatVersion, protocol: string, telemetry: typeof AriaTelemetry, scenarioMarker: ScenarioMarker): Promise<unknown> => {
     const options = optionalParams.DirectLine ? optionalParams.DirectLine.options : {};
-    const directLineCDNUrl = urlResolvers.resolveChatAdapterUrl(chatSDKConfig, liveChatVersion, protocol);
+    const directLineCDNUrl = urlResolvers.resolveChatAdapterUrl(chatSDKConfig, protocol);
 
     telemetry?.setCDNPackages({
         DirectLine: directLineCDNUrl

@@ -1,5 +1,4 @@
 import ChatSDKConfig from "../core/ChatSDKConfig";
-import LiveChatVersion from "../core/LiveChatVersion";
 import ChatAdapterProtocols from "../core/messaging/ChatAdapterProtocols";
 import libraries from "./libraries";
 
@@ -15,29 +14,12 @@ const resolveDirectLineCDNUrl = (chatSDKConfig: ChatSDKConfig) => {
     return libraries.getDirectLineCDNUrl();
 }
 
-const resolveACSAdapterCDNUrl = (chatSDKConfig: ChatSDKConfig) => {
-    if (chatSDKConfig.chatAdapterConfig && 'webChatACSAdapterCDNUrl' in chatSDKConfig.chatAdapterConfig) {
-        return chatSDKConfig.chatAdapterConfig.webChatACSAdapterCDNUrl as string;
-    }
-
-    if (chatSDKConfig.chatAdapterConfig && 'webChatACSAdapterVersion' in chatSDKConfig.chatAdapterConfig) {
-        return libraries.getACSAdapterCDNUrl(chatSDKConfig.chatAdapterConfig.webChatACSAdapterVersion);
-    }
-
-    return libraries.getACSAdapterCDNUrl();
-};
-
-const resolveChatAdapterUrl = (chatSDKConfig: ChatSDKConfig, liveChatVersion: LiveChatVersion, protocol: string): string => {
-    const supportedChatAdapterProtocols = [ChatAdapterProtocols.ACS, ChatAdapterProtocols.DirectLine];
-    if (protocol && !supportedChatAdapterProtocols.includes(protocol as string)) {
+const resolveChatAdapterUrl = (chatSDKConfig: ChatSDKConfig, protocol: string): string => {
+    if (protocol !== ChatAdapterProtocols.DirectLine) {
         throw new Error(`ChatAdapter for protocol ${protocol} currently not supported`);
     }
 
-    if (protocol === ChatAdapterProtocols.DirectLine) {
-        return resolveDirectLineCDNUrl(chatSDKConfig);
-    } else {
-        return resolveACSAdapterCDNUrl(chatSDKConfig);
-    }
+    return resolveDirectLineCDNUrl(chatSDKConfig);
 };
 
 export default {
