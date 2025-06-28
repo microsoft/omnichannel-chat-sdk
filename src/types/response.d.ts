@@ -1,5 +1,5 @@
 import QueueAvailability from "@microsoft/ocsdk/lib/Model/QueueAvailability";
-import { createACSAdapter, createDirectLine, createIC3Adapter } from "../utils/chatAdapterCreators";
+import { createACSAdapter, createDirectLine } from "../utils/chatAdapterCreators";
 import { VoiceVideoCallingProxy } from "../api/createVoiceVideoCalling";
 import OmnichannelMessage from "../core/messaging/OmnichannelMessage";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
@@ -18,8 +18,7 @@ export type GetPreChatSurveyResponse = GeneralResponse;
 export type GetLiveChatTranscriptResponse = GeneralResponse;
 export type DirectLineAdapter = ReturnType<typeof createDirectLine>;
 export type ACSAdapter = ReturnType<typeof createACSAdapter>;
-export type IC3Adapter = ReturnType<typeof createIC3Adapter>;
-export type ChatAdapter = DirectLineAdapter | ACSAdapter | IC3Adapter;
+export type ChatAdapter = DirectLineAdapter | ACSAdapter;
 export type GetAgentAvailabilityResponse = QueueAvailability | undefined;
 export type GetVoiceVideoCallingResponse = VoiceVideoCallingProxy | undefined;
 export type UploadFileAttachmentResponse = IRawMessage | OmnichannelMessage;
