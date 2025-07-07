@@ -1511,6 +1511,146 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             });
         });
 
+        it('ChatSDK.startChat() should NOT cleanup conversation when MessagingClientConversationJoinFailure occurs with liveChatContext', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig); // default uses createConversation
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: 'test-chat-id',
+                Token: 'test-token',
+                RegionGtms: '{}'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue(Promise.resolve({
+                State: 'Open',
+                ConversationId: 'id'
+            }));
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockRejectedValue(new Error('Async error message'));
+            jest.spyOn(chatSDK.AMSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'sessionClose').mockResolvedValue(Promise.resolve());
+
+            const liveChatContext = {
+                chatToken: {
+                    chatId: 'test-chat-id',
+                    token: 'test-token',
+                    regionGtms: {}
+                },
+                requestId: 'requestId'
+            };
+
+            try {
+                await chatSDK.startChat({ liveChatContext });
+                fail();
+            } catch (error : any ) {
+                expect(error.message).toBe("MessagingClientConversationJoinFailure");
+            }
+
+            expect(chatSDK.ACSClient.initialize).toHaveBeenCalledTimes(1);
+            expect(chatSDK.ACSClient.joinConversation).toHaveBeenCalledTimes(1);
+            expect(chatSDK.AMSClient.initialize).toHaveBeenCalledTimes(1);
+            // Should NOT cleanup conversation when liveChatContext is provided
+            expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(0);
+        });
+
+        it('ChatSDK.startChat() should NOT cleanup conversation when MessagingClientConversationJoinFailure occurs with persistent chat', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+                persistentChat: {
+                    disable: false,
+                    tokenUpdateTime: 30000
+                }
+            });
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            chatSDK["isPersistentChat"] = true;
+            chatSDK["reconnectId"] = 'test-reconnect-id';
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: 'test-chat-id',
+                Token: 'test-token',
+                RegionGtms: '{}'
+            }));
+
+            // Mock the getReconnectableChats call to succeed so we get to the conversation joining phase
+            jest.spyOn(chatSDK.OCClient, 'getReconnectableChats').mockResolvedValue(Promise.resolve({
+                reconnectid: 'test-reconnect-id'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve({
+                ChatId: 'test-chat-id',
+                Token: 'test-token',
+                RegionGtms: '{}'
+            }));
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockRejectedValue(new Error('Async error message'));
+            jest.spyOn(chatSDK.AMSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'sessionClose').mockResolvedValue(Promise.resolve());
+
+            try {
+                await chatSDK.startChat();
+                fail();
+            } catch (error : any ) {
+                expect(error.message).toBe("MessagingClientConversationJoinFailure");
+            }
+
+            expect(chatSDK.OCClient.createConversation).toHaveBeenCalledTimes(1);
+            expect(chatSDK.ACSClient.initialize).toHaveBeenCalledTimes(1);
+            expect(chatSDK.ACSClient.joinConversation).toHaveBeenCalledTimes(1);
+            expect(chatSDK.AMSClient.initialize).toHaveBeenCalledTimes(1);
+            // Should NOT cleanup conversation for persistent chat reconnection
+            expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(0);
+        });
+
+        it('ChatSDK.startChat() should NOT cleanup conversation when MessagingClientConversationJoinFailure occurs with chat reconnect', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+                chatReconnect: {
+                    disable: false
+                }
+            });
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            chatSDK["isChatReconnect"] = true;
+            chatSDK["isPersistentChat"] = false;
+            chatSDK["reconnectId"] = 'test-reconnect-id';
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
+                ChatId: 'test-chat-id',
+                Token: 'test-token',
+                RegionGtms: '{}'
+            }));
+
+            jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve({
+                ChatId: 'test-chat-id',
+                Token: 'test-token',
+                RegionGtms: '{}'
+            }));
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockRejectedValue(new Error('Async error message'));
+            jest.spyOn(chatSDK.AMSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'sessionClose').mockResolvedValue(Promise.resolve());
+
+            try {
+                await chatSDK.startChat();
+                fail();
+            } catch (error : any ) {
+                expect(error.message).toBe("MessagingClientConversationJoinFailure");
+            }
+
+            expect(chatSDK.OCClient.createConversation).toHaveBeenCalledTimes(1);
+            expect(chatSDK.ACSClient.initialize).toHaveBeenCalledTimes(1);
+            expect(chatSDK.ACSClient.joinConversation).toHaveBeenCalledTimes(1);
+            expect(chatSDK.AMSClient.initialize).toHaveBeenCalledTimes(1);
+            // Should NOT cleanup conversation for chat reconnect
+            expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(0);
+        });
+
         it('ChatSDK.startchat() with existing liveChatContext should not call OCClient.getChatToken() & OCClient.sessionInit()', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
                 useCreateConversation: {

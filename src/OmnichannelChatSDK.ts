@@ -927,9 +927,13 @@ class OmnichannelChatSDK {
             await Promise.all([messagingClientPromise(),attachmentClientPromise()]);
         } catch (error) {
             // If conversation joining fails after conversation was created, clean up the conversation
+            // Only cleanup conversations that were freshly created (not existing ones being reconnected to)
             if (error instanceof ChatSDKError &&
                 error.message === ChatSDKErrorName.MessagingClientConversationJoinFailure &&
-                !this.chatSDKConfig.useCreateConversation?.disable) {
+                !this.chatSDKConfig.useCreateConversation?.disable &&
+                !optionalParams.liveChatContext &&
+                !(this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) &&
+                !(this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat)) {
                 try {
                     const sessionCloseOptionalParams: ISessionCloseOptionalParams = {};
                     if (this.authenticatedUserToken) {
