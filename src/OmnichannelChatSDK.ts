@@ -924,7 +924,7 @@ class OmnichannelChatSDK {
         }
 
         try {
-            await Promise.all([messagingClientPromise(),attachmentClientPromise()]);
+            await Promise.all([messagingClientPromise(), attachmentClientPromise()]);
         } catch (error) {
             // If conversation joining fails after conversation was created, clean up the conversation
             // Only cleanup conversations that were freshly created (not existing ones being reconnected to)
