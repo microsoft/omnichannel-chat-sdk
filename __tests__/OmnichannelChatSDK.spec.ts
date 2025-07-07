@@ -5,6 +5,7 @@ const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 
 import { GetPreChatSurveyResponse, MaskingRule, MaskingRules } from "../src/types/response";
 import { defaultLocaleId, getLocaleStringFromId } from "../src/utils/locale";
+import { ChatSDKError, ChatSDKErrorName } from "../src/core/ChatSDKError";
 
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
 import AriaTelemetry from "../src/telemetry/AriaTelemetry";
@@ -1405,7 +1406,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             }));
             jest.spyOn(chatSDK.OCClient, 'sessionClose').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockRejectedValue(new ChatSDKError('Async error message', 'MessagingClientConversationJoinFailure'));
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockRejectedValue(new ChatSDKError(ChatSDKErrorName.MessagingClientConversationJoinFailure));
             jest.spyOn(chatSDK.AMSClient, 'initialize').mockResolvedValue(Promise.resolve());
 
             try {
