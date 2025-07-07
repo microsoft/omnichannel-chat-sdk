@@ -955,7 +955,7 @@ class OmnichannelChatSDK {
                         Event: 'ConversationCleanupFailure',
                         ExceptionDetails: JSON.stringify(exceptionDetails)
                     };
-                    this.telemetry?.error(cleanupTelemetryData);
+                    AriaTelemetry.error(cleanupTelemetryData);
                 }
             }
             throw error; // Re-throw the original error
