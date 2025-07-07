@@ -1405,7 +1405,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             }));
             jest.spyOn(chatSDK.OCClient, 'sessionClose').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockRejectedValue(new Error('Async error message'));
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockRejectedValue(new ChatSDKError('Async error message', 'MessagingClientConversationJoinFailure'));
             jest.spyOn(chatSDK.AMSClient, 'initialize').mockResolvedValue(Promise.resolve());
 
             try {
