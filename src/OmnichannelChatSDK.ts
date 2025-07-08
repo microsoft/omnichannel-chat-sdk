@@ -932,8 +932,7 @@ class OmnichannelChatSDK {
                 error.message === ChatSDKErrorName.MessagingClientConversationJoinFailure &&
                 !this.chatSDKConfig.useCreateConversation?.disable &&
                 !optionalParams.liveChatContext &&
-                !(this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) &&
-                !(this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat)) {
+                !this.reconnectId) {
                 try {
                     const sessionCloseOptionalParams: ISessionCloseOptionalParams = {};
                     if (this.authenticatedUserToken) {
