@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Clean up `ChatSDK.sendTypingEvent()` unused code path
+- Add `HttpRequestResponseTime` column to OCSDKLogData Interface and uptake v0.5.18 of OCSDK containing relevant TelemetryHelper update
 
 ## [1.11.2] - 2025-06-24
 
