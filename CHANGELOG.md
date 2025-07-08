@@ -7,7 +7,8 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Clean up `ChatSDK.sendTypingEvent()` unused code path
-- Add `HttpRequestResponseTime` column to OCSDKLogData Interface and uptake v0.5.18 of OCSDK containing relevant TelemetryHelper update
+- Add `HttpRequestResponseTime` column to OCSDKLogData Interface
+- Uptake [@microsoft/ocsdk@0.5.18](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.18)
 
 ## [1.11.2] - 2025-06-24
 
