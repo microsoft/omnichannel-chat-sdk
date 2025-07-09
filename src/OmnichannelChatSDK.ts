@@ -2728,7 +2728,7 @@ class OmnichannelChatSDK {
 
         } catch (cleanupError) {
 
-            // No need to throw an error, it shold be contained here.
+            // No need to throw an error, it should be contained here.
             // Log cleanup failure following the same ExceptionDetails pattern as exceptionThrowers
             const exceptionDetails: ChatSDKExceptionDetails = {
                 response: 'ConversationCleanupFailure',
