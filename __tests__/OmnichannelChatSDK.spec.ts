@@ -1505,11 +1505,14 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             // Verify telemetry error logging was called for cleanup failure
             expect(telemetryErrorSpy).toHaveBeenCalledTimes(2);
             expect(telemetryErrorSpy).toHaveBeenNthCalledWith(2, {
-                RequestId: expect.any(String),
-                ChatId: 'test-chat-id',
-                Event: 'ConversationCleanupFailure',
-                ExceptionDetails: expect.stringContaining('Cleanup failed')
-            });
+                ChatSDKRuntimeId: expect.any(String),
+                ElapsedTimeInMilliseconds: expect.any(Number),
+                Event: 'CleanupFailedStartchatFailed',
+                ExceptionDetails: expect.stringContaining('Cleanup failed'),
+                OrgId: '[data-org-id]',
+                OrgUrl: '[data-org-url]',
+                WidgetId: '[data-app-id]'
+            }, 'occhatsdk_events');
         });
 
         it('ChatSDK.startChat() should NOT cleanup conversation when MessagingClientConversationJoinFailure occurs with liveChatContext', async () => {
