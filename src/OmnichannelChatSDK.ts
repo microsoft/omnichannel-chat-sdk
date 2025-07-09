@@ -2720,12 +2720,6 @@ class OmnichannelChatSDK {
 
             this.scenarioMarker.completeScenario(TelemetryEvent.CleanupFailedStartchat);
 
-            // Log successful cleanup for debugging
-            this.debug && console.debug('Successfully cleaned up failed conversation', {
-                requestId: this.requestId,
-                chatId: this.chatToken?.chatId
-            });
-
         } catch (cleanupError) {
 
             // No need to throw an error, it should be contained here.

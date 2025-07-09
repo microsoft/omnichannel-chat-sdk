@@ -19,7 +19,7 @@ import LiveChatVersion from "../src/core/LiveChatVersion";
 import OmnichannelErrorCodes from "../src/core/OmnichannelErrorCodes";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import { SDKProvider } from "@microsoft/ocsdk";
-import { create } from "core-js/core/object";
+
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
 import libraries from "../src/utils/libraries";
 
