@@ -70,6 +70,7 @@ interface OCSDKContract {
     Event?: string;
     ExceptionDetails?: string;
     ElapsedTimeInMilliseconds?: string;
+    HttpRequestResponseTime?: string;
     RequestHeaders?: string;
     RequestPayload?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     RequestPath?: string;
@@ -786,6 +787,7 @@ class AriaTelemetry {
             Event: '',
             ExceptionDetails: '',
             ElapsedTimeInMilliseconds: '',
+            HttpRequestResponseTime: '',
             RequestHeaders: '',
             RequestPayload: '',
             RequestPath: '',
