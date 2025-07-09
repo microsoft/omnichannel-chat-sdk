@@ -1,0 +1,313 @@
+<testsuites id="" name="" tests="35" failures="6" skipped="0" errors="0" time="880.1564189999998">
+<testsuite name="unauthenticated-chat-outside-of-operating-hours.spec.ts" timestamp="1752090396326" hostname="" tests="1" failures="0" skipped="0" time="22.707" errors="0">
+<testcase name="UnauthenticatedChat @UnauthenticatedChatOutsideOfOperatingHours ChatSDK.startChat() on outside of operating hours should throw an exception" classname="[chromium] › unauthenticated-chat-outside-of-operating-hours.spec.ts › UnauthenticatedChat @UnauthenticatedChatOutsideOfOperatingHours › ChatSDK.startChat() on outside of operating hours should throw an exception" time="22.707">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-outside-of-operating-hour-68013-de-of-operating-hours-should-throw-an-exception-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="unauthenticated-chat-with-attachments.spec.ts" timestamp="1752090396326" hostname="" tests="2" failures="0" skipped="0" time="57.211" errors="0">
+<testcase name="@UnauthenticatedChat @UnauthenticatedChatWithAttachments ChatSDK.uploadFileAttachment() should upload attachment to the attachment service &amp; send a message with the metadata" classname="[chromium] › unauthenticated-chat-with-attachments.spec.ts › @UnauthenticatedChat @UnauthenticatedChatWithAttachments › ChatSDK.uploadFileAttachment() should upload attachment to the attachment service &amp; send a message with the metadata" time="27.844">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-with-attachments--Unauthe-3cabf-chment-service-send-a-message-with-the-metadata-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="@UnauthenticatedChat @UnauthenticatedChatWithAttachments ChatSDK.downloadFileAttachment() should download an attachment" classname="[chromium] › unauthenticated-chat-with-attachments.spec.ts › @UnauthenticatedChat @UnauthenticatedChatWithAttachments › ChatSDK.downloadFileAttachment() should download an attachment" time="29.367">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-with-attachments--Unauthe-5d243-oadFileAttachment-should-download-an-attachment-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="unauthenticated-chat-with-escalation-to-voice-and-video.spec.ts" timestamp="1752090396326" hostname="" tests="1" failures="0" skipped="0" time="13.244" errors="0">
+<testcase name="UnauthenticatedChat @UnauthenticatedChatWithEscalationToVoiceAndVideo Unauthenticated Chat with Escalation to Voice &amp; Video" classname="[chromium] › unauthenticated-chat-with-escalation-to-voice-and-video.spec.ts › UnauthenticatedChat @UnauthenticatedChatWithEscalationToVoiceAndVideo › Unauthenticated Chat with Escalation to Voice &amp; Video" time="13.244">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-with-escalation-to-voice--f2da5-thenticated-Chat-with-Escalation-to-Voice-Video-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="unauthenticated-chat-with-masking.spec.ts" timestamp="1752090396326" hostname="" tests="1" failures="0" skipped="0" time="17.423" errors="0">
+<testcase name="UnauthenticatedChat @UnauthenticatedChatWithMasking ChatSDK.sendMessage() should send the message masked" classname="[chromium] › unauthenticated-chat-with-masking.spec.ts › UnauthenticatedChat @UnauthenticatedChatWithMasking › ChatSDK.sendMessage() should send the message masked" time="17.423">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-with-masking-Unauthentica-45e10-tSDK-sendMessage-should-send-the-message-masked-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="unauthenticated-chat-with-no-escalation-to-voice-and-video.spec.ts" timestamp="1752090396326" hostname="" tests="1" failures="0" skipped="0" time="14.664" errors="0">
+<testcase name="UnauthenticatedChat @UnauthenticatedChatWithNoEscalationToVoiceAndVideo ChatSDK.getVoiceVideoCalling() should throw a FeatureDisabled exception" classname="[chromium] › unauthenticated-chat-with-no-escalation-to-voice-and-video.spec.ts › UnauthenticatedChat @UnauthenticatedChatWithNoEscalationToVoiceAndVideo › ChatSDK.getVoiceVideoCalling() should throw a FeatureDisabled exception" time="14.664">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-with-no-escalation-to-voi-0af3c-alling-should-throw-a-FeatureDisabled-exception-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="unauthenticated-chat-with-prechat.spec.ts" timestamp="1752090396326" hostname="" tests="4" failures="0" skipped="0" time="72.671" errors="0">
+<testcase name="UnauthenticatedChat @UnauthenticatedChatWithPrechat ChatSDK.startChat() with preChatResponse should be part of session init payload" classname="[chromium] › unauthenticated-chat-with-prechat.spec.ts › UnauthenticatedChat @UnauthenticatedChatWithPrechat › ChatSDK.startChat() with preChatResponse should be part of session init payload" time="23.001">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-with-prechat-Unauthentica-e8ca3-Response-should-be-part-of-session-init-payload-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="UnauthenticatedChat @UnauthenticatedChatWithPrechat ChatSDK.getPreChatSurvey() should return the survey in JSON format" classname="[chromium] › unauthenticated-chat-with-prechat.spec.ts › UnauthenticatedChat @UnauthenticatedChatWithPrechat › ChatSDK.getPreChatSurvey() should return the survey in JSON format" time="26.743">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-with-prechat-Unauthentica-8c6f5-tSurvey-should-return-the-survey-in-JSON-format-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="UnauthenticatedChat @UnauthenticatedChatWithPrechat ChatSDK.getPreChatSurvey() with parseToJSON set to true should return the survey as JSON format" classname="[chromium] › unauthenticated-chat-with-prechat.spec.ts › UnauthenticatedChat @UnauthenticatedChatWithPrechat › ChatSDK.getPreChatSurvey() with parseToJSON set to true should return the survey as JSON format" time="13.279">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-with-prechat-Unauthentica-0e986-to-true-should-return-the-survey-as-JSON-format-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="UnauthenticatedChat @UnauthenticatedChatWithPrechat ChatSDK.getPreChatSurvey() with parseToJSON set to false should return the survey as string format" classname="[chromium] › unauthenticated-chat-with-prechat.spec.ts › UnauthenticatedChat @UnauthenticatedChatWithPrechat › ChatSDK.getPreChatSurvey() with parseToJSON set to false should return the survey as string format" time="9.648">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-with-prechat-Unauthentica-60748-false-should-return-the-survey-as-string-format-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="unauthenticated-chat-with-reconnect.spec.ts" timestamp="1752090396326" hostname="" tests="2" failures="1" skipped="0" time="47.542" errors="0">
+<testcase name="UnauthenticatedChat @UnauthenticatedChatWithChatReconnect ChatSDK.getChatReconnectContext() with invalid reconnect id &amp; redirect URL should only return a redirect URL" classname="[chromium] › unauthenticated-chat-with-reconnect.spec.ts › UnauthenticatedChat @UnauthenticatedChatWithChatReconnect › ChatSDK.getChatReconnectContext() with invalid reconnect id &amp; redirect URL should only return a redirect URL" time="30.005">
+<failure message="unauthenticated-chat-with-reconnect.spec.ts:12:5 ChatSDK.getChatReconnectContext() with invalid reconnect id &amp; redirect URL should only return a redirect URL" type="FAILURE">
+<![CDATA[  [chromium] › unauthenticated-chat-with-reconnect.spec.ts:12:5 › UnauthenticatedChat @UnauthenticatedChatWithChatReconnect › ChatSDK.getChatReconnectContext() with invalid reconnect id & redirect URL should only return a redirect URL 
+
+    Test timeout of 30000ms exceeded while tearing down "context".
+]]>
+</failure>
+</testcase>
+<testcase name="UnauthenticatedChat @UnauthenticatedChatWithChatReconnect ChatSDK.getChatReconnectContext() with invalid reconnect id should not return any reconnect id" classname="[chromium] › unauthenticated-chat-with-reconnect.spec.ts › UnauthenticatedChat @UnauthenticatedChatWithChatReconnect › ChatSDK.getChatReconnectContext() with invalid reconnect id should not return any reconnect id" time="17.537">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-with-reconnect-Unauthenti-96204-reconnect-id-should-not-return-any-reconnect-id-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="unauthenticated-chat-with-transcripts.spec.ts" timestamp="1752090396326" hostname="" tests="4" failures="0" skipped="0" time="81.033" errors="0">
+<testcase name="@UnauthenticatedChat @UnauthenticatedChatWithTranscripts ChatSDK.emailLiveChatTranscript() should not fail" classname="[chromium] › unauthenticated-chat-with-transcripts.spec.ts › @UnauthenticatedChat @UnauthenticatedChatWithTranscripts › ChatSDK.emailLiveChatTranscript() should not fail" time="24.294">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-with-transcripts--Unauthe-2e371-ChatSDK-emailLiveChatTranscript-should-not-fail-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="@UnauthenticatedChat @UnauthenticatedChatWithTranscripts ChatSDK.emailLiveChatTranscript() with live chat context should not fail" classname="[chromium] › unauthenticated-chat-with-transcripts.spec.ts › @UnauthenticatedChat @UnauthenticatedChatWithTranscripts › ChatSDK.emailLiveChatTranscript() with live chat context should not fail" time="18.262">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-with-transcripts--Unauthe-38e1d-anscript-with-live-chat-context-should-not-fail-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="@UnauthenticatedChat @UnauthenticatedChatWithTranscripts ChatSDK.getLiveChatTranscript() should not fail" classname="[chromium] › unauthenticated-chat-with-transcripts.spec.ts › @UnauthenticatedChat @UnauthenticatedChatWithTranscripts › ChatSDK.getLiveChatTranscript() should not fail" time="19.726">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-with-transcripts--Unauthe-24f4e-s-ChatSDK-getLiveChatTranscript-should-not-fail-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="@UnauthenticatedChat @UnauthenticatedChatWithTranscripts ChatSDK.getLiveChatTranscript() with liveChatContext should not fail" classname="[chromium] › unauthenticated-chat-with-transcripts.spec.ts › @UnauthenticatedChat @UnauthenticatedChatWithTranscripts › ChatSDK.getLiveChatTranscript() with liveChatContext should not fail" time="18.751">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-with-transcripts--Unauthe-323e8-Transcript-with-liveChatContext-should-not-fail-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="unauthenticated-chat-with-typing.spec.ts" timestamp="1752090396326" hostname="" tests="2" failures="0" skipped="0" time="40.011" errors="0">
+<testcase name="@UnauthenticatedChat @UnauthenticatedChatWithTyping ChatSDK.sendTyping() should not fail" classname="[chromium] › unauthenticated-chat-with-typing.spec.ts › @UnauthenticatedChat @UnauthenticatedChatWithTyping › ChatSDK.sendTyping() should not fail" time="21.074">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-with-typing--Unauthentica-94ddb-atWithTyping-ChatSDK-sendTyping-should-not-fail-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="@UnauthenticatedChat @UnauthenticatedChatWithTyping ChatSDK.onTypingEvent() should not fail" classname="[chromium] › unauthenticated-chat-with-typing.spec.ts › @UnauthenticatedChat @UnauthenticatedChatWithTyping › ChatSDK.onTypingEvent() should not fail" time="18.937">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-with-typing--Unauthentica-d613b-ithTyping-ChatSDK-onTypingEvent-should-not-fail-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="unauthenticated-chat.spec.ts" timestamp="1752090396326" hostname="" tests="17" failures="5" skipped="0" time="388.823" errors="0">
+<testcase name="UnauthenticatedChat @UnauthenticatedChat ChatSDK.initialize() should fetch the live chat configuration" classname="[chromium] › unauthenticated-chat.spec.ts › UnauthenticatedChat @UnauthenticatedChat › ChatSDK.initialize() should fetch the live chat configuration" time="8.704">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-UnauthenticatedChat-Unaut-31375-ialize-should-fetch-the-live-chat-configuration-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="UnauthenticatedChat @UnauthenticatedChat ChatSDK.initialize() with sendCacheHeaders should pass the `Cache-Control` HTTP headers to the HTTP call" classname="[chromium] › unauthenticated-chat.spec.ts › UnauthenticatedChat @UnauthenticatedChat › ChatSDK.initialize() with sendCacheHeaders should pass the `Cache-Control` HTTP headers to the HTTP call" time="7.932">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-UnauthenticatedChat-Unaut-06fa9-the-Cache-Control-HTTP-headers-to-the-HTTP-call-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="UnauthenticatedChat @UnauthenticatedChat ChatSDK.startChat() should fetch the chat token &amp; perform session init" classname="[chromium] › unauthenticated-chat.spec.ts › UnauthenticatedChat @UnauthenticatedChat › ChatSDK.startChat() should fetch the chat token &amp; perform session init" time="23.04">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-UnauthenticatedChat-Unaut-bb352-hould-fetch-the-chat-token-perform-session-init-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="UnauthenticatedChat @UnauthenticatedChat ChatSDK.startChat() with customContext should be part of session init payload" classname="[chromium] › unauthenticated-chat.spec.ts › UnauthenticatedChat @UnauthenticatedChat › ChatSDK.startChat() with customContext should be part of session init payload" time="26.988">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-UnauthenticatedChat-Unaut-d39d5-mContext-should-be-part-of-session-init-payload-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="UnauthenticatedChat @UnauthenticatedChat ChatSDK.startChat() with a liveChatContext of a closed conversation should throw an &apos;ClosedConversation&apos; error" classname="[chromium] › unauthenticated-chat.spec.ts › UnauthenticatedChat @UnauthenticatedChat › ChatSDK.startChat() with a liveChatContext of a closed conversation should throw an &apos;ClosedConversation&apos; error" time="30.003">
+<failure message="unauthenticated-chat.spec.ts:194:5 ChatSDK.startChat() with a liveChatContext of a closed conversation should throw an &apos;ClosedConversation&apos; error" type="FAILURE">
+<![CDATA[  [chromium] › unauthenticated-chat.spec.ts:194:5 › UnauthenticatedChat @UnauthenticatedChat › ChatSDK.startChat() with a liveChatContext of a closed conversation should throw an 'ClosedConversation' error 
+
+    Test timeout of 30000ms exceeded while tearing down "context".
+]]>
+</failure>
+</testcase>
+<testcase name="UnauthenticatedChat @UnauthenticatedChat ChatSDK.startChat() with a liveChatContext should validate the live work item details &amp; should not perform session init call" classname="[chromium] › unauthenticated-chat.spec.ts › UnauthenticatedChat @UnauthenticatedChat › ChatSDK.startChat() with a liveChatContext should validate the live work item details &amp; should not perform session init call" time="30.003">
+<failure message="unauthenticated-chat.spec.ts:237:5 ChatSDK.startChat() with a liveChatContext should validate the live work item details &amp; should not perform session init call" type="FAILURE">
+<![CDATA[  [chromium] › unauthenticated-chat.spec.ts:237:5 › UnauthenticatedChat @UnauthenticatedChat › ChatSDK.startChat() with a liveChatContext should validate the live work item details & should not perform session init call 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 404
+
+      309 |
+      310 |         expect(liveWorkItemDetailsRequest.url() === liveWorkItemDetailsRequestUrl).toBe(true);
+    > 311 |         expect(liveWorkItemDetailsResponse.status()).toBe(200);
+          |                                                      ^
+      312 |         expect(liveWorkItemDetailsResponseDataJson.State).not.toBe('Closed');
+      313 |         expect(sessionInitCalls.length).toBe(1);
+      314 |     });
+
+        at C:\src\copilot-work\omnichannel-chat-sdk\playwright\integrations\unauthenticated-chat.spec.ts:311:54
+
+    Test timeout of 30000ms exceeded while tearing down "context".
+]]>
+</failure>
+</testcase>
+<testcase name="UnauthenticatedChat @UnauthenticatedChat ChatSDK.sendMessage() should send a message with default tags &amp; proper metadata" classname="[chromium] › unauthenticated-chat.spec.ts › UnauthenticatedChat @UnauthenticatedChat › ChatSDK.sendMessage() should send a message with default tags &amp; proper metadata" time="30.009">
+<failure message="unauthenticated-chat.spec.ts:316:5 ChatSDK.sendMessage() should send a message with default tags &amp; proper metadata" type="FAILURE">
+<![CDATA[  [chromium] › unauthenticated-chat.spec.ts:316:5 › UnauthenticatedChat @UnauthenticatedChat › ChatSDK.sendMessage() should send a message with default tags & proper metadata 
+
+    Test timeout of 30000ms exceeded.
+
+    attachment #1: video (video/webm) --------------------------------------------------------------
+    generated\tests\unauthenticated-chat-UnauthenticatedChat-Unaut-d445d-end-a-message-with-default-tags-proper-metadata-chromium\video.webm
+    ------------------------------------------------------------------------------------------------
+
+    attachment #2: trace (application/zip) ---------------------------------------------------------
+    generated\tests\unauthenticated-chat-UnauthenticatedChat-Unaut-d445d-end-a-message-with-default-tags-proper-metadata-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace generated\tests\unauthenticated-chat-UnauthenticatedChat-Unaut-d445d-end-a-message-with-default-tags-proper-metadata-chromium\trace.zip
+
+    ------------------------------------------------------------------------------------------------
+
+    attachment #3: screenshot (image/png) ----------------------------------------------------------
+    generated\tests\unauthenticated-chat-UnauthenticatedChat-Unaut-d445d-end-a-message-with-default-tags-proper-metadata-chromium\test-failed-1.png
+    ------------------------------------------------------------------------------------------------
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-UnauthenticatedChat-Unaut-d445d-end-a-message-with-default-tags-proper-metadata-chromium\video.webm]]
+
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-UnauthenticatedChat-Unaut-d445d-end-a-message-with-default-tags-proper-metadata-chromium\trace.zip]]
+
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-UnauthenticatedChat-Unaut-d445d-end-a-message-with-default-tags-proper-metadata-chromium\test-failed-1.png]]
+]]>
+</system-out>
+</testcase>
+<testcase name="UnauthenticatedChat @UnauthenticatedChat ChatSDK.getMessages() should return a list of messages" classname="[chromium] › unauthenticated-chat.spec.ts › UnauthenticatedChat @UnauthenticatedChat › ChatSDK.getMessages() should return a list of messages" time="24.084">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-UnauthenticatedChat-Unaut-8af06-DK-getMessages-should-return-a-list-of-messages-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="UnauthenticatedChat @UnauthenticatedChat ChatSDK.onNewMessage() should not fail" classname="[chromium] › unauthenticated-chat.spec.ts › UnauthenticatedChat @UnauthenticatedChat › ChatSDK.onNewMessage() should not fail" time="30.005">
+<failure message="unauthenticated-chat.spec.ts:426:5 ChatSDK.onNewMessage() should not fail" type="FAILURE">
+<![CDATA[  [chromium] › unauthenticated-chat.spec.ts:426:5 › UnauthenticatedChat @UnauthenticatedChat › ChatSDK.onNewMessage() should not fail 
+
+    Test timeout of 30000ms exceeded while tearing down "context".
+]]>
+</failure>
+</testcase>
+<testcase name="UnauthenticatedChat @UnauthenticatedChat ChatSDK.onNewMessage() with rehydrate flag should return previously received and new incoming messages" classname="[chromium] › unauthenticated-chat.spec.ts › UnauthenticatedChat @UnauthenticatedChat › ChatSDK.onNewMessage() with rehydrate flag should return previously received and new incoming messages" time="28.388">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-UnauthenticatedChat-Unaut-bda66-n-previously-received-and-new-incoming-messages-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="UnauthenticatedChat @UnauthenticatedChat ChatSDK.endChat() should perform session close" classname="[chromium] › unauthenticated-chat.spec.ts › UnauthenticatedChat @UnauthenticatedChat › ChatSDK.endChat() should perform session close" time="17.433">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-UnauthenticatedChat-Unaut-98005-at-ChatSDK-endChat-should-perform-session-close-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="UnauthenticatedChat @UnauthenticatedChat ChatSDK.endChat() with optional params &apos;isSessionEnded&apos; set as &apos;true&apos; should not call sessionClose" classname="[chromium] › unauthenticated-chat.spec.ts › UnauthenticatedChat @UnauthenticatedChat › ChatSDK.endChat() with optional params &apos;isSessionEnded&apos; set as &apos;true&apos; should not call sessionClose" time="21.03">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-UnauthenticatedChat-Unaut-dec97-nEnded-set-as-true-should-not-call-sessionClose-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="UnauthenticatedChat @UnauthenticatedChat ChatSDK.createChatAdapter() should load ACSAdapter" classname="[chromium] › unauthenticated-chat.spec.ts › UnauthenticatedChat @UnauthenticatedChat › ChatSDK.createChatAdapter() should load ACSAdapter" time="28.073">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-UnauthenticatedChat-Unaut-1216d-hatSDK-createChatAdapter-should-load-ACSAdapter-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="UnauthenticatedChat @UnauthenticatedChat ChatSDK.startChat() with sendDefaultInitContext should send default init contexts" classname="[chromium] › unauthenticated-chat.spec.ts › UnauthenticatedChat @UnauthenticatedChat › ChatSDK.startChat() with sendDefaultInitContext should send default init contexts" time="16.923">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-UnauthenticatedChat-Unaut-6dc12-ltInitContext-should-send-default-init-contexts-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="UnauthenticatedChat @UnauthenticatedChat ChatSDK.getConversationDetails() should not fail" classname="[chromium] › unauthenticated-chat.spec.ts › UnauthenticatedChat @UnauthenticatedChat › ChatSDK.getConversationDetails() should not fail" time="15.643">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-UnauthenticatedChat-Unaut-eab9f--ChatSDK-getConversationDetails-should-not-fail-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="UnauthenticatedChat @UnauthenticatedChat ChatSDK.getConversationDetails() with liveChatContext should not fail" classname="[chromium] › unauthenticated-chat.spec.ts › UnauthenticatedChat @UnauthenticatedChat › ChatSDK.getConversationDetails() with liveChatContext should not fail" time="30.004">
+<failure message="unauthenticated-chat.spec.ts:749:5 ChatSDK.getConversationDetails() with liveChatContext should not fail" type="FAILURE">
+<![CDATA[  [chromium] › unauthenticated-chat.spec.ts:749:5 › UnauthenticatedChat @UnauthenticatedChat › ChatSDK.getConversationDetails() with liveChatContext should not fail 
+
+    Test timeout of 30000ms exceeded while tearing down "context".
+]]>
+</failure>
+</testcase>
+<testcase name="UnauthenticatedChat @UnauthenticatedChat ChatSDK.initialize() with ChatSDK Configuration &quot;useCreateConversation&quot; enabled should perform create conversation call" classname="[chromium] › unauthenticated-chat.spec.ts › UnauthenticatedChat @UnauthenticatedChat › ChatSDK.initialize() with ChatSDK Configuration &quot;useCreateConversation&quot; enabled should perform create conversation call" time="20.561">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\generated\tests\unauthenticated-chat-UnauthenticatedChat-Unaut-e4273-enabled-should-perform-create-conversation-call-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>
