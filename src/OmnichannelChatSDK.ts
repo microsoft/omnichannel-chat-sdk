@@ -13,9 +13,9 @@ import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/ch
 import { createCoreServicesOrgUrl, getCoreServicesGeoName, isCoreServicesOrgUrl, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
 import { defaultLocaleId, getLocaleStringFromId } from "./utils/locale";
 import exceptionThrowers, { throwAMSLoadFailure } from "./utils/exceptionThrowers";
-import { getRuntimeId, isClientIdNotFoundErrorMessage, isCustomerMessage } from "./utils/utilities";
+import { getRuntimeId, isClientIdNotFoundErrorMessage, isCustomerMessage, isNotEmpty } from "./utils/utilities";
 import { loadScript, removeElementById, sleep } from "./utils/WebUtils";
-import platform from "./utils/platform";
+import { retrieveRegionBasedUrl, shouldUseFramedMode } from "./utils/AMSClientUtils";
 import validateSDKConfig, { defaultChatSDKConfig } from "./validators/SDKConfigValidators";
 
 import ACSParticipantDisplayName from "./core/messaging/ACSParticipantDisplayName";
@@ -104,13 +104,13 @@ import { getLocationInfo } from "./utils/location";
 import { isCoreServicesOrgUrlDNSError } from "./utils/internalUtils";
 import loggerUtils from "./utils/loggerUtils";
 import { parseLowerCaseString } from "./utils/parsers";
+import platform from "./utils/platform";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import setOcUserAgent from "./utils/setOcUserAgent";
 import startPolling from "./commands/startPolling";
 import stopPolling from "./commands/stopPolling";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
-import { retrieveRegionBasedUrl, shouldUseFramedMode } from "./utils/AMSClientUtils";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -926,37 +926,11 @@ class OmnichannelChatSDK {
         try {
             await Promise.all([messagingClientPromise(), attachmentClientPromise()]);
         } catch (error) {
+
+            
             // If conversation joining fails after conversation was created, clean up the conversation
             // Only cleanup conversations that were freshly created (not existing ones being reconnected to)
-            if (error instanceof ChatSDKError &&
-                error.message === ChatSDKErrorName.MessagingClientConversationJoinFailure &&
-                !this.chatSDKConfig.useCreateConversation?.disable &&
-                !optionalParams.liveChatContext &&
-                !this.reconnectId) {
-                try {
-                    const sessionCloseOptionalParams: ISessionCloseOptionalParams = {};
-                    if (this.authenticatedUserToken) {
-                        sessionCloseOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
-                    }
-                    await this.OCClient.sessionClose(this.requestId, sessionCloseOptionalParams);
-                } catch (cleanupError) {
-                    // Log cleanup failure following the same ExceptionDetails pattern as exceptionThrowers
-                    const exceptionDetails: ChatSDKExceptionDetails = {
-                        response: 'ConversationCleanupFailure'
-                    };
-                    if (cleanupError) {
-                        exceptionDetails.errorObject = String(cleanupError);
-                    }
-
-                    const cleanupTelemetryData = {
-                        RequestId: this.requestId,
-                        ChatId: this.chatToken?.chatId as string,
-                        Event: 'ConversationCleanupFailure',
-                        ExceptionDetails: JSON.stringify(exceptionDetails)
-                    };
-                    AriaTelemetry.error(cleanupTelemetryData);
-                }
-            }
+            await this.cleanupFailedConversation(error as Error, isLivechatContextPresent, isReconnectIdPresent);
             throw error; // Re-throw the original error
         }
 
@@ -1787,6 +1761,7 @@ class OmnichannelChatSDK {
                 this.scenarioMarker.completeScenario(TelemetryEvent.UploadFileAttachment, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string
+
                 });
 
                 return messageToSend;
@@ -2707,6 +2682,63 @@ class OmnichannelChatSDK {
                     this.omnichannelConfig.orgUrl = this.coreServicesOrgUrl;
                 }
             }
+        }
+    }
+
+    private async cleanupFailedConversation(error: Error, liveChatContext?: StartChatOptionalParams['liveChatContext']): Promise<void> {
+
+        const isLivechatContextPresent = Boolean(liveChatContext && Object.keys(liveChatContext).length > 0);
+        const isReconnectIdPresent = Boolean(this.reconnectId && this.reconnectId.trim().length > 0);
+
+        /**
+         * Only cleanup if it's a MessagingClientConversationJoinFailure on a freshly created conversation
+         *
+         * DO NOT cleanup if:
+         * - The error is not a ChatSDKError or not related to conversation join failure
+         * - The conversation is not freshly created (i.e., if `useCreateConversation` is disabled)
+         * - The conversation was previously created (i.e., if `isLivechatContextPresent` is true)
+         * - The error is related to a reconnect attempt (i.e., if `reconnectId` is present)
+         */
+
+        if (!(error instanceof ChatSDKError &&
+            error.message === ChatSDKErrorName.MessagingClientConversationJoinFailure &&
+            !this.chatSDKConfig.useCreateConversation?.disable &&
+            !isLivechatContextPresent &&
+            !isReconnectIdPresent)) {
+            return;
+        }
+
+        try {
+            const sessionCloseOptionalParams: ISessionCloseOptionalParams = {};
+            if (this.authenticatedUserToken) {
+                sessionCloseOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
+            }
+            
+            await this.OCClient.sessionClose(this.requestId, sessionCloseOptionalParams);
+            
+            // Log successful cleanup for debugging
+            this.debug && console.debug('Successfully cleaned up failed conversation', {
+                requestId: this.requestId,
+                chatId: this.chatToken?.chatId
+            });
+            
+        } catch (cleanupError) {
+            // Log cleanup failure following the same ExceptionDetails pattern as exceptionThrowers
+            const exceptionDetails: ChatSDKExceptionDetails = {
+                response: 'ConversationCleanupFailure',
+                message: 'Failed to cleanup conversation after join failure',
+                errorObject: String(cleanupError)
+            };
+
+            AriaTelemetry.error({
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string,
+                Event: 'ConversationCleanupFailure',
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+            
+            // Don't rethrow the cleanup error to avoid masking the original error
+            this.debug && console.error('Conversation cleanup failed:', cleanupError);
         }
     }
 }
