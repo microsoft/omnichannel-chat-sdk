@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Clean up `ChatSDK.sendTypingEvent()` unused code path
 - Add `HttpRequestResponseTime` property to OCSDKLogData and OCSDKContract Interfaces for HTTP request duration tracking
 - Uptake [@microsoft/ocsdk@0.5.18](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.18)
+- Update `regionBasedSupportedUrls` to include GCC
 
 ## [1.11.2] - 2025-06-24
 
