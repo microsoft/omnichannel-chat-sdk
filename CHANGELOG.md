@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Clean up `ChatSDK.sendTypingEvent()` unused code path
+- Update `regionBasedSupportedUrls` to include GCC
 
 ## [1.11.2] - 2025-06-24
 
