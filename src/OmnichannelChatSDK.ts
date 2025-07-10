@@ -929,7 +929,7 @@ class OmnichannelChatSDK {
             // If conversation joining fails after conversation was created, clean up the conversation
             // Only cleanup conversations that were freshly created (not existing ones being reconnected to)
             await this.handleConversationJoinFailure(error as Error, optionalParams);
-            
+
             throw error; // Re-throw the original error
         }
 
