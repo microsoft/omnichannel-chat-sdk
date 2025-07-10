@@ -930,7 +930,7 @@ class OmnichannelChatSDK {
             /**
              *  Calling endchat in this particular case, to ensure there are no ghost calls.
              *
-             *  Due to the simplicity of the case, and since this needs is not repeated,
+             *  Due to the simplicity of the case, and since this does not need to be repeated,
              * there is no need to abstract the code to a helper or command,
              *
              * For control and human readability will be keep within this block to ensure
