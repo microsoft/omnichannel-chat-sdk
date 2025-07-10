@@ -107,7 +107,6 @@ import { parseLowerCaseString } from "./utils/parsers";
 import platform from "./utils/platform";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import setOcUserAgent from "./utils/setOcUserAgent";
-
 import startPolling from "./commands/startPolling";
 import stopPolling from "./commands/stopPolling";
 import urlResolvers from "./utils/urlResolvers";
@@ -928,9 +927,47 @@ class OmnichannelChatSDK {
             await Promise.all([messagingClientPromise(), attachmentClientPromise()]);
         } catch (error) {
 
-            // If conversation joining fails after conversation was created, clean up the conversation
-            // Only cleanup conversations that were freshly created (not existing ones being reconnected to)
-            await this.cleanupFailedConversation(error as Error, optionalParams.liveChatContext);
+            /**
+             *  Calling endchat in this particular case, to ensure there are no ghost calls.
+             *
+             *  Due to the simplicity of the case, and since this needs is not repeated,
+             * there is no need to abstract the code to a helper or command,
+             *
+             * For control and human readability will be keep within this block to ensure
+             * understanding and simplify maintenance.
+             */
+
+            /**
+             * Rules for cleanup:
+            * Only cleanup if it's a MessagingClientConversationJoinFailure on a freshly created conversation
+            *
+            * DO NOT continue if:
+            * - The error is not a ChatSDKError or not related to conversation join failure
+            * - The conversation is not freshly created (i.e., if `useCreateConversation` is disabled)
+            * - The conversation was previously created (i.e., if `isLivechatContextPresent` is true)
+            * - The error is related to a reconnect attempt (i.e., if `this.reconnectId` is present)
+            */
+
+            const shouldCleanup = error instanceof ChatSDKError &&
+                error?.message === ChatSDKErrorName.MessagingClientConversationJoinFailure &&
+                !this.chatSDKConfig.useCreateConversation?.disable &&
+                !(optionalParams.liveChatContext && Object.keys(optionalParams.liveChatContext).length > 0) &&
+                !this.reconnectId;
+
+            if (shouldCleanup) {
+                try {
+                    /**
+                     *  Calling cleanup to take care of any session cleanup,
+                     *  and ensure a retry in startChat wont be affected with
+                     *  data from a failed session
+                     */
+                    await this.endChat();
+                } catch (cleanupError) {
+                    // Don't let cleanup errors mask the original error
+                    this.debug && console.error('Failed to cleanup conversation after join failure:', cleanupError);
+                }
+            }
+
             throw error; // Re-throw the original error
         }
 
@@ -939,54 +976,6 @@ class OmnichannelChatSDK {
                 await this.getChatToken(false);
                 this.updateChatToken(this.chatToken.token as string, this.chatToken.regionGTMS);
             }, this.chatSDKConfig.persistentChat?.tokenUpdateTime);
-        }
-    }
-
-    /**
-     * Cleans up failed conversations after MessagingClientConversationJoinFailure errors
-     * to prevent orphaned conversations in CRM.
-     */
-    private async cleanupFailedConversation(
-        error: Error,
-        liveChatContext?: StartChatOptionalParams['liveChatContext']
-    ): Promise<void> {
-        const isLivechatContextPresent = Boolean(liveChatContext && Object.keys(liveChatContext).length > 0);
-
-        /**
-         * Only cleanup if it's a MessagingClientConversationJoinFailure on a freshly created conversation
-         *
-         * DO NOT continue if:
-         * - The error is not a ChatSDKError or not related to conversation join failure
-         * - The conversation is not freshly created (i.e., if `useCreateConversation` is disabled)
-         * - The conversation was previously created (i.e., if `isLivechatContextPresent` is true)
-         * - The error is related to a reconnect attempt (i.e., if `this.reconnectId` is present)
-         */
-
-        if (!(error instanceof ChatSDKError &&
-            error?.message === ChatSDKErrorName.MessagingClientConversationJoinFailure &&
-            !this.chatSDKConfig.useCreateConversation?.disable &&
-            !isLivechatContextPresent &&
-            !this.reconnectId)) {
-            return;
-        }
-
-        try {
-            // Use endChat to ensure proper cleanup of all SDK elements
-            await this.endChat();
-        } catch (cleanupError) {
-            // Log cleanup failure following the same ExceptionDetails pattern as exceptionThrowers
-            const exceptionDetails: ChatSDKExceptionDetails = {
-                response: 'ConversationCleanupFailure',
-                message: 'Failed to cleanup conversation after join failure',
-                errorObject: String(cleanupError)
-            };
-
-            this.telemetry?.error({
-                Event: TelemetryEvent.StartChat,
-                ExceptionDetails: JSON.stringify(exceptionDetails)
-            });
-
-            // Don't rethrow the cleanup error to avoid masking the original error
         }
     }
 

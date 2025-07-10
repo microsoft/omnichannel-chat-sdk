@@ -46,8 +46,7 @@ enum TelemetryEvent {
     StartPolling = "StartPolling",
     StopPolling = "StopPolling",
     MessageReceived = "MessageReceived",
-    CleanupFailedStartchat = "CleanupFailedStartchat",
-    ConversationCleanupFailure = "ConversationCleanupFailure",
+    RollbackStartChat = "RollbackStartChat"
 }
 
 export default TelemetryEvent;
