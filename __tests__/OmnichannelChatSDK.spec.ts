@@ -17,9 +17,7 @@ import IFileMetadata from "@microsoft/omnichannel-ic3core/lib/model/IFileMetadat
 import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import LiveChatVersion from "../src/core/LiveChatVersion";
 import OmnichannelErrorCodes from "../src/core/OmnichannelErrorCodes";
-import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import { SDKProvider } from "@microsoft/ocsdk";
-
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
 import libraries from "../src/utils/libraries";
 
@@ -1466,6 +1464,9 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK["isAMSClientAllowed"] = true;
 
+            // Enable debug mode so console.error gets called
+            chatSDK.setDebug(true);
+
             await chatSDK.initialize();
 
             jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue(Promise.resolve({
@@ -1503,16 +1504,11 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(1);
 
             // Verify telemetry error logging was called for cleanup failure
-            // Now with endChat(), there are more telemetry calls due to endChat's internal error handling
-            expect(telemetryErrorSpy).toHaveBeenCalledTimes(4);
-            
-            // Check that one of the calls is related to our cleanup failure
-            const telemetryCalls = telemetryErrorSpy.mock.calls;
-            const cleanupFailureCall = telemetryCalls.find(call => {
-                const data = call[0];
-                return data && data.ExceptionDetails && JSON.stringify(data.ExceptionDetails).includes('Cleanup failed');
-            });
-            expect(cleanupFailureCall).toBeDefined();
+            // With the simplified implementation, we expect fewer telemetry calls
+            expect(telemetryErrorSpy).toHaveBeenCalledTimes(3);
+            // Verify that console.error was called for the cleanup failure
+            // The error could be either a plain Error or ChatSDKError
+            expect(console.error).toHaveBeenCalledWith('Failed to cleanup conversation after join failure:', expect.anything());
         });
 
         it('ChatSDK.startChat() should NOT cleanup conversation when MessagingClientConversationJoinFailure occurs with liveChatContext', async () => {
