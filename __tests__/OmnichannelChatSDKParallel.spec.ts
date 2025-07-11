@@ -1226,6 +1226,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             try {
                 await chatSDK.startChat();
+                fail("Exception should have been thrown");
             } catch (error : any ) {
                 expect(error.message).toBe("MessagingClientConversationJoinFailure");
             }
