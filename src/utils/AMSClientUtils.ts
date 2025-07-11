@@ -32,7 +32,8 @@ export const regionBasedSupportedUrls = [
     "https://oc-cdn-public-oce.azureedge.net",
     "https://oc-cdn-public-jpn.azureedge.net",
     "https://oc-cdn-public-eur.azureedge.net",
-    "https://oc-cdn-ocprod.azureedge.net"
+    "https://oc-cdn-ocprod.azureedge.net",
+    "https://ocprodocprodnamgs.blob.core.usgovcloudapi.net"
 ];
 
 export const regionBasedUrlSupportedVersions = [

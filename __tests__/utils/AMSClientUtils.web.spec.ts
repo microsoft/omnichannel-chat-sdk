@@ -69,7 +69,6 @@ describe("AMSClientUtils", () => {
 
     it("isRegionBasedUrlSupported() should return 'false' if URL is not supported", () => {
         const unsupportedUrl = [
-            "https://ocprodocprodnamgs.blob.core.usgovcloudapi.net",
             "https://microsoft.com",
             "https://bing.com",
             "https://contoso.com"
@@ -97,7 +96,6 @@ describe("AMSClientUtils", () => {
 
     it("retrieveRegionBasedUrl() should return '' if widget snippet base url is not supported", () => {
         const unsupportedUrl = [
-            "https://ocprodocprodnamgs.blob.core.usgovcloudapi.net",
             "https://microsoft.com",
             "https://bing.com",
             "https://contoso.com"
