@@ -946,13 +946,11 @@ class OmnichannelChatSDK {
                 this.updateChatToken(this.chatToken.token as string, this.chatToken.regionGTMS);
             }, this.chatSDKConfig.persistentChat?.tokenUpdateTime);
         }
-
-        // Mark startChat as completed for coordination
-        this.callCoordinator.completeCall(CallType.START_CHAT);
         } catch (error) {
-            // Mark startChat as completed even if it failed
-            this.callCoordinator.completeCall(CallType.START_CHAT);
             throw error;
+        } finally {
+            // Mark startChat as completed for coordination
+            this.callCoordinator.completeCall(CallType.START_CHAT);
         }
     }
 
@@ -1001,9 +999,11 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async endChat(endChatOptionalParams: EndChatOptionalParams = {}): Promise<void> {
-        // Coordinate with startChat calls to prevent race conditions
-        await this.callCoordinator.coordinateCall(CallType.END_CHAT, this.requestId, this.chatToken?.chatId || '');
+    public async endChat(endChatOptionalParams: EndChatOptionalParams = {}, bypassCoordination: boolean = false): Promise<void> {
+        // Coordinate with startChat calls to prevent race conditions (unless bypassing for cleanup)
+        if (!bypassCoordination) {
+            await this.callCoordinator.coordinateCall(CallType.END_CHAT, this.requestId, this.chatToken?.chatId || '');
+        }
 
         try {
             const cleanupMetadata = {
@@ -1050,13 +1050,7 @@ class OmnichannelChatSDK {
 
             this.scenarioMarker.completeScenario(TelemetryEvent.EndChat, cleanupMetadata);
 
-            // Mark endChat as completed for coordination
-            this.callCoordinator.completeCall(CallType.END_CHAT);
-
         } catch (error) {
-            // Mark endChat as completed even if it failed
-            this.callCoordinator.completeCall(CallType.END_CHAT);
-
             const telemetryData = {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string
@@ -1065,6 +1059,11 @@ class OmnichannelChatSDK {
                 exceptionThrowers.throwConversationClosureFailure(new Error(JSON.stringify(error.exceptionDetails)), this.scenarioMarker, TelemetryEvent.EndChat, telemetryData);
             }
             exceptionThrowers.throwConversationClosureFailure(error, this.scenarioMarker, TelemetryEvent.EndChat, telemetryData);
+        } finally {
+            // Mark endChat as completed for coordination (only if coordination was used)
+            if (!bypassCoordination) {
+                this.callCoordinator.completeCall(CallType.END_CHAT);
+            }
         }
     }
 
@@ -2740,7 +2739,7 @@ class OmnichannelChatSDK {
                  * and ensure a retry in startChat won't be affected with
                  * data from a failed session
                  */
-                await this.endChat();
+                await this.endChat({}, true); // bypass coordination for cleanup
             } catch (cleanupError) {
                 // Don't let cleanup errors mask the original error
                 this.debug && console.error('Failed to cleanup conversation after join failure:', cleanupError);
