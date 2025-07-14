@@ -64,6 +64,12 @@ npx playwright show-report integrations-report
 npm run test:integrations -- -g "@UnauthenticatedChat"
 ```
 
+#### Directly Run Specific Chat Scenarios
+
+```sh
+./node_modules/.bin/playwright test -c playwright.config.ts --trace on --grep "@UnauthenticatedChat"
+```
+
 ### Run Authenticated Chat Scenarios
 
 ```sh
