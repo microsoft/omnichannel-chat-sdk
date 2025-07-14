@@ -17,6 +17,7 @@ import { getRuntimeId, isClientIdNotFoundErrorMessage, isCustomerMessage } from 
 import { loadScript, removeElementById, sleep } from "./utils/WebUtils";
 import platform from "./utils/platform";
 import validateSDKConfig, { defaultChatSDKConfig } from "./validators/SDKConfigValidators";
+import { CallCoordinator, CallType } from "./core/CallCoordinator";
 
 import ACSParticipantDisplayName from "./core/messaging/ACSParticipantDisplayName";
 import ACSRegisterOnNewMessageOptionalParams from "./core/messaging/ACSRegisterOnNewMessageOptionalParams";
@@ -161,6 +162,7 @@ class OmnichannelChatSDK {
     private debugAMS = false;
     private debugACS = false;
     private detailedDebugEnabled = false;
+    private callCoordinator: CallCoordinator;
 
     constructor(omnichannelConfig: OmnichannelConfig, chatSDKConfig: ChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
@@ -184,6 +186,7 @@ class OmnichannelChatSDK {
         this.preChatSurvey = null;
         this.telemetry = createTelemetry(this.debug);
         this.scenarioMarker = new ScenarioMarker(this.omnichannelConfig);
+        this.callCoordinator = new CallCoordinator(this.scenarioMarker);
         this.ic3ClientLogger = createIC3ClientLogger(this.omnichannelConfig);
         this.ocSdkLogger = createOCSDKLogger(this.omnichannelConfig);
         this.acsClientLogger = createACSClientLogger(this.omnichannelConfig);
@@ -640,113 +643,117 @@ class OmnichannelChatSDK {
     }
 
     public async startChat(optionalParams: StartChatOptionalParams = {}): Promise<void> {
-        this.scenarioMarker.startScenario(TelemetryEvent.StartChat, {
-            RequestId: this.requestId
-        });
+        // Coordinate with endChat calls to prevent race conditions
+        await this.callCoordinator.coordinateCall(CallType.START_CHAT, this.requestId, this.chatToken?.chatId || '');
 
-        if (!this.isInitialized) {
-            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.StartChat);
-        }
+        try {
+            this.scenarioMarker.startScenario(TelemetryEvent.StartChat, {
+                RequestId: this.requestId
+            });
 
-        if (!this.requestId) {
-            this.requestId = uuidv4();
-        }
-
-        const shouldReinitIC3Client = !platform.isNode() && !platform.isReactNative() && !this.IC3Client && this.liveChatVersion === LiveChatVersion.V1;
-        if (shouldReinitIC3Client) {
-            this.IC3Client = await this.getIC3Client();
-        }
-
-        if (this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat && optionalParams.reconnectId) {
-            this.reconnectId = optionalParams.reconnectId as string;
-        }
-
-        if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
-            try {
-                const reconnectableChatsParams: IReconnectableChatsParams = {
-                    authenticatedUserToken: this.authenticatedUserToken as string,
-                    requestId: this.requestId as string
-                }
-
-                const reconnectableChatsResponse = await this.OCClient.getReconnectableChats(reconnectableChatsParams);
-
-                if (reconnectableChatsResponse && reconnectableChatsResponse.reconnectid) {
-                    this.reconnectId = reconnectableChatsResponse.reconnectid;
-                }
-            } catch (e) {
-                const telemetryData = {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                };
-
-                exceptionThrowers.throwPersistentChatConversationRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
-            }
-        }
-
-        if (optionalParams.liveChatContext && Object.keys(optionalParams.liveChatContext).length > 0 && !this.reconnectId) {
-            this.chatToken = optionalParams.liveChatContext.chatToken || {};
-            this.requestId = optionalParams.liveChatContext.requestId || uuidv4();
-            this.sessionId = optionalParams.liveChatContext.sessionId || null;
-
-            // Validate conversation
-            const conversationDetails = await this.getConversationDetails();
-            if (Object.keys(conversationDetails).length === 0) {
-                const telemetryData = {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                };
-
-                exceptionThrowers.throwInvalidConversation(this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
+            if (!this.isInitialized) {
+                exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.StartChat);
             }
 
-            if (conversationDetails.state === LiveWorkItemState.WrapUp || conversationDetails.state === LiveWorkItemState.Closed) {
-                console.error(`Unable to join conversation that's in '${conversationDetails.state}' state`);
-                const telemetryData = {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                };
-
-                exceptionThrowers.throwClosedConversation(this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
-            }
-        }
-
-        if (this.authSettings) {
-            if (!this.authenticatedUserToken) {
-                await this.setAuthTokenProvider(this.chatSDKConfig.getAuthToken, { throwError: true });
+            if (!this.requestId) {
+                this.requestId = uuidv4();
             }
 
-            if (optionalParams.liveChatContext && Object.keys(optionalParams.liveChatContext).length > 0) {
-                this.chatToken = optionalParams.liveChatContext.chatToken || {};
-                this.requestId = optionalParams.liveChatContext.requestId || uuidv4();
+            const shouldReinitIC3Client = !platform.isNode() && !platform.isReactNative() && !this.IC3Client && this.liveChatVersion === LiveChatVersion.V1;
+            if (shouldReinitIC3Client) {
+                this.IC3Client = await this.getIC3Client();
+            }
 
+            if (this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat && optionalParams.reconnectId) {
+                this.reconnectId = optionalParams.reconnectId as string;
+            }
+
+            if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
                 try {
-                    await this.OCClient.validateAuthChatRecord(this.requestId, {
-                        authenticatedUserToken: this.authenticatedUserToken,
-                        chatId: this.chatToken.chatId
-                    });
+                    const reconnectableChatsParams: IReconnectableChatsParams = {
+                        authenticatedUserToken: this.authenticatedUserToken as string,
+                        requestId: this.requestId as string
+                    }
+
+                    const reconnectableChatsResponse = await this.OCClient.getReconnectableChats(reconnectableChatsParams);
+
+                    if (reconnectableChatsResponse && reconnectableChatsResponse.reconnectid) {
+                        this.reconnectId = reconnectableChatsResponse.reconnectid;
+                    }
                 } catch (e) {
                     const telemetryData = {
                         RequestId: this.requestId,
                         ChatId: this.chatToken.chatId as string,
                     };
 
-                    exceptionThrowers.throwAuthenticatedChatConversationRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
+                    exceptionThrowers.throwPersistentChatConversationRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
                 }
             }
-        }
 
-        if (this.chatSDKConfig.useCreateConversation?.disable && this.chatToken && Object.keys(this.chatToken).length === 0) {
-            await this.getChatToken(false);
-        }
-        if (this.chatToken?.chatId) {
-            loggerUtils.setChatId(this.chatToken.chatId || '', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
-        }
+            if (optionalParams.liveChatContext && Object.keys(optionalParams.liveChatContext).length > 0 && !this.reconnectId) {
+                this.chatToken = optionalParams.liveChatContext.chatToken || {};
+                this.requestId = optionalParams.liveChatContext.requestId || uuidv4();
+                this.sessionId = optionalParams.liveChatContext.sessionId || null;
 
-        let sessionInitOptionalParams: ISessionInitOptionalParams = {
-            initContext: {} as InitContext
-        };
+                // Validate conversation
+                const conversationDetails = await this.getConversationDetails();
+                if (Object.keys(conversationDetails).length === 0) {
+                    const telemetryData = {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken.chatId as string,
+                    };
 
-        sessionInitOptionalParams = this.populateInitChatOptionalParam(sessionInitOptionalParams, optionalParams, TelemetryEvent.StartChat);
+                    exceptionThrowers.throwInvalidConversation(this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
+                }
+
+                if (conversationDetails.state === LiveWorkItemState.WrapUp || conversationDetails.state === LiveWorkItemState.Closed) {
+                    console.error(`Unable to join conversation that's in '${conversationDetails.state}' state`);
+                    const telemetryData = {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken.chatId as string,
+                    };
+
+                    exceptionThrowers.throwClosedConversation(this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
+                }
+            }
+
+            if (this.authSettings) {
+                if (!this.authenticatedUserToken) {
+                    await this.setAuthTokenProvider(this.chatSDKConfig.getAuthToken, { throwError: true });
+                }
+
+                if (optionalParams.liveChatContext && Object.keys(optionalParams.liveChatContext).length > 0) {
+                    this.chatToken = optionalParams.liveChatContext.chatToken || {};
+                    this.requestId = optionalParams.liveChatContext.requestId || uuidv4();
+
+                    try {
+                        await this.OCClient.validateAuthChatRecord(this.requestId, {
+                            authenticatedUserToken: this.authenticatedUserToken,
+                            chatId: this.chatToken.chatId
+                        });
+                    } catch (e) {
+                        const telemetryData = {
+                            RequestId: this.requestId,
+                            ChatId: this.chatToken.chatId as string,
+                        };
+
+                        exceptionThrowers.throwAuthenticatedChatConversationRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
+                    }
+                }
+            }
+
+            if (this.chatSDKConfig.useCreateConversation?.disable && this.chatToken && Object.keys(this.chatToken).length === 0) {
+                await this.getChatToken(false);
+            }
+            if (this.chatToken?.chatId) {
+                loggerUtils.setChatId(this.chatToken.chatId || '', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+            }
+
+            let sessionInitOptionalParams: ISessionInitOptionalParams = {
+                initContext: {} as InitContext
+            };
+
+            sessionInitOptionalParams = this.populateInitChatOptionalParam(sessionInitOptionalParams, optionalParams, TelemetryEvent.StartChat);
         sessionInitOptionalParams.initContext!.isProactiveChat = !!optionalParams.isProactiveChat;
 
         if (optionalParams.platform) {
@@ -930,6 +937,14 @@ class OmnichannelChatSDK {
                 this.updateChatToken(this.chatToken.token as string, this.chatToken.regionGTMS);
             }, this.chatSDKConfig.persistentChat?.tokenUpdateTime);
         }
+
+        // Mark startChat as completed for coordination
+        this.callCoordinator.completeCall(CallType.START_CHAT);
+        } catch (error) {
+            // Mark startChat as completed even if it failed
+            this.callCoordinator.completeCall(CallType.START_CHAT);
+            throw error;
+        }
     }
 
     private async closeChat(endChatOptionalParams: EndChatOptionalParams): Promise<void> {
@@ -978,19 +993,21 @@ class OmnichannelChatSDK {
     }
 
     public async endChat(endChatOptionalParams: EndChatOptionalParams = {}): Promise<void> {
-
-        const cleanupMetadata = {
-            RequestId: this.requestId,
-            ChatId: this.chatToken.chatId as string
-        };
-
-        this.scenarioMarker.startScenario(TelemetryEvent.EndChat, cleanupMetadata);
-
-        if (!this.isInitialized) {
-            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.EndChat);
-        }
+        // Coordinate with startChat calls to prevent race conditions
+        await this.callCoordinator.coordinateCall(CallType.END_CHAT, this.requestId, this.chatToken?.chatId || '');
 
         try {
+            const cleanupMetadata = {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            };
+
+            this.scenarioMarker.startScenario(TelemetryEvent.EndChat, cleanupMetadata);
+
+            if (!this.isInitialized) {
+                exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.EndChat);
+            }
+
             // calling close chat, internally will handle the session close
             try {
                 await this.closeChat(endChatOptionalParams);
@@ -1024,7 +1041,13 @@ class OmnichannelChatSDK {
 
             this.scenarioMarker.completeScenario(TelemetryEvent.EndChat, cleanupMetadata);
 
+            // Mark endChat as completed for coordination
+            this.callCoordinator.completeCall(CallType.END_CHAT);
+
         } catch (error) {
+            // Mark endChat as completed even if it failed
+            this.callCoordinator.completeCall(CallType.END_CHAT);
+
             const telemetryData = {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string
