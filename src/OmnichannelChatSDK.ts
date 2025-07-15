@@ -946,8 +946,6 @@ class OmnichannelChatSDK {
                 this.updateChatToken(this.chatToken.token as string, this.chatToken.regionGTMS);
             }, this.chatSDKConfig.persistentChat?.tokenUpdateTime);
         }
-        } catch (error) {
-            throw error;
         } finally {
             // Mark startChat as completed for coordination
             this.callCoordinator.completeCall(CallType.START_CHAT);
@@ -999,7 +997,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async endChat(endChatOptionalParams: EndChatOptionalParams = {}, bypassCoordination: boolean = false): Promise<void> {
+    public async endChat(endChatOptionalParams: EndChatOptionalParams = {}, bypassCoordination = false): Promise<void> {
         // Coordinate with startChat calls to prevent race conditions (unless bypassing for cleanup)
         if (!bypassCoordination) {
             await this.callCoordinator.coordinateCall(CallType.END_CHAT, this.requestId, this.chatToken?.chatId || '');
