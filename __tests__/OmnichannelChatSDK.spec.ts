@@ -3118,8 +3118,6 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             await chatSDK.startChat();
             chatSDK.authenticatedUserToken = optionalParams.authenticatedUserToken;
 
-            await chatSDK.startChat();
-
             const getChatTranscriptOptionalParams = {
                 authenticatedUserToken: optionalParams.authenticatedUserToken
             }
