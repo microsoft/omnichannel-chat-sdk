@@ -215,10 +215,9 @@ describe("CallCoordinator", () => {
             // Complete correct call type
             coordinator.completeCall(CallType.START_CHAT);
 
-            // Now should NOT be able to start same call type because state is now CHAT_STARTED
-            await expect(
-                coordinator.coordinateCall(CallType.START_CHAT, requestId, chatId)
-            ).rejects.toThrow("StartChat has already been called. Call endChat first to reset the permission.");
+            // After completion, should allow sequential startChat calls (for re-initialization)
+            await coordinator.coordinateCall(CallType.START_CHAT, requestId, chatId);
+            coordinator.completeCall(CallType.START_CHAT);
         });
     });
 
@@ -332,15 +331,14 @@ describe("CallCoordinator", () => {
             ).rejects.toThrow("EndChat can only be called after startChat. Call startChat first to reset the permission.");
         });
 
-        it("should prevent startChat when already started and not ended", async () => {
+        it("should allow startChat for re-initialization scenarios", async () => {
             // Arrange
             await coordinator.coordinateCall(CallType.START_CHAT, "request-1", "chat-1");
             coordinator.completeCall(CallType.START_CHAT);
 
-            // Act & Assert
-            await expect(
-                coordinator.coordinateCall(CallType.START_CHAT, "request-2", "chat-2")
-            ).rejects.toThrow("StartChat has already been called. Call endChat first to reset the permission.");
+            // Act & Assert - should now allow sequential startChat calls for re-initialization
+            await coordinator.coordinateCall(CallType.START_CHAT, "request-2", "chat-2");
+            coordinator.completeCall(CallType.START_CHAT);
         });
 
         it("should prevent endChat when already ended and not started again", async () => {

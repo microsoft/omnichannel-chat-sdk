@@ -163,12 +163,7 @@ class CallCoordinator {
      * @param callType - The type of call being requested
      */
     private checkStatePermissions(callType: CallType): void {
-        if (callType === CallType.START_CHAT) {
-            // startChat is only allowed when state is IDLE or CHAT_ENDED OR when endChat is currently in progress
-            if (this.chatState === ChatState.CHAT_STARTED && (!this.currentExecution || this.currentExecution.callType !== CallType.END_CHAT)) {
-                throw new Error("StartChat has already been called. Call endChat first to reset the permission.");
-            }
-        } else if (callType === CallType.END_CHAT) {
+        if (callType === CallType.END_CHAT) {
             // endChat is only allowed when state is CHAT_STARTED OR when startChat is currently in progress
             if (this.chatState === ChatState.IDLE && (!this.currentExecution || this.currentExecution.callType !== CallType.START_CHAT)) {
                 throw new Error("EndChat can only be called after startChat. Call startChat first to reset the permission.");
@@ -176,6 +171,8 @@ class CallCoordinator {
                 throw new Error("EndChat can only be called after startChat. Call startChat first to reset the permission.");
             }
         }
+        // Note: Removed state-based restrictions for startChat to allow legitimate re-initialization scenarios
+        // The coordination logic still prevents concurrent calls and race conditions
     }
 
     /**
