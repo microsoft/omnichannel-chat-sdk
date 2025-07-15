@@ -10,6 +10,15 @@ enum CallType {
 }
 
 /**
+ * Enum representing the current state of the chat session
+ */
+enum ChatState {
+    IDLE = "Idle",
+    CHAT_STARTED = "ChatStarted",
+    CHAT_ENDED = "ChatEnded"
+}
+
+/**
  * Interface for tracking call execution state
  */
 interface CallExecution {
@@ -22,10 +31,12 @@ interface CallExecution {
 
 /**
  * CallCoordinator handles coordination between startChat and endChat calls
- * to prevent race conditions when they are called in quick succession.
+ * to prevent race conditions when they are called in quick succession and
+ * enforces state-based permissions to prevent multiple calls of the same type.
  */
 class CallCoordinator {
     private currentExecution: CallExecution | null = null;
+    private chatState: ChatState = ChatState.IDLE;
     private scenarioMarker: ScenarioMarker;
 
     constructor(scenarioMarker: ScenarioMarker) {
@@ -34,7 +45,7 @@ class CallCoordinator {
 
     /**
      * Coordinates the execution of a call, ensuring that opposite calls wait
-     * for completion before proceeding.
+     * for completion before proceeding and enforcing state-based permissions.
      *
      * @param callType - The type of call being coordinated
      * @param requestId - The request ID for telemetry
@@ -42,6 +53,9 @@ class CallCoordinator {
      * @returns Promise that resolves when the call can proceed
      */
     public async coordinateCall(callType: CallType, requestId: string, chatId: string): Promise<void> {
+        // Check state-based permissions first
+        this.checkStatePermissions(callType);
+
         // If no call is currently in progress, mark this call as in progress and proceed
         if (!this.currentExecution) {
             this.markCallInProgress(callType, requestId, chatId);
@@ -56,12 +70,16 @@ class CallCoordinator {
         // If the opposite call is in progress, wait for it to complete
         await this.waitForCallCompletion(callType, requestId, chatId);
 
+        // State permissions will be automatically satisfied after waiting
+        // (startChat completion enables endChat, endChat completion enables startChat)
+
         // Mark this call as in progress
         this.markCallInProgress(callType, requestId, chatId);
     }
 
     /**
-     * Marks a call as completed and resolves any waiting calls
+     * Marks a call as completed and resolves any waiting calls.
+     * Updates the chat state based on the completed call type.
      *
      * @param callType - The type of call that completed
      */
@@ -72,6 +90,9 @@ class CallCoordinator {
             }
             this.currentExecution = null;
         }
+
+        // Update chat state based on completed call
+        this.updateChatState(callType);
     }
 
     /**
@@ -135,6 +156,40 @@ class CallCoordinator {
             });
         }
     }
+
+    /**
+     * Checks if the requested call type is allowed based on current chat state
+     *
+     * @param callType - The type of call being requested
+     */
+    private checkStatePermissions(callType: CallType): void {
+        if (callType === CallType.START_CHAT) {
+            // startChat is only allowed when state is IDLE or CHAT_ENDED OR when endChat is currently in progress
+            if (this.chatState === ChatState.CHAT_STARTED && (!this.currentExecution || this.currentExecution.callType !== CallType.END_CHAT)) {
+                throw new Error("StartChat has already been called. Call endChat first to reset the permission.");
+            }
+        } else if (callType === CallType.END_CHAT) {
+            // endChat is only allowed when state is CHAT_STARTED OR when startChat is currently in progress
+            if (this.chatState === ChatState.IDLE && (!this.currentExecution || this.currentExecution.callType !== CallType.START_CHAT)) {
+                throw new Error("EndChat can only be called after startChat. Call startChat first to reset the permission.");
+            } else if (this.chatState === ChatState.CHAT_ENDED) {
+                throw new Error("EndChat can only be called after startChat. Call startChat first to reset the permission.");
+            }
+        }
+    }
+
+    /**
+     * Updates the chat state based on the completed call type
+     *
+     * @param callType - The type of call that completed
+     */
+    private updateChatState(callType: CallType): void {
+        if (callType === CallType.START_CHAT) {
+            this.chatState = ChatState.CHAT_STARTED;
+        } else if (callType === CallType.END_CHAT) {
+            this.chatState = ChatState.CHAT_ENDED;
+        }
+    }
 }
 
-export { CallCoordinator, CallType };
+export { CallCoordinator, CallType, ChatState };
