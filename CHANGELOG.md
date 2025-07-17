@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.11.3]
+
+### Fixed
+
+- Fix conversation cleanup when MessagingClientConversationJoinFailure occurs to prevent orphaned conversations
+
 ### Changed
 
 - Clean up `ChatSDK.sendTypingEvent()` unused code path
