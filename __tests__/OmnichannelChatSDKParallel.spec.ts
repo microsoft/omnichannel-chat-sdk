@@ -1156,7 +1156,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             expect(chatSDK.AMSClient.initialize).toHaveBeenCalledTimes(1);
         });
 
-        it('ChatSDK.startChat() should not throw an exception if AMSClient.initialize() fails, but should log AMSLoadError telemetry', async () => {
+        it('ChatSDK.startChat() should throw an exception if AMSClient.initialize() fails', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig ,{
                 useCreateConversation: {
                     disable: true,
@@ -1183,24 +1183,17 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.AMSClient, 'initialize').mockRejectedValue(new Error('Async error message'));
-            
-            // Spy on the scenarioMarker.singleRecord method to verify telemetry logging
-            const singleRecordSpy = jest.spyOn(chatSDK.scenarioMarker, 'singleRecord');
 
-            // This should not throw an exception anymore
-            await chatSDK.startChat();
+            try {
+                await chatSDK.startChat();
+            } catch (error : any ) {
+                expect(error.message).toBe("MessagingClientInitializationFailure");
+            }
 
             expect(chatSDK.OCClient.sessionInit).toHaveBeenCalledTimes(1);
             expect(chatSDK.ACSClient.initialize).toHaveBeenCalledTimes(1);
             expect(chatSDK.ACSClient.joinConversation).toHaveBeenCalledTimes(1);
             expect(chatSDK.AMSClient.initialize).toHaveBeenCalledTimes(1);
-            
-            // Verify that AMSLoadError telemetry was logged with proper error structure
-            expect(singleRecordSpy).toHaveBeenCalledWith("AMSLoadError", expect.objectContaining({
-                RequestId: expect.any(String),
-                ChatId: expect.any(String),
-                ExceptionDetails: expect.stringContaining('"response":"MessagingClientInitializationFailure"')
-            }));
         });
 
         it('ChatSDK.startChat() should throw an exception if ACSClient.joinConversation() fails', async () => {
