@@ -1194,7 +1194,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             expect(chatSDK.ACSClient.initialize).toHaveBeenCalledTimes(1);
             expect(chatSDK.ACSClient.joinConversation).toHaveBeenCalledTimes(1);
             expect(chatSDK.AMSClient.initialize).toHaveBeenCalledTimes(1);
-                        // Verify that AMSLoadError telemetry was logged
+           // Verify that AMSLoadError telemetry was logged
             expect(singleRecordSpy).toHaveBeenCalledWith("AMSLoadError", {
                 RequestId: expect.any(String),
                 ChatId: expect.any(String)

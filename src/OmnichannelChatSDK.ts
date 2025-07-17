@@ -916,7 +916,6 @@ class OmnichannelChatSDK {
 
                 this.scenarioMarker.singleRecord("AMSLoadError", {
                     ...telemetryData,
-                    ExceptionDetails: JSON.stringify(telemetryData)
                 });
             }
         };
