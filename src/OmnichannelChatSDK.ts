@@ -913,8 +913,20 @@ class OmnichannelChatSDK {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string,
                 };
-                // Log AMS failure but do not throw to avoid blocking chat creation
-                exceptionSuppressors.suppressChatSDKError(ChatSDKErrorName.MessagingClientInitializationFailure, error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
+
+                // Log AMS failure with proper error structure but don't fail StartChat scenario
+                const exceptionDetails: ChatSDKExceptionDetails = {
+                    response: ChatSDKErrorName.MessagingClientInitializationFailure
+                };
+
+                if (error) {
+                    exceptionDetails.errorObject = `${error}`;
+                }
+
+                this.scenarioMarker.singleRecord("AMSLoadError", {
+                    ...telemetryData,
+                    ExceptionDetails: JSON.stringify(exceptionDetails)
+                });
             }
         };
 
