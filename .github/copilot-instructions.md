@@ -9,9 +9,29 @@ When creating pull requests, follow these guidelines:
 3. **Testing**: Include comprehensive tests for any new functionality or bug fixes
 4. **Documentation**: Update documentation if necessary, including JSDoc comments
 5. **Test Verification**: Ensure all tests pass before submitting the pull request
-6. **Collaboration**: When reacting to comments, ask for confirmation before proceeding with changes
-7. **Clarification**: If you are not sure about something, ask for clarification in the pull request comments
+6. **Collaboration**: **ALWAYS** ask for explicit confirmation before proceeding with changes. Do not make any code modifications until explicitly authorized by the requester.
+7. **Authorization Required**: For every change request, provide a detailed plan of what will be modified and wait for explicit approval before implementing
+8. **Clarification**: If you are not sure about something, ask for clarification in the pull request comments
 8. **Incremental Changes**: Consider breaking significant changes into smaller pull requests for easier review
+
+## GitHub Copilot Behavior Guidelines
+
+### Response Protocol
+- **ASK FIRST**: Always ask for permission before making any code modifications
+- **PROPOSE CHANGES**: Present a clear plan of what will be changed and why
+- **WAIT FOR APPROVAL**: Do not proceed until receiving explicit "yes" or "proceed" confirmation
+- **NO ASSUMPTIONS**: Never assume what the user wants - always clarify requirements
+- **SUMMARIZE IMPACT**: Explain potential side effects or dependencies before implementing
+
+### Example Response Pattern
+When a user requests a change, respond with:
+1. "I understand you want to [describe the request]"
+2. "Here's what I propose to change: [detailed plan]"
+3. "This will affect: [list of files and components]"
+4. "Do you want me to proceed with these changes? (Yes/No)"
+5. Wait for explicit confirmation before implementing
+
+9. **Incremental Changes**: Consider breaking significant changes into smaller pull requests for easier review
 9. **Bug Fixes**: Include a description of the issue and how it was resolved
 10. **Changelog**: Always include a one-line summary of the change at the top of CHANGELOG.md under [Unreleased] section:
     - **Fixed**: for bugs
@@ -46,6 +66,7 @@ When creating pull requests, follow these guidelines:
 - **Breaking Changes**: Identify and document any breaking changes with migration guidance
 
 ### Prohibited Actions
+- **No Unauthorized Changes**: **NEVER** make code changes without explicit user approval. Always propose changes and wait for confirmation
 - **No Silent Changes**: Do not make dependency updates without explicit approval
 - **No Silent Failures**: Every error must be properly logged with telemetry
 - **No Type Safety Violations**: Avoid using 'any' type without proper justification

@@ -913,7 +913,11 @@ class OmnichannelChatSDK {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string,
                 };
-                exceptionThrowers.throwMessagingClientInitializationFailure(error, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
+
+                this.scenarioMarker.singleRecord("AMSLoadError", {
+                    ...telemetryData,
+                    ExceptionDetails: JSON.stringify(telemetryData)
+                });
             }
         };
 
