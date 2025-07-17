@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- AMS failures no longer block chat creation; they are logged as telemetry instead
+
 ## [1.11.3]
 
 ### Fixed
