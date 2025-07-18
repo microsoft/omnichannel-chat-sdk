@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## [1.11.3]
+## [1.11.4] 2025-07-17
+
+### Changed
+
+- When a exception is detected during AMS initialization, the chat will log the error and continue with the chat initialization.
+
+## [1.11.3] 2025-07-14
 
 ### Fixed
 
