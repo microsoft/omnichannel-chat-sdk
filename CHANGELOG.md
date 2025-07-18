@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Validate request payload passed to `OCClient.getSurveyInviteLink` in `ChatSDK.getPostChatSurveyContext()`
+
 ## [1.11.4] 2025-07-17
 
 ### Changed

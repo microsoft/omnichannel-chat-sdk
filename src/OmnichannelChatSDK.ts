@@ -91,6 +91,7 @@ import ProtocolType from "@microsoft/omnichannel-ic3core/lib/interfaces/Protocol
 import ScenarioMarker from "./telemetry/ScenarioMarker";
 import SetAuthTokenProviderOptionalParams from "./core/SetAuthTokenProviderOptionalParams";
 import StartChatOptionalParams from "./core/StartChatOptionalParams";
+import { SurveyProvider } from "./core/SurveyProvider";
 import TelemetryEvent from "./telemetry/TelemetryEvent";
 import { callingBundleVersion } from "./config/settings";
 import createAMSClient from "@microsoft/omnichannel-amsclient";
@@ -2126,6 +2127,16 @@ class OmnichannelChatSDK {
             const { LiveWSAndLiveChatEngJoin: liveWSAndLiveChatEngJoin } = chatConfig;
             const { msdyn_postconversationsurveyenable, msfp_sourcesurveyidentifier, msfp_botsourcesurveyidentifier, postConversationSurveyOwnerId, postConversationBotSurveyOwnerId, msdyn_surveyprovider } = liveWSAndLiveChatEngJoin;
 
+            const surveyProvider = parseInt(msdyn_surveyprovider);
+            if (surveyProvider === SurveyProvider.CustomerVoice && !msfp_sourcesurveyidentifier) {
+                this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken?.chatId ?? "",
+                    ExceptionDetails: `GetPostChatSurveyContext : msfp_sourcesurveyidentifier is mandatory for survey provider ${SurveyProvider.CustomerVoice}.`
+                });
+                return Promise.reject(`GetPostChatSurveyContext : msfp_sourcesurveyidentifier is mandatory for survey provider ${SurveyProvider.CustomerVoice}.`);
+            }
+
             if (parseLowerCaseString(msdyn_postconversationsurveyenable) === "true") {
                 const liveWorkItemDetails = await this.getConversationDetails();
                 if (Object.keys(liveWorkItemDetails).length === 0) {
@@ -2141,6 +2152,15 @@ class OmnichannelChatSDK {
                 const participantType = liveWorkItemDetails?.participantType;
 
                 conversationId = liveWorkItemDetails?.conversationId;
+
+                if (!conversationId) {
+                    this.scenarioMarker.failScenario(TelemetryEvent.GetPostChatSurveyContext, {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken?.chatId ?? "",
+                        ExceptionDetails: "GetPostChatSurveyContext : Conversation ID is mandatory."
+                    });
+                    return Promise.reject("GetPostChatSurveyContext : Conversation ID is mandatory.");
+                }
 
                 const agentSurveyInviteLinkRequest = {
                     "SurveyProvider": msdyn_surveyprovider,
