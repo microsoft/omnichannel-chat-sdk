@@ -106,7 +106,7 @@ New releases are published on a regular basis to ensure the product quality.
 
 for a detailed tracking of the releases, please refer to the [Changelog document](https://github.com/microsoft/omnichannel-chat-sdk/blob/main/CHANGELOG.md)
 
-_**Important Note:**_ Versions below 1.11.0 are not going to be supported after November 1st 2025. please update to recent versions to ensure you have the latest features and bug fixes.
+_**Important Note:**_ Versions below 1.11.0 will not be supported after November 1st, 2025. Please update to recent versions to ensure you have the latest features and bug fixes.
 
 
 | Version | Docs | Release Date | End of Support | Deprecated |
