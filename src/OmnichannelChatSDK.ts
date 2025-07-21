@@ -227,12 +227,13 @@ class OmnichannelChatSDK {
     }
 
     /**
-     * 
+     *
      * @param flag Flag to enable/disable debug log telemetry, will be applied to all components
      * @description Set the debug flag to enable/disable debug log telemetry
      */
     /* istanbul ignore next */
     public setDebug(flag: boolean): void {
+
         this.detailedDebugEnabled = false;
         this.debug = flag;
         this.telemetry?.setDebug(flag);
