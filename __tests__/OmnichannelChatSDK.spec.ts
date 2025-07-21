@@ -4581,6 +4581,83 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(postChatContext.participantType).toBe("Bot");
         });
 
+        it("ChatSDK.getPostChatSurveyContext() should reject without calling OCClient.getSurveyInviteLink if provider is Customer Voice and msfp_sourcesurveyidentifier is empty", async () => {
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                },
+                chatReconnect: {
+                    disable: false,
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            jest.spyOn(chatSDK, 'getChatConfig').mockImplementation(() => {});
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.liveChatConfig = {
+                LiveWSAndLiveChatEngJoin: {
+                    msdyn_postconversationsurveyenable: "true",
+                    msfp_sourcesurveyidentifier: "",
+                    postConversationSurveyOwnerId: "",
+                    msdyn_surveyprovider: "600990000"
+                },
+                ChatWidgetLanguage: {
+                    msdyn_localeid: "1033"
+                }
+            };
+
+            jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue({
+                state: "Active",
+                conversationId: "convId",
+                canRenderPostChat: "True"
+            });
+            const getSurveyInviteLinkSpy = jest.spyOn(chatSDK.OCClient, 'getSurveyInviteLink');
+
+            await expect(chatSDK.getPostChatSurveyContext()).rejects.toMatch("GetPostChatSurveyContext : msfp_sourcesurveyidentifier is mandatory for survey provider 600990000.");
+            expect(getSurveyInviteLinkSpy).not.toHaveBeenCalled();
+        });
+
+        it("ChatSDK.getPostChatSurveyContext() should reject without calling OCClient.getSurveyInviteLink if conversation ID is empty", async () => {
+            const chatSDKConfig = {
+                telemetry: {
+                    disable: true
+                },
+                chatReconnect: {
+                    disable: false,
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            jest.spyOn(chatSDK, 'getChatConfig').mockImplementation(() => {});
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.liveChatConfig = {
+                LiveWSAndLiveChatEngJoin: {
+                    msdyn_postconversationsurveyenable: "true",
+                    msfp_sourcesurveyidentifier: "",
+                    postConversationSurveyOwnerId: ""
+                },
+                ChatWidgetLanguage: {
+                    msdyn_localeid: "1033"
+                }
+            };
+
+            jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue({
+                state: "Active",
+                conversationId: "",
+                canRenderPostChat: "True"
+            });
+            const getSurveyInviteLinkSpy = jest.spyOn(chatSDK.OCClient, 'getSurveyInviteLink');
+
+            await expect(chatSDK.getPostChatSurveyContext()).rejects.toMatch("GetPostChatSurveyContext : Conversation ID is mandatory.");
+            expect(getSurveyInviteLinkSpy).not.toHaveBeenCalled();
+        });
+
         it('ChatSDK.getAgentAvailability() should throw error if conversation already started', async () => {
             const chatSDKConfig = {
                 telemetry: {
