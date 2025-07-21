@@ -227,6 +227,7 @@ class OmnichannelChatSDK {
     }
 
     /**
+     * 
      * @param flag Flag to enable/disable debug log telemetry, will be applied to all components
      * @description Set the debug flag to enable/disable debug log telemetry
      */
