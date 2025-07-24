@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- Add `customEvent` property to `OmnichannelMessage` to support custom event metadata propagation to mobile SDKs (Android/iOS).
+
 ## [1.11.4] 2025-07-17
 
 ### Changed
