@@ -77,6 +77,15 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
             omnichannelMessage.properties.originalMessageId = id;
         }
 
+        // Handle custom event metadata
+        if (metadata && metadata.customEvent && metadata.customEventName && metadata.customEventValue) {
+            omnichannelMessage.customEvent = {
+                isCustomEvent: Boolean(metadata.customEvent),
+                customEventName: metadata.customEventName,
+                customEventValue: metadata.customEventValue
+            };
+        }
+
         omnichannelMessage.role = getMessageRole(omnichannelMessage);
     } else {
         const { clientmessageid } = message as IRawMessage;

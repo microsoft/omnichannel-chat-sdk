@@ -6,7 +6,12 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fix Error object serialization in ACSAdapterLogger.failScenario() to prevent JSON.stringify errors when ExceptionDetails contains Error instances
 - Validate request payload passed to `OCClient.getSurveyInviteLink` in `ChatSDK.getPostChatSurveyContext()`
+
+### Changed
+
+- Add `customEvent` property to `OmnichannelMessage` to support custom event metadata propagation to mobile SDKs (Android/iOS).
 
 ## [1.11.4] 2025-07-17
 
