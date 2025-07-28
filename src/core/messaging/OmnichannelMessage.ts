@@ -80,6 +80,11 @@ interface OmnichannelMessage {
     fileMetadata?: IFileMetadata;
     resourceType?: ResourceType;
     role?: string;
+    customEvent?: {
+        isCustomEvent: boolean;
+        customEventName: string;
+        customEventValue: string;
+    };
 }
 
 export default OmnichannelMessage;
