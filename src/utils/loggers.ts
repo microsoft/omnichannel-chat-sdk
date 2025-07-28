@@ -426,7 +426,16 @@ export class ACSAdapterLogger {
             additionalProperties.CustomProperties = JSON.stringify(redactPII(additionalProperties.CustomProperties, false));
         }
         if (additionalProperties.ExceptionDetails) {
-            additionalProperties.ExceptionDetails = JSON.stringify(redactPII(additionalProperties.ExceptionDetails, false, true, _exceptionDetailPIIKeys));
+            // Handle Error objects properly by converting to serializable format
+            let exceptionDetails = additionalProperties.ExceptionDetails;
+            if (exceptionDetails instanceof Error) {
+                exceptionDetails = {
+                    ...exceptionDetails,
+                    name: exceptionDetails.name,
+                    message: exceptionDetails.message
+                };
+            }
+            additionalProperties.ExceptionDetails = JSON.stringify(redactPII(exceptionDetails, false, true, _exceptionDetailPIIKeys));
         }
         if (additionalProperties.Description) {
             additionalProperties.Description = JSON.stringify(redactPII(additionalProperties.Description, false, true));

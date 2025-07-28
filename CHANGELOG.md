@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix Error object serialization in ACSAdapterLogger.failScenario() to prevent JSON.stringify errors when ExceptionDetails contains Error instances
+
 ### Changed
 
 - Add `customEvent` property to `OmnichannelMessage` to support custom event metadata propagation to mobile SDKs (Android/iOS).
