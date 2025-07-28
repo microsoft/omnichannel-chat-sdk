@@ -5,6 +5,9 @@ on:
     branches:
       - '*'
 
+permission:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest

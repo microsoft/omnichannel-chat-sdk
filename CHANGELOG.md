@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Fix Error object serialization in ACSAdapterLogger.failScenario() to prevent JSON.stringify errors when ExceptionDetails contains Error instances
+- Validate request payload passed to `OCClient.getSurveyInviteLink` in `ChatSDK.getPostChatSurveyContext()`
 
 ### Changed
 
