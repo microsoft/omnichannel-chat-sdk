@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.11.5] - 2025-07-31
+
 ### Fixed
 
 - Fix Error object serialization in ACSAdapterLogger.failScenario() to prevent JSON.stringify errors when ExceptionDetails contains Error instances
