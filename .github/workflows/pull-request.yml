@@ -5,7 +5,7 @@ on:
     branches:
       - '*'
 
-permission:
+permissions:
   contents: read
 
 jobs:
