@@ -46,6 +46,8 @@ enum TelemetryEvent {
     StartPolling = "StartPolling",
     StopPolling = "StopPolling",
     MessageReceived = "MessageReceived",
+    StartChatCoordinationHold = "StartChatCoordinationHold",
+    EndChatCoordinationHold = "EndChatCoordinationHold",
 }
 
 export default TelemetryEvent;
