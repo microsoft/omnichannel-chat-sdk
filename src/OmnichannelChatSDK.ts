@@ -128,6 +128,10 @@ class OmnichannelChatSDK {
     public localeId: string;
     public requestId: string;
     public sessionId: string | null = null;
+
+    // Operation queue for serializing chat operations
+    private chatOperationInProgress = false;
+    private pendingOperations: Array<() => Promise<void>> = [];
     private unqServicesOrgUrl: string | null = null;
     private coreServicesOrgUrl: string | null = null;
     private dynamicsLocationCode: string | null = null;
@@ -225,6 +229,44 @@ class OmnichannelChatSDK {
         }
 
         loggerUtils.setRequestId(this.requestId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+    }
+
+    /**
+     * Executes an operation with mutual exclusion to prevent race conditions
+     * between startChat and endChat operations
+     */
+    private async executeWithLock<T>(operation: () => Promise<T>): Promise<T> {
+        return new Promise<T>((resolve, reject) => {
+            const wrappedOperation = async () => {
+                try {
+                    const result = await operation();
+                    resolve(result);
+                } catch (error) {
+                    reject(error);
+                } finally {
+                    this.chatOperationInProgress = false;
+                    this.processNextOperation();
+                }
+            };
+
+            if (this.chatOperationInProgress) {
+                this.pendingOperations.push(wrappedOperation);
+            } else {
+                this.chatOperationInProgress = true;
+                wrappedOperation();
+            }
+        });
+    }
+
+    /**
+     * Processes the next pending operation in the queue
+     */
+    private processNextOperation(): void {
+        if (this.pendingOperations.length > 0) {
+            this.chatOperationInProgress = true;
+            const nextOperation = this.pendingOperations.shift()!;
+            nextOperation();
+        }
     }
 
     /**
@@ -643,6 +685,10 @@ class OmnichannelChatSDK {
     }
 
     public async startChat(optionalParams: StartChatOptionalParams = {}): Promise<void> {
+        return this.executeWithLock(() => this.internalStartChat(optionalParams));
+    }
+
+    private async internalStartChat(optionalParams: StartChatOptionalParams = {}): Promise<void> {
         this.scenarioMarker.startScenario(TelemetryEvent.StartChat, {
             RequestId: this.requestId
         });
@@ -993,6 +1039,10 @@ class OmnichannelChatSDK {
     }
 
     public async endChat(endChatOptionalParams: EndChatOptionalParams = {}): Promise<void> {
+        return this.executeWithLock(() => this.internalEndChat(endChatOptionalParams));
+    }
+
+    private async internalEndChat(endChatOptionalParams: EndChatOptionalParams = {}): Promise<void> {
 
         const cleanupMetadata = {
             RequestId: this.requestId,
@@ -2742,7 +2792,7 @@ class OmnichannelChatSDK {
                  * and ensure a retry in startChat won't be affected with
                  * data from a failed session
                  */
-                await this.endChat();
+                await this.internalEndChat();
             } catch (cleanupError) {
                 // Don't let cleanup errors mask the original error
                 this.debug && console.error('Failed to cleanup conversation after join failure:', cleanupError);

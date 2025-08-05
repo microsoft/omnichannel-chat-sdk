@@ -1,5 +1,12 @@
 # GitHub Copilot Instructions for Omnichannel Chat SDK
 
+## Build Process    
+To build the Omnichannel Chat SDK, follow these steps:
+1. **Install Dependencies**: Run `npm install` to install all required dependencies
+2. **Build the SDK**: Run `npm run build:tsc` to build the SDK
+3. **Run Tests**: Execute `npm run test` to run all unit tests and ensure everything is functioning correctly
+4. **Linting**: Run `npm run lint` to check for any code style
+
 ## Pull Request Guidelines
 
 When creating pull requests, follow these guidelines:
