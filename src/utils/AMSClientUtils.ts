@@ -39,8 +39,7 @@ export const regionBasedSupportedUrls = [
 export const regionBasedUrlSupportedVersions = [
     "0.1.8",
     "0.1.9",
-    "0.1.10",
-    "0.1.11"
+    "0.1.10"
 ];
 
 export const isUrlWhitelisted = (url: string) => {
