@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+-  Implement mutex pattern to prevent race conditions between startChat() and endChat() operations that could lead to state corruption
+
+### Changed
+
+- uptake amsclient  "@microsoft/omnichannel-amsclient": "^0.1.11"
+
 ## [1.11.5] - 2025-07-31
 
 ### Fixed
