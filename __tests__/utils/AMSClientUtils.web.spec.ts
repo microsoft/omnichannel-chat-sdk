@@ -89,6 +89,10 @@ describe("AMSClientUtils", () => {
     it("retrieveRegionBasedUrl() should return region based url accordingly", () => {
         for (const url of regionBasedSupportedUrls) {
             const widgetSnippetBaseUrl = url;
+            // Mock the version to be 1.10
+            jest.mock('@microsoft/omnichannel-amsclient/package.json', () => ({
+                version: '0.1.10'
+            }));
             const regionBasedUrl = retrieveRegionBasedUrl(widgetSnippetBaseUrl);
             expect(regionBasedUrl).toBe(`${widgetSnippetBaseUrl}/livechatwidget/v2scripts/ams`);
         }
