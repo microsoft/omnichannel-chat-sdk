@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.11.6] - 2025-08-08
+
 ### Fixed
 
 -  Implement mutex pattern to prevent race conditions between startChat() and endChat() operations that could lead to state corruption
