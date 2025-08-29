@@ -1,13 +1,13 @@
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
-import fetchAuthUrl from '../utils/fetchAuthUrl';
 import fetchTestSettings from '../utils/fetchTestSettings';
 import { test, expect } from '@playwright/test';
 import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
+import fetchAuthToken from '../utils/fetchAuthToken';
 
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('AuthenticatedChatWithTyping');
-const authUrl = fetchAuthUrl('AuthenticatedChatWithTyping');
+const authToken = fetchAuthToken('AuthenticatedChatWithTyping');
 const testSettings = fetchTestSettings('AuthenticatedChatWithTyping');
 
 test.describe('AuthenticatedChat @AuthenticatedChatWithTyping', () => {
@@ -21,7 +21,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithTyping', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.SendTypingIndicatorPath);
             }),
-            await page.evaluate(async ({ omnichannelConfig, authUrl, chatDuration }) => {
+            await page.evaluate(async ({ omnichannelConfig, authToken, chatDuration }) => {
                 const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
@@ -29,11 +29,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithTyping', () => {
                     method: "POST"
                 };
 
-                const response = await fetch(authUrl, payload);
-                const authToken = await response.text();
-
                 const chatSDKConfig = {
-                    getAuthToken: () => authToken
+                    getAuthToken: () => Promise.resolve(authToken),
                 };
 
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);
@@ -53,7 +50,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithTyping', () => {
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, authUrl, chatDuration: testSettings.chatDuration })
+            }, { omnichannelConfig, authToken, chatDuration: testSettings.chatDuration })
         ]);
 
         const { requestId } = runtimeContext;
@@ -67,7 +64,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithTyping', () => {
         await page.goto(testPage);
 
         const [runtimeContext] = await Promise.all([
-            await page.evaluate(async ({ omnichannelConfig, authUrl, chatDuration }) => {
+            await page.evaluate(async ({ omnichannelConfig, authToken, chatDuration }) => {
                 const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
@@ -75,11 +72,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithTyping', () => {
                     method: "POST"
                 };
 
-                const response = await fetch(authUrl, payload);
-                const authToken = await response.text();
-
                 const chatSDKConfig = {
-                    getAuthToken: () => authToken
+                    getAuthToken: () => Promise.resolve(authToken),
                 };
 
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);
@@ -108,7 +102,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithTyping', () => {
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, authUrl, chatDuration: testSettings.chatDuration })
+            }, { omnichannelConfig, authToken, chatDuration: testSettings.chatDuration })
         ]);
 
         expect(runtimeContext?.errorMessage).not.toBeDefined();

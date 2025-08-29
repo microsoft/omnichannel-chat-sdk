@@ -1,13 +1,13 @@
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
-import fetchAuthUrl from '../utils/fetchAuthUrl';
 import fetchTestSettings from '../utils/fetchTestSettings';
 import { test, expect } from '@playwright/test';
 import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
+import fetchAuthToken from '../utils/fetchAuthToken';
 
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('AuthenticatedChatWithPrechat');
-const authUrl = fetchAuthUrl('AuthenticatedChatWithPrechat');
+const authToken = fetchAuthToken('AuthenticatedChatWithPrechat');
 const testSettings = fetchTestSettings('AuthenticatedChatWithPrechat');
 
 test.describe('AuthenticatedChat @AuthenticatedChatWithPrechat', () => {
@@ -28,7 +28,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPrechat', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatAuthSessionInitPath);
             }),
-            await page.evaluate(async ({ omnichannelConfig, optionalParams, authUrl, chatDuration }) => {
+            await page.evaluate(async ({ omnichannelConfig, optionalParams, authToken, chatDuration }) => {
                 const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
@@ -36,11 +36,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPrechat', () => {
                     method: "POST"
                 };
 
-                const response = await fetch(authUrl, payload);
-                const authToken = await response.text();
-
                 const chatSDKConfig = {
-                    getAuthToken: () => authToken,
+                    getAuthToken: () => Promise.resolve(authToken),
                     useCreateConversation: {
                         disable: true,
                     }
@@ -66,7 +63,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPrechat', () => {
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, optionalParams, authUrl, chatDuration: testSettings.chatDuration })
+            }, { omnichannelConfig, optionalParams, authToken, chatDuration: testSettings.chatDuration })
         ]);
 
         const { requestId } = runtimeContext;
