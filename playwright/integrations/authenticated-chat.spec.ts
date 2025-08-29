@@ -1,6 +1,6 @@
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
-import fetchAuthUrl from '../utils/fetchAuthUrl';
+import fetchAuthToken from '../utils/fetchAuthToken';
 import fetchTestSettings from '../utils/fetchTestSettings';
 import { test, expect } from '@playwright/test';
 import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
@@ -8,11 +8,11 @@ import ResponseStatusCodes from '../utils/ResponseStatusCodes';
 
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('AuthenticatedChat');
-const authUrl = fetchAuthUrl('AuthenticatedChat');
+const authToken = fetchAuthToken('AuthenticatedChat');
 const testSettings = fetchTestSettings('AuthenticatedChat');
 
 test.describe('AuthenticatedChat @AuthenticatedChat', () => {
-    test('ChatSDK.startChat() should fetch the chat token & perform session init', async ({ page }) => {
+    test.only('ChatSDK.startChat() should fetch the chat token & perform session init', async ({ page }) => {
         await page.goto(testPage);
 
         const [chatTokenRequest, chatTokenResponse, sessionInitRequest, sessionInitResponse, runtimeContext] = await Promise.all([
@@ -28,7 +28,7 @@ test.describe('AuthenticatedChat @AuthenticatedChat', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatAuthSessionInitPath);
             }),
-            await page.evaluate(async ({ omnichannelConfig, authUrl, chatDuration }) => {
+            await page.evaluate(async ({ omnichannelConfig, authToken, chatDuration }) => {
                 const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
@@ -36,11 +36,8 @@ test.describe('AuthenticatedChat @AuthenticatedChat', () => {
                     method: "POST"
                 };
 
-                const response = await fetch(authUrl, payload);
-                const authToken = await response.text();
-
                 const chatSDKConfig = {
-                    getAuthToken: () => authToken,
+                    getAuthToken: () => Promise.resolve(authToken),
                     useCreateConversation: {
                         disable: true,
                     }
@@ -63,10 +60,10 @@ test.describe('AuthenticatedChat @AuthenticatedChat', () => {
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, authUrl, chatDuration: testSettings.chatDuration })
+            }, { omnichannelConfig, authToken, chatDuration: testSettings.chatDuration })
         ]);
 
-        const { requestId, authToken } = runtimeContext;
+        const { requestId, authToken: token } = runtimeContext;
         const chatTokenRequestUrl = `${runtimeContext.orgUrl}/${OmnichannelEndpoints.LiveChatv2AuthGetChatTokenPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
         const sessionInitRequestUrl = `${runtimeContext.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
 
@@ -74,10 +71,10 @@ test.describe('AuthenticatedChat @AuthenticatedChat', () => {
         const sessionInitRequestHeaders = sessionInitRequest.headers();
 
         expect(chatTokenRequest.url() === chatTokenRequestUrl).toBe(true);
-        expect(chatTokenRequestHeaders['authenticatedusertoken']).toBe(authToken);
+        expect(chatTokenRequestHeaders['authenticatedusertoken']).toBe(token);
         expect(chatTokenResponse.status()).toBe(200);
         expect(sessionInitRequest.url() === sessionInitRequestUrl).toBe(true);
-        expect(sessionInitRequestHeaders['authenticatedusertoken']).toBe(authToken);
+        expect(sessionInitRequestHeaders['authenticatedusertoken']).toBe(token);
         expect(sessionInitResponse.status()).toBe(200);
     });
 
