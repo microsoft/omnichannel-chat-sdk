@@ -12,7 +12,7 @@ const authToken = fetchAuthToken('AuthenticatedChat');
 const testSettings = fetchTestSettings('AuthenticatedChat');
 
 test.describe('AuthenticatedChat @AuthenticatedChat', () => {
-    test('ChatSDK.startChat() should fetch the chat token & perform session init', async ({ page }) => {
+    test.only('ChatSDK.startChat() should fetch the chat token & perform session init', async ({ page }) => {
         await page.goto(testPage);
 
         const [chatTokenRequest, chatTokenResponse, sessionInitRequest, sessionInitResponse, runtimeContext] = await Promise.all([
