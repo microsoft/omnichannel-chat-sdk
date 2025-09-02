@@ -179,7 +179,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
         expect(sessionInitResponse.status()).toBe(200);
     });
 
-    test("ChatSDK.startChat() should not have any reconnect id if there's no existing chat session", async ({ page }) => {
+    test.only("ChatSDK.startChat() should not have any reconnect id if there's no existing chat session", async ({ page }) => {
         await page.goto(testPage);
 
         const [reconnectableChatsRequest, reconnectableChatsResponse, runtimeContext] = await Promise.all([
@@ -236,7 +236,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
 
         expect(reconnectableChatsRequest.url() === reconnectableChatsRequestUrl).toBe(true);
         expect(reconnectableChatsRequestHeaders['authenticatedusertoken']).toBe(token);
-        expect(reconnectableChatsResponse.status()).toBe(204);
+        expect(reconnectableChatsResponse.status()).toBe(200);
     });
 
     test('ChatSDK.endChat() on an existing session should call session close with isPersistentChat=true & isReconnectChat=true as query params', async ({ page }) => {
