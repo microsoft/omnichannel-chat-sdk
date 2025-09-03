@@ -90,6 +90,7 @@ test.describe('AuthenticatedChat @AuthenticatedChat', () => {
 
         const [_, liveWorkItemDetailsRequest, liveWorkItemDetailsResponse, liveChatMapRecordRequest, liveChatMapRecordResponse, runtimeContext] = await Promise.all([
             await page.evaluate(async ({ omnichannelConfig, authToken }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
                 const payload = {
@@ -108,6 +109,7 @@ test.describe('AuthenticatedChat @AuthenticatedChat', () => {
                 await chatSDK.initialize();
 
                 await chatSDK.startChat();
+                await sleep(3000);
 
                 const liveChatContext = await chatSDK.getCurrentLiveChatContext();
 
@@ -160,7 +162,7 @@ test.describe('AuthenticatedChat @AuthenticatedChat', () => {
                     runtimeContext.errorMessage = `${err.message}`;
                 }
 
-                await sleep(chatDuration);
+                await sleep(8000);
 
                 await chatSDK.endChat();
 

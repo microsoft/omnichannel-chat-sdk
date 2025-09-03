@@ -220,6 +220,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
                 };
 
                 await chatSDK.startChat();
+                await sleep(3000);
 
                 await sleep(chatDuration);
 
@@ -231,6 +232,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
 
         const { authToken:token, requestId } = runtimeContext;
         const reconnectableChatsRequestUrl = `${runtimeContext.orgUrl}/${OmnichannelEndpoints.LiveChatAuthReconnectableChats}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
+        console.log(reconnectableChatsRequestUrl);
+        console.log(reconnectableChatsResponse.status());
 
         const reconnectableChatsRequestHeaders = reconnectableChatsRequest.headers();
 

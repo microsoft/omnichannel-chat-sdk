@@ -284,7 +284,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 });
 
                 await chatSDK.initialize();
-
+                
                 runtimeContext.runtimeIdSecondSession = chatSDK.runtimeId;
                 runtimeContext.requestIdSecondSession = chatSDK.requestId;
 
@@ -294,7 +294,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                     runtimeContext.errorMessage = `${err.message}`;
                 }
 
-                await sleep(chatDuration);
+                await sleep(8000);
 
                 await chatSDK.endChat();
 
