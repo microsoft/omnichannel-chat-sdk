@@ -78,7 +78,7 @@ test.describe('AuthenticatedChat @AuthenticatedChat', () => {
         expect(sessionInitResponse.status()).toBe(200);
     });
 
-    test.only('ChatSDK.startChat() with liveChatContext should not perform session init & validate the live work item details & validate auth map record', async ({ page }) => {
+    test('ChatSDK.startChat() with liveChatContext should not perform session init & validate the live work item details & validate auth map record', async ({ page }) => {
         await page.goto(testPage);
 
         const requestUrls = [];
@@ -133,6 +133,7 @@ test.describe('AuthenticatedChat @AuthenticatedChat', () => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatAuthChatMapRecord);
             }),
             await page.evaluate(async ({ omnichannelConfig, authToken, chatDuration }) => {
+                await chatDuration;
                 const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK, runtimeContext } = window;
 
