@@ -1697,53 +1697,24 @@ class OmnichannelChatSDK {
         if (!this.isInitialized) {
             exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.OnAgentEndSession);
         }
+        try {
+            (this.conversation as ACSConversation).registerOnThreadUpdate(async (event: ParticipantsRemovedEvent) => {
+                const liveWorkItemDetails = await this.getConversationDetails();
+                if (Object.keys(liveWorkItemDetails).length === 0 || liveWorkItemDetails.state == LiveWorkItemState.WrapUp || liveWorkItemDetails.state == LiveWorkItemState.Closed) {
+                    onAgentEndSessionCallback(event);
+                    this.stopPolling();
+                }
+            });
 
-        if (this.liveChatVersion === LiveChatVersion.V2) {
-            try {
-                (this.conversation as ACSConversation).registerOnThreadUpdate(async (event: ParticipantsRemovedEvent) => {
-                    const liveWorkItemDetails = await this.getConversationDetails();
-                    if (Object.keys(liveWorkItemDetails).length === 0 || liveWorkItemDetails.state == LiveWorkItemState.WrapUp || liveWorkItemDetails.state == LiveWorkItemState.Closed) {
-                        onAgentEndSessionCallback(event);
-                        this.stopPolling();
-                    }
-                });
-
-                this.scenarioMarker.completeScenario(TelemetryEvent.OnAgentEndSession, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-            } catch (error) {
-                this.scenarioMarker.failScenario(TelemetryEvent.OnAgentEndSession, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-            }
-        } else {
-            try {
-                this.conversation?.registerOnThreadUpdate((message: IRawThread) => {
-                    const { members } = message;
-
-                    // Agent ending conversation would have 1 member left in the chat thread
-                    if (members.length === 1) {
-                        onAgentEndSessionCallback(message);
-
-                        if (this.refreshTokenTimer !== null) {
-                            clearInterval(this.refreshTokenTimer);
-                            this.refreshTokenTimer = null;
-                        }
-                    }
-                });
-                this.scenarioMarker.completeScenario(TelemetryEvent.OnAgentEndSession, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-
-            } catch (error) {
-                this.scenarioMarker.failScenario(TelemetryEvent.OnAgentEndSession, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-            }
+            this.scenarioMarker.completeScenario(TelemetryEvent.OnAgentEndSession, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
+        } catch (error) {
+            this.scenarioMarker.failScenario(TelemetryEvent.OnAgentEndSession, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
         }
     }
 
