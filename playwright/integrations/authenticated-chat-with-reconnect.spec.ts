@@ -344,6 +344,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
 
         const [_, liveWorkItemDetailsRequest, liveWorkItemDetailsResponse, runtimeContext] = await Promise.all([
             await page.evaluate(async ({ omnichannelConfig, authToken }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
                 const payload = {
                     method: "POST"
@@ -360,6 +361,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
                 await chatSDK.initialize();
 
                 await chatSDK.startChat();
+                await sleep(3000); // wait to get conversation details
             }, { omnichannelConfig, authToken }),
             page.waitForRequest(request => {
                 return request.url().includes(OmnichannelEndpoints.LiveChatAuthLiveWorkItemDetailsPath);
@@ -417,6 +419,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
 
         const [_, invalidLiveWorkItemDetailsRequest, invalidLiveWorkItemDetailsResponse, __, liveChatContextLiveWorkItemDetailsRequest, liveChatContextLiveWorkItemDetailsResponse, runtimeContext] = await Promise.all([
             await page.evaluate(async ({ omnichannelConfig, authToken }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
                 const payload = {
                     method: "POST"
@@ -431,8 +434,10 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithChatReconnect', () => {
 
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);
                 await chatSDK.initialize();
+                await sleep(3000);
 
                 await chatSDK.startChat();
+                await sleep(3000);
 
                 const runtimeContext = {
                     orgUrl: chatSDK.omnichannelConfig.orgUrl,

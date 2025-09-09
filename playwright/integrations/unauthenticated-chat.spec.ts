@@ -764,6 +764,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 await chatSDK.initialize();
 
                 await chatSDK.startChat();
+                await sleep(3000); // wait to get conversation details
 
                 const liveChatContext = await chatSDK.getCurrentLiveChatContext();
 
