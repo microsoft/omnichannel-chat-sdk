@@ -242,6 +242,7 @@ test.describe('AuthenticatedChat @AuthenticatedChat', () => {
     });
 
     test('ChatSDK.getConversationDetails() should not fail', async ({ page }) => {
+        
         await page.goto(testPage);
 
         const [liveWorkItemDetailsRequest, liveWorkItemDetailsResponse, runtimeContext] = await Promise.all([
@@ -251,33 +252,45 @@ test.describe('AuthenticatedChat @AuthenticatedChat', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatAuthLiveWorkItemDetailsPath);
             }),
-            await page.evaluate(async ({ omnichannelConfig, authToken }) => {
-                const { OmnichannelChatSDK_1: OmnichannelChatSDK, sleep } = window;
-                const payload = {
-                    method: "POST"
-                };
+            page.evaluate(async ({ omnichannelConfig, authToken }) => {
+                try {
+                    const { OmnichannelChatSDK_1: OmnichannelChatSDK, sleep } = window;
+                    const payload = {
+                        method: "POST"
+                    };
 
-                const chatSDKConfig = {
-                    getAuthToken: () => Promise.resolve(authToken),
-                };
+                    const chatSDKConfig = {
+                        getAuthToken: () => Promise.resolve(authToken),
+                    };
 
-                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);
-                await chatSDK.initialize();
+                    const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);
+                    await chatSDK.initialize();
+                    await chatSDK.startChat();
 
-                await chatSDK.startChat();
+                    await sleep(4000); // wait to get conversation details
 
-                await sleep(3000); // wait to get conversation details
+                    const conversationDetails = await chatSDK.getConversationDetails();
 
-                const conversationDetails = await chatSDK.getConversationDetails();
+                    const runtimeContext = {
+                        orgUrl: chatSDK.omnichannelConfig.orgUrl,
+                        requestId: chatSDK.requestId,
+                        conversationDetails
+                    };
 
-                const runtimeContext = {
-                    orgUrl: chatSDK.omnichannelConfig.orgUrl,
-                    requestId: chatSDK.requestId,
-                    conversationDetails
-                };
-
-                await chatSDK.endChat();
-                return runtimeContext;
+                    await chatSDK.endChat();
+                    return runtimeContext;
+                } catch (error) {
+                    console.error('ChatSDKError2 caught in page.evaluate:', error);
+                    return {
+                        orgUrl: '',
+                        requestId: '',
+                        conversationDetails: {
+                            state: '',
+                            conversationId: '',
+                            canRenderPostChat: false
+                        }
+                    };
+                }
             }, { omnichannelConfig, authToken }),
         ]);
 
