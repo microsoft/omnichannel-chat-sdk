@@ -45,6 +45,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithAttachments', () => {
                 await chatSDK.initialize();
 
                 await chatSDK.startChat();
+                await sleep(5000);
 
                 const runtimeContext = {
                     requestId: chatSDK.requestId,
