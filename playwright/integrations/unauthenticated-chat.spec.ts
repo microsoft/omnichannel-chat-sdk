@@ -333,7 +333,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 await chatSDK.initialize();
 
                 await chatSDK.startChat();
-                await sleep(3000);
+                await sleep(5000);
 
                 const runtimeContext = {
                     requestId: chatSDK.requestId,
