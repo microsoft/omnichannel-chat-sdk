@@ -39,6 +39,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithTyping', () => {
                 await chatSDK.initialize();
 
                 await chatSDK.startChat();
+                await sleep(4000);
 
                 runtimeContext.orgUrl = chatSDK.omnichannelConfig.orgUrl;
                 runtimeContext.requestId = chatSDK.requestId;

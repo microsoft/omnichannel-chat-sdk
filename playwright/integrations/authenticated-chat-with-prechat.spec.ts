@@ -50,6 +50,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPrechat', () => {
                 await chatSDK.initialize();
 
                 await chatSDK.startChat(optionalParams);
+                await sleep(4000);
 
                 runtimeContext.orgUrl = chatSDK.omnichannelConfig.orgUrl;
                 runtimeContext.requestId = chatSDK.requestId;

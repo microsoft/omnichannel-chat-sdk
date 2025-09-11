@@ -107,6 +107,7 @@ test.describe('@AuthenticatedChat @AuthenticatedChatWithTranscripts', () => {
                 runtimeContext.authToken = authToken;
 
                 await chatSDK.startChat();
+                await sleep(4000);
 
                 const liveChatContext = await chatSDK.getCurrentLiveChatContext();
                 runtimeContext.liveChatContext = liveChatContext;
@@ -170,6 +171,7 @@ test.describe('@AuthenticatedChat @AuthenticatedChatWithTranscripts', () => {
                 runtimeContext.orgUrl = chatSDK.omnichannelConfig.orgUrl;
 
                 await chatSDK.startChat();
+                await sleep(4000);
 
                 runtimeContext.requestId = chatSDK.requestId;
 

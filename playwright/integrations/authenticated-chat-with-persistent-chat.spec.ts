@@ -78,6 +78,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
 
         const [_, reconnectableChatsRequest, reconnectableChatsResponse, chatTokenRequest, chatTokenResponse, sessionInitRequest, sessionInitResponse, runtimeContext] = await Promise.all([
             await page.evaluate(async ({ omnichannelConfig, authToken }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
                 const payload = {
@@ -99,6 +100,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithPersistentChat', () => {
                 await chatSDK.initialize();
 
                 await chatSDK.startChat();
+                await sleep(4000);
             }, { omnichannelConfig, authToken }),
 
             page.waitForRequest(request => {
