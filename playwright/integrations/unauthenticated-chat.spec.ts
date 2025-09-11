@@ -210,6 +210,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 };
 
                 await chatSDK.startChat();
+                await sleep(4000);
 
                 const liveChatContext = await chatSDK.getCurrentLiveChatContext();
 
@@ -778,7 +779,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 await chatSDK.initialize();
 
                 await chatSDK.startChat();
-                await sleep(3000); // wait to get conversation details
+                await sleep(5000); // wait to get conversation details
 
                 const liveChatContext = await chatSDK.getCurrentLiveChatContext();
 
@@ -841,6 +842,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatOrganization);
             }),
             await page.evaluate(async ({ omnichannelConfig }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, {
                     useCreateConversation: {
@@ -856,6 +858,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 };
 
                 await chatSDK.startChat();
+                await sleep(4000);
 
                 await chatSDK.endChat();
 
