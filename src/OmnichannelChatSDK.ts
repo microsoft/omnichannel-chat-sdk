@@ -2829,7 +2829,6 @@ class OmnichannelChatSDK {
             exceptionThrowers.throwPersistentChatConversationRetrievalFailure(error, this.scenarioMarker, TelemetryEvent.GetPersistentChatHistory, telemetryData);
         }
 
-        return {} as GetPersistentChatHistoryResponse;
     }
 }
 
