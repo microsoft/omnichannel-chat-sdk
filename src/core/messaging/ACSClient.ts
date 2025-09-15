@@ -2,6 +2,7 @@ import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "
 import { ChatClient, ChatMessage, ChatParticipant, ChatThreadClient } from "@azure/communication-chat";
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
 import { MessagePrinterFactory, PrinterType } from "../../utils/printers/MessagePrinterFactory";
+import { isReactNative } from "../../utils/platform";
 
 import ACSChatMessageType from "./ACSChatMessageType";
 import ACSClientConfig from "./ACSClientConfig";
@@ -44,6 +45,25 @@ export interface ParticipantMapping {
 
 function* nextDelay() {
     yield* [1000, 1000, 2000, 3000, 5000, 8000, 10000];
+}
+
+/**
+ * Ensures React Native environment is properly set up for Azure Communication Services detection.
+ * This is needed because the Azure library checks for React Native environment during ChatClient construction,
+ * and if the navigator global is not properly available, it will default to Node.js mode and not support realtime notifications.
+ */
+function ensureReactNativeEnvironment(): void {
+    if (isReactNative()) {
+        if (typeof navigator !== 'undefined' && navigator.product !== 'ReactNative') {
+            // This should not happen, but we add it as a safety measure
+            (navigator as any).product = 'ReactNative'; // eslint-disable-line @typescript-eslint/no-explicit-any
+        }
+
+        // For environments where navigator might not be immediately available
+        if (typeof navigator === 'undefined' && typeof global !== 'undefined') {
+            (global as any).navigator = { product: 'ReactNative' }; // eslint-disable-line @typescript-eslint/no-explicit-any
+        }
+    }
 }
 export class ACSConversation {
     private logger: ACSClientLogger | null = null;
@@ -489,6 +509,9 @@ class ACSClient {
         }
 
         try {
+            // Ensure React Native environment is properly detected by Azure Communication Services
+            ensureReactNativeEnvironment();
+
             this.chatClient = new ChatClient(acsClientConfig.environmentUrl, this.tokenCredential);
         } catch (error) {
             const exceptionDetails = {

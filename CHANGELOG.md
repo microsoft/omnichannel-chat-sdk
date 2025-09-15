@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- Fixed React Native callback execution issue where `onAgentEndSession` and typing indicator callbacks were not executing due to improper platform detection in Azure Communication Services
 
 ### Changed
 - Parallelize survey invite link requests in getPostChatSurveyContext method for improved performance
