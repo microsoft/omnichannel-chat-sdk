@@ -2780,7 +2780,7 @@ class OmnichannelChatSDK {
      * @param requestId Optional request id.
      * @param getPersistentChatHistoryOptionalParams Optional parameters for persistent chat history retrieval.
      */
-    public async getPersistentChatHistory(getPersistentChatHistoryOptionalParams: GetPersistentChatHistoryOptionalParams = {}): Promise<GetPersistentChatHistoryResponse> {
+    public async getPersistentChatHistory(getPersistentChatHistoryOptionalParams: GetPersistentChatHistoryOptionalParams = {}): Promise<GetPersistentChatHistoryResponse | undefined> {
 
         if (!this.requestId) {
             this.requestId = uuidv4();
