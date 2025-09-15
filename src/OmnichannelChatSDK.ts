@@ -3,7 +3,7 @@
 import { ACSAdapterLogger, ACSClientLogger, AMSClientLogger, CallingSDKLogger, IC3ClientLogger, OCSDKLogger, createACSAdapterLogger, createACSClientLogger, createAMSClientLogger, createCallingSDKLogger, createIC3ClientLogger, createOCSDKLogger } from "./utils/loggers";
 import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
 import { AmsClient, ChatWidgetLanguage, DataMaskingInfo, LiveWSAndLiveChatEngJoin, VoiceVideoCallingOptionalParams } from "./types/config";
-import { ChatAdapter, GetAgentAvailabilityResponse, GetCurrentLiveChatContextResponse, GetLiveChatTranscriptResponse, GetMessagesResponse, GetPreChatSurveyResponse, GetVoiceVideoCallingResponse, MaskingRule, MaskingRules, UploadFileAttachmentResponse } from "./types/response";
+import { ChatAdapter, GetAgentAvailabilityResponse, GetCurrentLiveChatContextResponse, GetLiveChatTranscriptResponse, GetMessagesResponse, GetPersistentChatHistoryResponse, GetPreChatSurveyResponse, GetVoiceVideoCallingResponse, MaskingRule, MaskingRules, UploadFileAttachmentResponse } from "./types/response";
 import { ChatClient, ChatMessage } from "@azure/communication-chat";
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import { ChatSDKError, ChatSDKErrorName } from "./core/ChatSDKError";
@@ -49,6 +49,7 @@ import GetChatTokenOptionalParams from "./core/GetChatTokenOptionalParams";
 import GetConversationDetailsOptionalParams from "./core/GetConversationDetailsOptionalParams";
 import GetLiveChatConfigOptionalParams from "./core/GetLiveChatConfigOptionalParams";
 import GetLiveChatTranscriptOptionalParams from "./core/GetLiveChatTranscriptOptionalParams";
+import GetPersistentChatHistoryOptionalParams from "./core/GetPersistentChatHistoryOptionalParams";
 import HostType from "@microsoft/omnichannel-ic3core/lib/interfaces/HostType";
 import { SDKProvider as IC3SDKProvider } from '@microsoft/omnichannel-ic3core';
 import IChatToken from "./external/IC3Adapter/IChatToken";
@@ -168,6 +169,7 @@ class OmnichannelChatSDK {
     private detailedDebugEnabled = false;
 
     constructor(omnichannelConfig: OmnichannelConfig, chatSDKConfig: ChatSDKConfig = defaultChatSDKConfig) {
+        console.log("SDK :: Config ::", { omnichannelConfig, chatSDKConfig });
         this.debug = false;
         this.debugSDK = false;
         this.debugAMS = false;
@@ -2772,6 +2774,70 @@ class OmnichannelChatSDK {
                 this.debug && console.error('Failed to cleanup conversation after join failure:', cleanupError);
             }
         }
+    }
+
+    /**
+     * Get persistent chat history for authenticated users.
+     * @param requestId Optional request id.
+     * @param getPersistentChatHistoryOptionalParams Optional parameters for persistent chat history retrieval.
+     */
+    public async getPersistentChatHistory(getPersistentChatHistoryOptionalParams: GetPersistentChatHistoryOptionalParams = {}): Promise<GetPersistentChatHistoryResponse> {
+
+        if (!this.requestId) {
+            this.requestId = uuidv4();
+        }
+
+        this.scenarioMarker.startScenario(TelemetryEvent.GetPersistentChatHistory, {
+            RequestId: this.requestId
+        });
+
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.GetPersistentChatHistory);
+        }
+
+        console.log("SDK :: Persistent chat history called");
+        console.log("SDK :: isPersistentChat", this.isPersistentChat);
+        console.log("SDK :: chatSDKConfig.persistentChat?.disable", this.chatSDKConfig.persistentChat?.disable);
+
+        if (!this.isPersistentChat || this.chatSDKConfig.persistentChat?.disable === true) {
+            exceptionThrowers.throwNotPersistentChatEnabled(this.scenarioMarker, TelemetryEvent.GetPersistentChatHistory, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string
+            });
+
+        }
+
+        // Prefer provided authenticated user token, otherwise try SDK's stored token
+        if (!this.authenticatedUserToken) {
+            exceptionThrowers.throwChatSDKError(ChatSDKErrorName.AuthenticatedUserTokenNotFound, new Error('Authenticated user token not found'), this.scenarioMarker, TelemetryEvent.GetPersistentChatHistory, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string
+            });
+        }
+
+        try {
+            console.log("LOPEZ :: Persistent chat history called 2");
+
+            getPersistentChatHistoryOptionalParams.authenticatedUserToken = this.authenticatedUserToken as string;
+
+            const result = await this.OCClient.getPersistentChatHistory(this.requestId, getPersistentChatHistoryOptionalParams);
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.GetPersistentChatHistory, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string
+            });
+            console.log('LOPEZ :: Persistent chat history retrieved successfully:', result);
+            return result;
+        } catch (error) {
+            const telemetryData = {
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string
+            };
+
+            exceptionThrowers.throwPersistentChatConversationRetrievalFailure(error, this.scenarioMarker, TelemetryEvent.GetPersistentChatHistory, telemetryData);
+        }
+
+        return {} as GetPersistentChatHistoryResponse;
     }
 }
 
