@@ -169,7 +169,6 @@ class OmnichannelChatSDK {
     private detailedDebugEnabled = false;
 
     constructor(omnichannelConfig: OmnichannelConfig, chatSDKConfig: ChatSDKConfig = defaultChatSDKConfig) {
-        console.log("SDK :: Config ::", { omnichannelConfig, chatSDKConfig });
         this.debug = false;
         this.debugSDK = false;
         this.debugAMS = false;

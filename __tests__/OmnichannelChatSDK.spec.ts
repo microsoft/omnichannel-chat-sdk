@@ -3185,6 +3185,249 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.OCClient.getChatTranscripts.mock.calls[1][2]).not.toBe(chatToken.Token);
         });
 
+        it('ChatSDK.getPersistentChatHistory() should call OCClient.getPersistentChatHistory()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+                persistentChat: {
+                    disable: false
+                }
+            });
+
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            chatSDK["isPersistentChat"] = true;
+            chatSDK.authenticatedUserToken = 'test-auth-token';
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve({
+                ChatId: 124,
+                Token: '',
+                RegionGtms: '{}'
+            }));
+            jest.spyOn(chatSDK.OCClient, 'getPersistentChatHistory').mockResolvedValue(Promise.resolve({
+                chatMessages: [],
+                nextPageToken: null
+            }));
+
+            await chatSDK.getPersistentChatHistory();
+
+            expect(chatSDK.OCClient.getPersistentChatHistory).toHaveBeenCalledTimes(1);
+            expect(chatSDK.OCClient.getPersistentChatHistory.mock.calls[0][0]).toBe(chatSDK.requestId);
+            expect(chatSDK.OCClient.getPersistentChatHistory.mock.calls[0][1]).toMatchObject({
+                authenticatedUserToken: 'test-auth-token'
+            });
+        });
+
+        it('ChatSDK.getPersistentChatHistory() should throw error if SDK is not initialized', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+                persistentChat: {
+                    disable: false
+                }
+            });
+            chatSDK.isPersistentChat = true;
+            chatSDK.authenticatedUserToken = 'test-auth-token';
+
+            try {
+                await chatSDK.getPersistentChatHistory();
+                fail('Exception was expected');
+            } catch (error: any) {
+                expect(error).toBeInstanceOf(ChatSDKError);
+                expect(error.message).toBe(ChatSDKErrorName.UninitializedChatSDK);
+            }
+        });
+
+        it('ChatSDK.getPersistentChatHistory() should throw error if persistent chat is not enabled', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK["isAMSClientAllowed"] = true;
+            chatSDK.authenticatedUserToken = 'test-auth-token';
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            try {
+                await chatSDK.getPersistentChatHistory();
+                fail('Exception was expected');
+            } catch (error: any) {
+                expect(error).toBeInstanceOf(ChatSDKError);
+                expect(error.message).toBe(ChatSDKErrorName.NotPersistentChatEnabled);
+            }
+        });
+
+        it('ChatSDK.getPersistentChatHistory() should throw error if persistent chat is disabled in config', async () => {
+            const chatSDKConfig = {
+                persistentChat: {
+                    disable: true
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK["isAMSClientAllowed"] = true;
+            chatSDK.authenticatedUserToken = 'test-auth-token';
+
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            try {
+                await chatSDK.getPersistentChatHistory();
+                fail('Exception was expected');
+            } catch (error: any) {
+                expect(error).toBeInstanceOf(ChatSDKError);
+                expect(error.message).toBe(ChatSDKErrorName.NotPersistentChatEnabled);
+            }
+        });
+
+        it('ChatSDK.getPersistentChatHistory() should throw error if authenticated user token is not found', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+                persistentChat: {
+                    disable: false
+                }
+            });
+            chatSDK["isAMSClientAllowed"] = true;
+            chatSDK["isPersistentChat"] = true;
+            chatSDK.authenticatedUserToken = undefined;
+
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            try {
+                await chatSDK.getPersistentChatHistory();
+                fail('Exception was expected');
+            } catch (error: any) {
+                expect(error).toBeInstanceOf(ChatSDKError);
+                expect(error.message).toBe(ChatSDKErrorName.AuthenticatedUserTokenNotFound);
+            }
+        });
+
+        it('ChatSDK.getPersistentChatHistory() with optional parameters should pass them to OCClient.getPersistentChatHistory()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+                persistentChat: {
+                    disable: false
+                }
+            });
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            chatSDK["isPersistentChat"] = true;
+
+            chatSDK.authenticatedUserToken = 'test-auth-token';
+
+            await chatSDK.initialize();
+
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve({
+                ChatId: 124,
+                Token: '',
+                RegionGtms: '{}'
+            }));
+            jest.spyOn(chatSDK.OCClient, 'getPersistentChatHistory').mockResolvedValue(Promise.resolve({
+                chatMessages: [],
+                nextPageToken: 'next-page-token'
+            }));
+
+            const optionalParams = {
+                pageSize: 50,
+                pageToken: 'page-token'
+            };
+
+            await chatSDK.getPersistentChatHistory(optionalParams);
+
+            expect(chatSDK.OCClient.getPersistentChatHistory).toHaveBeenCalledTimes(1);
+            expect(chatSDK.OCClient.getPersistentChatHistory.mock.calls[0][0]).toBe(chatSDK.requestId);
+            expect(chatSDK.OCClient.getPersistentChatHistory.mock.calls[0][1]).toMatchObject({
+                authenticatedUserToken: 'test-auth-token',
+                pageSize: 50,
+                pageToken: 'page-token'
+            });
+        });
+
+        it('ChatSDK.getPersistentChatHistory() should handle OCClient.getPersistentChatHistory() failure', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+                persistentChat: {
+                    disable: false
+                }
+            });
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            chatSDK["isPersistentChat"] = true;
+
+            chatSDK.authenticatedUserToken = 'test-auth-token';
+
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve({
+                ChatId: 124,
+                Token: '',
+                RegionGtms: '{}'
+            }));
+            jest.spyOn(chatSDK.OCClient, 'getPersistentChatHistory').mockRejectedValue(new Error('OCClient failure'));
+
+            try {
+                await chatSDK.getPersistentChatHistory();
+                fail('Exception was expected');
+            } catch (error: any) {
+                expect(error).toBeInstanceOf(ChatSDKError);
+                expect(error.message).toBe(ChatSDKErrorName.PersistentChatConversationRetrievalFailure);
+            }
+        });
+
+        it('ChatSDK.getPersistentChatHistory() should generate requestId if not present', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+                persistentChat: {
+                    disable: false
+                }
+            });
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            chatSDK["isPersistentChat"] = true;
+            chatSDK.authenticatedUserToken = 'test-auth-token';
+            chatSDK.requestId = '';
+
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK["isPersistentChat"] = true;
+            await chatSDK.initialize();
+
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve({
+                ChatId: 124,
+                Token: '',
+                RegionGtms: '{}'
+            }));
+            jest.spyOn(chatSDK.OCClient, 'getPersistentChatHistory').mockResolvedValue(Promise.resolve({
+                chatMessages: [],
+                nextPageToken: null
+            }));
+
+            await chatSDK.getPersistentChatHistory();
+
+            expect(chatSDK.requestId).toBeTruthy();
+            expect(chatSDK.requestId).not.toBe('');
+            expect(chatSDK.OCClient.getPersistentChatHistory).toHaveBeenCalledTimes(1);
+            expect(chatSDK.OCClient.getPersistentChatHistory.mock.calls[0][0]).toBe(chatSDK.requestId);
+        });
+
         it('[LiveChatV1] ChatSDK.getIC3Client() should return IC3Core if platform is Node', async () => {
             // eslint-disable-next-line @typescript-eslint/no-var-requires
             const IC3SDKProvider = require('@microsoft/omnichannel-ic3core').SDKProvider;

@@ -5,7 +5,10 @@
 
 import * as settings from '../src/config/settings';
 
+import { ChatSDKError, ChatSDKErrorName } from "../src/core/ChatSDKError";
+
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
+import ConversationMode from '../src/core/ConversationMode';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
@@ -13,6 +16,10 @@ const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 describe('Omnichannel Chat SDK (Node) Parallel initialization', () => {
     (settings as any).ariaTelemetryKey = '';
     AWTLogManager.initialize = jest.fn();
+
+    function fail(message = 'Test Expected to Fail') {
+        throw new Error(message);
+    }
 
     const omnichannelConfig = {
         orgUrl: '[data-org-url]',
@@ -145,6 +152,79 @@ describe('Omnichannel Chat SDK (Node) Parallel initialization', () => {
             console.log(error);
             expect(error.message).toEqual('UnsupportedPlatform');
             expect(console.error).toHaveBeenCalledWith('VoiceVideoCalling is only supported on browser');
+        }
+    });
+
+    it('ChatSDK.getPersistentChatHistory() should work on Node.js platform with parallel initialization', async () => {
+        const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+            persistentChat: { disable: false, tokenUpdateTime: 21600000 }
+        });
+        chatSDK.scenarioMarker = {
+            startScenario: jest.fn(),
+            failScenario: jest.fn(),
+            completeScenario: jest.fn()
+        };
+        chatSDK.getChatConfig = jest.fn();
+        chatSDK["isAMSClientAllowed"] = true;
+        chatSDK.OCClient = {
+            getChatConfig: jest.fn().mockResolvedValue(Promise.resolve({
+                DataMaskingInfo: { setting: { msdyn_maskforcustomer: false } },
+                LiveWSAndLiveChatEngJoin: {
+                    PreChatSurvey: { msdyn_prechatenabled: false },
+                    msdyn_conversationmode: ConversationMode.PersistentChat
+                },
+                LiveChatConfigAuthSettings: {},
+                ChatWidgetLanguage: { msdyn_localeid: '1033' },
+                LiveChatVersion: 2
+            })),
+            getPersistentChatHistory: jest.fn()
+        };
+
+        await chatSDK.initialize({ useParallelLoad: true });
+
+        // Wait for AMSClient to be ready
+        while (chatSDK.AMSClient === null) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        chatSDK.ACSClient.initialize = jest.fn();
+        chatSDK.ACSClient.joinConversation = jest.fn();
+        chatSDK.AMSClient.initialize = jest.fn();
+
+        chatSDK.OCClient.sessionInit = jest.fn();
+        chatSDK.OCClient.createConversation = jest.fn();
+
+        // Set up persistent chat state
+        chatSDK["isPersistentChat"] = true;
+        chatSDK.authenticatedUserToken = 'test-auth-token';
+        chatSDK.chatToken = { chatId: 'test-chat-id' };
+
+        jest.spyOn(chatSDK.OCClient, 'getPersistentChatHistory').mockResolvedValue(Promise.resolve({
+            conversationResponse: []
+        }));
+
+        const result = await chatSDK.getPersistentChatHistory();
+
+        expect(chatSDK.OCClient.getPersistentChatHistory).toHaveBeenCalledTimes(1);
+        expect(result).toEqual({ conversationResponse: [] });
+    });
+
+    it('ChatSDK.getPersistentChatHistory() should throw error if not initialized with parallel load on Node.js', async () => {
+        const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+        chatSDK.scenarioMarker = {
+            startScenario: jest.fn(),
+            failScenario: jest.fn(),
+            completeScenario: jest.fn()
+        };
+
+        // Don't initialize
+        chatSDK.isInitialized = false;
+
+        try {
+            await chatSDK.getPersistentChatHistory();
+            fail("Error expected");
+        } catch (error: any) {
+            expect(error.message).toBe(ChatSDKErrorName.UninitializedChatSDK);
         }
     });
 

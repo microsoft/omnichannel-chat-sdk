@@ -2,6 +2,7 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 
+import { ChatSDKError, ChatSDKErrorName } from "../src/core/ChatSDKError";
 import { GetPreChatSurveyResponse, MaskingRule, MaskingRules } from "../src/types/response";
 import { defaultLocaleId, getLocaleStringFromId } from "../src/utils/locale";
 
@@ -2268,6 +2269,116 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             expect(chatSDK.OCClient.getChatTranscripts.mock.calls[1][0]).not.toBe(chatSDK.requestId);
             expect(chatSDK.OCClient.getChatTranscripts.mock.calls[1][1]).not.toBe(chatToken.ChatId);
             expect(chatSDK.OCClient.getChatTranscripts.mock.calls[1][2]).not.toBe(chatToken.Token);
+        });
+
+        it('ChatSDK.getPersistentChatHistory() should call OCClient.getPersistentChatHistory()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+                persistentChat: {
+                    disable: false,
+                    tokenUpdateTime: 100
+                }
+            });
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            chatSDK["isPersistentChat"] = true;
+            chatSDK.authenticatedUserToken = 'test-auth-token';
+
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize({ useParallelLoad: true });
+            let retryCount = 0;
+            const maxRetries = 3;
+
+            while (chatSDK.AMSClient === null && retryCount < maxRetries) {
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                retryCount++;
+            }
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn(),
+                getPersistentChatHistory: jest.fn()
+            }
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'getPersistentChatHistory').mockResolvedValue(Promise.resolve({
+                chatMessages: [],
+                nextPageToken: null
+            }));
+            
+            await chatSDK.getPersistentChatHistory();
+
+            expect(chatSDK.OCClient.getPersistentChatHistory).toHaveBeenCalledTimes(1);
+            expect(chatSDK.OCClient.getPersistentChatHistory.mock.calls[0][0]).toBe(chatSDK.requestId);
+            expect(chatSDK.OCClient.getPersistentChatHistory.mock.calls[0][1]).toMatchObject({
+                authenticatedUserToken: 'test-auth-token'
+            });
+        });
+
+        it('ChatSDK.getPersistentChatHistory() should throw error if SDK is not initialized', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig , {
+                persistentChat: {
+                    disable: false,
+                    tokenUpdateTime: 100
+                }
+            });
+            chatSDK["isAMSClientAllowed"] = true;
+            chatSDK["isPersistentChat"] = true;
+
+            try {
+                await chatSDK.getPersistentChatHistory();
+                fail('Exception was expected');
+            } catch (error: any) {
+                expect(error).toBeInstanceOf(ChatSDKError);
+                expect(error.message).toBe(ChatSDKErrorName.UninitializedChatSDK);
+            }
+        });
+
+        it('ChatSDK.getPersistentChatHistory() should throw error if persistent chat is not enabled', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK["isAMSClientAllowed"] = true;
+            chatSDK.authenticatedUserToken = 'test-auth-token';
+
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize({ useParallelLoad: true });
+
+            try {
+                await chatSDK.getPersistentChatHistory();
+                fail('Exception was expected');
+            } catch (error: any) {
+                expect(error).toBeInstanceOf(ChatSDKError);
+                expect(error.message).toBe(ChatSDKErrorName.NotPersistentChatEnabled);
+            }
+        });
+
+        it('ChatSDK.getPersistentChatHistory() should throw error if authenticated user token is not found', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+                persistentChat: {
+                    disable: false,
+                    tokenUpdateTime: 100
+                }
+            });
+            chatSDK["isAMSClientAllowed"] = true;
+            chatSDK["isPersistentChat"] = true;
+            chatSDK.authenticatedUserToken = undefined;
+
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize({ useParallelLoad: true });
+
+            try {
+                await chatSDK.getPersistentChatHistory();
+                fail('Exception was expected');
+            } catch (error: any) {
+                expect(error).toBeInstanceOf(ChatSDKError);
+                expect(error.message).toBe(ChatSDKErrorName.AuthenticatedUserTokenNotFound);
+            }
         });
 
         it('ChatSDK.onNewMessage() should call conversation.registerOnNewMessage()', async () => {
