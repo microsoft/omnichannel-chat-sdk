@@ -2795,10 +2795,6 @@ class OmnichannelChatSDK {
             exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.GetPersistentChatHistory);
         }
 
-        console.log("SDK :: Persistent chat history called");
-        console.log("SDK :: isPersistentChat", this.isPersistentChat);
-        console.log("SDK :: chatSDKConfig.persistentChat?.disable", this.chatSDKConfig.persistentChat?.disable);
-
         if (!this.isPersistentChat || this.chatSDKConfig.persistentChat?.disable === true) {
             exceptionThrowers.throwNotPersistentChatEnabled(this.scenarioMarker, TelemetryEvent.GetPersistentChatHistory, {
                 RequestId: this.requestId,
@@ -2816,8 +2812,6 @@ class OmnichannelChatSDK {
         }
 
         try {
-            console.log("LOPEZ :: Persistent chat history called 2");
-
             getPersistentChatHistoryOptionalParams.authenticatedUserToken = this.authenticatedUserToken as string;
 
             const result = await this.OCClient.getPersistentChatHistory(this.requestId, getPersistentChatHistoryOptionalParams);
@@ -2826,7 +2820,6 @@ class OmnichannelChatSDK {
                 RequestId: this.requestId,
                 ChatId: this.chatToken?.chatId as string
             });
-            console.log('LOPEZ :: Persistent chat history retrieved successfully:', result);
             return result;
         } catch (error) {
             const telemetryData = {
