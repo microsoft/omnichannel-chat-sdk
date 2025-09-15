@@ -2802,7 +2802,6 @@ class OmnichannelChatSDK {
 
         }
 
-        // Prefer provided authenticated user token, otherwise try SDK's stored token
         if (!this.authenticatedUserToken) {
             exceptionThrowers.throwChatSDKError(ChatSDKErrorName.AuthenticatedUserTokenNotFound, new Error('Authenticated user token not found'), this.scenarioMarker, TelemetryEvent.GetPersistentChatHistory, {
                 RequestId: this.requestId,
