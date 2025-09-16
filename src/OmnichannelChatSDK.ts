@@ -1797,6 +1797,7 @@ class OmnichannelChatSDK {
                 this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string
+
                 });
             }
 
@@ -2777,7 +2778,6 @@ class OmnichannelChatSDK {
 
     /**
      * Get persistent chat history for authenticated users.
-     * @param requestId Optional request id.
      * @param getPersistentChatHistoryOptionalParams Optional parameters for persistent chat history retrieval.
      */
     public async getPersistentChatHistory(getPersistentChatHistoryOptionalParams: GetPersistentChatHistoryOptionalParams = {}): Promise<GetPersistentChatHistoryResponse | undefined> {
@@ -2810,22 +2810,32 @@ class OmnichannelChatSDK {
         }
 
         try {
-            getPersistentChatHistoryOptionalParams.authenticatedUserToken = this.authenticatedUserToken as string;
 
-            const result = await this.OCClient.getPersistentChatHistory(this.requestId, getPersistentChatHistoryOptionalParams);
+            const result = await this.OCClient.getPersistentChatHistory(this.requestId, {
+                authenticatedUserToken: this.authenticatedUserToken,
+                pageSize: getPersistentChatHistoryOptionalParams?.pageSize || 5,
+                pageToken: getPersistentChatHistoryOptionalParams?.pageToken || ""
+            });
 
             this.scenarioMarker.completeScenario(TelemetryEvent.GetPersistentChatHistory, {
                 RequestId: this.requestId,
                 ChatId: this.chatToken?.chatId as string
             });
+
             return result;
         } catch (error) {
             const telemetryData = {
                 RequestId: this.requestId,
-                ChatId: this.chatToken?.chatId as string
+                ChatId: this.chatToken?.chatId as string,
+                ErrorMessage: (error as Error)?.message || 'Unknown error' // Added error message for better debugging
             };
 
-            exceptionThrowers.throwPersistentChatConversationRetrievalFailure(error, this.scenarioMarker, TelemetryEvent.GetPersistentChatHistory, telemetryData);
+            exceptionThrowers.throwPersistentChatConversationRetrievalFailure(
+                error,
+                this.scenarioMarker,
+                TelemetryEvent.GetPersistentChatHistory,
+                telemetryData
+            );
         }
 
     }
