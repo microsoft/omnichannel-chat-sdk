@@ -2785,7 +2785,6 @@ class OmnichannelChatSDK {
     public async getPersistentChatHistory(getPersistentChatHistoryOptionalParams: GetPersistentChatHistoryOptionalParams = {}): Promise<GetPersistentChatHistoryResponse | undefined> {
 
         if (!this.requestId) {
-            console.log("LOPEZ :: SDK :: Creating new request ID");
             this.requestId = uuidv4();
         }
 
@@ -2802,7 +2801,6 @@ class OmnichannelChatSDK {
                 RequestId: this.requestId,
                 ChatId: this.chatToken?.chatId as string
             });
-
         }
 
         if (!this.authenticatedUserToken) {
@@ -2813,16 +2811,10 @@ class OmnichannelChatSDK {
         }
 
         try {
+            const params: { pageSize?: number | undefined; pageToken?: string | undefined } = {};
 
-            const params: { pageSize?: number; pageToken?: string } = {};
-
-            if (getPersistentChatHistoryOptionalParams.pageSize) {
-                params.pageSize = getPersistentChatHistoryOptionalParams.pageSize;
-            }
-
-            if (getPersistentChatHistoryOptionalParams.pageToken) {
-                params.pageToken = getPersistentChatHistoryOptionalParams.pageToken;
-            }
+            params.pageSize = getPersistentChatHistoryOptionalParams.pageSize || undefined;
+            params.pageToken = getPersistentChatHistoryOptionalParams.pageToken || undefined;
 
             const result = await this.OCClient.getPersistentChatHistory(this.requestId, {
                 ...params,
@@ -2849,7 +2841,6 @@ class OmnichannelChatSDK {
                 telemetryData
             );
         }
-
     }
 }
 

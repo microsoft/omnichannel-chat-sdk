@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
 
 - Parallelize survey invite link requests in getPostChatSurveyContext method for improved performance
 - Remove V1 logic for onAgentEndSession
-- Uptake ocsdk  "@microsoft/omnichannel-sdk": "^0.5.19"
+- Uptake ocsdk  "@microsoft/omnichannel-sdk": "^0.5.20-main.a3b9c5e"
 
 ## [1.11.6] - 2025-08-08
 
