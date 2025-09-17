@@ -14,6 +14,7 @@ import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
 import AriaTelemetry from "../src/telemetry/AriaTelemetry";
 import CallingOptionsOptionSetNumber from "../src/core/CallingOptionsOptionSetNumber";
 import { ChatSDKErrorName } from "../src/core/ChatSDKError";
+import ConversationMode from '../src/core/ConversationMode';
 import WebUtils from "../src/utils/WebUtils";
 import libraries from "../src/utils/libraries";
 import platform from "../src/utils/platform";
@@ -23,6 +24,10 @@ describe('Omnichannel Chat SDK (Web), Sequential', () => {
     (settings as any).ariaTelemetryKey = '';
     (AriaTelemetry as any)._disable = true;
     AWTLogManager.initialize = jest.fn();
+
+    function fail(message = 'Test Expected to Fail') {
+        throw new Error(message);
+    }
 
     const omnichannelConfig = {
         orgUrl: '[data-org-url]',
@@ -188,6 +193,64 @@ describe('Omnichannel Chat SDK (Web), Sequential', () => {
         } catch (error : any ) {
             expect(error.message).toEqual('FeatureDisabled');
             expect(console.error).toHaveBeenCalledWith('Voice and video call is not enabled');
+        }
+    });
+
+    it('ChatSDK.getPersistentChatHistory() should work on Web platform', async () => {
+        const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+            persistentChat: { disable: false, tokenUpdateTime: 21600000 }
+        });
+
+        chatSDK.getChatToken = jest.fn();
+        chatSDK["isAMSClientAllowed"] = true;
+        chatSDK.authenticatedUserToken = 'test-auth-token';
+
+        chatSDK.getChatConfig = jest.fn();
+
+        await chatSDK.initialize();
+
+        chatSDK["isPersistentChat"] = true;
+        chatSDK.chatToken = { chatId: 'test-chat-id' };
+
+        jest.spyOn(chatSDK.OCClient, 'getPersistentChatHistory').mockResolvedValue(Promise.resolve({
+            chatMessages: [],
+            nextPageToken: null
+        }));
+
+        jest.spyOn(platform, 'isNode').mockReturnValue(false);
+        jest.spyOn(platform, 'isReactNative').mockReturnValue(false);
+        jest.spyOn(platform, 'isBrowser').mockReturnValue(true);
+
+        const result = await chatSDK.getPersistentChatHistory();
+
+        expect(chatSDK.OCClient.getPersistentChatHistory).toHaveBeenCalledTimes(1);
+        expect(result).toEqual({ chatMessages: [], nextPageToken: null });
+    });
+
+    it('ChatSDK.getPersistentChatHistory() should throw error if authenticated token is missing on Web', async () => {
+        const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+            persistentChat: { disable: false, tokenUpdateTime: 21600000 }
+        });
+
+        chatSDK.getChatToken = jest.fn();
+        chatSDK["isAMSClientAllowed"] = true;
+        chatSDK.authenticatedUserToken = null; // No auth token
+        chatSDK.getChatConfig = jest.fn();
+
+        await chatSDK.initialize();
+
+        chatSDK["isPersistentChat"] = true;
+        chatSDK.chatToken = { chatId: 'test-chat-id' };
+
+        jest.spyOn(platform, 'isNode').mockReturnValue(false);
+        jest.spyOn(platform, 'isReactNative').mockReturnValue(false);
+        jest.spyOn(platform, 'isBrowser').mockReturnValue(true);
+
+        try {
+            await chatSDK.getPersistentChatHistory();
+            fail("Error expected");
+        } catch (error: any) {
+            expect(error.message).toBe(ChatSDKErrorName.AuthenticatedUserTokenNotFound);
         }
     });
 });

@@ -5,7 +5,10 @@
 
 import * as settings from '../src/config/settings';
 
+import { ChatSDKError, ChatSDKErrorName } from "../src/core/ChatSDKError";
+
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
+import ConversationMode from '../src/core/ConversationMode';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
@@ -13,6 +16,10 @@ const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 describe('Omnichannel Chat SDK (Node), Sequential', () => {
     (settings as any).ariaTelemetryKey = '';
     AWTLogManager.initialize = jest.fn();
+
+    function fail(message = 'Test Expected to Fail') {
+        throw new Error(message);
+    }
 
     const omnichannelConfig = {
         orgUrl: '[data-org-url]',

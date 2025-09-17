@@ -4,15 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Added `ChatSDK.getPersistentChatHistory()` to retrieve persistent chat history for authenticated chats
 
 ### Changed
+
 - Parallelize survey invite link requests in getPostChatSurveyContext method for improved performance
-- Remove V1 logic for onAgentEndSession 
+- Remove V1 logic for onAgentEndSession
+- Uptake ocsdk  "@microsoft/omnichannel-sdk": "^0.5.20-main.a3b9c5e"
+
 ## [1.11.6] - 2025-08-08
 
 ### Fixed
 
--  Implement mutex pattern to prevent race conditions between startChat() and endChat() operations that could lead to state corruption
+- Implement mutex pattern to prevent race conditions between startChat() and endChat() operations that could lead to state corruption
 
 ### Changed
 

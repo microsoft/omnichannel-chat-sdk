@@ -14,6 +14,7 @@ import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
 import AriaTelemetry from "../src/telemetry/AriaTelemetry";
 import CallingOptionsOptionSetNumber from "../src/core/CallingOptionsOptionSetNumber";
 import { ChatSDKErrorName } from "../src/core/ChatSDKError";
+import ConversationMode from '../src/core/ConversationMode';
 import WebUtils from "../src/utils/WebUtils";
 import libraries from "../src/utils/libraries";
 import platform from "../src/utils/platform";
@@ -23,6 +24,10 @@ describe('Omnichannel Chat SDK (Web)', () => {
     (settings as any).ariaTelemetryKey = '';
     (AriaTelemetry as any)._disable = true;
     AWTLogManager.initialize = jest.fn();
+
+    function fail(message = 'Test Expected to Fail') {
+        throw new Error(message);
+    }
 
     const omnichannelConfig = {
         orgUrl: '[data-org-url]',
@@ -205,6 +210,121 @@ describe('Omnichannel Chat SDK (Web)', () => {
         } catch (error : any ) {
             expect(error.message).toEqual('FeatureDisabled');
             expect(console.error).toHaveBeenCalledWith('Voice and video call is not enabled');
+        }
+    });
+
+    it('ChatSDK.getPersistentChatHistory() should work on Web platform with parallel initialization', async () => {
+        const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+            persistentChat: { disable: false, tokenUpdateTime: 21600000 }
+        });
+        chatSDK.scenarioMarker = {
+            startScenario: jest.fn(),
+            failScenario: jest.fn(),
+            completeScenario: jest.fn()
+        };
+        chatSDK.getChatConfig = jest.fn();
+        chatSDK["isAMSClientAllowed"] = true;
+        chatSDK.OCClient = {
+            getChatConfig: jest.fn().mockResolvedValue(Promise.resolve({
+                DataMaskingInfo: { setting: { msdyn_maskforcustomer: false } },
+                LiveWSAndLiveChatEngJoin: { 
+                    PreChatSurvey: { msdyn_prechatenabled: false },
+                    msdyn_conversationmode: ConversationMode.PersistentChat
+                },
+                LiveChatConfigAuthSettings: {},
+                ChatWidgetLanguage: { msdyn_localeid: '1033' },
+                LiveChatVersion: 2
+            })),
+            getPersistentChatHistory: jest.fn()
+        };
+
+        await chatSDK.initialize({ useParallelLoad: true });
+
+        // Wait for AMSClient to be ready
+        while (chatSDK.AMSClient === null) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        chatSDK.ACSClient.initialize = jest.fn();
+        chatSDK.ACSClient.joinConversation = jest.fn();
+        
+        // Wait for AMSClient to be available in parallel initialization or create mock
+        let retryCount = 0;
+        while (!chatSDK.AMSClient && retryCount < 20) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            retryCount++;
+        }
+        
+        // If AMSClient is still not available, create a mock
+        if (!chatSDK.AMSClient) {
+            chatSDK.AMSClient = { initialize: jest.fn() };
+        } else {
+            chatSDK.AMSClient.initialize = jest.fn();
+        }
+
+        // Set up persistent chat state
+        chatSDK["isPersistentChat"] = true;
+        chatSDK.authenticatedUserToken = 'test-auth-token';
+        chatSDK.chatToken = { chatId: 'test-chat-id' };
+
+        jest.spyOn(chatSDK.OCClient, 'getPersistentChatHistory').mockResolvedValue(Promise.resolve({
+            conversationResponse: []
+        }));
+
+        jest.spyOn(platform, 'isNode').mockReturnValue(false);
+        jest.spyOn(platform, 'isReactNative').mockReturnValue(false);
+        jest.spyOn(platform, 'isBrowser').mockReturnValue(true);
+
+        const result = await chatSDK.getPersistentChatHistory();
+
+        expect(chatSDK.OCClient.getPersistentChatHistory).toHaveBeenCalledTimes(1);
+        expect(result).toEqual({ conversationResponse: [] });
+    });
+
+    it('ChatSDK.getPersistentChatHistory() should handle errors properly on Web with parallel initialization', async () => {
+        const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+            persistentChat: { disable: false, tokenUpdateTime: 21600000 }
+        });
+        chatSDK.scenarioMarker = {
+            startScenario: jest.fn(),
+            failScenario: jest.fn(),
+            completeScenario: jest.fn()
+        };
+        chatSDK.getChatConfig = jest.fn();
+        chatSDK["isAMSClientAllowed"] = true;
+        chatSDK.OCClient = {
+            getChatConfig: jest.fn().mockResolvedValue(Promise.resolve({
+                DataMaskingInfo: { setting: { msdyn_maskforcustomer: false } },
+                LiveWSAndLiveChatEngJoin: { 
+                    PreChatSurvey: { msdyn_prechatenabled: false },
+                    msdyn_conversationmode: ConversationMode.PersistentChat
+                },
+                LiveChatConfigAuthSettings: {},
+                ChatWidgetLanguage: { msdyn_localeid: '1033' },
+                LiveChatVersion: 2
+            }))
+        };
+
+        await chatSDK.initialize({ useParallelLoad: true });
+
+        // Wait for AMSClient to be ready
+        while (chatSDK.AMSClient === null) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        // Enable persistent chat flag and set missing auth token
+        chatSDK["isPersistentChat"] = true;
+        chatSDK.authenticatedUserToken = null;
+
+        jest.spyOn(platform, 'isNode').mockReturnValue(false);
+        jest.spyOn(platform, 'isReactNative').mockReturnValue(false);
+        jest.spyOn(platform, 'isBrowser').mockReturnValue(true);
+
+        try {
+            await chatSDK.getPersistentChatHistory();
+            fail("Error expected");
+        } catch (error: any) {
+            expect(error.message).toBe(ChatSDKErrorName.AuthenticatedUserTokenNotFound);
         }
     });
 });
