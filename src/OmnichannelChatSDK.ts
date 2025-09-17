@@ -184,7 +184,6 @@ class OmnichannelChatSDK {
         this.liveChatVersion = LiveChatVersion.V2;
         this.localeId = defaultLocaleId;
 
-        console.log("OmnichannelChatSDK initialized with runtimeId:");
         this.requestId = uuidv4();
         this.chatToken = {};
         this.liveChatConfig = {};
