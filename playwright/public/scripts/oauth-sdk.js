@@ -11,9 +11,9 @@ const run = async () => {
 
     // cpsBotId if needed, add it here 
     const omnichannelConfig = {
-        orgId: "ce4db5f6-1c20-ee11-a66d-000d3a0a02f3",
-        orgUrl: "https://m-ce4db5f6-1c20-ee11-a66d-000d3a0a02f3.ca.omnichannelengagementhub.com",
-        widgetId: "4b537f7e-4df5-481c-b2d9-d543bb7e9d4d"
+        orgId: "",
+        orgUrl: "",
+        widgetId: ""
     };
 
     const defaultChatSDKConfig = {
