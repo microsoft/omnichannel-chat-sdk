@@ -1,4 +1,4 @@
-import { ACSAdapter, ChatAdapter, DirectLineAdapter, GeneralResponse, GetAgentAvailabilityResponse, GetCurrentLiveChatContextResponse, GetLiveChatTranscriptResponse, GetMessagesResponse, GetPreChatSurveyResponse, GetVoiceVideoCallingResponse, IC3Adapter, MaskingRule, MaskingRules, UploadFileAttachmentResponse } from "./types/response";
+import { ACSAdapter, ChatAdapter, DirectLineAdapter, GeneralResponse, GetAgentAvailabilityResponse, GetCurrentLiveChatContextResponse, GetLiveChatTranscriptResponse, GetMessagesResponse, GetPersistentChatHistoryResponse, GetPreChatSurveyResponse, GetVoiceVideoCallingResponse, IC3Adapter, MaskingRule, MaskingRules, UploadFileAttachmentResponse } from "./types/response";
 import { AmsClient, ChatWidgetLanguage, DataMaskingInfo, LiveChatConfig, LiveWSAndLiveChatEngJoin, Setting, VoiceVideoCallingOptionalParams } from "./types/config";
 import { ChatSDKError, ChatSDKErrorName } from "./core/ChatSDKError";
 import {SDKProvider as OCSDKProvider, uuidv4} from "@microsoft/ocsdk";
@@ -47,6 +47,7 @@ export {
     GeneralResponse,
     GetPreChatSurveyResponse,
     GetLiveChatTranscriptResponse,
+    GetPersistentChatHistoryResponse,
     DirectLineAdapter,
     ACSAdapter,
     IC3Adapter,
@@ -55,7 +56,7 @@ export {
     GetVoiceVideoCallingResponse,
     UploadFileAttachmentResponse,
     GetMessagesResponse,
-    GetCurrentLiveChatContextResponse
+    GetCurrentLiveChatContextResponse,
 }
 
 export default {

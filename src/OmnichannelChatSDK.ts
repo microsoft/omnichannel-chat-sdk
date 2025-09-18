@@ -3,7 +3,7 @@
 import { ACSAdapterLogger, ACSClientLogger, AMSClientLogger, CallingSDKLogger, IC3ClientLogger, OCSDKLogger, createACSAdapterLogger, createACSClientLogger, createAMSClientLogger, createCallingSDKLogger, createIC3ClientLogger, createOCSDKLogger } from "./utils/loggers";
 import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
 import { AmsClient, ChatWidgetLanguage, DataMaskingInfo, LiveWSAndLiveChatEngJoin, VoiceVideoCallingOptionalParams } from "./types/config";
-import { ChatAdapter, GetAgentAvailabilityResponse, GetCurrentLiveChatContextResponse, GetLiveChatTranscriptResponse, GetMessagesResponse, GetPreChatSurveyResponse, GetVoiceVideoCallingResponse, MaskingRule, MaskingRules, UploadFileAttachmentResponse } from "./types/response";
+import { ChatAdapter, GetAgentAvailabilityResponse, GetCurrentLiveChatContextResponse, GetLiveChatTranscriptResponse, GetMessagesResponse, GetPersistentChatHistoryResponse, GetPreChatSurveyResponse, GetVoiceVideoCallingResponse, MaskingRule, MaskingRules, UploadFileAttachmentResponse } from "./types/response";
 import { ChatClient, ChatMessage } from "@azure/communication-chat";
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import { ChatSDKError, ChatSDKErrorName } from "./core/ChatSDKError";
@@ -49,6 +49,7 @@ import GetChatTokenOptionalParams from "./core/GetChatTokenOptionalParams";
 import GetConversationDetailsOptionalParams from "./core/GetConversationDetailsOptionalParams";
 import GetLiveChatConfigOptionalParams from "./core/GetLiveChatConfigOptionalParams";
 import GetLiveChatTranscriptOptionalParams from "./core/GetLiveChatTranscriptOptionalParams";
+import GetPersistentChatHistoryOptionalParams from "./core/GetPersistentChatHistoryOptionalParams";
 import HostType from "@microsoft/omnichannel-ic3core/lib/interfaces/HostType";
 import { SDKProvider as IC3SDKProvider } from '@microsoft/omnichannel-ic3core';
 import IChatToken from "./external/IC3Adapter/IChatToken";
@@ -182,6 +183,7 @@ class OmnichannelChatSDK {
         this.isInitialized = false;
         this.liveChatVersion = LiveChatVersion.V2;
         this.localeId = defaultLocaleId;
+
         this.requestId = uuidv4();
         this.chatToken = {};
         this.liveChatConfig = {};
@@ -1697,53 +1699,24 @@ class OmnichannelChatSDK {
         if (!this.isInitialized) {
             exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.OnAgentEndSession);
         }
+        try {
+            (this.conversation as ACSConversation).registerOnThreadUpdate(async (event: ParticipantsRemovedEvent) => {
+                const liveWorkItemDetails = await this.getConversationDetails();
+                if (Object.keys(liveWorkItemDetails).length === 0 || liveWorkItemDetails.state == LiveWorkItemState.WrapUp || liveWorkItemDetails.state == LiveWorkItemState.Closed) {
+                    onAgentEndSessionCallback(event);
+                    this.stopPolling();
+                }
+            });
 
-        if (this.liveChatVersion === LiveChatVersion.V2) {
-            try {
-                (this.conversation as ACSConversation).registerOnThreadUpdate(async (event: ParticipantsRemovedEvent) => {
-                    const liveWorkItemDetails = await this.getConversationDetails();
-                    if (Object.keys(liveWorkItemDetails).length === 0 || liveWorkItemDetails.state == LiveWorkItemState.WrapUp || liveWorkItemDetails.state == LiveWorkItemState.Closed) {
-                        onAgentEndSessionCallback(event);
-                        this.stopPolling();
-                    }
-                });
-
-                this.scenarioMarker.completeScenario(TelemetryEvent.OnAgentEndSession, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-            } catch (error) {
-                this.scenarioMarker.failScenario(TelemetryEvent.OnAgentEndSession, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-            }
-        } else {
-            try {
-                this.conversation?.registerOnThreadUpdate((message: IRawThread) => {
-                    const { members } = message;
-
-                    // Agent ending conversation would have 1 member left in the chat thread
-                    if (members.length === 1) {
-                        onAgentEndSessionCallback(message);
-
-                        if (this.refreshTokenTimer !== null) {
-                            clearInterval(this.refreshTokenTimer);
-                            this.refreshTokenTimer = null;
-                        }
-                    }
-                });
-                this.scenarioMarker.completeScenario(TelemetryEvent.OnAgentEndSession, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-
-            } catch (error) {
-                this.scenarioMarker.failScenario(TelemetryEvent.OnAgentEndSession, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-            }
+            this.scenarioMarker.completeScenario(TelemetryEvent.OnAgentEndSession, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
+        } catch (error) {
+            this.scenarioMarker.failScenario(TelemetryEvent.OnAgentEndSession, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
         }
     }
 
@@ -1825,6 +1798,7 @@ class OmnichannelChatSDK {
                 this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string
+
                 });
             }
 
@@ -2800,6 +2774,71 @@ class OmnichannelChatSDK {
                 // Don't let cleanup errors mask the original error
                 this.debug && console.error('Failed to cleanup conversation after join failure:', cleanupError);
             }
+        }
+    }
+
+    /**
+     * Get persistent chat history for authenticated users.
+     * @param getPersistentChatHistoryOptionalParams Optional parameters for persistent chat history retrieval.
+     */
+    public async getPersistentChatHistory(getPersistentChatHistoryOptionalParams: GetPersistentChatHistoryOptionalParams = {}): Promise<GetPersistentChatHistoryResponse | undefined> {
+
+        if (!this.requestId) {
+            this.requestId = uuidv4();
+        }
+
+        this.scenarioMarker.startScenario(TelemetryEvent.GetPersistentChatHistory, {
+            RequestId: this.requestId
+        });
+
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.GetPersistentChatHistory);
+        }
+
+        if (!this.isPersistentChat || this.chatSDKConfig.persistentChat?.disable === true) {
+            exceptionThrowers.throwNotPersistentChatEnabled(this.scenarioMarker, TelemetryEvent.GetPersistentChatHistory, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string
+            });
+        }
+
+        if (!this.authenticatedUserToken) {
+            exceptionThrowers.throwChatSDKError(ChatSDKErrorName.AuthenticatedUserTokenNotFound, new Error('Authenticated user token not found'), this.scenarioMarker, TelemetryEvent.GetPersistentChatHistory, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string
+            });
+        }
+
+        try {
+            const params: { pageSize?: number | undefined; pageToken?: string | undefined } = {};
+
+            params.pageSize = getPersistentChatHistoryOptionalParams.pageSize || undefined;
+            params.pageToken = getPersistentChatHistoryOptionalParams.pageToken || undefined;
+
+            const result = await this.OCClient.getPersistentChatHistory(this.requestId, {
+                ...params,
+                authenticatedUserToken: this.authenticatedUserToken
+            });
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.GetPersistentChatHistory, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string
+            });
+
+            return result;
+        } catch (error) {
+            const telemetryData = {
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string,
+                ErrorMessage: (error as Error)?.message || 'Unknown error' // Added error message for better debugging
+            };
+
+            exceptionThrowers.throwPersistentChatConversationRetrievalFailure(
+                error,
+                this.scenarioMarker,
+                TelemetryEvent.GetPersistentChatHistory,
+                telemetryData
+            );
         }
     }
 }

@@ -62,6 +62,8 @@ export enum ChatSDKErrorName {
     ChatSDKSendMessageFailed = "ChatSDKSendMessageFailed",
 
     AttachmentClientNotLoaded = "AttachmentClientNotLoaded",
+    NotPersistentChatEnabled = "NotPersistentChatEnabled",
+    AuthenticatedUserTokenNotFound = "AuthenticatedUserTokenNotFound",
 
 }
 
