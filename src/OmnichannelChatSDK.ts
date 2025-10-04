@@ -1429,12 +1429,25 @@ class OmnichannelChatSDK {
         let match;
 
         for (const maskingRule of this.dataMaskingRules.rules) {
-            const regex = new RegExp(maskingRule.regex, 'g');
-            while ((match = regex.exec(content)) !== null) {
-                const replaceStr = match[0].replace(/./g, this.maskingCharacter);
-                content = content.replace(match[0], replaceStr);
+            try {
+                const regex = new RegExp(maskingRule.regex, 'g');
+                let lastIndex = -1;
+                while ((match = regex.exec(content)) !== null) {
+                    // Prevent infinite loop from zero-width matches
+                    if (regex.lastIndex === lastIndex) {
+                        this.debug && console.warn(`[OmnichannelChatSDK][transformMessage] Data masking regex caused zero-width match, skipping rule: ${maskingRule.id}`);
+                        break;
+                    }
+                    lastIndex = regex.lastIndex;
+
+                    const replaceStr = match[0].replace(/./g, this.maskingCharacter);
+                    content = content.replace(match[0], replaceStr);
+                }
+                match = null;
+            } catch (error) {
+                // Log error for invalid regex but continue processing other rules
+                this.debug && console.error(`[OmnichannelChatSDK][transformMessage] Data masking regex failed for rule ${maskingRule.id}: ${error}`);
             }
-            match = null;
         }
         message.content = content;
         return message;

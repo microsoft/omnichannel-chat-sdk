@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed data masking crash when invalid regex patterns or zero-width match patterns are configured
+
 ### Added
 
 - Added `ChatSDK.getPersistentChatHistory()` to retrieve persistent chat history for authenticated chats
