@@ -1465,90 +1465,44 @@ class OmnichannelChatSDK {
 
         this.transformMessage(message);
 
-        if (this.liveChatVersion === LiveChatVersion.V2) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const sendMessageRequest: any = {
-                content: message.content,
-            }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const sendMessageRequest: any = {
+            content: message.content,
+        }
 
-            sendMessageRequest.metadata = {
-                widgetId: this.omnichannelConfig.widgetId,
-                clientMessageId: Date.now().toString()
-            }
+        sendMessageRequest.metadata = {
+            widgetId: this.omnichannelConfig.widgetId,
+            clientMessageId: Date.now().toString()
+        }
 
-            if (message.metadata) {
-                sendMessageRequest.metadata = { ...sendMessageRequest.metadata, ...message.metadata };
-            }
+        if (message.metadata) {
+            sendMessageRequest.metadata = { ...sendMessageRequest.metadata, ...message.metadata };
+        }
 
-            try {
-                const chatMessage = await (this.conversation as ACSConversation)?.sendMessage(sendMessageRequest);
+        try {
+            const chatMessage = await (this.conversation as ACSConversation)?.sendMessage(sendMessageRequest);
 
-                this.scenarioMarker.completeScenario(TelemetryEvent.SendMessages, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
+            this.scenarioMarker.completeScenario(TelemetryEvent.SendMessages, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
 
-                return chatMessage;
-            } catch (error) {
-                const exceptionDetails: ChatSDKExceptionDetails = {
-                    response: ChatSDKErrorName.ChatSDKSendMessageFailed,
-                    errorObject: `${error}`
-                };
-                this.scenarioMarker.failScenario(TelemetryEvent.SendMessages, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: JSON.stringify(exceptionDetails)
-                });
-
-                throw new ChatSDKError(ChatSDKErrorName.ChatSDKSendMessageFailed, undefined, {
-                    response: ChatSDKErrorName.ChatSDKSendMessageFailed,
-                    errorObject: `${error}`
-                });
-            }
-        } else {
-            const messageToSend: IRawMessage = {
-                content: message.content,
-                timestamp: new Date(),
-                contentType: MessageContentType.Text,
-                deliveryMode: DeliveryMode.Bridged,
-                messageType: MessageType.UserMessage,
-                properties: undefined,
-                tags: [...defaultMessageTags],
-                sender: {
-                    displayName: "Customer",
-                    id: "customer",
-                    type: PersonType.User
-                }
+            return chatMessage;
+        } catch (error) {
+            const exceptionDetails: ChatSDKExceptionDetails = {
+                response: ChatSDKErrorName.ChatSDKSendMessageFailed,
+                errorObject: `${error}`
             };
+            this.scenarioMarker.failScenario(TelemetryEvent.SendMessages, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string,
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
 
-            if (message.tags) {
-                messageToSend.tags = message.tags;
-            }
-
-            if (message.timestamp) {
-                messageToSend.timestamp = message.timestamp;
-            }
-
-            try {
-                await (this.conversation as IConversation).sendMessage(messageToSend);
-
-                this.scenarioMarker.completeScenario(TelemetryEvent.SendMessages, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-            } catch (error) {
-                const exceptionDetails: ChatSDKExceptionDetails = {
-                    response: ChatSDKErrorName.ChatSDKSendMessageFailed,
-                    errorObject: `${error}`
-                };
-                this.scenarioMarker.failScenario(TelemetryEvent.SendMessages, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: JSON.stringify(exceptionDetails)
-                });
-
-                throw new Error(ChatSDKErrorName.ChatSDKSendMessageFailed);
-            }
+            throw new ChatSDKError(ChatSDKErrorName.ChatSDKSendMessageFailed, undefined, {
+                response: ChatSDKErrorName.ChatSDKSendMessageFailed,
+                errorObject: `${error}`
+            });
         }
     }
 
