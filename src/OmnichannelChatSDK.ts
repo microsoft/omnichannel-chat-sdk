@@ -167,6 +167,7 @@ class OmnichannelChatSDK {
     private debugAMS = false;
     private debugACS = false;
     private detailedDebugEnabled = false;
+    private regexCompiledForDataMasking: RegExp[] = [];
 
     constructor(omnichannelConfig: OmnichannelConfig, chatSDKConfig: ChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
@@ -1428,14 +1429,17 @@ class OmnichannelChatSDK {
         let { content } = message;
         let match;
 
-        for (const maskingRule of this.dataMaskingRules.rules) {
+        if(this.regexCompiledForDataMasking.length === 0) {
+            return message;
+        }
+
+        for (const regex of this.regexCompiledForDataMasking) {
             try {
-                const regex = new RegExp(maskingRule.regex, 'g');
                 let lastIndex = -1;
                 while ((match = regex.exec(content)) !== null) {
                     // Prevent infinite loop from zero-width matches
                     if (regex.lastIndex === lastIndex) {
-                        this.debug && console.warn(`[OmnichannelChatSDK][transformMessage] Data masking regex caused zero-width match, skipping rule: ${maskingRule.id}`);
+                        this.debug && console.warn(`[OmnichannelChatSDK][transformMessage] Data masking regex caused zero-width match, skipping rule ${regex}`);
                         break;
                     }
                     lastIndex = regex.lastIndex;
@@ -1446,7 +1450,7 @@ class OmnichannelChatSDK {
                 match = null;
             } catch (error) {
                 // Log error for invalid regex but continue processing other rules
-                this.debug && console.error(`[OmnichannelChatSDK][transformMessage] Data masking regex failed for rule ${maskingRule.id}: ${error}`);
+                this.debug && console.error(`[OmnichannelChatSDK][transformMessage] Data masking regex failed for rule ${regex}: ${error}`);
             }
         }
         message.content = content;
@@ -2470,7 +2474,6 @@ class OmnichannelChatSDK {
     }
 
     private async setDataMaskingConfiguration(dataMaskingConfig: DataMaskingInfo): Promise<void> {
-
         if (dataMaskingConfig.setting.msdyn_maskforcustomer) {
             if (dataMaskingConfig.dataMaskingRules) {
                 for (const [key, value] of Object.entries(dataMaskingConfig.dataMaskingRules)) {
@@ -2479,10 +2482,22 @@ class OmnichannelChatSDK {
                         regex: value
                     } as MaskingRule);
                 }
+                this.compileDataMaskingRegex();
             }
         }
     }
 
+    private compileDataMaskingRegex(): void {
+        this.regexCompiledForDataMasking = [];
+        for (const rule of this.dataMaskingRules.rules) {
+            try {
+                const regex = new RegExp(rule.regex, 'g');
+                this.regexCompiledForDataMasking.push(regex);
+            } catch (e) {
+                console.error(`Error compiling regex for data masking rule id ${rule.id}: ${e}`);
+            }
+        }
+    }
     private async setAuthSettingConfig(authSettings: AuthSettings): Promise<void> {
 
         if (authSettings) {
