@@ -2580,6 +2580,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             };
 
             chatSDK.dataMaskingRules = { rules : [maskingRule] } as MaskingRules;
+            chatSDK['compileDataMaskingRegex']();
 
             const messageToSend = {
                 content: 'Sending my SSN 514-12-3456'
@@ -2800,6 +2801,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             };
 
             chatSDK.dataMaskingRules = { rules : [invalidMaskingRule, validMaskingRule] } as MaskingRules;
+            chatSDK['compileDataMaskingRegex']();
 
             const messageToSend = {
                 content: 'My SSN is 123-45-6789'
@@ -2853,6 +2855,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             };
 
             chatSDK.dataMaskingRules = { rules : [phoneNumberMaskingRule] } as MaskingRules;
+            chatSDK['compileDataMaskingRegex']();
 
             // Test cases for phone numbers that should be masked
             const testCases = [

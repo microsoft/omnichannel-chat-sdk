@@ -1847,6 +1847,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             };
 
             chatSDK.dataMaskingRules = { rules : [maskingRule] } as MaskingRules;
+            chatSDK['compileDataMaskingRegex']();
 
             const messageToSend = {
                 content: 'Sending my SSN 514-12-3456'
@@ -2081,6 +2082,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             ];
 
             chatSDK.dataMaskingRules = { rules : mixedMaskingRules } as MaskingRules;
+            chatSDK['compileDataMaskingRegex']();
 
             const messageToSend = {
                 content: 'My phone is 123-456-789 and I have [unclosed'
