@@ -85,6 +85,12 @@ interface OmnichannelMessage {
         customEventName: string;
         customEventValue: string;
     };
+    citations?: {
+        text: string;
+        "pva:gpt-feedback": string;
+        "feedbackLoop": string;
+        "deliveryMode": string;
+    }
 }
 
 export default OmnichannelMessage;

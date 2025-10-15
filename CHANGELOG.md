@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Added `ChatSDK.getPersistentChatHistory()` to retrieve persistent chat history for authenticated chats
+- Added handling for edited messages in `ChatSDK.onNewMessage()`
+- Added citations metadata to `OmnichannelMessage` for messages containing citations from Copilot
 
 ### Changed
 
