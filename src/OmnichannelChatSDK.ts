@@ -167,6 +167,7 @@ class OmnichannelChatSDK {
     private debugAMS = false;
     private debugACS = false;
     private detailedDebugEnabled = false;
+    private regexCompiledForDataMasking: RegExp[] = [];
 
     constructor(omnichannelConfig: OmnichannelConfig, chatSDKConfig: ChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
@@ -1428,13 +1429,29 @@ class OmnichannelChatSDK {
         let { content } = message;
         let match;
 
-        for (const maskingRule of this.dataMaskingRules.rules) {
-            const regex = new RegExp(maskingRule.regex, 'g');
-            while ((match = regex.exec(content)) !== null) {
-                const replaceStr = match[0].replace(/./g, this.maskingCharacter);
-                content = content.replace(match[0], replaceStr);
+        if(this.regexCompiledForDataMasking.length === 0) {
+            return message;
+        }
+
+        for (const regex of this.regexCompiledForDataMasking) {
+            try {
+                let lastIndex = -1;
+                while ((match = regex.exec(content)) !== null) {
+                    // Prevent infinite loop from zero-width matches
+                    if (regex.lastIndex === lastIndex) {
+                        this.debug && console.warn(`[OmnichannelChatSDK][transformMessage] Data masking regex caused zero-width match, skipping rule ${regex}`);
+                        break;
+                    }
+                    lastIndex = regex.lastIndex;
+
+                    const replaceStr = match[0].replace(/./g, this.maskingCharacter);
+                    content = content.replace(match[0], replaceStr);
+                }
+                match = null;
+            } catch (error) {
+                // Log error for invalid regex but continue processing other rules
+                this.debug && console.error(`[OmnichannelChatSDK][transformMessage] Data masking regex failed for rule ${regex}: ${error}`);
             }
-            match = null;
         }
         message.content = content;
         return message;
@@ -1452,90 +1469,44 @@ class OmnichannelChatSDK {
 
         this.transformMessage(message);
 
-        if (this.liveChatVersion === LiveChatVersion.V2) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const sendMessageRequest: any = {
-                content: message.content,
-            }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const sendMessageRequest: any = {
+            content: message.content,
+        }
 
-            sendMessageRequest.metadata = {
-                widgetId: this.omnichannelConfig.widgetId,
-                clientMessageId: Date.now().toString()
-            }
+        sendMessageRequest.metadata = {
+            widgetId: this.omnichannelConfig.widgetId,
+            clientMessageId: Date.now().toString()
+        }
 
-            if (message.metadata) {
-                sendMessageRequest.metadata = { ...sendMessageRequest.metadata, ...message.metadata };
-            }
+        if (message.metadata) {
+            sendMessageRequest.metadata = { ...sendMessageRequest.metadata, ...message.metadata };
+        }
 
-            try {
-                const chatMessage = await (this.conversation as ACSConversation)?.sendMessage(sendMessageRequest);
+        try {
+            const chatMessage = await (this.conversation as ACSConversation)?.sendMessage(sendMessageRequest);
 
-                this.scenarioMarker.completeScenario(TelemetryEvent.SendMessages, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
+            this.scenarioMarker.completeScenario(TelemetryEvent.SendMessages, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
 
-                return chatMessage;
-            } catch (error) {
-                const exceptionDetails: ChatSDKExceptionDetails = {
-                    response: ChatSDKErrorName.ChatSDKSendMessageFailed,
-                    errorObject: `${error}`
-                };
-                this.scenarioMarker.failScenario(TelemetryEvent.SendMessages, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: JSON.stringify(exceptionDetails)
-                });
-
-                throw new ChatSDKError(ChatSDKErrorName.ChatSDKSendMessageFailed, undefined, {
-                    response: ChatSDKErrorName.ChatSDKSendMessageFailed,
-                    errorObject: `${error}`
-                });
-            }
-        } else {
-            const messageToSend: IRawMessage = {
-                content: message.content,
-                timestamp: new Date(),
-                contentType: MessageContentType.Text,
-                deliveryMode: DeliveryMode.Bridged,
-                messageType: MessageType.UserMessage,
-                properties: undefined,
-                tags: [...defaultMessageTags],
-                sender: {
-                    displayName: "Customer",
-                    id: "customer",
-                    type: PersonType.User
-                }
+            return chatMessage;
+        } catch (error) {
+            const exceptionDetails: ChatSDKExceptionDetails = {
+                response: ChatSDKErrorName.ChatSDKSendMessageFailed,
+                errorObject: `${error}`
             };
+            this.scenarioMarker.failScenario(TelemetryEvent.SendMessages, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string,
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
 
-            if (message.tags) {
-                messageToSend.tags = message.tags;
-            }
-
-            if (message.timestamp) {
-                messageToSend.timestamp = message.timestamp;
-            }
-
-            try {
-                await (this.conversation as IConversation).sendMessage(messageToSend);
-
-                this.scenarioMarker.completeScenario(TelemetryEvent.SendMessages, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-            } catch (error) {
-                const exceptionDetails: ChatSDKExceptionDetails = {
-                    response: ChatSDKErrorName.ChatSDKSendMessageFailed,
-                    errorObject: `${error}`
-                };
-                this.scenarioMarker.failScenario(TelemetryEvent.SendMessages, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: JSON.stringify(exceptionDetails)
-                });
-
-                throw new Error(ChatSDKErrorName.ChatSDKSendMessageFailed);
-            }
+            throw new ChatSDKError(ChatSDKErrorName.ChatSDKSendMessageFailed, undefined, {
+                response: ChatSDKErrorName.ChatSDKSendMessageFailed,
+                errorObject: `${error}`
+            });
         }
     }
 
@@ -2509,7 +2480,6 @@ class OmnichannelChatSDK {
     }
 
     private async setDataMaskingConfiguration(dataMaskingConfig: DataMaskingInfo): Promise<void> {
-
         if (dataMaskingConfig.setting.msdyn_maskforcustomer) {
             if (dataMaskingConfig.dataMaskingRules) {
                 for (const [key, value] of Object.entries(dataMaskingConfig.dataMaskingRules)) {
@@ -2518,10 +2488,22 @@ class OmnichannelChatSDK {
                         regex: value
                     } as MaskingRule);
                 }
+                this.compileDataMaskingRegex();
             }
         }
     }
 
+    private compileDataMaskingRegex(): void {
+        this.regexCompiledForDataMasking = [];
+        for (const rule of this.dataMaskingRules.rules) {
+            try {
+                const regex = new RegExp(rule.regex, 'g');
+                this.regexCompiledForDataMasking.push(regex);
+            } catch (e) {
+                console.error(`Error compiling regex for data masking rule id ${rule.id}: ${e}`);
+            }
+        }
+    }
     private async setAuthSettingConfig(authSettings: AuthSettings): Promise<void> {
 
         if (authSettings) {
