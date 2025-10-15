@@ -1552,13 +1552,20 @@ class OmnichannelChatSDK {
 
                 (this.conversation as ACSConversation)?.registerOnNewMessage((event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
                     const { id } = event;
+                    const isChatMessageEditedEvent = Object.keys(event).includes("editedOn");
+
+                    console.log("[OmnichannelChatSDK][onNewMessage] New message received", event);
+                    console.log("[OmnichannelChatSDK][onNewMessage] isChatMessageEditedEvent=>", isChatMessageEditedEvent);
+
                     const omnichannelMessage = createOmnichannelMessage(event, {
                         liveChatVersion: this.liveChatVersion,
                         debug: (this.detailedDebugEnabled ? this.debugACS : this.debug),
                     });
 
-                    if (!postedMessages.has(id)) {
+                    // send callback for new messages or edited existent messages
+                    if (!postedMessages.has(id) || isChatMessageEditedEvent) {
                         onNewMessageCallback(omnichannelMessage);
+                        console.log("[OmnichannelChatSDK][onNewMessage] Message posted");
                         postedMessages.add(id);
                     }
                 }, registerOnNewMessageOptionalParams);
@@ -1603,7 +1610,6 @@ class OmnichannelChatSDK {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string
                 });
-
                 throw new Error('SendTypingFailure');
             }
         }

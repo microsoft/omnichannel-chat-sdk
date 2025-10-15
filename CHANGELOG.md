@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added handling for edited messages in `ChatSDK.onNewMessage()`
 - Added `ChatSDK.getPersistentChatHistory()` to retrieve persistent chat history for authenticated chats
 - Added comprehensive V2 sendMessage data masking tests to ensure proper coverage for all masking scenarios
 - Added comprehensive V2 sendMessage data masking tests to parallel initialization test suite for complete test coverage
