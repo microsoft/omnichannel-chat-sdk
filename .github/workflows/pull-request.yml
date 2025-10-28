@@ -32,6 +32,8 @@ jobs:
         run: git fetch origin main:main
       
       - name: Validate using DangerJS
+        env:
+          GITHUB_TOKEN: ${{ secrets.PTOKEN }}
         run: |
           yarn danger ci --dangerfile dangerfile.js --base main
           if [ $? -ne 0 ]; then exit $?; fi
