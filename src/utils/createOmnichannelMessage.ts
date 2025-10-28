@@ -56,7 +56,7 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
                 "pva:gpt-feedback" : metadata["pva:gpt-feedback"],
                 "feedbackLoop" : metadata?.feedbackLoop,
                 "deliveryMode" : metadata?.deliveryMode
-            }
+            };
         }
 
         if (metadata && metadata.amsMetadata && metadata.amsReferences || metadata?.amsreferences) {
