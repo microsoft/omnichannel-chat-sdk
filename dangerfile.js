@@ -16,15 +16,19 @@ const settingsVersion = versionMatch ? versionMatch[1] : null;
 
 // Check if versions match
 if (!settingsVersion) {
-    warn('❌ Could not find omnichannelChatSdkVersion in src/config/settings.ts');
+    const errorMessage = '❌ Could not find omnichannelChatSdkVersion in src/config/settings.ts';
+    console.log('\n' + errorMessage);
+    fail(errorMessage);
 } else if (packageVersion !== settingsVersion) {
-    warn(
+    const errorMessage = 
         `❌ Version mismatch detected!\n\n` +
         `📦 package.json version: ${packageVersion}\n` +
         `⚙️  settings.ts version: ${settingsVersion}\n\n` +
         `🔧 To fix this:\n` +
         `1. Update omnichannelChatSdkVersion in src/config/settings.ts to "${packageVersion}"\n` +
         `2. Commit the change\n\n` +
-        `This ensures bundled environments have the correct version information.`
-    );
+        `This ensures bundled environments have the correct version information.`;
+    
+    console.log('\n' + errorMessage);
+    fail(errorMessage);
 }
