@@ -11,9 +11,9 @@ const run = async () => {
 
     // cpsBotId if needed, add it here 
     const omnichannelConfig = {
-        orgId: "",
-        orgUrl: "",
-        widgetId: ""
+        orgId: "ce4db5f6-1c20-ee11-a66d-000d3a0a02f3",
+        orgUrl: "https://m-ce4db5f6-1c20-ee11-a66d-000d3a0a02f3.ca.omnichannelengagementhub.com",
+        widgetId: "148d0ead-14d2-41ea-bfc9-f4d4287f060c"
     };
 
     const { sleep } = window;
@@ -38,10 +38,11 @@ const run = async () => {
         runtimeContext.errorMessage = `${err.message}`;
         runtimeContext.errorObject = `${err}`;
     }
-    await sleep(30000);
+    await sleep(10000);
 
-    await chatSDK.sendMessage({ "content": "hi" });
-    await sleep(30000);
+    await chatSDK.sendMessage({ "content": "rich media" });
+    await sleep(5000);
+    await chatSDK.sendMessage({ "content": "customization" });
     console.log("*************** ALL MESSAGES ************************");
     console.table(await chatSDK.getMessages());
 
@@ -50,11 +51,11 @@ const run = async () => {
     console.table(messages);
     console.log("*************** ENDING CHAT MID FLY ************************");
 
-    await sleep(10000);
+    await sleep(30000);
     await chatSDK.endChat();
 
 
-    await sleep(60000);
+    await sleep(10000);
     console.log("*************** ALL MESSAGES BEFORE END CHAT ************************");
     console.table(await chatSDK.getMessages());
 

@@ -31,13 +31,8 @@ jobs:
       - name: Fetch base branch
         run: git fetch origin main:main
       
-      - name: Validate using DangerJS
-        env:
-          GITHUB_TOKEN: ${{ secrets.PTOKEN }}
-        run: |
-          yarn danger ci --dangerfile dangerfile.js --base main
-          if [ $? -ne 0 ]; then exit $?; fi
-        shell: bash
+      - name: Validate version consistency
+        run: node scripts/validate-version.js
 
       - name: Run tests
         run: npm run test
