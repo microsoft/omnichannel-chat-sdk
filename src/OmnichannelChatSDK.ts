@@ -108,7 +108,6 @@ import loggerUtils from "./utils/loggerUtils";
 import { parseLowerCaseString } from "./utils/parsers";
 import platform from "./utils/platform";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
-import setOcUserAgent from "./utils/setOcUserAgent";
 import startPolling from "./commands/startPolling";
 import stopPolling from "./commands/stopPolling";
 import urlResolvers from "./utils/urlResolvers";
@@ -459,8 +458,7 @@ class OmnichannelChatSDK {
         const useCoreServices = isCoreServicesOrgUrl(this.omnichannelConfig.orgUrl);
         try {
             this.OCSDKProvider = OCSDKProvider;
-            this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(useCoreServices) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
-            setOcUserAgent(this.OCClient, this.chatSDKConfig?.ocUserAgent);
+            this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(useCoreServices, this.chatSDKConfig?.ocUserAgent) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
         } catch (e) {
             exceptionThrowers.throwOmnichannelClientInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
@@ -534,8 +532,7 @@ class OmnichannelChatSDK {
 
         try {
             this.OCSDKProvider = OCSDKProvider;
-            this.OCClient = OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(useCoreServices) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
-            setOcUserAgent(this.OCClient, this.chatSDKConfig?.ocUserAgent);
+            this.OCClient = OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(useCoreServices, this.chatSDKConfig?.ocUserAgent) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
         } catch (e) {
             exceptionThrowers.throwOmnichannelClientInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeLoadChatConfig);
         }
@@ -2583,6 +2580,7 @@ class OmnichannelChatSDK {
             // Fallback on orgUrl which got converted to Core Services orgUrl
             if (isCoreServicesOrgUrlDNSError(error, this.coreServicesOrgUrl, this.dynamicsLocationCode)) { // eslint-disable-line @typescript-eslint/no-explicit-any
                 this.omnichannelConfig.orgUrl = this.unqServicesOrgUrl as string;
+                console.error("LOPEZ :: FAILING HERE");
                 this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(false) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
                 liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache); // Bubble up error by default to throw ChatConfigRetrievalFailure
             } else {

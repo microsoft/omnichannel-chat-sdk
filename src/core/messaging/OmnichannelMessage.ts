@@ -65,6 +65,7 @@ export class ResourceType {
 }
 
 interface OmnichannelMessage {
+    citations: { Text: string; "pva:gpt-feedback": string; };
     id: string;
     liveChatVersion: LiveChatVersion;
     clientmessageid?: string;

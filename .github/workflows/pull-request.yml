@@ -27,6 +27,19 @@ jobs:
 
       - name: Install packages
         run: npm install
+      
+      - name: Fetch base branch
+        working-directory: chat-widget
+        run: git fetch origin main:main
+      
+      - name: Validate using DangerJS
+        working-directory: chat-widget
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          yarn danger ci --dangerfile dangerfile.js --base main
+          if [ $? -ne 0 ]; then exit $?; fi
+        shell: bash
 
       - name: Run tests
         run: npm run test
