@@ -52,8 +52,10 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
         // extract the additional data from citations references
         if (metadata && metadata["pva:gpt-feedback"]){
             omnichannelMessage.citations = {
-                "Text" : metadata?.Text,
+                "text" : metadata?.Text,
                 "pva:gpt-feedback" : metadata["pva:gpt-feedback"],
+                "feedbackLoop" : metadata?.feedbackLoop,
+                "deliveryMode" : metadata?.deliveryMode
             }
         }
 
