@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+
 ## [Unreleased]
 
 ### Fixed
@@ -13,10 +14,16 @@ All notable changes to this project will be documented in this file.
 - Fixed version information not being passed to backend for React Native and other platforms by implementing robust version detection that works in both development and bundled environments
 
 ### Added
+=======
+- Fixed data masking crash when invalid regex patterns or zero-width match patterns are configured
+
 
 ### Added
 
+- Added handling for edited messages in `ChatSDK.onNewMessage()`
 - Added `ChatSDK.getPersistentChatHistory()` to retrieve persistent chat history for authenticated chats
+- Added comprehensive V2 sendMessage data masking tests to ensure proper coverage for all masking scenarios
+- Added comprehensive V2 sendMessage data masking tests to parallel initialization test suite for complete test coverage
 
 ### Changed
 
