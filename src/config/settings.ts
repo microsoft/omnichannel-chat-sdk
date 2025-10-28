@@ -1,4 +1,4 @@
-const omnichannelChatSdkVersion = '1.11.7-0-LOPEZ';
+const omnichannelChatSdkVersion = '1.11.7-0';
 const ic3ClientVersion = '2021.08.14.1';
 const webChatIC3AdapterVersion = '0.1.0-master.2dba07b';
 const webChatACSAdapterVersion = '0.0.1-beta.5';

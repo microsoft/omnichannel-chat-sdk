@@ -5,9 +5,6 @@ const createOcSDKConfiguration = (useCoreServices: boolean, customUserAgent?: st
     const version = getOmnichannelChatSdkVersion();
     const chatSdkUserAgent = `omnichannel-chat-sdk/${version}`;
 
-    console.log("LOPEZ :: Version ", version);
-    console.log("LOPEZ :: Chat SDK User Agent ", chatSdkUserAgent);
-
     // Combine custom user agents with the chat SDK user agent
     const userAgents = customUserAgent ? [...customUserAgent, chatSdkUserAgent] : [chatSdkUserAgent];
 
