@@ -88,8 +88,8 @@ interface OmnichannelMessage {
     citations?: {
         text: string;
         "pva:gpt-feedback": string;
-        "feedbackLoop": string;
-        "deliveryMode": string;
+        "feedbackLoop"?: string;
+        "deliveryMode"?: string;
     }
 }
 
