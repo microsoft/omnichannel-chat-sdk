@@ -6,7 +6,17 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+
+## [Unreleased]
+
+### Fixed
+
+- Fixed version information not being passed to backend for React Native and other platforms by implementing robust version detection that works in both development and bundled environments
+
+### Added
+=======
 - Fixed data masking crash when invalid regex patterns or zero-width match patterns are configured
+
 
 ### Added
 
