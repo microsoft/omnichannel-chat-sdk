@@ -987,8 +987,15 @@ class OmnichannelChatSDK {
 
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
             this.refreshTokenTimer = setInterval(async () => {
-                await this.getChatToken(false);
-                this.updateChatToken(this.chatToken.token as string, this.chatToken.regionGTMS);
+                try {
+                    await this.getChatToken(false);
+                    this.updateChatToken(this.chatToken.token as string, this.chatToken.regionGTMS);
+                } catch (error) {
+                    if (this.refreshTokenTimer !== null) {
+                        clearInterval(this.refreshTokenTimer);
+                        this.refreshTokenTimer = null;
+                    }
+                }
             }, this.chatSDKConfig.persistentChat?.tokenUpdateTime);
         }
     }
