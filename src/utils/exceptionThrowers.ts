@@ -100,6 +100,11 @@ export const throwUninitializedChatSDK = (scenarioMarker: ScenarioMarker, teleme
     throwChatSDKError(ChatSDKErrorName.UninitializedChatSDK, undefined, scenarioMarker, telemetryEvent)
 };
 
+export const throwNotPersistentChatEnabled = (scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
+    const message = `Persistent chat is not enabled for this chat widget`;
+    throwChatSDKError(ChatSDKErrorName.NotPersistentChatEnabled, undefined, scenarioMarker, telemetryEvent, telemetryData, message);
+}
+
 export const throwChatTokenRetrievalFailure = (e: unknown, scenarioMarker: ScenarioMarker, telemetryEvent: TelemetryEvent, telemetryData: {[key: string]: string}): void => {
     throwChatSDKError(ChatSDKErrorName.ChatTokenRetrievalFailure, e, scenarioMarker, telemetryEvent, telemetryData);
 }
@@ -176,5 +181,6 @@ export default {
     throwMessagingClientConversationJoinFailure,
     throwChatAdapterInitializationFailure,
     throwLiveChatTranscriptRetrievalFailure,
-    throwAuthContactIdNotFoundFailure
+    throwAuthContactIdNotFoundFailure,
+    throwNotPersistentChatEnabled
 }

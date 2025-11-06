@@ -2508,179 +2508,6 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.conversation.getMessages).toHaveBeenCalledTimes(1);
         });
 
-        it('[LiveChatV1] ChatSDK.sendMessage() should mask characters if enabled', async () => {
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
-            chatSDK.getChatConfig = jest.fn();
-            chatSDK.getChatToken = jest.fn();
-
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
-
-            await chatSDK.initialize();
-
-            chatSDK.OCClient = {
-                sessionInit: jest.fn(),
-                createConversation: jest.fn()
-            }
-
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                sendMessage: (message: any) => {}
-            }));
-
-            await chatSDK.startChat();
-            jest.spyOn(chatSDK.conversation, 'sendMessage').mockResolvedValue(Promise.resolve());
-
-            chatSDK.chatSDKConfig = {
-                dataMasking: {
-                    disable: false,
-                    maskingCharacter: '#'
-                }
-            }
-
-            const maskingRule : MaskingRule = {
-                id: "SSN",
-                regex : "\\b(?!000|666|9)\\d{3}[- ]?(?!00)\\d{2}[- ]?(?!0000)\\d{4}\\b"
-            };
-
-            chatSDK.dataMaskingRules = { rules : [maskingRule] } as MaskingRules;
-
-            const messageToSend = {
-                content: 'Sending my SSN 514-12-3456'
-            }
-
-            const regex = new RegExp(chatSDK.dataMaskingRules.rules[0].regex as string, 'g');
-
-            let match;
-            let {content} = messageToSend;
-            // eslint-disable-next-line no-cond-assign
-            while (match = regex.exec(content)) {
-                const replaceStr = match[0].replace(/./g, chatSDK.chatSDKConfig.dataMasking.maskingCharacter);
-                content = content.replace(match[0], replaceStr);
-            }
-
-            await chatSDK.sendMessage(messageToSend);
-
-            expect(chatSDK.chatSDKConfig.dataMasking.disable).toBe(false);
-            expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
-            expect((chatSDK.conversation.sendMessage.mock.calls[0][0] as any).content).toBe(content);
-        });
-
-        it('[LiveChatV1] ChatSDK.sendMessage() should NOT mask characters if disabled', async () => {
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
-            chatSDK.getChatConfig = jest.fn();
-            chatSDK.getChatToken = jest.fn();
-
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
-
-            await chatSDK.initialize();
-
-            chatSDK.OCClient = {
-                sessionInit: jest.fn(),
-                createConversation: jest.fn()
-            }
-
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                sendMessage: (message: any) => {}
-            }));
-
-            await chatSDK.startChat();
-            jest.spyOn(chatSDK.conversation, 'sendMessage').mockResolvedValue(Promise.resolve());
-
-            chatSDK.chatSDKConfig = {
-                dataMasking: {
-                    disable: true,
-                    maskingCharacter: '#'
-                }
-            }
-
-            const maskingRule : MaskingRule = {
-                id: "SSN",
-                regex : "\\b(?!000|666|9)\\d{3}[- ]?(?!00)\\d{2}[- ]?(?!0000)\\d{4}\\b"
-            };
-
-            chatSDK.dataMaskingRules = { rules : [maskingRule] } as MaskingRules;
-
-            const messageToSend = {
-                content: 'Sending my SSN 514-12-3456'
-            }
-
-            await chatSDK.sendMessage(messageToSend);
-
-            expect(chatSDK.chatSDKConfig.dataMasking.disable).toBe(true);
-            expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
-            expect((chatSDK.conversation.sendMessage.mock.calls[0][0] as any).content).toBe(messageToSend.content);
-        });
-
-        it('[LiveChatV1] ChatSDK.sendMessage() should send message with custom tags if set', async () => {
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
-            chatSDK.getChatConfig = jest.fn();
-            chatSDK.getChatToken = jest.fn();
-
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
-
-            await chatSDK.initialize();
-
-            chatSDK.OCClient = {
-                sessionInit: jest.fn(),
-                createConversation: jest.fn()
-            }
-
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                sendMessage: (message: any) => {}
-            }));
-
-            await chatSDK.startChat();
-            jest.spyOn(chatSDK.conversation, 'sendMessage').mockResolvedValue(Promise.resolve());
-
-            const messageToSend = {
-                content: 'sample',
-                tags: ['system']
-            }
-
-            await chatSDK.sendMessage(messageToSend);
-            expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
-            expect((chatSDK.conversation.sendMessage.mock.calls[0][0] as any).tags.length).not.toBe(0);
-        });
-
-        it('[LiveChatV1] ChatSDK.sendMessage() should send message with custom timestamp if set', async () => {
-            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
-            chatSDK.getChatConfig = jest.fn();
-            chatSDK.getChatToken = jest.fn();
-
-            chatSDK.liveChatVersion = LiveChatVersion.V1;
-
-            await chatSDK.initialize();
-
-            chatSDK.OCClient = {
-                sessionInit: jest.fn(),
-                createConversation: jest.fn()
-            }
-
-            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                sendMessage: (message: any) => {}
-            }));
-
-            await chatSDK.startChat();
-            jest.spyOn(chatSDK.conversation, 'sendMessage').mockResolvedValue(Promise.resolve());
-
-            const messageToSend = {
-                content: 'sample',
-                timestamp: 'timestamp'
-            }
-
-            await chatSDK.sendMessage(messageToSend);
-            expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            expect((chatSDK.conversation.sendMessage.mock.calls[0][0] as any).timestamp).toEqual(messageToSend.timestamp);
-        });
-
         it('ChatSDK.sendMessage() should call conversation.sendMessage()', async() => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
@@ -2713,6 +2540,390 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             await chatSDK.sendMessage(message);
 
             expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
+        });
+
+        it('[LiveChatV2] ChatSDK.sendMessage() should mask characters if enabled', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn(),
+                sendTypingIndicator: jest.fn()
+            }
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendMessage: jest.fn()
+            }));
+
+            await chatSDK.startChat();
+
+            chatSDK.chatSDKConfig = {
+                dataMasking: {
+                    disable: false,
+                    maskingCharacter: '#'
+                }
+            }
+
+            const maskingRule : MaskingRule = {
+                id: "SSN",
+                regex : "\\b(?!000|666|9)\\d{3}[- ]?(?!00)\\d{2}[- ]?(?!0000)\\d{4}\\b"
+            };
+
+            chatSDK.dataMaskingRules = { rules : [maskingRule] } as MaskingRules;
+            chatSDK['compileDataMaskingRegex']();
+
+            const messageToSend = {
+                content: 'Sending my SSN 514-12-3456'
+            }
+
+            await chatSDK.sendMessage(messageToSend);
+
+            expect(chatSDK.chatSDKConfig.dataMasking.disable).toBe(false);
+            expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
+
+            // Verify the message content was masked
+            const sentMessage = (chatSDK.conversation.sendMessage as jest.Mock).mock.calls[0][0];
+            expect(sentMessage.content).toBe('Sending my SSN ###########');
+        });
+
+        it('[LiveChatV2] ChatSDK.sendMessage() should NOT mask characters if disabled', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn(),
+                sendTypingIndicator: jest.fn()
+            }
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendMessage: jest.fn()
+            }));
+
+            await chatSDK.startChat();
+
+            chatSDK.chatSDKConfig = {
+                dataMasking: {
+                    disable: true,
+                    maskingCharacter: '#'
+                }
+            }
+
+            const maskingRule : MaskingRule = {
+                id: "SSN",
+                regex : "\\b(?!000|666|9)\\d{3}[- ]?(?!00)\\d{2}[- ]?(?!0000)\\d{4}\\b"
+            };
+
+            chatSDK.dataMaskingRules = { rules : [maskingRule] } as MaskingRules;
+
+            const messageToSend = {
+                content: 'Sending my SSN 514-12-3456'
+            }
+
+            await chatSDK.sendMessage(messageToSend);
+
+            expect(chatSDK.chatSDKConfig.dataMasking.disable).toBe(true);
+            expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
+
+            // Verify the message content was NOT masked
+            const sentMessage = (chatSDK.conversation.sendMessage as jest.Mock).mock.calls[0][0];
+            expect(sentMessage.content).toBe(messageToSend.content);
+        });
+
+        it('[LiveChatV2] ChatSDK.sendMessage() should not crash with invalid regex pattern', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn(),
+                sendTypingIndicator: jest.fn()
+            }
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendMessage: jest.fn()
+            }));
+
+            await chatSDK.startChat();
+
+            chatSDK.chatSDKConfig = {
+                dataMasking: {
+                    disable: false,
+                    maskingCharacter: '#'
+                }
+            }
+
+            // Invalid regex with unbalanced brackets
+            const invalidMaskingRule : MaskingRule = {
+                id: "INVALID",
+                regex : "[invalid(regex"
+            };
+
+            chatSDK.dataMaskingRules = { rules : [invalidMaskingRule] } as MaskingRules;
+
+            const messageToSend = {
+                content: 'This is a test message'
+            }
+
+            // Should not throw error, message should be sent unchanged
+            await chatSDK.sendMessage(messageToSend);
+
+            expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
+
+            // Verify the message content was sent unchanged due to invalid regex
+            const sentMessage = (chatSDK.conversation.sendMessage as jest.Mock).mock.calls[0][0];
+            expect(sentMessage.content).toBe(messageToSend.content);
+        });
+
+        it('[LiveChatV2] ChatSDK.sendMessage() should not hang with zero-width match regex', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn(),
+                sendTypingIndicator: jest.fn()
+            }
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendMessage: jest.fn()
+            }));
+
+            await chatSDK.startChat();
+
+            chatSDK.chatSDKConfig = {
+                dataMasking: {
+                    disable: false,
+                    maskingCharacter: '#'
+                }
+            }
+
+            // Regex that matches zero-width (empty string), which would cause infinite loop
+            const zeroWidthMaskingRule : MaskingRule = {
+                id: "ZERO_WIDTH",
+                regex : "a*"  // matches zero or more 'a', including empty string
+            };
+
+            chatSDK.dataMaskingRules = { rules : [zeroWidthMaskingRule] } as MaskingRules;
+
+            const messageToSend = {
+                content: 'This is a test message'
+            }
+
+            // Should not hang, message should be sent (possibly partially masked)
+            await chatSDK.sendMessage(messageToSend);
+
+            expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
+
+            // Should have been called, content may be modified or not depending on the implementation
+            const sentMessage = (chatSDK.conversation.sendMessage as jest.Mock).mock.calls[0][0];
+            expect(sentMessage.content).toBeDefined();
+        });
+
+        it('[LiveChatV2] ChatSDK.sendMessage() should continue masking with valid rules even if one rule is invalid', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn(),
+                sendTypingIndicator: jest.fn()
+            }
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendMessage: jest.fn()
+            }));
+
+            await chatSDK.startChat();
+
+            chatSDK.chatSDKConfig = {
+                dataMasking: {
+                    disable: false,
+                    maskingCharacter: '#'
+                }
+            }
+
+            // Mix of valid and invalid rules
+            const invalidMaskingRule : MaskingRule = {
+                id: "INVALID",
+                regex : "[invalid(regex"
+            };
+
+            const validMaskingRule : MaskingRule = {
+                id: "VALID",
+                regex : "\\d{3}-\\d{2}-\\d{4}"  // Simple SSN pattern
+            };
+
+            chatSDK.dataMaskingRules = { rules : [invalidMaskingRule, validMaskingRule] } as MaskingRules;
+            chatSDK['compileDataMaskingRegex']();
+
+            const messageToSend = {
+                content: 'My SSN is 123-45-6789'
+            }
+
+            await chatSDK.sendMessage(messageToSend);
+
+            expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
+
+            // Valid rule should have masked the SSN (all characters including hyphens)
+            const sentMessage = (chatSDK.conversation.sendMessage as jest.Mock).mock.calls[0][0];
+            expect(sentMessage.content).toBe('My SSN is ###########');
+        });
+
+        it('[LiveChatV2] ChatSDK.sendMessage() should mask phone numbers with complex regex pattern', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn(),
+                sendTypingIndicator: jest.fn()
+            }
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendMessage: jest.fn()
+            }));
+
+            await chatSDK.startChat();
+
+            chatSDK.chatSDKConfig = {
+                dataMasking: {
+                    disable: false,
+                    maskingCharacter: '#'
+                }
+            }
+
+            // Complex phone number regex with negative lookbehind and lookahead
+            const phoneNumberMaskingRule : MaskingRule = {
+                id: "PHONE_NUMBER",
+                regex : "(?<!\\d)(?<!\\+)(?<!\\+\\d)(?<!\\+\\d{2})(?<!\\+\\d{3})(?<!\\+\\d\\s)(?<!\\+\\d{2}\\s)(?<!\\+\\d{3}\\s)(?:[1-9]\\d{2}[-\\s]?\\d{3}[-\\s]?\\d{3}|[1-9]\\d{8})(?!\\d)"
+            };
+
+            chatSDK.dataMaskingRules = { rules : [phoneNumberMaskingRule] } as MaskingRules;
+            chatSDK['compileDataMaskingRegex']();
+
+            // Test cases for phone numbers that should be masked
+            const testCases = [
+                {
+                    input: 'Call me at 123-456-789',
+                    expected: 'Call me at ###########',
+                    description: 'hyphenated phone number'
+                },
+                {
+                    input: 'My number is 123 456 789',
+                    expected: 'My number is ###########',
+                    description: 'space-separated phone number'
+                },
+                {
+                    input: 'Contact: 123456789',
+                    expected: 'Contact: #########',
+                    description: 'continuous phone number'
+                },
+                {
+                    input: 'Numbers: 987654321 and 123-456-789',
+                    expected: 'Numbers: ######### and ###########',
+                    description: 'multiple phone numbers'
+                }
+            ];
+
+            for (const testCase of testCases) {
+                const messageToSend = {
+                    content: testCase.input
+                };
+
+                await chatSDK.sendMessage(messageToSend);
+
+                const sentMessage = (chatSDK.conversation.sendMessage as jest.Mock).mock.calls[(chatSDK.conversation.sendMessage as jest.Mock).mock.calls.length - 1][0];
+                expect(sentMessage.content).toBe(testCase.expected);
+            }
+
+            // Test cases for text that should NOT be masked
+            const noMaskTestCases = [
+                {
+                    input: 'Phone +1234567890 should not mask international format',
+                    description: 'international phone with plus prefix'
+                },
+                {
+                    input: 'Number 0123456789 should not mask (starts with 0)',
+                    description: 'phone number starting with 0'
+                },
+                {
+                    input: 'ID 12345678901 should not mask (too long)',
+                    description: 'number too long to be phone'
+                },
+                {
+                    input: 'Code 12 should not mask (too short)',
+                    description: 'number too short to be phone'
+                }
+            ];
+
+            for (const testCase of noMaskTestCases) {
+                const messageToSend = {
+                    content: testCase.input
+                };
+
+                await chatSDK.sendMessage(messageToSend);
+
+                const sentMessage = (chatSDK.conversation.sendMessage as jest.Mock).mock.calls[(chatSDK.conversation.sendMessage as jest.Mock).mock.calls.length - 1][0];
+                expect(sentMessage.content).toBe(testCase.input); // Should remain unchanged
+            }
+
+            expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(testCases.length + noMaskTestCases.length);
         });
 
         it('ChatSDK.sendTypingEvent() should call OCClient.sendTypingIndicator()', async() => {
@@ -3183,6 +3394,249 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.OCClient.getChatTranscripts.mock.calls[1][0]).not.toBe(chatSDK.requestId);
             expect(chatSDK.OCClient.getChatTranscripts.mock.calls[1][1]).not.toBe(chatToken.ChatId);
             expect(chatSDK.OCClient.getChatTranscripts.mock.calls[1][2]).not.toBe(chatToken.Token);
+        });
+
+        it('ChatSDK.getPersistentChatHistory() should call OCClient.getPersistentChatHistory()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+                persistentChat: {
+                    disable: false
+                }
+            });
+
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            chatSDK["isPersistentChat"] = true;
+            chatSDK.authenticatedUserToken = 'test-auth-token';
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve({
+                ChatId: 124,
+                Token: '',
+                RegionGtms: '{}'
+            }));
+            jest.spyOn(chatSDK.OCClient, 'getPersistentChatHistory').mockResolvedValue(Promise.resolve({
+                chatMessages: [],
+                nextPageToken: null
+            }));
+
+            await chatSDK.getPersistentChatHistory();
+
+            expect(chatSDK.OCClient.getPersistentChatHistory).toHaveBeenCalledTimes(1);
+            expect(chatSDK.OCClient.getPersistentChatHistory.mock.calls[0][0]).toBe(chatSDK.requestId);
+            expect(chatSDK.OCClient.getPersistentChatHistory.mock.calls[0][1]).toMatchObject({
+                authenticatedUserToken: 'test-auth-token'
+            });
+        });
+
+        it('ChatSDK.getPersistentChatHistory() should throw error if SDK is not initialized', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+                persistentChat: {
+                    disable: false
+                }
+            });
+            chatSDK.isPersistentChat = true;
+            chatSDK.authenticatedUserToken = 'test-auth-token';
+
+            try {
+                await chatSDK.getPersistentChatHistory();
+                fail('Exception was expected');
+            } catch (error: any) {
+                expect(error).toBeInstanceOf(ChatSDKError);
+                expect(error.message).toBe(ChatSDKErrorName.UninitializedChatSDK);
+            }
+        });
+
+        it('ChatSDK.getPersistentChatHistory() should throw error if persistent chat is not enabled', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK["isAMSClientAllowed"] = true;
+            chatSDK.authenticatedUserToken = 'test-auth-token';
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            try {
+                await chatSDK.getPersistentChatHistory();
+                fail('Exception was expected');
+            } catch (error: any) {
+                expect(error).toBeInstanceOf(ChatSDKError);
+                expect(error.message).toBe(ChatSDKErrorName.NotPersistentChatEnabled);
+            }
+        });
+
+        it('ChatSDK.getPersistentChatHistory() should throw error if persistent chat is disabled in config', async () => {
+            const chatSDKConfig = {
+                persistentChat: {
+                    disable: true
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK["isAMSClientAllowed"] = true;
+            chatSDK.authenticatedUserToken = 'test-auth-token';
+
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            try {
+                await chatSDK.getPersistentChatHistory();
+                fail('Exception was expected');
+            } catch (error: any) {
+                expect(error).toBeInstanceOf(ChatSDKError);
+                expect(error.message).toBe(ChatSDKErrorName.NotPersistentChatEnabled);
+            }
+        });
+
+        it('ChatSDK.getPersistentChatHistory() should throw error if authenticated user token is not found', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+                persistentChat: {
+                    disable: false
+                }
+            });
+            chatSDK["isAMSClientAllowed"] = true;
+            chatSDK["isPersistentChat"] = true;
+            chatSDK.authenticatedUserToken = undefined;
+
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            try {
+                await chatSDK.getPersistentChatHistory();
+                fail('Exception was expected');
+            } catch (error: any) {
+                expect(error).toBeInstanceOf(ChatSDKError);
+                expect(error.message).toBe(ChatSDKErrorName.AuthenticatedUserTokenNotFound);
+            }
+        });
+
+        it('ChatSDK.getPersistentChatHistory() with optional parameters should pass them to OCClient.getPersistentChatHistory()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+                persistentChat: {
+                    disable: false
+                }
+            });
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            chatSDK["isPersistentChat"] = true;
+
+            chatSDK.authenticatedUserToken = 'test-auth-token';
+
+            await chatSDK.initialize();
+
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve({
+                ChatId: 124,
+                Token: '',
+                RegionGtms: '{}'
+            }));
+            jest.spyOn(chatSDK.OCClient, 'getPersistentChatHistory').mockResolvedValue(Promise.resolve({
+                chatMessages: [],
+                nextPageToken: 'next-page-token'
+            }));
+
+            const optionalParams = {
+                pageSize: 50,
+                pageToken: 'page-token'
+            };
+
+            await chatSDK.getPersistentChatHistory(optionalParams);
+
+            expect(chatSDK.OCClient.getPersistentChatHistory).toHaveBeenCalledTimes(1);
+            expect(chatSDK.OCClient.getPersistentChatHistory.mock.calls[0][0]).toBe(chatSDK.requestId);
+            expect(chatSDK.OCClient.getPersistentChatHistory.mock.calls[0][1]).toMatchObject({
+                authenticatedUserToken: 'test-auth-token',
+                pageSize: 50,
+                pageToken: 'page-token'
+            });
+        });
+
+        it('ChatSDK.getPersistentChatHistory() should handle OCClient.getPersistentChatHistory() failure', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+                persistentChat: {
+                    disable: false
+                }
+            });
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            chatSDK["isPersistentChat"] = true;
+
+            chatSDK.authenticatedUserToken = 'test-auth-token';
+
+            chatSDK.getChatConfig = jest.fn();
+
+            await chatSDK.initialize();
+
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve({
+                ChatId: 124,
+                Token: '',
+                RegionGtms: '{}'
+            }));
+            jest.spyOn(chatSDK.OCClient, 'getPersistentChatHistory').mockRejectedValue(new Error('OCClient failure'));
+
+            try {
+                await chatSDK.getPersistentChatHistory();
+                fail('Exception was expected');
+            } catch (error: any) {
+                expect(error).toBeInstanceOf(ChatSDKError);
+                expect(error.message).toBe(ChatSDKErrorName.PersistentChatConversationRetrievalFailure);
+            }
+        });
+
+        it('ChatSDK.getPersistentChatHistory() should generate requestId if not present', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+                persistentChat: {
+                    disable: false
+                }
+            });
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            chatSDK["isPersistentChat"] = true;
+            chatSDK.authenticatedUserToken = 'test-auth-token';
+            chatSDK.requestId = '';
+
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK["isPersistentChat"] = true;
+            await chatSDK.initialize();
+
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve({
+                ChatId: 124,
+                Token: '',
+                RegionGtms: '{}'
+            }));
+            jest.spyOn(chatSDK.OCClient, 'getPersistentChatHistory').mockResolvedValue(Promise.resolve({
+                chatMessages: [],
+                nextPageToken: null
+            }));
+
+            await chatSDK.getPersistentChatHistory();
+
+            expect(chatSDK.requestId).toBeTruthy();
+            expect(chatSDK.requestId).not.toBe('');
+            expect(chatSDK.OCClient.getPersistentChatHistory).toHaveBeenCalledTimes(1);
+            expect(chatSDK.OCClient.getPersistentChatHistory.mock.calls[0][0]).toBe(chatSDK.requestId);
         });
 
         it('[LiveChatV1] ChatSDK.getIC3Client() should return IC3Core if platform is Node', async () => {
