@@ -58,6 +58,7 @@ test.describe('AuthenticatedChat @AuthenticatedChat', () => {
                 await sleep(chatDuration);
 
                 await chatSDK.endChat();
+                await sleep(4000); // wait to ensure all requests are complete
 
                 return runtimeContext;
             }, { omnichannelConfig, authToken, chatDuration: testSettings.chatDuration })

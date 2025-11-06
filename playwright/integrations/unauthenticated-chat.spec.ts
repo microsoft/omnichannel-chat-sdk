@@ -556,6 +556,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 await sleep(chatDuration);
 
                 await chatSDK.endChat();
+                await sleep(4000);
 
                 return runtimeContext;
             }, { omnichannelConfig, chatDuration: testSettings.chatDuration })
@@ -622,6 +623,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 };
 
                 await chatSDK.startChat();
+                await sleep(4000);
 
                 try {
                     await preloadChatAdapter();
@@ -634,6 +636,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 await sleep(chatDuration);
 
                 await chatSDK.endChat();
+                await sleep(4000);
 
                 return runtimeContext;
             }, { omnichannelConfig, chatDuration: testSettings.chatDuration })
@@ -734,6 +737,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                         };
 
                         await chatSDK.endChat();
+                        await sleep(4000);
                         return runtimeContext;
                     } catch (error) {
                         console.error('ChatSDKError2 caught in page.evaluate:', error);

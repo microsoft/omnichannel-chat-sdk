@@ -10,6 +10,7 @@ test.describe('Utilities @Utilities', () => {
 
         const [runtimeContext] = await Promise.all([
             await page.evaluate(async () => {
+                const { sleep } = window;
                 const {require_WebUtils, require_libraries} = window;
                 const WebUtils = require_WebUtils();
                 const libraries = require_libraries();
@@ -23,8 +24,8 @@ test.describe('Utilities @Utilities', () => {
                 } catch (err) {
                     runtimeContext.errorMessage = `${err.message}`;
                 }
-
                 const scriptElements = document.getElementsByTagName('script');
+                await sleep(4000);
                 const result = Array.from(scriptElements).filter((script) => script.src === scriptURL);
                 runtimeContext.loadedScriptUrl = result[0].src;
 
