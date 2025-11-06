@@ -32,7 +32,7 @@ test.describe('Utilities @Utilities', () => {
                 return runtimeContext;
             })
         ]);
-
+        await page.waitForTimeout(4000);
         expect(runtimeContext?.errorMessage).not.toBeDefined();
         expect(runtimeContext.loadedScriptUrl).toBeDefined();
         expect(runtimeContext.loadedScriptUrl === runtimeContext.expectedScriptUrl).toBe(true);
