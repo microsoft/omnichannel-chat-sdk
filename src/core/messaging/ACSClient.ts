@@ -29,6 +29,7 @@ enum ACSClientEvent {
     GetMessages = 'GetMessages',
     SendMessage = 'SendMessage',
     SendTyping = 'SendTyping',
+    SendReadReceipt = 'SendReadReceipt',
     StartPolling = 'StartPolling',
     StopPolling = 'StopPolling',
     Disconnect = 'Disconnect'
@@ -385,6 +386,26 @@ export class ACSConversation {
             });
 
             throw new Error('SendTypingFailed');
+        }
+    }
+
+    public async sendReadReceipt(messageId: string): Promise<void> {
+        this.logger?.startScenario(ACSClientEvent.SendReadReceipt);
+
+        try {
+            await this.chatThreadClient?.sendReadReceipt({ chatMessageId: messageId });
+            this.logger?.completeScenario(ACSClientEvent.SendReadReceipt);
+        } catch (error) {
+            const exceptionDetails = {
+                response: 'SendReadReceiptFailed',
+                errorObject: `${error}`
+            };
+
+            this.logger?.failScenario(ACSClientEvent.SendReadReceipt, {
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+
+            throw new Error('SendReadReceiptFailed');
         }
     }
 
