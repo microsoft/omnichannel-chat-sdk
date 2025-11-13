@@ -11,14 +11,40 @@ const run = async () => {
 
     // cpsBotId if needed, add it here 
     const omnichannelConfig = {
-        orgId: "<org-id>",
-        orgUrl: "<org-url>",
-        widgetId: "<widget-id>"
+        orgId: "",
+        orgUrl: "",
+        widgetId: ""
+    };
+
+    const defaultChatSDKConfig = {
+        dataMasking: {
+            disable: false,
+            maskingCharacter: '#'
+        },
+        telemetry: {
+            disable: false,
+            ariaTelemetryKey: ""
+        },
+        persistentChat: {
+            disable: false,
+            tokenUpdateTime: 21600000
+        },
+        chatReconnect: {
+            disable: true,
+        },
+        useCreateConversation: {
+            disable: false,
+        },
+        getAuthToken: () => {
+            return "<OAUTH>";
+        }
     };
 
     const { sleep } = window;
+
     const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
-    const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+
+    const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig,  defaultChatSDKConfig);
 
     await chatSDK.initialize();
 
@@ -38,24 +64,34 @@ const run = async () => {
         runtimeContext.errorMessage = `${err.message}`;
         runtimeContext.errorObject = `${err}`;
     }
-    await sleep(10000);
-
-    await chatSDK.sendMessage({ "content": "rich media" });
     await sleep(5000);
-    await chatSDK.sendMessage({ "content": "customization" });
-    console.log("*************** ALL MESSAGES ************************");
+
+    await chatSDK.sendMessage({ "content": "hi" });
+    await sleep(1000);
+    console.log("*************** ALL MESSAGES ***********************");
     console.table(await chatSDK.getMessages());
 
+    console.log("*************** FIRST PULL ************************");
+    console.table(await chatSDK.getPersistentChatHistory({}));
 
+    await sleep(1000);
+
+    console.log("*************** SECOND PULL ************************");
+    console.table(await chatSDK.getPersistentChatHistory({pageSize:2, pageToken:"<PAGE_TOKEN>"}));
+
+    console.log("*************** THIRD PULL ************************");
+    console.table(await chatSDK.getPersistentChatHistory({pageSize:2}));
+
+    
     console.log("*************** Pushed Messages ************************");
     console.table(messages);
     console.log("*************** ENDING CHAT MID FLY ************************");
 
-    await sleep(30000);
+    await sleep(5000);
     await chatSDK.endChat();
 
 
-    await sleep(10000);
+    await sleep(60000);
     console.log("*************** ALL MESSAGES BEFORE END CHAT ************************");
     console.table(await chatSDK.getMessages());
 

@@ -3,7 +3,7 @@
 import { ACSAdapterLogger, ACSClientLogger, AMSClientLogger, CallingSDKLogger, IC3ClientLogger, OCSDKLogger, createACSAdapterLogger, createACSClientLogger, createAMSClientLogger, createCallingSDKLogger, createIC3ClientLogger, createOCSDKLogger } from "./utils/loggers";
 import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
 import { AmsClient, ChatWidgetLanguage, DataMaskingInfo, LiveWSAndLiveChatEngJoin, VoiceVideoCallingOptionalParams } from "./types/config";
-import { ChatAdapter, GetAgentAvailabilityResponse, GetCurrentLiveChatContextResponse, GetLiveChatTranscriptResponse, GetMessagesResponse, GetPreChatSurveyResponse, GetVoiceVideoCallingResponse, MaskingRule, MaskingRules, UploadFileAttachmentResponse } from "./types/response";
+import { ChatAdapter, GetAgentAvailabilityResponse, GetCurrentLiveChatContextResponse, GetLiveChatTranscriptResponse, GetMessagesResponse, GetPersistentChatHistoryResponse, GetPreChatSurveyResponse, GetVoiceVideoCallingResponse, MaskingRule, MaskingRules, UploadFileAttachmentResponse } from "./types/response";
 import { ChatClient, ChatMessage } from "@azure/communication-chat";
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import { ChatSDKError, ChatSDKErrorName } from "./core/ChatSDKError";
@@ -49,6 +49,7 @@ import GetChatTokenOptionalParams from "./core/GetChatTokenOptionalParams";
 import GetConversationDetailsOptionalParams from "./core/GetConversationDetailsOptionalParams";
 import GetLiveChatConfigOptionalParams from "./core/GetLiveChatConfigOptionalParams";
 import GetLiveChatTranscriptOptionalParams from "./core/GetLiveChatTranscriptOptionalParams";
+import GetPersistentChatHistoryOptionalParams from "./core/GetPersistentChatHistoryOptionalParams";
 import HostType from "@microsoft/omnichannel-ic3core/lib/interfaces/HostType";
 import { SDKProvider as IC3SDKProvider } from '@microsoft/omnichannel-ic3core';
 import IChatToken from "./external/IC3Adapter/IChatToken";
@@ -107,7 +108,6 @@ import loggerUtils from "./utils/loggerUtils";
 import { parseLowerCaseString } from "./utils/parsers";
 import platform from "./utils/platform";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
-import setOcUserAgent from "./utils/setOcUserAgent";
 import startPolling from "./commands/startPolling";
 import stopPolling from "./commands/stopPolling";
 import urlResolvers from "./utils/urlResolvers";
@@ -166,6 +166,7 @@ class OmnichannelChatSDK {
     private debugAMS = false;
     private debugACS = false;
     private detailedDebugEnabled = false;
+    private regexCompiledForDataMasking: RegExp[] = [];
 
     constructor(omnichannelConfig: OmnichannelConfig, chatSDKConfig: ChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
@@ -182,6 +183,7 @@ class OmnichannelChatSDK {
         this.isInitialized = false;
         this.liveChatVersion = LiveChatVersion.V2;
         this.localeId = defaultLocaleId;
+
         this.requestId = uuidv4();
         this.chatToken = {};
         this.liveChatConfig = {};
@@ -457,8 +459,7 @@ class OmnichannelChatSDK {
         const useCoreServices = isCoreServicesOrgUrl(this.omnichannelConfig.orgUrl);
         try {
             this.OCSDKProvider = OCSDKProvider;
-            this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(useCoreServices) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
-            setOcUserAgent(this.OCClient, this.chatSDKConfig?.ocUserAgent);
+            this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(useCoreServices, this.chatSDKConfig?.ocUserAgent) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
         } catch (e) {
             exceptionThrowers.throwOmnichannelClientInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK);
         }
@@ -532,8 +533,7 @@ class OmnichannelChatSDK {
 
         try {
             this.OCSDKProvider = OCSDKProvider;
-            this.OCClient = OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(useCoreServices) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
-            setOcUserAgent(this.OCClient, this.chatSDKConfig?.ocUserAgent);
+            this.OCClient = OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(useCoreServices, this.chatSDKConfig?.ocUserAgent) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
         } catch (e) {
             exceptionThrowers.throwOmnichannelClientInitializationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeLoadChatConfig);
         }
@@ -987,8 +987,15 @@ class OmnichannelChatSDK {
 
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
             this.refreshTokenTimer = setInterval(async () => {
-                await this.getChatToken(false);
-                this.updateChatToken(this.chatToken.token as string, this.chatToken.regionGTMS);
+                try {
+                    await this.getChatToken(false);
+                    this.updateChatToken(this.chatToken.token as string, this.chatToken.regionGTMS);
+                } catch (error) {
+                    if (this.refreshTokenTimer !== null) {
+                        clearInterval(this.refreshTokenTimer);
+                        this.refreshTokenTimer = null;
+                    }
+                }
             }, this.chatSDKConfig.persistentChat?.tokenUpdateTime);
         }
     }
@@ -1426,13 +1433,29 @@ class OmnichannelChatSDK {
         let { content } = message;
         let match;
 
-        for (const maskingRule of this.dataMaskingRules.rules) {
-            const regex = new RegExp(maskingRule.regex, 'g');
-            while ((match = regex.exec(content)) !== null) {
-                const replaceStr = match[0].replace(/./g, this.maskingCharacter);
-                content = content.replace(match[0], replaceStr);
+        if(this.regexCompiledForDataMasking.length === 0) {
+            return message;
+        }
+
+        for (const regex of this.regexCompiledForDataMasking) {
+            try {
+                let lastIndex = -1;
+                while ((match = regex.exec(content)) !== null) {
+                    // Prevent infinite loop from zero-width matches
+                    if (regex.lastIndex === lastIndex) {
+                        this.debug && console.warn(`[OmnichannelChatSDK][transformMessage] Data masking regex caused zero-width match, skipping rule ${regex}`);
+                        break;
+                    }
+                    lastIndex = regex.lastIndex;
+
+                    const replaceStr = match[0].replace(/./g, this.maskingCharacter);
+                    content = content.replace(match[0], replaceStr);
+                }
+                match = null;
+            } catch (error) {
+                // Log error for invalid regex but continue processing other rules
+                this.debug && console.error(`[OmnichannelChatSDK][transformMessage] Data masking regex failed for rule ${regex}: ${error}`);
             }
-            match = null;
         }
         message.content = content;
         return message;
@@ -1450,90 +1473,44 @@ class OmnichannelChatSDK {
 
         this.transformMessage(message);
 
-        if (this.liveChatVersion === LiveChatVersion.V2) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const sendMessageRequest: any = {
-                content: message.content,
-            }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const sendMessageRequest: any = {
+            content: message.content,
+        }
 
-            sendMessageRequest.metadata = {
-                widgetId: this.omnichannelConfig.widgetId,
-                clientMessageId: Date.now().toString()
-            }
+        sendMessageRequest.metadata = {
+            widgetId: this.omnichannelConfig.widgetId,
+            clientMessageId: Date.now().toString()
+        }
 
-            if (message.metadata) {
-                sendMessageRequest.metadata = { ...sendMessageRequest.metadata, ...message.metadata };
-            }
+        if (message.metadata) {
+            sendMessageRequest.metadata = { ...sendMessageRequest.metadata, ...message.metadata };
+        }
 
-            try {
-                const chatMessage = await (this.conversation as ACSConversation)?.sendMessage(sendMessageRequest);
+        try {
+            const chatMessage = await (this.conversation as ACSConversation)?.sendMessage(sendMessageRequest);
 
-                this.scenarioMarker.completeScenario(TelemetryEvent.SendMessages, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
+            this.scenarioMarker.completeScenario(TelemetryEvent.SendMessages, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
 
-                return chatMessage;
-            } catch (error) {
-                const exceptionDetails: ChatSDKExceptionDetails = {
-                    response: ChatSDKErrorName.ChatSDKSendMessageFailed,
-                    errorObject: `${error}`
-                };
-                this.scenarioMarker.failScenario(TelemetryEvent.SendMessages, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: JSON.stringify(exceptionDetails)
-                });
-
-                throw new ChatSDKError(ChatSDKErrorName.ChatSDKSendMessageFailed, undefined, {
-                    response: ChatSDKErrorName.ChatSDKSendMessageFailed,
-                    errorObject: `${error}`
-                });
-            }
-        } else {
-            const messageToSend: IRawMessage = {
-                content: message.content,
-                timestamp: new Date(),
-                contentType: MessageContentType.Text,
-                deliveryMode: DeliveryMode.Bridged,
-                messageType: MessageType.UserMessage,
-                properties: undefined,
-                tags: [...defaultMessageTags],
-                sender: {
-                    displayName: "Customer",
-                    id: "customer",
-                    type: PersonType.User
-                }
+            return chatMessage;
+        } catch (error) {
+            const exceptionDetails: ChatSDKExceptionDetails = {
+                response: ChatSDKErrorName.ChatSDKSendMessageFailed,
+                errorObject: `${error}`
             };
+            this.scenarioMarker.failScenario(TelemetryEvent.SendMessages, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string,
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
 
-            if (message.tags) {
-                messageToSend.tags = message.tags;
-            }
-
-            if (message.timestamp) {
-                messageToSend.timestamp = message.timestamp;
-            }
-
-            try {
-                await (this.conversation as IConversation).sendMessage(messageToSend);
-
-                this.scenarioMarker.completeScenario(TelemetryEvent.SendMessages, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-            } catch (error) {
-                const exceptionDetails: ChatSDKExceptionDetails = {
-                    response: ChatSDKErrorName.ChatSDKSendMessageFailed,
-                    errorObject: `${error}`
-                };
-                this.scenarioMarker.failScenario(TelemetryEvent.SendMessages, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: JSON.stringify(exceptionDetails)
-                });
-
-                throw new Error(ChatSDKErrorName.ChatSDKSendMessageFailed);
-            }
+            throw new ChatSDKError(ChatSDKErrorName.ChatSDKSendMessageFailed, undefined, {
+                response: ChatSDKErrorName.ChatSDKSendMessageFailed,
+                errorObject: `${error}`
+            });
         }
     }
 
@@ -1579,13 +1556,20 @@ class OmnichannelChatSDK {
 
                 (this.conversation as ACSConversation)?.registerOnNewMessage((event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
                     const { id } = event;
+                    const isChatMessageEditedEvent = Object.keys(event).includes("editedOn");
+
+                    console.log("[OmnichannelChatSDK][onNewMessage] New message received", event);
+                    console.log("[OmnichannelChatSDK][onNewMessage] isChatMessageEditedEvent=>", isChatMessageEditedEvent);
+
                     const omnichannelMessage = createOmnichannelMessage(event, {
                         liveChatVersion: this.liveChatVersion,
                         debug: (this.detailedDebugEnabled ? this.debugACS : this.debug),
                     });
 
-                    if (!postedMessages.has(id)) {
+                    // send callback for new messages or edited existent messages
+                    if (!postedMessages.has(id) || isChatMessageEditedEvent) {
                         onNewMessageCallback(omnichannelMessage);
+                        console.log("[OmnichannelChatSDK][onNewMessage] Message posted");
                         postedMessages.add(id);
                     }
                 }, registerOnNewMessageOptionalParams);
@@ -1630,7 +1614,6 @@ class OmnichannelChatSDK {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string
                 });
-
                 throw new Error('SendTypingFailure');
             }
         }
@@ -1697,53 +1680,24 @@ class OmnichannelChatSDK {
         if (!this.isInitialized) {
             exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.OnAgentEndSession);
         }
+        try {
+            (this.conversation as ACSConversation).registerOnThreadUpdate(async (event: ParticipantsRemovedEvent) => {
+                const liveWorkItemDetails = await this.getConversationDetails();
+                if (Object.keys(liveWorkItemDetails).length === 0 || liveWorkItemDetails.state == LiveWorkItemState.WrapUp || liveWorkItemDetails.state == LiveWorkItemState.Closed) {
+                    onAgentEndSessionCallback(event);
+                    this.stopPolling();
+                }
+            });
 
-        if (this.liveChatVersion === LiveChatVersion.V2) {
-            try {
-                (this.conversation as ACSConversation).registerOnThreadUpdate(async (event: ParticipantsRemovedEvent) => {
-                    const liveWorkItemDetails = await this.getConversationDetails();
-                    if (Object.keys(liveWorkItemDetails).length === 0 || liveWorkItemDetails.state == LiveWorkItemState.WrapUp || liveWorkItemDetails.state == LiveWorkItemState.Closed) {
-                        onAgentEndSessionCallback(event);
-                        this.stopPolling();
-                    }
-                });
-
-                this.scenarioMarker.completeScenario(TelemetryEvent.OnAgentEndSession, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-            } catch (error) {
-                this.scenarioMarker.failScenario(TelemetryEvent.OnAgentEndSession, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-            }
-        } else {
-            try {
-                this.conversation?.registerOnThreadUpdate((message: IRawThread) => {
-                    const { members } = message;
-
-                    // Agent ending conversation would have 1 member left in the chat thread
-                    if (members.length === 1) {
-                        onAgentEndSessionCallback(message);
-
-                        if (this.refreshTokenTimer !== null) {
-                            clearInterval(this.refreshTokenTimer);
-                            this.refreshTokenTimer = null;
-                        }
-                    }
-                });
-                this.scenarioMarker.completeScenario(TelemetryEvent.OnAgentEndSession, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-
-            } catch (error) {
-                this.scenarioMarker.failScenario(TelemetryEvent.OnAgentEndSession, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
-            }
+            this.scenarioMarker.completeScenario(TelemetryEvent.OnAgentEndSession, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
+        } catch (error) {
+            this.scenarioMarker.failScenario(TelemetryEvent.OnAgentEndSession, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            });
         }
     }
 
@@ -1825,6 +1779,7 @@ class OmnichannelChatSDK {
                 this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string
+
                 });
             }
 
@@ -2529,7 +2484,6 @@ class OmnichannelChatSDK {
     }
 
     private async setDataMaskingConfiguration(dataMaskingConfig: DataMaskingInfo): Promise<void> {
-
         if (dataMaskingConfig.setting.msdyn_maskforcustomer) {
             if (dataMaskingConfig.dataMaskingRules) {
                 for (const [key, value] of Object.entries(dataMaskingConfig.dataMaskingRules)) {
@@ -2538,10 +2492,22 @@ class OmnichannelChatSDK {
                         regex: value
                     } as MaskingRule);
                 }
+                this.compileDataMaskingRegex();
             }
         }
     }
 
+    private compileDataMaskingRegex(): void {
+        this.regexCompiledForDataMasking = [];
+        for (const rule of this.dataMaskingRules.rules) {
+            try {
+                const regex = new RegExp(rule.regex, 'g');
+                this.regexCompiledForDataMasking.push(regex);
+            } catch (e) {
+                console.error(`Error compiling regex for data masking rule id ${rule.id}: ${e}`);
+            }
+        }
+    }
     private async setAuthSettingConfig(authSettings: AuthSettings): Promise<void> {
 
         if (authSettings) {
@@ -2800,6 +2766,71 @@ class OmnichannelChatSDK {
                 // Don't let cleanup errors mask the original error
                 this.debug && console.error('Failed to cleanup conversation after join failure:', cleanupError);
             }
+        }
+    }
+
+    /**
+     * Get persistent chat history for authenticated users.
+     * @param getPersistentChatHistoryOptionalParams Optional parameters for persistent chat history retrieval.
+     */
+    public async getPersistentChatHistory(getPersistentChatHistoryOptionalParams: GetPersistentChatHistoryOptionalParams = {}): Promise<GetPersistentChatHistoryResponse | undefined> {
+
+        if (!this.requestId) {
+            this.requestId = uuidv4();
+        }
+
+        this.scenarioMarker.startScenario(TelemetryEvent.GetPersistentChatHistory, {
+            RequestId: this.requestId
+        });
+
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.GetPersistentChatHistory);
+        }
+
+        if (!this.isPersistentChat || this.chatSDKConfig.persistentChat?.disable === true) {
+            exceptionThrowers.throwNotPersistentChatEnabled(this.scenarioMarker, TelemetryEvent.GetPersistentChatHistory, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string
+            });
+        }
+
+        if (!this.authenticatedUserToken) {
+            exceptionThrowers.throwChatSDKError(ChatSDKErrorName.AuthenticatedUserTokenNotFound, new Error('Authenticated user token not found'), this.scenarioMarker, TelemetryEvent.GetPersistentChatHistory, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string
+            });
+        }
+
+        try {
+            const params: { pageSize?: number | undefined; pageToken?: string | undefined } = {};
+
+            params.pageSize = getPersistentChatHistoryOptionalParams.pageSize || undefined;
+            params.pageToken = getPersistentChatHistoryOptionalParams.pageToken || undefined;
+
+            const result = await this.OCClient.getPersistentChatHistory(this.requestId, {
+                ...params,
+                authenticatedUserToken: this.authenticatedUserToken
+            });
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.GetPersistentChatHistory, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string
+            });
+
+            return result;
+        } catch (error) {
+            const telemetryData = {
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string,
+                ErrorMessage: (error as Error)?.message || 'Unknown error' // Added error message for better debugging
+            };
+
+            exceptionThrowers.throwPersistentChatConversationRetrievalFailure(
+                error,
+                this.scenarioMarker,
+                TelemetryEvent.GetPersistentChatHistory,
+                telemetryData
+            );
         }
     }
 }

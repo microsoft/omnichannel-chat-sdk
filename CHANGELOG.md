@@ -4,14 +4,39 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+
+## [Unreleased]
+
+### Fixed
+
+- Fixed version information not being passed to backend for React Native and other platforms by implementing robust version detection that works in both development and bundled environments
+- Fixed timer cleanup logic, if getChatToken refresh mechanisam failed to potentially avoid infinite loop
+
+### Added
+=======
+- Fixed data masking crash when invalid regex patterns or zero-width match patterns are configured
+
+
+### Added
+
+- Added handling for edited messages in `ChatSDK.onNewMessage()`
+- Added `ChatSDK.getPersistentChatHistory()` to retrieve persistent chat history for authenticated chats
+- Added comprehensive V2 sendMessage data masking tests to ensure proper coverage for all masking scenarios
+- Added comprehensive V2 sendMessage data masking tests to parallel initialization test suite for complete test coverage
+
 ### Changed
+
 - Parallelize survey invite link requests in getPostChatSurveyContext method for improved performance
+- Remove V1 logic for onAgentEndSession
+- Uptake ocsdk  "@microsoft/omnichannel-sdk": "^0.5.20-main.a3b9c5e"
 
 ## [1.11.6] - 2025-08-08
 
 ### Fixed
 
--  Implement mutex pattern to prevent race conditions between startChat() and endChat() operations that could lead to state corruption
+- Implement mutex pattern to prevent race conditions between startChat() and endChat() operations that could lead to state corruption
 
 ### Changed
 
