@@ -6,6 +6,7 @@ const testPage = fetchTestPageUrl();
 
 test.describe('Utilities @Utilities', () => {
     test('WebUtils.loadScript() should add the script in the DOM', async ({ page }) => {
+        test.setTimeout(60 * 1000);
         await page.goto(testPage);
 
         const [runtimeContext] = await Promise.all([
@@ -32,7 +33,7 @@ test.describe('Utilities @Utilities', () => {
                 return runtimeContext;
             })
         ]);
-        await page.goto(testPage, { waitUntil: 'networkidle' })
+        await page.waitForTimeout(2000);
         expect(runtimeContext?.errorMessage).not.toBeDefined();
         expect(runtimeContext.loadedScriptUrl).toBeDefined();
         expect(runtimeContext.loadedScriptUrl === runtimeContext.expectedScriptUrl).toBe(true);

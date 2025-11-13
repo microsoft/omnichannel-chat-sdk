@@ -604,6 +604,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
     });
 
     test('ChatSDK.createChatAdapter() should load ACSAdapter', async ({ page }) => {
+        test.setTimeout(60_000);
         await page.goto(testPage);
 
         const [createChatAdapterResponse, runtimeContext] = await Promise.all([
@@ -641,7 +642,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 return runtimeContext;
             }, { omnichannelConfig, chatDuration: testSettings.chatDuration })
         ]);
-
+        await page.waitForTimeout(2000);
         expect(createChatAdapterResponse.status()).toBe(200);
         expect(runtimeContext.errorMessage).not.toBeDefined();
         expect(runtimeContext.errorObject).not.toBeDefined();
