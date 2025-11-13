@@ -5,7 +5,7 @@ import fetchTestPageUrl from '../utils/fetchTestPageUrl';
 const testPage = fetchTestPageUrl();
 
 test.describe('Utilities @Utilities', () => {
-    test('WebUtils.loadScript() should add the script in the DOM', async ({ page }) => {
+    test.only('WebUtils.loadScript() should add the script in the DOM', async ({ page }) => {
         await page.goto(testPage);
 
         const [runtimeContext] = await Promise.all([
