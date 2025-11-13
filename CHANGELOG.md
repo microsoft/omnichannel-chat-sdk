@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Fixed version information not being passed to backend for React Native and other platforms by implementing robust version detection that works in both development and bundled environments
+- Fixed timer cleanup logic, if getChatToken refresh mechanisam failed to potentially avoid infinite loop
 
 ### Added
 =======
