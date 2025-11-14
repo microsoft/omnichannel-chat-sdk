@@ -643,6 +643,8 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
             }, { omnichannelConfig, chatDuration: testSettings.chatDuration })
         ]);
         await page.waitForTimeout(2000);
+        const response = await createChatAdapterResponse.url();
+         console.log(`URL: ${response}`);
         expect(createChatAdapterResponse.status()).toBe(200);
         expect(runtimeContext.errorMessage).not.toBeDefined();
         expect(runtimeContext.errorObject).not.toBeDefined();

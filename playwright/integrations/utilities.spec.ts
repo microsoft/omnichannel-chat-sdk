@@ -45,7 +45,7 @@ test.describe('Utilities @Utilities', () => {
     // });
 
     
-    test.only('WebUtils.loadScript() should add the script in the DOM', async ({ page }) => {
+    test('WebUtils.loadScript() should add the script in the DOM', async ({ page }) => {
     test.setTimeout(60 * 1000);
 
     await page.goto(testPage); // ensure testPage is defined
