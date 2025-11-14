@@ -1619,6 +1619,41 @@ class OmnichannelChatSDK {
         }
     }
 
+    public async sendReadReceipt(messageId: string): Promise<void> {
+        if (!this.isInitialized) {
+            this.debug && console.warn('[OmnichannelChatSDK][sendReadReceipt] SDK not initialized');
+            return;
+        }
+
+        if (this.liveChatVersion !== LiveChatVersion.V2) {
+            this.debug && console.warn('[OmnichannelChatSDK][sendReadReceipt] Read receipts only supported for LiveChat V2');
+            return;
+        }
+
+        if (!messageId) {
+            this.debug && console.warn('[OmnichannelChatSDK][sendReadReceipt] Message ID is required');
+            return;
+        }
+
+        try {
+            await (this.conversation as ACSConversation).sendReadReceipt(messageId);
+
+            this.scenarioMarker.singleRecord(TelemetryEvent.SendReadReceiptSucceeded, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string,
+                MessageId: messageId
+            });
+        } catch (error) {
+            // Silently handle errors - read receipts are best-effort
+            this.scenarioMarker.singleRecord(TelemetryEvent.SendReadReceiptFailed, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string,
+                MessageId: messageId,
+                ErrorMessage: `${error}`
+            });
+        }
+    }
+
     public async onTypingEvent(onTypingEventCallback: CallableFunction): Promise<void> {
         this.scenarioMarker.startScenario(TelemetryEvent.OnTypingEvent, {
             RequestId: this.requestId,

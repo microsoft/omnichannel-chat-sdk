@@ -2956,6 +2956,98 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.conversation.sendTyping).toHaveBeenCalledTimes(1);
         });
 
+        it('[LiveChatV2] ChatSDK.sendReadReceipt() should call conversation.sendReadReceipt()', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                sendTypingIndicator: jest.fn(),
+                createConversation: jest.fn()
+            }
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendReadReceipt: jest.fn()
+            }));
+
+            await chatSDK.startChat();
+            await chatSDK.sendReadReceipt('message-id-123');
+
+            expect(chatSDK.conversation.sendReadReceipt).toHaveBeenCalledTimes(1);
+            expect(chatSDK.conversation.sendReadReceipt).toHaveBeenCalledWith('message-id-123');
+        });
+
+        it('[LiveChatV2] ChatSDK.sendReadReceipt() should silently handle errors', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                sendTypingIndicator: jest.fn(),
+                createConversation: jest.fn()
+            }
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendReadReceipt: jest.fn().mockRejectedValue(new Error('SendReadReceiptFailed'))
+            }));
+
+            await chatSDK.startChat();
+            
+            // Should not throw error
+            await expect(chatSDK.sendReadReceipt('message-id-123')).resolves.not.toThrow();
+            
+            expect(chatSDK.conversation.sendReadReceipt).toHaveBeenCalledTimes(1);
+        });
+
+        it('[LiveChatV2] ChatSDK.sendReadReceipt() should not call anything if SDK is not initialized', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            
+            // Should not throw, just return silently
+            await expect(chatSDK.sendReadReceipt('message-id-123')).resolves.not.toThrow();
+        });
+
+        it('[LiveChatV1] ChatSDK.sendReadReceipt() should not work for LiveChat V1', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendMessage: jest.fn()
+            }));
+
+            await chatSDK.startChat();
+            
+            // Should not throw, just return silently (V1 not supported)
+            await expect(chatSDK.sendReadReceipt('message-id-123')).resolves.not.toThrow();
+        });
+
         it('[LiveChatV1] ChatSDK.uploadFileAttachment() should call conversation.sendFileData() & conversation.sendFileMessage()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
