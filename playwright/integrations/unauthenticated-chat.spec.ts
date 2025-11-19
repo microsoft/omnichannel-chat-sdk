@@ -355,7 +355,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         ]);
 
         const { acsEndpoint, chatId } = runtimeContext;
-        const sendMessageRequestPartialUrl = `${acsEndpoint}chat/threads/${encodeURIComponent(chatId)}/messages?api-version=`;
+        const sendMessageRequestPartialUrl = `${acsEndpoint}/chat/threads/${encodeURIComponent(chatId)}/messages?api-version=`;
         const sendMessageRequestPostDataDataJson = sendMessageRequest.postDataJSON();
         const { content: sendMessageRequestContent, metadata: { deliveryMode, tags, widgetId } } = sendMessageRequestPostDataDataJson;
 
@@ -413,11 +413,14 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         ]);
 
         const { acsEndpoint, chatId } = runtimeContext;
-        const getMessagesRequestPartialUrl = `${acsEndpoint}chat/threads/${encodeURIComponent(chatId)}/messages?api-version=`;
+        const getMessagesRequestPartialUrl = `${acsEndpoint}/chat/threads/${encodeURIComponent(chatId)}/messages?api-version=`;
         const getMessagesResponseDataJson = await getMessagesResponse.json();
 
         const sentMessage = getMessagesResponseDataJson.value.filter((message) => message.type === 'text' && message.content.message === content);
         const sentMessageContent = sentMessage[0].content.message;
+        const uri = getMessagesRequest.url();
+
+        console.log(uri);
 
         expect(getMessagesRequest.url().includes(getMessagesRequestPartialUrl)).toBe(true);
         expect(getMessagesResponse.status()).toBe(200);
