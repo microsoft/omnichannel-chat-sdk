@@ -5,46 +5,6 @@ import fetchTestPageUrl from '../utils/fetchTestPageUrl';
 const testPage = fetchTestPageUrl();
 
 test.describe('Utilities @Utilities', () => {
-    // test.only('WebUtils.loadScript() should add the script in the DOM', async ({ page }) => {
-    //     test.setTimeout(60 * 1000);
-    //     await page.goto(testPage);
-    //     let scriptURL='';
-
-    //     const [runtimeContext] = await Promise.all([
-    //         await page.evaluate(async () => {
-    //             const { sleep } = window;
-    //             const {require_WebUtils, require_libraries} = window;
-    //             const WebUtils = require_WebUtils();
-    //             const libraries = require_libraries();
-    //             scriptURL = await libraries.getACSAdapterCDNUrl();
-                
-
-    //             const runtimeContext = {};
-    //             runtimeContext.expectedScriptUrl = scriptURL;
-
-    //             try {
-    //                 await WebUtils.default.loadScript(scriptURL);
-    //             } catch (err) {
-    //                 runtimeContext.errorMessage = `${err.message}`;
-    //             }
-    //             const scriptElements = document.getElementsByTagName('script');
-    //             await sleep(4000);
-    //             const result = Array.from(scriptElements).filter((script) => script.src === scriptURL);
-    //             runtimeContext.loadedScriptUrl = result[0].src;
-    //             //console.log(`Loaded script from URL: ${result[0].src}`);
-
-
-    //             return runtimeContext;
-    //         })
-    //     ]);
-    //     console.log(`Loading script from URL1: ${scriptURL}`);
-    //     await page.waitForTimeout(2000);
-    //     expect(runtimeContext?.errorMessage).not.toBeDefined();
-    //     expect(runtimeContext.loadedScriptUrl).toBeDefined();
-    //     expect(runtimeContext.loadedScriptUrl === runtimeContext.expectedScriptUrl).toBe(true);
-    // });
-
-    
     test('WebUtils.loadScript() should add the script in the DOM', async ({ page }) => {
     test.setTimeout(60 * 1000);
 
