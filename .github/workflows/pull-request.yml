@@ -27,6 +27,12 @@ jobs:
 
       - name: Install packages
         run: npm install
+      
+      - name: Fetch base branch
+        run: git fetch origin main:main
+      
+      - name: Validate version consistency
+        run: node scripts/validate-version.js
 
       - name: Run tests
         run: npm run test
