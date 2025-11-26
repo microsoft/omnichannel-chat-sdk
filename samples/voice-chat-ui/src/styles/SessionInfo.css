@@ -1,0 +1,74 @@
+.session-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  min-width: 220px;
+}
+
+.session-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.session-label {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.session-value {
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+  opacity: 0.95;
+  word-break: break-all;
+}
+
+.agent-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+.status-indicator.connected {
+  background: #10b981;
+}
+
+.status-indicator.disconnected {
+  background: #fbbf24;
+}
+
+@keyframes statusPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@media (max-width: 600px) {
+  .session-info {
+    min-width: auto;
+    flex-direction: row;
+    gap: 16px;
+  }
+
+  .session-item {
+    flex: 1;
+  }
+}
