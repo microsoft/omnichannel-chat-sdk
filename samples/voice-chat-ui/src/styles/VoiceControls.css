@@ -1,0 +1,133 @@
+.voice-controls {
+  padding: 16px;
+  background: #fafafa;
+  border-top: 1px solid #eee;
+  flex-shrink: 0;
+}
+
+.controls-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.control-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: white;
+  color: #333;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.control-btn:hover:not(.disabled) {
+  background: #f5f5f5;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.control-btn:active:not(.disabled) {
+  transform: translateY(0);
+}
+
+.control-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.refresh-btn {
+  color: #666;
+}
+
+.voice-btn {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  color: white;
+  font-weight: 600;
+}
+
+.voice-btn.recording {
+  animation: pulse 1.5s ease-in-out infinite;
+  background: #dc2626;
+}
+
+.voice-btn.recording .recording-indicator {
+  display: inline-block;
+  animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+  }
+  50% {
+    box-shadow: 0 2px 20px rgba(124, 58, 237, 0.6);
+  }
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.send-btn {
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+.send-btn:hover:not(.disabled) {
+  color: #6d28d9;
+}
+
+.call-btn {
+  color: #059669;
+  font-weight: 600;
+}
+
+.call-btn:hover:not(.disabled) {
+  color: #047857;
+}
+
+.recording-indicator-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: #fee;
+  border-radius: 20px;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.recording-pulse {
+  width: 8px;
+  height: 8px;
+  background: #dc2626;
+  border-radius: 50%;
+  animation: recordingPulse 1s ease-in-out infinite;
+}
+
+@keyframes recordingPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.3);
+  }
+}
