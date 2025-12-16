@@ -1865,12 +1865,12 @@ class OmnichannelChatSDK {
                     ChatId: this.chatToken.chatId as string
                 });
                 return viewResponse;
-            } catch {
+            } catch (ex){
                 this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string
                 });
-                throw new Error('DownloadFileAttachmentFailed');
+                throw new Error('DownloadFileAttachmentFailed', ex);
             }
         } else {
             try {
@@ -1886,7 +1886,7 @@ class OmnichannelChatSDK {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string
                 });
-                throw new Error('DownloadFileAttachmentFailed');
+                throw new Error('DownloadFileAttachmentFailed', error);
             }
         }
     }
