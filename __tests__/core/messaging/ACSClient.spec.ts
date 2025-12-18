@@ -507,6 +507,91 @@ describe('ACSClient', () => {
         expect(chatThreadClient.sendTypingNotification).toHaveBeenCalledTimes(1);
     });
 
+    it('ACSClient.conversation.sendReadReceipt() should call ChatThreadClient.sendReadReceipt()', async () => {
+        const client: any = new ACSClient();
+        const config = {
+            token: 'token',
+            environmentUrl: 'url'
+        }
+
+        await client.initialize(config);
+
+        const chatThreadClient: any = {};
+        chatThreadClient.listParticipants = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+        chatThreadClient.listMessages = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+
+        client.chatClient = {};
+        client.chatClient.getChatThreadClient = jest.fn(() => chatThreadClient);
+        client.chatClient.startRealtimeNotifications = jest.fn();
+
+        const conversation = await client.joinConversation({
+            id: 'id',
+            threadId: 'threadId',
+            pollingInterval: 1000,
+        });
+
+        chatThreadClient.sendReadReceipt = jest.fn();
+
+        await conversation.sendReadReceipt('message-id-123');
+
+        expect(chatThreadClient.sendReadReceipt).toHaveBeenCalledTimes(1);
+        expect(chatThreadClient.sendReadReceipt).toHaveBeenCalledWith({ chatMessageId: 'message-id-123' });
+    });
+
+    it('ACSClient.conversation.sendReadReceipt() should throw an error if chatThreadClient.sendReadReceipt() fails', async () => {
+        const client: any = new ACSClient();
+        const config = {
+            token: 'token',
+            environmentUrl: 'url'
+        }
+
+        await client.initialize(config);
+
+        const chatThreadClient: any = {};
+        chatThreadClient.listParticipants = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+        chatThreadClient.listMessages = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+
+        client.chatClient = {};
+        client.chatClient.getChatThreadClient = jest.fn(() => chatThreadClient);
+        client.chatClient.startRealtimeNotifications = jest.fn();
+
+        const conversation = await client.joinConversation({
+            id: 'id',
+            threadId: 'threadId',
+            pollingInterval: 1000,
+        });
+
+        chatThreadClient.sendReadReceipt = jest.fn(() => Promise.reject());
+
+        try {
+            await conversation.sendReadReceipt('message-id-123');
+        } catch (error : any ) {
+            expect(error.message).toBe('SendReadReceiptFailed');
+        }
+
+        expect(chatThreadClient.sendReadReceipt).toHaveBeenCalledTimes(1);
+    });
+
     it('ACSClient.conversation.sendFileMessage() should be mocked', async () => {
         const client: any = new ACSClient();
         const config = {
