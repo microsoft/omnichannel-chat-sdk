@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 
 ## [Unreleased]
+- Enhanced logging for failures during DownloadFileAttachmentFailed event.
 
 ### Fixed
 
