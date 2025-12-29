@@ -1,13 +1,13 @@
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
-import fetchAuthUrl from '../utils/fetchAuthUrl';
 import fetchTestSettings from '../utils/fetchTestSettings';
 import { test, expect } from '@playwright/test';
 import OmnichannelEndpoints from '../utils/OmnichannelEndpoints';
+import fetchAuthToken from '../utils/fetchAuthToken';
 
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('AuthenticatedChatWithTranscripts');
-const authUrl = fetchAuthUrl('AuthenticatedChatWithTranscripts');
+const authToken = fetchAuthToken('AuthenticatedChatWithTranscripts');
 const testSettings = fetchTestSettings('AuthenticatedChatWithTranscripts');
 
 test.describe('@AuthenticatedChat @AuthenticatedChatWithTranscripts', () => {
@@ -21,7 +21,7 @@ test.describe('@AuthenticatedChat @AuthenticatedChatWithTranscripts', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatv2AuthGetChatTranscriptPath);
             }),
-            await page.evaluate(async ({ omnichannelConfig, authUrl, chatDuration }) => {
+            await page.evaluate(async ({ omnichannelConfig, authToken, chatDuration }) => {
                 const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
@@ -29,11 +29,8 @@ test.describe('@AuthenticatedChat @AuthenticatedChatWithTranscripts', () => {
                     method: "POST"
                 };
 
-                const response = await fetch(authUrl, payload);
-                const authToken = await response.text();
-
                 const chatSDKConfig = {
-                    getAuthToken: () => authToken
+                     getAuthToken: () => Promise.resolve(authToken),
                 };
 
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);
@@ -57,10 +54,10 @@ test.describe('@AuthenticatedChat @AuthenticatedChatWithTranscripts', () => {
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, authUrl, chatDuration: testSettings.chatDuration })
+            }, { omnichannelConfig, authToken, chatDuration: testSettings.chatDuration })
         ]);
 
-        const { authToken, requestId, token, chatId, transcript } = runtimeContext;
+        const { authToken:tokencode, requestId, token, chatId, transcript } = runtimeContext;
         const requestUrl = `${runtimeContext.orgUrl}/${OmnichannelEndpoints.LiveChatv2AuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=lcw`;
         const requestHeaders = request.headers();
 
@@ -68,7 +65,7 @@ test.describe('@AuthenticatedChat @AuthenticatedChatWithTranscripts', () => {
         expect(requestHeaders['authorization']).toBe(token);
         expect(requestHeaders['organizationid']).toBe(omnichannelConfig.orgId);
         expect(requestHeaders['widgetappid']).toBe(omnichannelConfig.widgetId);
-        expect(requestHeaders['authenticatedusertoken']).toBe(authToken);
+        expect(requestHeaders['authenticatedusertoken']).toBe(tokencode);
         expect(response.status()).toBe(200);
         expect(Object.keys(transcript).includes('chatMessagesJson'));
         expect(typeof transcript['chatMessagesJson']).toBe('string');
@@ -90,7 +87,7 @@ test.describe('@AuthenticatedChat @AuthenticatedChatWithTranscripts', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatv2AuthGetChatTranscriptPath);
             }),
-            await page.evaluate(async ({ omnichannelConfig, authUrl, chatDuration }) => {
+            await page.evaluate(async ({ omnichannelConfig, authToken, chatDuration }) => {
                 const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
@@ -98,11 +95,8 @@ test.describe('@AuthenticatedChat @AuthenticatedChatWithTranscripts', () => {
                     method: "POST"
                 };
 
-                const response = await fetch(authUrl, payload);
-                const authToken = await response.text();
-
                 const chatSDKConfig = {
-                    getAuthToken: () => authToken
+                     getAuthToken: () => Promise.resolve(authToken),
                 };
 
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);
@@ -113,6 +107,7 @@ test.describe('@AuthenticatedChat @AuthenticatedChatWithTranscripts', () => {
                 runtimeContext.authToken = authToken;
 
                 await chatSDK.startChat();
+                await sleep(4000);
 
                 const liveChatContext = await chatSDK.getCurrentLiveChatContext();
                 runtimeContext.liveChatContext = liveChatContext;
@@ -128,10 +123,10 @@ test.describe('@AuthenticatedChat @AuthenticatedChatWithTranscripts', () => {
                 runtimeContext.transcript = transcript;
 
                 return runtimeContext;
-            }, { omnichannelConfig, authUrl, chatDuration: testSettings.chatDuration })
+            }, { omnichannelConfig, authToken, chatDuration: testSettings.chatDuration })
         ]);
 
-        const { authToken, requestId, token, chatId, transcript } = runtimeContext;
+        const { authToken:tokencode, requestId, token, chatId, transcript } = runtimeContext;
         const requestUrl = `${runtimeContext.orgUrl}/${OmnichannelEndpoints.LiveChatv2AuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=lcw`;
         const requestHeaders = request.headers();
 
@@ -139,7 +134,7 @@ test.describe('@AuthenticatedChat @AuthenticatedChatWithTranscripts', () => {
         expect(requestHeaders['authorization']).toBe(token);
         expect(requestHeaders['organizationid']).toBe(omnichannelConfig.orgId);
         expect(requestHeaders['widgetappid']).toBe(omnichannelConfig.widgetId);
-        expect(requestHeaders['authenticatedusertoken']).toBe(authToken);
+        expect(requestHeaders['authenticatedusertoken']).toBe(tokencode);
         expect(response.status()).toBe(200);
         expect(Object.keys(transcript).includes('chatMessagesJson'));
         expect(typeof transcript['chatMessagesJson']).toBe('string');
@@ -155,7 +150,7 @@ test.describe('@AuthenticatedChat @AuthenticatedChatWithTranscripts', () => {
             page.waitForResponse(response => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatAuthTranscriptEmailRequestPath);
             }),
-            await page.evaluate(async ({ omnichannelConfig, authUrl, chatDuration }) => {
+            await page.evaluate(async ({ omnichannelConfig, authToken, chatDuration }) => {
                 const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
@@ -163,11 +158,8 @@ test.describe('@AuthenticatedChat @AuthenticatedChatWithTranscripts', () => {
                     method: "POST"
                 };
 
-                const response = await fetch(authUrl, payload);
-                const authToken = await response.text();
-
                 const chatSDKConfig = {
-                    getAuthToken: () => authToken
+                     getAuthToken: () => Promise.resolve(authToken),
                 };
 
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);
@@ -179,6 +171,7 @@ test.describe('@AuthenticatedChat @AuthenticatedChatWithTranscripts', () => {
                 runtimeContext.orgUrl = chatSDK.omnichannelConfig.orgUrl;
 
                 await chatSDK.startChat();
+                await sleep(4000);
 
                 runtimeContext.requestId = chatSDK.requestId;
 
@@ -194,7 +187,7 @@ test.describe('@AuthenticatedChat @AuthenticatedChatWithTranscripts', () => {
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, authUrl, chatDuration: testSettings.chatDuration })
+            }, { omnichannelConfig, authToken, chatDuration: testSettings.chatDuration })
         ]);
 
         const { requestId } = runtimeContext;
