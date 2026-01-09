@@ -689,6 +689,13 @@ class OmnichannelChatSDK {
     }
 
     private async internalStartChat(optionalParams: StartChatOptionalParams = {}): Promise<void> {
+        console.log("[OmnichannelChatSDK][internalStartChat] START", {
+            requestId: this.requestId,
+            hasAuthSettings: !!this.authSettings,
+            hasAuthenticatedUserToken: !!this.authenticatedUserToken,
+            hasChatSDKConfigGetAuthToken: !!this.chatSDKConfig.getAuthToken,
+            optionalParams: JSON.stringify(optionalParams)
+        });
         this.scenarioMarker.startScenario(TelemetryEvent.StartChat, {
             RequestId: this.requestId
         });
@@ -711,6 +718,7 @@ class OmnichannelChatSDK {
         }
 
         if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
+            console.log("[OmnichannelChatSDK][internalStartChat] Persistent chat enabled, getting reconnectable chats");
             try {
                 const reconnectableChatsParams: IReconnectableChatsParams = {
                     authenticatedUserToken: this.authenticatedUserToken as string,
@@ -733,6 +741,7 @@ class OmnichannelChatSDK {
         }
 
         if (optionalParams.liveChatContext && Object.keys(optionalParams.liveChatContext).length > 0 && !this.reconnectId) {
+            console.log("[OmnichannelChatSDK][internalStartChat] liveChatContext provided, validating conversation");
             this.chatToken = optionalParams.liveChatContext.chatToken || {};
             this.requestId = optionalParams.liveChatContext.requestId || uuidv4();
             this.sessionId = optionalParams.liveChatContext.sessionId || null;
@@ -759,8 +768,28 @@ class OmnichannelChatSDK {
             }
         }
 
-        if (this.authSettings) {
+        console.info(`deferInitialAuth: ${(optionalParams as any)?.deferInitialAuth}`);
+        const deferInitialAuth = (optionalParams as any)?.deferInitialAuth === true ;
+        console.info(`startChat/deferInitialAuth: ${deferInitialAuth}`);
+
+        console.info("[OmnichannelChatSDK][internalStartChat] AUTH DECISION POINT", {
+            deferInitialAuth: deferInitialAuth,
+            hasAuthSettings: !!this.authSettings,
+            authSettingsValue: this.authSettings,
+            hasAuthenticatedUserToken: !!this.authenticatedUserToken,
+            hasChatSDKConfigGetAuthToken: !!this.chatSDKConfig.getAuthToken
+        });
+        if (deferInitialAuth) {
+            // Deferred: explicit telemetry (optional)
+            console.info("startChat: Deferring initial authentication");
+            this.scenarioMarker.singleRecord(TelemetryEvent.StartChat, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string,
+                CustomProperties: "Deferred initial authentication"
+            });
+        } else if (this.authSettings) {
             if (!this.authenticatedUserToken) {
+                console.info("startChat: Setting auth token provider");
                 await this.setAuthTokenProvider(this.chatSDKConfig.getAuthToken, { throwError: true });
             }
 
@@ -2317,6 +2346,129 @@ class OmnichannelChatSDK {
         }
     }
 
+    public async authenticateChat(tokenOrProvider: string | (() => Promise<string>), optionalParams: { refreshChatToken?: boolean } = {}): Promise<void> {
+        this.scenarioMarker.startScenario(TelemetryEvent.MidConversationAuth, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken?.chatId as string
+        });
+
+        console.log("[OmnichannelChatSDK][authenticateChat] Start", {
+            requestId: this.requestId,
+            chatId: this.chatToken?.chatId,
+            hasConversation: !!this.conversation,
+            isInitialized: this.isInitialized
+        });
+
+        if (!this.isInitialized) {
+            console.log("[OmnichannelChatSDK][authenticateChat] Error: SDK not initialized");
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.MidConversationAuth);
+        }
+        if (!this.conversation || !this.chatToken?.chatId) {
+            console.log("[OmnichannelChatSDK][authenticateChat] Error: No active conversation or chatId missing", {
+                chatId: this.chatToken?.chatId,
+                hasConversation: !!this.conversation
+            });
+            exceptionThrowers.throwChatSDKError(
+                ChatSDKErrorName.InvalidConversation,
+                new Error("No active conversation to authenticate"),
+                this.scenarioMarker,
+                TelemetryEvent.MidConversationAuth,
+                { RequestId: this.requestId }
+            );
+        }
+
+        // If Already authenticated � no action required
+        if (this.authenticatedUserToken) {
+            console.log("[OmnichannelChatSDK][authenticateChat] Already authenticated, skipping", {
+                chatId: this.chatToken?.chatId
+            });
+            this.scenarioMarker.completeScenario(TelemetryEvent.MidConversationAuth, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string
+            });
+            return;
+        }
+
+        // Resolve token
+        let token: string;
+        try {
+            console.log("[OmnichannelChatSDK][authenticateChat] Resolving token");
+            token = typeof tokenOrProvider === "function" ? await tokenOrProvider() : tokenOrProvider;
+            console.log("[OmnichannelChatSDK][authenticateChat] Token resolved", {
+                tokenPresent: !!token
+            });
+        } catch (e) {
+            console.error("[OmnichannelChatSDK][authenticateChat] Error: Token provider threw", e);
+            this.scenarioMarker.failScenario(TelemetryEvent.MidConversationAuth, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string,
+                ExceptionDetails: "Token provider threw"
+            });
+            throw e;
+        }
+
+        if (!token || token.trim().length === 0) {
+            console.error("[OmnichannelChatSDK][authenticateChat] Error: Empty token");
+            this.scenarioMarker.failScenario(TelemetryEvent.MidConversationAuth, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string,
+                ExceptionDetails: "Empty token"
+            });
+            throw new Error("MidConversationAuth: Empty token");
+        }
+
+        try {
+            if (!this.OCClient?.midConversationAuthenticateChat) {
+                console.log("[OmnichannelChatSDK][authenticateChat] Error: OCClient.midConversationAuthenticateChat not available");
+                throw new Error("OCClient.midConversationAuthenticateChat is not available");
+            }
+
+            console.log("[OmnichannelChatSDK][authenticateChat] Calling OCClient.midConversationAuthenticateChat", {
+                requestId: this.requestId,
+                chatId: this.chatToken.chatId
+            });
+
+            await this.OCClient.midConversationAuthenticateChat(this.requestId, {
+                chatId: this.chatToken.chatId,
+                authenticatedUserToken: token
+            });
+
+            // Persist token
+            this.authenticatedUserToken = token;
+            console.log("[OmnichannelChatSDK][authenticateChat] Authenticated token persisted");
+
+            // Optionally refresh chat token so subsequent calls use authenticated endpoint set
+            if (optionalParams.refreshChatToken) {
+                console.log("[OmnichannelChatSDK][authenticateChat] Refreshing chat token post-auth");
+                await this.getChatToken(false);
+                console.log("[OmnichannelChatSDK][authenticateChat] Chat token refreshed", {
+                    newChatId: this.chatToken?.chatId
+                });
+            }
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.MidConversationAuth, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string
+            });
+            console.log("[OmnichannelChatSDK][authenticateChat] Success", {
+                requestId: this.requestId,
+                chatId: this.chatToken?.chatId
+            });
+        } catch (error) {
+            console.error("[OmnichannelChatSDK][authenticateChat] Failure", {
+                requestId: this.requestId,
+                chatId: this.chatToken?.chatId,
+                error: `${error}`
+            });
+            this.scenarioMarker.failScenario(TelemetryEvent.MidConversationAuth, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string,
+                ExceptionDetails: `${error}`
+            });
+            throw error;
+        }
+    }
+
     public async startPolling(): Promise<void> {
         return startPolling(this.isInitialized, this.scenarioMarker, this.liveChatVersion, this.requestId, this.chatToken.chatId as string, this.conversation as ACSConversation);
     }
@@ -2654,22 +2806,36 @@ class OmnichannelChatSDK {
     }
 
     private async setAuthTokenProvider(provider: ChatSDKConfig["getAuthToken"], optionalParams: SetAuthTokenProviderOptionalParams = {}): Promise<void> {
+        console.info("[OmnichannelChatSDK][setAuthTokenProvider] START", {
+            hasProvider: !!provider,
+            providerType: typeof provider,
+            throwError: optionalParams?.throwError
+        });
+
         this.scenarioMarker.startScenario(TelemetryEvent.GetAuthToken);
 
         this.chatSDKConfig.getAuthToken = provider;
         if (this.chatSDKConfig.getAuthToken) {
+            console.info("[OmnichannelChatSDK][setAuthTokenProvider] getAuthToken function exists, invoking...");
             try {
                 const token = await this.chatSDKConfig.getAuthToken();
+                console.info("[OmnichannelChatSDK][setAuthTokenProvider] getAuthToken returned", {
+                    hasToken: !!token,
+                    tokenLength: token?.length || 0
+                });
 
                 if (token) {
                     this.authenticatedUserToken = token;
+                    console.info("[OmnichannelChatSDK][setAuthTokenProvider] SUCCESS - Token stored");
                     this.scenarioMarker.completeScenario(TelemetryEvent.GetAuthToken);
                 } else {
+                    console.info("[OmnichannelChatSDK][setAuthTokenProvider] FAILED - Token is null/undefined/empty");
                     const exceptionDetails = {
                         response: ChatSDKErrorName.UndefinedAuthToken
                     };
 
                     if (optionalParams?.throwError) {
+                        console.info("[OmnichannelChatSDK][setAuthTokenProvider] Throwing UndefinedAuthToken error");
                         throw Error(exceptionDetails.response);
                     }
 
@@ -2679,6 +2845,11 @@ class OmnichannelChatSDK {
                     });
                 }
             } catch (error) {
+                console.info("[OmnichannelChatSDK][setAuthTokenProvider] EXCEPTION during getAuthToken()", {
+                    errorMessage: (error as Error)?.message,
+                    errorName: (error as Error)?.name
+                });
+
                 const exceptionDetails = {
                     response: ChatSDKErrorName.GetAuthTokenFailed as string
                 };
@@ -2692,10 +2863,18 @@ class OmnichannelChatSDK {
                 });
 
                 if (optionalParams?.throwError) {
+                    console.info("[OmnichannelChatSDK][setAuthTokenProvider] Re-throwing error", {
+                        response: exceptionDetails.response
+                    });
                     throw Error(exceptionDetails.response);
                 }
             }
         } else {
+            console.info("[OmnichannelChatSDK][setAuthTokenProvider] FAILED - No getAuthToken function provided", {
+                chatSDKConfigGetAuthToken: !!this.chatSDKConfig.getAuthToken,
+                providerParam: !!provider
+            });
+
             const exceptionDetails = {
                 response: ChatSDKErrorName.GetAuthTokenNotFound
             };
@@ -2705,9 +2884,14 @@ class OmnichannelChatSDK {
             });
 
             if (optionalParams?.throwError) {
+                console.info("[OmnichannelChatSDK][setAuthTokenProvider] Throwing GetAuthTokenNotFound error");
                 throw Error(exceptionDetails.response);
             }
         }
+
+        console.info("[OmnichannelChatSDK][setAuthTokenProvider] END", {
+            hasAuthenticatedUserToken: !!this.authenticatedUserToken
+        });
     }
 
     private useCoreServicesOrgUrlIfNotSet(): void {
