@@ -768,8 +768,8 @@ class OmnichannelChatSDK {
             }
         }
 
-        console.info(`deferInitialAuth: ${(optionalParams as any)?.deferInitialAuth}`);
-        const deferInitialAuth = (optionalParams as any)?.deferInitialAuth === true ;
+        console.info(`deferInitialAuth: ${optionalParams?.deferInitialAuth}`);
+        const deferInitialAuth = optionalParams?.deferInitialAuth === true;
         console.info(`startChat/deferInitialAuth: ${deferInitialAuth}`);
 
         console.info("[OmnichannelChatSDK][internalStartChat] AUTH DECISION POINT", {
