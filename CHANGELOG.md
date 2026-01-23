@@ -25,6 +25,7 @@ All notable changes to this project will be documented in this file.
 - Migrated package-lock.json from lockfileVersion 2 to lockfileVersion 3
 - Parallelize survey invite link requests in getPostChatSurveyContext method for improved performance
 - Remove V1 logic for onAgentEndSession
+- Uptake [@microsoft/omnichannel-amsclient@0.1.12](https://www.npmjs.com/package/@microsoft/omnichannel-amsclient/v/0.1.12)
 - Uptake ocsdk "@microsoft/ocsdk": "^0.5.20"
 
 ## [1.11.6] - 2025-08-08
