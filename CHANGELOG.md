@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Uptake [@microsoft/ocsdk@0.5.21](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.21)
 - Upgraded @typescript-eslint/eslint-plugin from ^5.4.2 to ^8.18.2
 - Upgraded @typescript-eslint/parser from ^5.4.2 to ^8.18.2
 - Added globals ^15.14.0 as devDependency
