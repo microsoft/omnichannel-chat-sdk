@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Added globals ^15.14.0 as devDependency
 - Migrated from .eslintrc.js to eslint.config.js (ESLint v9 flat config format)
 - Removed 38 unused eslint-disable directives across codebase
+- Added build step to pull request workflow to catch TypeScript compilation errors before merge
 
 ## [1.11.7] - 2026-01-23
 
