@@ -221,7 +221,7 @@ export class ACSClientLogger {
         this.scenarioMarker?.useTelemetry(this.telemetry);
     }
 
-    public logClientSdkTelemetryEvent(logLevel: LogLevel, event: any): void {  // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+    public logClientSdkTelemetryEvent(logLevel: LogLevel, event: any): void {  // eslint-disable-line @typescript-eslint/no-explicit-any
         /* istanbul ignore next */
         this.debug && console.log(`[ACSClientLogger][logClientSdkTelemetryEvent][${logLevel}]`);
         /* istanbul ignore next */
@@ -348,7 +348,7 @@ export class ACSAdapterLogger {
         this.scenarioMarker?.useTelemetry(this.telemetry);
     }
 
-    public logEvent(logLevel: LogLevel, event: any): void {  // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+    public logEvent(logLevel: LogLevel, event: any): void {  // eslint-disable-line @typescript-eslint/no-explicit-any
         /* istanbul ignore next */
         this.debug && console.log(`[ACSAdapterLogger][logClientSdkTelemetryEvent][${logLevel}]`);
         /* istanbul ignore next */
@@ -577,7 +577,7 @@ export class AMSClientLogger {
         this.telemetry = telemetry;
     }
 
-    public logClientSdkTelemetryEvent(logLevel: LogLevel, event: any): void {  // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+    public logClientSdkTelemetryEvent(logLevel: LogLevel, event: any): void {  // eslint-disable-line @typescript-eslint/no-explicit-any
         /* istanbul ignore next */
         this.debug && console.log(`[AMSClientLogger][logClientSdkTelemetryEvent][${logLevel}]`);
         /* istanbul ignore next */

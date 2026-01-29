@@ -10,7 +10,7 @@ import { omnichannelChatSdkVersion } from "../config/settings";
 const getOmnichannelChatSdkVersion = (): string => {
     try {
         // Try dynamic loading - works in 99% of cases
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
+
         const packageJson = require('../../package.json');
 
         if (packageJson && packageJson.version && packageJson.version !== "0.0.0-0") {
