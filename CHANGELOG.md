@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.11.8] - 2026-01-29
+
+### Security
+
+- Fixed all npm audit vulnerabilities (8 total)
+- Upgraded @babel/helpers to ^7.26.10 (fixed RegExp complexity vulnerability)
+- Upgraded brace-expansion to ^2.0.2 (fixed ReDoS vulnerability)
+- Upgraded js-yaml to ^4.1.0 (fixed prototype pollution vulnerability)
+- Upgraded eslint to ^9.26.0 (fixed stack overflow vulnerability)
+
+### Changed
+
+- Uptake [@microsoft/ocsdk@0.5.21](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.21)
+- Upgraded @typescript-eslint/eslint-plugin from ^5.4.2 to ^8.18.2
+- Upgraded @typescript-eslint/parser from ^5.4.2 to ^8.18.2
+- Added globals ^15.14.0 as devDependency
+- Migrated from .eslintrc.js to eslint.config.js (ESLint v9 flat config format)
+- Removed 38 unused eslint-disable directives across codebase
+- Added build step to pull request workflow to catch TypeScript compilation errors before merge
+
 ## [1.11.7] - 2026-01-23
 
 ### Added

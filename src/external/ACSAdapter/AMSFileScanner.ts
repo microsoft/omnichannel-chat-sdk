@@ -71,7 +71,7 @@ class AMSFileScanner {
         }
     }
 
-    public addActivity(id: string, activity: any): void {  // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+    public addActivity(id: string, activity: any): void {  // eslint-disable-line @typescript-eslint/no-explicit-any
         const scanResult = this.scanResults?.get(id);
         if (scanResult) {
             this.scanResults?.set(id, { ...scanResult, activity });
@@ -119,7 +119,7 @@ class AMSFileScanner {
         let blob: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
         try {
-            blob = await this.amsClient.getView(fileMetadata, view_location); // eslint-disable-line @typescript-eslint/no-explicit-any
+            blob = await this.amsClient.getView(fileMetadata, view_location);
         } catch (error) {
             console.error(error);
         }
@@ -135,7 +135,7 @@ class AMSFileScanner {
         activity.channelData.attachmentSizes[index] = attachmentSizes[0];
     }
 
-    public async renderAttachmentActivity(scanResult: FileScanResult, view_location: any): Promise<void> { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+    public async renderAttachmentActivity(scanResult: FileScanResult, view_location: any): Promise<void> { // eslint-disable-line @typescript-eslint/no-explicit-any
         const { fileMetadata, next, activity } = scanResult;
         const blob = await this.retrieveFileBlob(fileMetadata, view_location);
         const file = new File([blob], fileMetadata.name as string, { type: fileMetadata.type });
@@ -157,7 +157,7 @@ class AMSFileScanner {
         next(activity); // Send updated activity to webchat
     }
 
-    public async renderMalwareActivity(scanResult: FileScanResult): Promise<void> { // eslint-disable-line @typescript-eslint/no-explicit-any
+    public async renderMalwareActivity(scanResult: FileScanResult): Promise<void> {
         const { fileMetadata, next, activity } = scanResult;
         const index = activity.attachments.findIndex((attachment: any) => (attachment.name === fileMetadata.name)); // eslint-disable-line @typescript-eslint/no-explicit-any
         activity.channelData.fileScan[index] = { status: AMSViewScanStatus.MALWARE };

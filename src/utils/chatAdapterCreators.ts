@@ -90,7 +90,7 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
             chatToken.acsEndpoint as string,
             fileManager,
             30000,
-            // eslint-disable-next-line @typescript-eslint/no-empty-function
+
             errorEventSubscriber,
             ACSParticipantDisplayName.Customer,
             chatClient,
@@ -114,7 +114,7 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
     }
 };
 
-const createIC3Adapter = async (optionalParams: ChatAdapterOptionalParams, chatSDKConfig: ChatSDKConfig, liveChatVersion: LiveChatVersion, protocol: string, telemetry: typeof AriaTelemetry, scenarioMarker: ScenarioMarker, chatToken: IChatToken, ic3Client: any, logger: IC3ClientLogger): Promise<unknown> => { // eslint-disable-line @typescript-eslint/no-explicit-any,  @typescript-eslint/explicit-module-boundary-types
+const createIC3Adapter = async (optionalParams: ChatAdapterOptionalParams, chatSDKConfig: ChatSDKConfig, liveChatVersion: LiveChatVersion, protocol: string, telemetry: typeof AriaTelemetry, scenarioMarker: ScenarioMarker, chatToken: IChatToken, ic3Client: any, logger: IC3ClientLogger): Promise<unknown> => { // eslint-disable-line @typescript-eslint/no-explicit-any
     const options = optionalParams.IC3Adapter ? optionalParams.IC3Adapter.options : {};
     const ic3AdapterCDNUrl = urlResolvers.resolveChatAdapterUrl(chatSDKConfig, liveChatVersion, protocol);
 
