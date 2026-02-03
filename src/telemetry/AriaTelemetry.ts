@@ -671,11 +671,11 @@ class AriaTelemetry {
 
     private static populateBaseProperties(): BaseContract {
         const packagesInfo: NPMPackagesInfo = {
-            OCSDK: require('@microsoft/ocsdk/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
-            IC3Core: require('@microsoft/omnichannel-ic3core/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
-            ACSChat: require('@azure/communication-chat/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
-            ACSCommon: require('@azure/communication-common/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
-            AMSClient:  require('@microsoft/omnichannel-amsclient/package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
+            OCSDK: require('@microsoft/ocsdk/package.json').version,
+            IC3Core: require('@microsoft/omnichannel-ic3core/package.json').version,
+            ACSChat: require('@azure/communication-chat/package.json').version,
+            ACSCommon: require('@azure/communication-common/package.json').version,
+            AMSClient:  require('@microsoft/omnichannel-amsclient/package.json').version,
         };
 
         return {
@@ -689,7 +689,7 @@ class AriaTelemetry {
             Domain: '',
             ExceptionDetails: '',
             ElapsedTimeInMilliseconds: '',
-            ChatSDKVersion: require('../../package.json').version, // eslint-disable-line @typescript-eslint/no-var-requires
+            ChatSDKVersion: require('../../package.json').version,
             NPMPackagesInfo: JSON.stringify(packagesInfo),
             CDNPackagesInfo: JSON.stringify(AriaTelemetry._CDNPackagesInfo),
             PlatformDetails: ''
@@ -705,7 +705,7 @@ class AriaTelemetry {
         }
 
         try {
-            const ReactNative = require('react-native'); // eslint-disable-line @typescript-eslint/no-var-requires
+            const ReactNative = require('react-native');
             const Platform = ReactNative.Platform;
 
             platformDetails.Renderer = Renderer.ReactNative;
@@ -793,7 +793,7 @@ class AriaTelemetry {
             RequestPath: '',
             RequestMethod: '',
             ResponseStatusCode: '',
-            OCSDKVersion: require('@microsoft/ocsdk/package.json').version // eslint-disable-line @typescript-eslint/no-var-requires
+            OCSDKVersion: require('@microsoft/ocsdk/package.json').version
         }
     }
 
@@ -808,7 +808,7 @@ class AriaTelemetry {
             Event: '',
             ExceptionDetails: '',
             ElapsedTimeInMilliseconds: '',
-            ACSChatVersion: require('@azure/communication-chat/package.json').version // eslint-disable-line @typescript-eslint/no-var-requires
+            ACSChatVersion: require('@azure/communication-chat/package.json').version
         }
     }
 
@@ -854,7 +854,7 @@ class AriaTelemetry {
             Event: '',
             ExceptionDetails: '',
             ElapsedTimeInMilliseconds: '',
-            AMSClientVersion: require('@microsoft/omnichannel-amsclient/package.json').version // eslint-disable-line @typescript-eslint/no-var-requires
+            AMSClientVersion: require('@microsoft/omnichannel-amsclient/package.json').version
         }
     }
 }

@@ -3,7 +3,7 @@ import MessageType from "@microsoft/omnichannel-ic3core/lib/model/MessageType";
 import { uuidv4 } from "@microsoft/ocsdk";
 import { Role } from "../core/messaging/OmnichannelMessage";
 
-export const isSystemMessage = (message: any): boolean => { // eslint-disable-line @typescript-eslint/no-explicit-any,  @typescript-eslint/explicit-module-boundary-types
+export const isSystemMessage = (message: any): boolean => { // eslint-disable-line @typescript-eslint/no-explicit-any
     const {messageType, properties} = message;
 
     const conditionV1 = messageType === MessageType.UserMessage
@@ -15,7 +15,7 @@ export const isSystemMessage = (message: any): boolean => { // eslint-disable-li
     return conditionV1 || conditionV2 || false;
 }
 
-export const isCustomerMessage = (message: any): boolean => { // eslint-disable-line @typescript-eslint/no-explicit-any,  @typescript-eslint/explicit-module-boundary-types
+export const isCustomerMessage = (message: any): boolean => { // eslint-disable-line @typescript-eslint/no-explicit-any
     const {sender} = message;
 
     const conditionV1 = sender && sender.id && sender.id.includes('contacts/8:');
@@ -24,7 +24,7 @@ export const isCustomerMessage = (message: any): boolean => { // eslint-disable-
     return conditionV1 || conditionV2 || false;
 }
 
-export const getMessageRole = (message: any): string => { // eslint-disable-line @typescript-eslint/no-explicit-any,  @typescript-eslint/explicit-module-boundary-types
+export const getMessageRole = (message: any): string => { // eslint-disable-line @typescript-eslint/no-explicit-any
     const { messageType, properties, tags } = message;
 
     const isBotMessage = (messageType === MessageType.UserMessage && (!properties.tags || Object.keys(properties.tags).length === 0)) &&
@@ -40,7 +40,7 @@ export const getMessageRole = (message: any): string => { // eslint-disable-line
     return Role.Unknown;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const isClientIdNotFoundErrorMessage = (e: any): boolean => {
     return e?.response?.status === 401
         && e?.response?.headers?.message === "UserId not found";

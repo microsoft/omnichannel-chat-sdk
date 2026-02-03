@@ -4,21 +4,27 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-### Fixed
+## [1.11.8] - 2026-01-29
 
+### Security
 
-## [Unreleased]
-- Enhanced logging for failures during DownloadFileAttachmentFailed event.
+- Fixed all npm audit vulnerabilities (8 total)
+- Upgraded @babel/helpers to ^7.26.10 (fixed RegExp complexity vulnerability)
+- Upgraded brace-expansion to ^2.0.2 (fixed ReDoS vulnerability)
+- Upgraded js-yaml to ^4.1.0 (fixed prototype pollution vulnerability)
+- Upgraded eslint to ^9.26.0 (fixed stack overflow vulnerability)
 
-### Fixed
+### Changed
 
-- Fixed version information not being passed to backend for React Native and other platforms by implementing robust version detection that works in both development and bundled environments
-- Fixed timer cleanup logic, if getChatToken refresh mechanisam failed to potentially avoid infinite loop
+- Uptake [@microsoft/ocsdk@0.5.21](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.21)
+- Upgraded @typescript-eslint/eslint-plugin from ^5.4.2 to ^8.18.2
+- Upgraded @typescript-eslint/parser from ^5.4.2 to ^8.18.2
+- Added globals ^15.14.0 as devDependency
+- Migrated from .eslintrc.js to eslint.config.js (ESLint v9 flat config format)
+- Removed 38 unused eslint-disable directives across codebase
+- Added build step to pull request workflow to catch TypeScript compilation errors before merge
 
-### Added
-=======
-- Fixed data masking crash when invalid regex patterns or zero-width match patterns are configured
-
+## [1.11.7] - 2026-01-23
 
 ### Added
 
@@ -26,12 +32,21 @@ All notable changes to this project will be documented in this file.
 - Added `ChatSDK.getPersistentChatHistory()` to retrieve persistent chat history for authenticated chats
 - Added comprehensive V2 sendMessage data masking tests to ensure proper coverage for all masking scenarios
 - Added comprehensive V2 sendMessage data masking tests to parallel initialization test suite for complete test coverage
+- Enhanced logging for failures during DownloadFileAttachmentFailed event
+
+### Fixed
+
+- Fixed version information not being passed to backend for React Native and other platforms by implementing robust version detection that works in both development and bundled environments
+- Fixed timer cleanup logic, if getChatToken refresh mechanisam failed to potentially avoid infinite loop
+- Fixed data masking crash when invalid regex patterns or zero-width match patterns are configured
 
 ### Changed
 
+- Migrated package-lock.json from lockfileVersion 2 to lockfileVersion 3
 - Parallelize survey invite link requests in getPostChatSurveyContext method for improved performance
 - Remove V1 logic for onAgentEndSession
-- Uptake ocsdk  "@microsoft/omnichannel-sdk": "^0.5.20-main.a3b9c5e"
+- Uptake [@microsoft/omnichannel-amsclient@0.1.12](https://www.npmjs.com/package/@microsoft/omnichannel-amsclient/v/0.1.12)
+- Uptake ocsdk "@microsoft/ocsdk": "^0.5.20"
 
 ## [1.11.6] - 2025-08-08
 
