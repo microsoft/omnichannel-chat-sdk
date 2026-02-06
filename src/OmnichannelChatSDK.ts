@@ -166,6 +166,7 @@ class OmnichannelChatSDK {
     private debugACS = false;
     private detailedDebugEnabled = false;
     private regexCompiledForDataMasking: RegExp[] = [];
+    private isEndingChat = false;
 
     constructor(omnichannelConfig: OmnichannelConfig, chatSDKConfig: ChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
@@ -1061,6 +1062,8 @@ class OmnichannelChatSDK {
             exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.EndChat);
         }
 
+        this.isEndingChat = true;
+
         try {
             // calling close chat, internally will handle the session close
             try {
@@ -1104,6 +1107,8 @@ class OmnichannelChatSDK {
                 exceptionThrowers.throwConversationClosureFailure(new Error(JSON.stringify(error.exceptionDetails)), this.scenarioMarker, TelemetryEvent.EndChat, telemetryData);
             }
             exceptionThrowers.throwConversationClosureFailure(error, this.scenarioMarker, TelemetryEvent.EndChat, telemetryData);
+        } finally {
+            this.isEndingChat = false;
         }
     }
 
@@ -1681,6 +1686,9 @@ class OmnichannelChatSDK {
         }
         try {
             (this.conversation as ACSConversation).registerOnThreadUpdate(async (event: ParticipantsRemovedEvent) => {
+                if (this.isEndingChat) {
+                    return;
+                }
                 const liveWorkItemDetails = await this.getConversationDetails();
                 if (Object.keys(liveWorkItemDetails).length === 0 || liveWorkItemDetails.state == LiveWorkItemState.WrapUp || liveWorkItemDetails.state == LiveWorkItemState.Closed) {
                     onAgentEndSessionCallback(event);
