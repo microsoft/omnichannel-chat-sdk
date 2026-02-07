@@ -2,12 +2,12 @@ import { test, expect } from '@playwright/test';
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
 import RegexExpression from '../utils/RegexExpression';
-import fetchAuthUrl from '../utils/fetchAuthUrl';
 import { callingBundleVersion } from '../../src/config/settings';
+import fetchAuthToken from '../utils/fetchAuthToken';
 
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('AuthenticatedChatWithEscalationToVoiceAndVideo');
-const authUrl = fetchAuthUrl('AuthenticatedChatWithEscalationToVoiceAndVideo');
+const authToken = fetchAuthToken('AuthenticatedChatWithEscalationToVoiceAndVideo');
 
 test.describe('AuthenticatedChat @AuthenticatedChatWithEscalationToVoiceAndVideo', () => {
     test('Authenticated Chat with Escalation to Voice & Video', async ({ page }) => {
@@ -20,18 +20,15 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithEscalationToVoiceAndVideo
             page.waitForResponse(response => {
                 return response.url().includes(RegexExpression.callingBundle) && response.url().match(RegexExpression.callingWidgetSnippetSourceRegex)?.length >= 0;
             }),
-            await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
+            await page.evaluate(async ({ omnichannelConfig, authToken }) => {
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
                 const payload = {
                     method: "POST"
                 };
 
-                const response = await fetch(authUrl, payload);
-                const authToken = await response.text();
-
                 const chatSDKConfig = {
-                    getAuthToken: () => authToken
+                    getAuthToken: () => Promise.resolve(authToken),
                 };
 
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);
@@ -57,7 +54,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithEscalationToVoiceAndVideo
                 };
 
                 return runtimeContext;
-            }, { omnichannelConfig, authUrl })
+            }, { omnichannelConfig, authToken })
         ]);
 
         const { result } = runtimeContext;

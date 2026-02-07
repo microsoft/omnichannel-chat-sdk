@@ -1,13 +1,13 @@
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
-import fetchAuthUrl from '../utils/fetchAuthUrl';
 import fetchTestSettings from '../utils/fetchTestSettings';
 import { test, expect } from '@playwright/test';
 import ACSEndpoints from '../utils/ACSEndpoints';
+import fetchAuthToken from '../utils/fetchAuthToken';
 
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('AuthenticatedChatWithMasking');
-const authUrl = fetchAuthUrl('AuthenticatedChatWithMasking');
+const authToken = fetchAuthToken('AuthenticatedChatWithMasking');
 const testSettings = fetchTestSettings('AuthenticatedChatWithMasking');
 
 test.describe('AuthenticatedChat @AuthenticatedChatWithMasking', () => {
@@ -22,7 +22,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithMasking', () => {
             page.waitForResponse(response => {
                 return response.url().match(ACSEndpoints.sendMessagePathPattern)?.length >= 0;
             }),
-            await page.evaluate(async ({ omnichannelConfig, content, authUrl, chatDuration }) => {
+            await page.evaluate(async ({ omnichannelConfig, content, authToken, chatDuration }) => {
                 const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
@@ -30,11 +30,8 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithMasking', () => {
                     method: "POST"
                 };
 
-                const response = await fetch(authUrl, payload);
-                const authToken = await response.text();
-
                 const chatSDKConfig = {
-                    getAuthToken: () => authToken
+                    getAuthToken: () => Promise.resolve(authToken),
                 };
 
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);
@@ -59,7 +56,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithMasking', () => {
                 await chatSDK.endChat();
 
                 return runtimeContext;
-            }, { omnichannelConfig, content, authUrl, chatDuration: testSettings.chatDuration })
+            }, { omnichannelConfig, content, authToken, chatDuration: testSettings.chatDuration })
         ]);
         
         const sendMessageRequestPostDataDataJson = sendMessageRequest.postDataJSON();

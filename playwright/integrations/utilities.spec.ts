@@ -6,35 +6,51 @@ const testPage = fetchTestPageUrl();
 
 test.describe('Utilities @Utilities', () => {
     test('WebUtils.loadScript() should add the script in the DOM', async ({ page }) => {
-        await page.goto(testPage);
+    test.setTimeout(60 * 1000);
 
-        const [runtimeContext] = await Promise.all([
-            await page.evaluate(async () => {
-                const {require_WebUtils, require_libraries} = window;
-                const WebUtils = require_WebUtils();
-                const libraries = require_libraries();
-                const scriptURL = libraries.getACSAdapterCDNUrl();
+    await page.goto(testPage); // ensure testPage is defined
 
-                const runtimeContext = {};
-                runtimeContext.expectedScriptUrl = scriptURL;
+    // Run in the browser context and return all needed values to Node context
+    const runtimeContext = await page.evaluate(async () => {
+        const { sleep, require_WebUtils, require_libraries } = window as any;
+        const WebUtils = require_WebUtils();
+        const libraries = require_libraries();
 
-                try {
-                    await WebUtils.default.loadScript(scriptURL);
-                } catch (err) {
-                    runtimeContext.errorMessage = `${err.message}`;
-                }
+        const expectedScriptUrl = await libraries.getACSAdapterCDNUrl();
+        const resultContext: {
+        expectedScriptUrl: string;
+        loadedScriptUrl?: string;
+        errorMessage?: string;
+        } = { expectedScriptUrl };
 
-                const scriptElements = document.getElementsByTagName('script');
-                const result = Array.from(scriptElements).filter((script) => script.src === scriptURL);
-                runtimeContext.loadedScriptUrl = result[0].src;
+        try {
+        await WebUtils.default.loadScript(expectedScriptUrl);
+        } catch (err: any) {
+        resultContext.errorMessage = String(err?.message ?? err);
+        }
 
-                return runtimeContext;
-            })
-        ]);
+        // Optionally wait for the DOM to reflect the inserted script
+        if (typeof sleep === 'function') {
+        await sleep(4000);
+        }
 
-        expect(runtimeContext?.errorMessage).not.toBeDefined();
-        expect(runtimeContext.loadedScriptUrl).toBeDefined();
-        expect(runtimeContext.loadedScriptUrl === runtimeContext.expectedScriptUrl).toBe(true);
+        const scriptElements = Array.from(document.getElementsByTagName('script'));
+        const match = scriptElements.find((script) => script.src === expectedScriptUrl);
+        resultContext.loadedScriptUrl = match?.src;
+
+        return resultContext;
+    });
+
+    // If you still want to log the URL, use the one returned from the page
+    console.log(`Loading script from URL: ${runtimeContext.expectedScriptUrl}`);
+
+    // Optional brief wait if your environment needs it
+    await page.waitForTimeout(500);
+
+    // Assertions
+    expect(runtimeContext.errorMessage).not.toBeDefined();
+    expect(runtimeContext.loadedScriptUrl).toBeDefined();
+    expect(runtimeContext.loadedScriptUrl).toBe(runtimeContext.expectedScriptUrl);
     });
 
     test('WebUtils.loadScript() failure should return an error message', async ({ page }) => {

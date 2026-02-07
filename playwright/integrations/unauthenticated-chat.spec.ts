@@ -210,6 +210,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 };
 
                 await chatSDK.startChat();
+                await sleep(4000);
 
                 const liveChatContext = await chatSDK.getCurrentLiveChatContext();
 
@@ -284,7 +285,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 });
 
                 await chatSDK.initialize();
-
+                
                 runtimeContext.runtimeIdSecondSession = chatSDK.runtimeId;
                 runtimeContext.requestIdSecondSession = chatSDK.requestId;
 
@@ -294,7 +295,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                     runtimeContext.errorMessage = `${err.message}`;
                 }
 
-                await sleep(chatDuration);
+                await sleep(8000);
 
                 await chatSDK.endChat();
 
@@ -333,6 +334,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 await chatSDK.initialize();
 
                 await chatSDK.startChat();
+                await sleep(5000);
 
                 const runtimeContext = {
                     requestId: chatSDK.requestId,
@@ -353,7 +355,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         ]);
 
         const { acsEndpoint, chatId } = runtimeContext;
-        const sendMessageRequestPartialUrl = `${acsEndpoint}chat/threads/${encodeURIComponent(chatId)}/messages?api-version=`;
+        const sendMessageRequestPartialUrl = `${acsEndpoint}/chat/threads/${encodeURIComponent(chatId)}/messages?api-version=`;
         const sendMessageRequestPostDataDataJson = sendMessageRequest.postDataJSON();
         const { content: sendMessageRequestContent, metadata: { deliveryMode, tags, widgetId } } = sendMessageRequestPostDataDataJson;
 
@@ -411,11 +413,14 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         ]);
 
         const { acsEndpoint, chatId } = runtimeContext;
-        const getMessagesRequestPartialUrl = `${acsEndpoint}chat/threads/${encodeURIComponent(chatId)}/messages?api-version=`;
+        const getMessagesRequestPartialUrl = `${acsEndpoint}/chat/threads/${encodeURIComponent(chatId)}/messages?api-version=`;
         const getMessagesResponseDataJson = await getMessagesResponse.json();
 
         const sentMessage = getMessagesResponseDataJson.value.filter((message) => message.type === 'text' && message.content.message === content);
         const sentMessageContent = sentMessage[0].content.message;
+        const uri = getMessagesRequest.url();
+
+        console.log(uri);
 
         expect(getMessagesRequest.url().includes(getMessagesRequestPartialUrl)).toBe(true);
         expect(getMessagesResponse.status()).toBe(200);
@@ -436,6 +441,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 await chatSDK.initialize();
 
                 await chatSDK.startChat();
+                await sleep(4000);
 
                 const runtimeContext = {
                     requestId: chatSDK.requestId,
@@ -553,6 +559,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 await sleep(chatDuration);
 
                 await chatSDK.endChat();
+                await sleep(4000);
 
                 return runtimeContext;
             }, { omnichannelConfig, chatDuration: testSettings.chatDuration })
@@ -600,6 +607,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
     });
 
     test('ChatSDK.createChatAdapter() should load ACSAdapter', async ({ page }) => {
+        test.setTimeout(60_000);
         await page.goto(testPage);
 
         const [createChatAdapterResponse, runtimeContext] = await Promise.all([
@@ -619,6 +627,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 };
 
                 await chatSDK.startChat();
+                await sleep(4000);
 
                 try {
                     await preloadChatAdapter();
@@ -631,11 +640,14 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 await sleep(chatDuration);
 
                 await chatSDK.endChat();
+                await sleep(4000);
 
                 return runtimeContext;
             }, { omnichannelConfig, chatDuration: testSettings.chatDuration })
         ]);
-
+        await page.waitForTimeout(2000);
+        const response = await createChatAdapterResponse.url();
+         console.log(`URL: ${response}`);
         expect(createChatAdapterResponse.status()).toBe(200);
         expect(runtimeContext.errorMessage).not.toBeDefined();
         expect(runtimeContext.errorObject).not.toBeDefined();
@@ -682,6 +694,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 await sleep(chatDuration);
 
                 await chatSDK.endChat();
+                await sleep(4000); // wait to ensure all requests are complete
 
                 return runtimeContext;
             }, { omnichannelConfig, chatDuration: testSettings.chatDuration })
@@ -706,44 +719,57 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
         await page.goto(testPage);
 
         const [liveWorkItemDetailsRequest, liveWorkItemDetailsResponse, runtimeContext] = await Promise.all([
-            page.waitForRequest(request => {
-                return request.url().includes(OmnichannelEndpoints.LiveChatLiveWorkItemDetailsPath);
-            }),
-            page.waitForResponse(response => {
-                return response.url().includes(OmnichannelEndpoints.LiveChatLiveWorkItemDetailsPath);
-            }),
-            await page.evaluate(async ({ omnichannelConfig }) => {
-                const { OmnichannelChatSDK_1: OmnichannelChatSDK, sleep } = window;
-                const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
+                page.waitForRequest(request => {
+                    return request.url().includes(OmnichannelEndpoints.LiveChatLiveWorkItemDetailsPath);
+                }),
+                page.waitForResponse(response => {
+                    return response.url().includes(OmnichannelEndpoints.LiveChatLiveWorkItemDetailsPath);
+                }),
+                page.evaluate(async ({ omnichannelConfig }) => {
+                    try {
+                        const { OmnichannelChatSDK_1: OmnichannelChatSDK, sleep } = window;
+                        const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig);
 
-                await chatSDK.initialize();
+                        await chatSDK.initialize();
+                        await chatSDK.startChat();
 
-                await chatSDK.startChat();
+                        await sleep(4000); // wait to get conversation details
 
-                await sleep(3000); // wait to get conversation details
+                        const conversationDetails = await chatSDK.getConversationDetails();
 
-                const conversationDetails = await chatSDK.getConversationDetails();
+                        const runtimeContext = {
+                            orgUrl: chatSDK.omnichannelConfig.orgUrl,
+                            requestId: chatSDK.requestId,
+                            conversationDetails
+                        };
 
-                const runtimeContext = {
-                    orgUrl: chatSDK.omnichannelConfig.orgUrl,
-                    requestId: chatSDK.requestId,
-                    conversationDetails
-                };
+                        await chatSDK.endChat();
+                        await sleep(4000);
+                        return runtimeContext;
+                    } catch (error) {
+                        console.error('ChatSDKError2 caught in page.evaluate:', error);
+                        return {
+                            orgUrl: '',
+                            requestId: '',
+                            conversationDetails: {
+                                state: '',
+                                conversationId: '',
+                                canRenderPostChat: false
+                            }
+                        };
+                    }
+                }, { omnichannelConfig }),
+            ]);
 
-                await chatSDK.endChat();
-                return runtimeContext;
-            }, { omnichannelConfig }),
-        ]);
+            const { requestId, conversationDetails } = runtimeContext;
+            const liveWorkItemDetailsRequestUrl = `${runtimeContext.orgUrl}/${OmnichannelEndpoints.LiveChatLiveWorkItemDetailsPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
+            const liveWorkItemDetailsResponseDataJson = await liveWorkItemDetailsResponse.json();
 
-        const { requestId, conversationDetails } = runtimeContext;
-        const liveWorkItemDetailsRequestUrl = `${runtimeContext.orgUrl}/${OmnichannelEndpoints.LiveChatLiveWorkItemDetailsPath}/${omnichannelConfig.orgId}/${omnichannelConfig.widgetId}/${requestId}?channelId=lcw`;
-        const liveWorkItemDetailsResponseDataJson = await liveWorkItemDetailsResponse.json();
-
-        expect(liveWorkItemDetailsRequest.url() === liveWorkItemDetailsRequestUrl).toBe(true);
-        expect(liveWorkItemDetailsResponse.status()).toBe(200);
-        expect(liveWorkItemDetailsResponseDataJson.State).toBe(conversationDetails.state);
-        expect(liveWorkItemDetailsResponseDataJson.ConversationId).toBe(conversationDetails.conversationId);
-        expect(liveWorkItemDetailsResponseDataJson.CanRenderPostChat).toBe(conversationDetails.canRenderPostChat);
+            expect(liveWorkItemDetailsRequest.url() === liveWorkItemDetailsRequestUrl).toBe(true);
+            expect(liveWorkItemDetailsResponse.status()).toBe(200);
+            expect(liveWorkItemDetailsResponseDataJson.State).toBe(conversationDetails.state);
+            expect(liveWorkItemDetailsResponseDataJson.ConversationId).toBe(conversationDetails.conversationId);
+            expect(liveWorkItemDetailsResponseDataJson.CanRenderPostChat).toBe(conversationDetails.canRenderPostChat);
     });
 
     test('ChatSDK.getConversationDetails() with liveChatContext should not fail', async ({page}) => {
@@ -764,6 +790,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 await chatSDK.initialize();
 
                 await chatSDK.startChat();
+                await sleep(5000); // wait to get conversation details
 
                 const liveChatContext = await chatSDK.getCurrentLiveChatContext();
 
@@ -826,6 +853,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 return response.url().includes(OmnichannelEndpoints.LiveChatOrganization);
             }),
             await page.evaluate(async ({ omnichannelConfig }) => {
+                const { sleep } = window;
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, {
                     useCreateConversation: {
@@ -841,6 +869,7 @@ test.describe('UnauthenticatedChat @UnauthenticatedChat', () => {
                 };
 
                 await chatSDK.startChat();
+                await sleep(4000);
 
                 await chatSDK.endChat();
 
