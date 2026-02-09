@@ -689,6 +689,8 @@ class OmnichannelChatSDK {
     }
 
     private async internalStartChat(optionalParams: StartChatOptionalParams = {}): Promise<void> {
+        this.isEndingChat = false;
+
         this.scenarioMarker.startScenario(TelemetryEvent.StartChat, {
             RequestId: this.requestId
         });
