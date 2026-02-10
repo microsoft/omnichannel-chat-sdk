@@ -1093,14 +1093,35 @@ class OmnichannelChatSDK {
             if (shouldWaitForSurvey) {
                 this.scenarioMarker.startScenario(TelemetryEvent.WaitForConversationalSurvey, telemetryData);
 
-                const surveyStarted = await this.waitForSurveyStart();
+                try {
+                    const surveyStarted = await this.waitForSurveyStart();
 
-                if (surveyStarted) {
-                    await this.waitForConversationalSurveyEnd();
+                    if (surveyStarted) {
+                        await this.waitForConversationalSurveyEnd();
+                    }
+
+                    this.scenarioMarker.completeScenario(TelemetryEvent.WaitForConversationalSurvey, telemetryData);
+                } catch (error) {
+                    // Survey timeout or error - log but continue with chat cleanup
+                    // The failure telemetry is already logged in waitForMessageTags
+                    // Don't let survey failures prevent chat from closing
                 }
-
-                this.scenarioMarker.completeScenario(TelemetryEvent.WaitForConversationalSurvey, telemetryData);
             }
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.EndChat, cleanupMetadata);
+
+        } catch (error) {
+            const telemetryData = {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string
+            };
+            if (error instanceof ChatSDKError) {
+                exceptionThrowers.throwConversationClosureFailure(new Error(JSON.stringify(error.exceptionDetails)), this.scenarioMarker, TelemetryEvent.EndChat, telemetryData);
+            }
+            exceptionThrowers.throwConversationClosureFailure(error, this.scenarioMarker, TelemetryEvent.EndChat, telemetryData);
+        } finally {
+            // Cleanup always runs, regardless of success or failure
+            // This ensures resources are released even if closeChat or survey waiting throws
             this.conversation?.disconnect();
             this.conversation = null;
             this.requestId = uuidv4();
@@ -1125,27 +1146,18 @@ class OmnichannelChatSDK {
                 clearInterval(this.refreshTokenTimer);
                 this.refreshTokenTimer = null;
             }
-
-            this.scenarioMarker.completeScenario(TelemetryEvent.EndChat, cleanupMetadata);
-
-        } catch (error) {
-            const telemetryData = {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string
-            };
-            if (error instanceof ChatSDKError) {
-                exceptionThrowers.throwConversationClosureFailure(new Error(JSON.stringify(error.exceptionDetails)), this.scenarioMarker, TelemetryEvent.EndChat, telemetryData);
-            }
-            exceptionThrowers.throwConversationClosureFailure(error, this.scenarioMarker, TelemetryEvent.EndChat, telemetryData);
         }
     }
 
     /**
      * Waits for a message with specific tags. Used for conversational survey detection.
+     * Automatically unregisters the listener after the promise resolves to prevent memory leaks.
+     * Includes timeout to prevent indefinite hanging if messages never arrive.
      */
-    private waitForMessageTags(requiredTags: string[]): Promise<boolean> {
+    private waitForMessageTags(requiredTags: string[], timeoutMs = 60000): Promise<boolean> {
         return new Promise((resolve, reject) => {
             let resolved = false;
+            let timeoutHandle: NodeJS.Timeout | null = null;
 
             const checkForTags = (message: OmnichannelMessage) => {
                 if (resolved) return;
@@ -1154,6 +1166,7 @@ class OmnichannelChatSDK {
                     const hasTags = requiredTags.every(tag => message.tags?.includes(tag));
                     if (hasTags) {
                         resolved = true;
+                        cleanup();
                         resolve(true);
                     }
                 } catch (error) {
@@ -1161,9 +1174,44 @@ class OmnichannelChatSDK {
                 }
             };
 
+            const cleanup = (clearTimer = true) => {
+                // Clear timeout if still active
+                if (clearTimer && timeoutHandle) {
+                    clearTimeout(timeoutHandle);
+                    timeoutHandle = null;
+                }
+
+                // Remove listener to prevent memory leak
+                if (this.conversation && this.liveChatVersion === LiveChatVersion.V2) {
+                    const acsConversation = this.conversation as ACSConversation;
+                    acsConversation.removeListener("chatMessageReceived", checkForTags);
+                    acsConversation.removeListener("chatMessageEdited", checkForTags);
+                }
+            };
+
+            // Set timeout to prevent indefinite hang
+            timeoutHandle = setTimeout(() => {
+                if (!resolved) {
+                    resolved = true;
+                    cleanup(false); // Don't clear timeout since we're in the timeout handler
+
+                    // Log telemetry for timeout
+                    this.scenarioMarker?.failScenario(TelemetryEvent.WaitForConversationalSurvey, {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken?.chatId as string,
+                        Reason: 'Timeout',
+                        ExpectedTags: requiredTags.join(','),
+                        TimeoutMs: timeoutMs
+                    });
+
+                    reject(new Error(`Timeout waiting for message with tags: ${requiredTags.join(', ')}`));
+                }
+            }, timeoutMs);
+
             this.onNewMessage(checkForTags).catch((error) => {
                 if (!resolved) {
                     resolved = true;
+                    cleanup();
                     reject(error);
                 }
             });
