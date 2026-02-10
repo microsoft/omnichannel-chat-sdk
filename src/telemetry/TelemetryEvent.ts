@@ -47,6 +47,8 @@ enum TelemetryEvent {
     StopPolling = "StopPolling",
     MessageReceived = "MessageReceived",
     GetPersistentChatHistory = "GetPersistentChatHistory",
+    DisconnectConversation = "DisconnectConversation",
+    WaitForConversationalSurvey = "WaitForConversationalSurvey",
 }
 
 export default TelemetryEvent;

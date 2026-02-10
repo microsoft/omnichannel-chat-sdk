@@ -1045,6 +1045,18 @@ class OmnichannelChatSDK {
         }
     }
 
+    /**
+     * Ends the chat by closing the session and disconnecting from the conversation.
+     *
+     * On React Native, automatically waits for conversational survey completion if enabled.
+     * On Web, disconnects immediately as the widget handles surveys independently.
+     *
+     * @param endChatOptionalParams - Optional parameters
+     * @param endChatOptionalParams.isSessionEnded - Skip survey wait if session already ended
+     * @example
+     * await chatSDK.endChat();
+     * await chatSDK.endChat({ isSessionEnded: true });
+     */
     public async endChat(endChatOptionalParams: EndChatOptionalParams = {}): Promise<void> {
         return this.executeWithLock(() => this.internalEndChat(endChatOptionalParams));
     }
@@ -1063,35 +1075,55 @@ class OmnichannelChatSDK {
         }
 
         try {
-            // calling close chat, internally will handle the session close
-            try {
-                await this.closeChat(endChatOptionalParams);
-            } finally {
+            await this.closeChat(endChatOptionalParams);
 
-                this.conversation?.disconnect();
-                this.conversation = null;
-                this.requestId = uuidv4();
-                this.chatToken = {};
-                this.reconnectId = null;
+            const isReactNative = platform.isReactNative();
+            const isConversationalSurveyEnabled = this.liveChatConfig.LiveWSAndLiveChatEngJoin?.msdyn_isConversationalPostChatSurveyEnabled?.toString().toLowerCase() === 'true';
+            const shouldWaitForSurvey = isReactNative && isConversationalSurveyEnabled && !endChatOptionalParams.isSessionEnded;
 
-                if (this.IC3Client) {
-                    this.IC3Client.dispose();
-                    !platform.isNode() && !platform.isReactNative() && removeElementById(this.IC3Client.id);
-                    this.IC3Client = null;
+            const telemetryData = {
+                ...cleanupMetadata,
+                IsReactNative: isReactNative,
+                SurveyEnabled: isConversationalSurveyEnabled,
+                IsSessionEnded: endChatOptionalParams.isSessionEnded || false,
+                WaitingForSurvey: shouldWaitForSurvey
+            };
+
+            // React Native only: Wait for conversational survey to complete
+            if (shouldWaitForSurvey) {
+                this.scenarioMarker.startScenario(TelemetryEvent.WaitForConversationalSurvey, telemetryData);
+
+                const surveyStarted = await this.waitForSurveyStart();
+
+                if (surveyStarted) {
+                    await this.waitForConversationalSurveyEnd();
                 }
 
-                if (this.OCClient.sessionId) {
-                    this.OCClient.sessionId = null;
-                    this.sessionId = null;
-                }
+                this.scenarioMarker.completeScenario(TelemetryEvent.WaitForConversationalSurvey, telemetryData);
+            }
+            this.conversation?.disconnect();
+            this.conversation = null;
+            this.requestId = uuidv4();
+            this.chatToken = {};
+            this.reconnectId = null;
 
-                loggerUtils.setRequestId(this.requestId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
-                loggerUtils.setChatId('', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+            if (this.IC3Client) {
+                this.IC3Client.dispose();
+                !platform.isNode() && !platform.isReactNative() && removeElementById(this.IC3Client.id);
+                this.IC3Client = null;
+            }
 
-                if (this.refreshTokenTimer !== null) {
-                    clearInterval(this.refreshTokenTimer);
-                    this.refreshTokenTimer = null;
-                }
+            if (this.OCClient.sessionId) {
+                this.OCClient.sessionId = null;
+                this.sessionId = null;
+            }
+
+            loggerUtils.setRequestId(this.requestId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+            loggerUtils.setChatId('', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+
+            if (this.refreshTokenTimer !== null) {
+                clearInterval(this.refreshTokenTimer);
+                this.refreshTokenTimer = null;
             }
 
             this.scenarioMarker.completeScenario(TelemetryEvent.EndChat, cleanupMetadata);
@@ -1106,6 +1138,44 @@ class OmnichannelChatSDK {
             }
             exceptionThrowers.throwConversationClosureFailure(error, this.scenarioMarker, TelemetryEvent.EndChat, telemetryData);
         }
+    }
+
+    /**
+     * Waits for a message with specific tags. Used for conversational survey detection.
+     */
+    private waitForMessageTags(requiredTags: string[]): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            let resolved = false;
+
+            const checkForTags = (message: OmnichannelMessage) => {
+                if (resolved) return;
+
+                try {
+                    const hasTags = requiredTags.every(tag => message.tags?.includes(tag));
+                    if (hasTags) {
+                        resolved = true;
+                        resolve(true);
+                    }
+                } catch (error) {
+                    // Silently continue listening on message processing errors
+                }
+            };
+
+            this.onNewMessage(checkForTags).catch((error) => {
+                if (!resolved) {
+                    resolved = true;
+                    reject(error);
+                }
+            });
+        });
+    }
+
+    private async waitForSurveyStart(): Promise<boolean> {
+        return this.waitForMessageTags(['system', 'startconversationalsurvey']);
+    }
+
+    private async waitForConversationalSurveyEnd(): Promise<void> {
+        await this.waitForMessageTags(['system', 'endconversationalsurvey']);
     }
 
     public async getCurrentLiveChatContext(): Promise<GetCurrentLiveChatContextResponse> {
