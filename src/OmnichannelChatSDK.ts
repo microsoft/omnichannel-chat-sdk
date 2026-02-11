@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { ACSAdapterLogger, ACSClientLogger, AMSClientLogger, CallingSDKLogger, IC3ClientLogger, OCSDKLogger, createACSAdapterLogger, createACSClientLogger, createAMSClientLogger, createCallingSDKLogger, createIC3ClientLogger, createOCSDKLogger } from "./utils/loggers";
 import ACSClient, { ACSConversation } from "./core/messaging/ACSClient";
@@ -2129,7 +2128,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async getPostChatSurveyContext(): Promise<PostChatContext> { // eslint-disable-line @typescript-eslint/no-explicit-any
+    public async getPostChatSurveyContext(): Promise<PostChatContext> {
         this.scenarioMarker.startScenario(TelemetryEvent.GetPostChatSurveyContext, {
             RequestId: this.requestId,
             ChatId: this.chatToken?.chatId as string,
@@ -2658,7 +2657,7 @@ class OmnichannelChatSDK {
 
         } catch (error) {
             // Fallback on orgUrl which got converted to Core Services orgUrl
-            if (isCoreServicesOrgUrlDNSError(error, this.coreServicesOrgUrl, this.dynamicsLocationCode)) { // eslint-disable-line @typescript-eslint/no-explicit-any
+            if (isCoreServicesOrgUrlDNSError(error, this.coreServicesOrgUrl, this.dynamicsLocationCode)) {
                 this.omnichannelConfig.orgUrl = this.unqServicesOrgUrl as string;
                 this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(false) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
                 liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache); // Bubble up error by default to throw ChatConfigRetrievalFailure

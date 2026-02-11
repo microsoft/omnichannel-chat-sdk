@@ -6,7 +6,7 @@ class StopWatch {
     }
 
     public stop(): number {
-        return new Date().getTime() - this.timeStart!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        return new Date().getTime() - this.timeStart!;
     }
 }
 

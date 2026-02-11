@@ -39,3 +39,6 @@ jobs:
 
       - name: Run ESLint
         run: npm run lint
+
+      - name: Build
+        run: npm run build:tsc
