@@ -102,6 +102,7 @@ export type LiveWSAndLiveChatEngJoin = {
     msdyn_name: string;
     solutionid: string;
     msdyn_postconversationsurveyenable: string;
+    msdyn_isConversationalPostChatSurveyEnabled: string | null;
     OutOfOperatingHours: string;
     msdyn_postconversationsurveymessagetext: string;
     msdyn_enablechattranscriptdownload: string;

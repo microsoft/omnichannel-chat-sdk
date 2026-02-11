@@ -14,6 +14,10 @@ All notable changes to this project will be documented in this file.
 
 ## [1.11.8] - 2026-01-29
 
+### Fixed
+
+- Fixed conversational survey handling when customer ends conversation in React Native
+
 ### Security
 
 - Fixed all npm audit vulnerabilities (8 total)

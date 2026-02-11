@@ -1047,6 +1047,18 @@ class OmnichannelChatSDK {
         }
     }
 
+    /**
+     * Ends the chat by closing the session and disconnecting from the conversation.
+     *
+     * On React Native, automatically waits for conversational survey completion if enabled.
+     * On Web, disconnects immediately as the widget handles surveys independently.
+     *
+     * @param endChatOptionalParams - Optional parameters
+     * @param endChatOptionalParams.isSessionEnded - Skip survey wait if session already ended
+     * @example
+     * await chatSDK.endChat();
+     * await chatSDK.endChat({ isSessionEnded: true });
+     */
     public async endChat(endChatOptionalParams: EndChatOptionalParams = {}): Promise<void> {
         return this.executeWithLock(() => this.internalEndChat(endChatOptionalParams));
     }
@@ -1067,34 +1079,36 @@ class OmnichannelChatSDK {
         this.isEndingChat = true;
 
         try {
-            // calling close chat, internally will handle the session close
-            try {
-                await this.closeChat(endChatOptionalParams);
-            } finally {
+            await this.closeChat(endChatOptionalParams);
 
-                this.conversation?.disconnect();
-                this.conversation = null;
-                this.requestId = uuidv4();
-                this.chatToken = {};
-                this.reconnectId = null;
+            const isReactNative = platform.isReactNative();
+            const isConversationalSurveyEnabled = this.liveChatConfig.LiveWSAndLiveChatEngJoin?.msdyn_isConversationalPostChatSurveyEnabled?.toString().toLowerCase() === 'true';
+            const shouldWaitForSurvey = isReactNative && isConversationalSurveyEnabled && !endChatOptionalParams.isSessionEnded;
 
-                if (this.IC3Client) {
-                    this.IC3Client.dispose();
-                    !platform.isNode() && !platform.isReactNative() && removeElementById(this.IC3Client.id);
-                    this.IC3Client = null;
-                }
+            const telemetryData = {
+                ...cleanupMetadata,
+                IsReactNative: isReactNative,
+                SurveyEnabled: isConversationalSurveyEnabled,
+                IsSessionEnded: endChatOptionalParams.isSessionEnded || false,
+                WaitingForSurvey: shouldWaitForSurvey
+            };
 
-                if (this.OCClient.sessionId) {
-                    this.OCClient.sessionId = null;
-                    this.sessionId = null;
-                }
+            // React Native only: Wait for conversational survey to complete
+            if (shouldWaitForSurvey) {
+                this.scenarioMarker.startScenario(TelemetryEvent.WaitForConversationalSurvey, telemetryData);
 
-                loggerUtils.setRequestId(this.requestId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
-                loggerUtils.setChatId('', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+                try {
+                    const surveyStarted = await this.waitForSurveyStart();
 
-                if (this.refreshTokenTimer !== null) {
-                    clearInterval(this.refreshTokenTimer);
-                    this.refreshTokenTimer = null;
+                    if (surveyStarted) {
+                        await this.waitForConversationalSurveyEnd();
+                    }
+
+                    this.scenarioMarker.completeScenario(TelemetryEvent.WaitForConversationalSurvey, telemetryData);
+                } catch (error) {
+                    // Survey timeout or error - log but continue with chat cleanup
+                    // The failure telemetry is already logged in waitForMessageTags
+                    // Don't let survey failures prevent chat from closing
                 }
             }
 
@@ -1110,8 +1124,119 @@ class OmnichannelChatSDK {
             }
             exceptionThrowers.throwConversationClosureFailure(error, this.scenarioMarker, TelemetryEvent.EndChat, telemetryData);
         } finally {
+            // Cleanup always runs, regardless of success or failure
+            // This ensures resources are released even if closeChat or survey waiting throws
+            this.conversation?.disconnect();
+            this.conversation = null;
+            this.requestId = uuidv4();
+            this.chatToken = {};
+            this.reconnectId = null;
+
+            if (this.IC3Client) {
+                this.IC3Client.dispose();
+                !platform.isNode() && !platform.isReactNative() && removeElementById(this.IC3Client.id);
+                this.IC3Client = null;
+            }
+
+            if (this.OCClient.sessionId) {
+                this.OCClient.sessionId = null;
+                this.sessionId = null;
+            }
+
+            loggerUtils.setRequestId(this.requestId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+            loggerUtils.setChatId('', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+
+            if (this.refreshTokenTimer !== null) {
+                clearInterval(this.refreshTokenTimer);
+                this.refreshTokenTimer = null;
+            }
             this.isEndingChat = false;
         }
+    }
+
+    /**
+     * Waits for a message with specific tags. Used for conversational survey detection.
+     * Automatically unregisters the listener after the promise resolves to prevent memory leaks.
+     * Includes timeout to prevent indefinite hanging if messages never arrive.
+     */
+    private waitForMessageTags(requiredTags: string[], timeoutMs = 60000): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            let resolved = false;
+            let timeoutHandle: NodeJS.Timeout | null = null;
+
+            const checkForTags = (event: any) => {  // eslint-disable-line @typescript-eslint/no-explicit-any
+                if (resolved) return;
+
+                try {
+                    const tagsString = event?.metadata?.tags || '';
+                    const tags = tagsString.replace(/\"/g, "").split(",").filter((tag: string) => tag.length > 0);  // eslint-disable-line no-useless-escape
+                    const hasTags = requiredTags.every(tag => tags.includes(tag));
+                    if (hasTags) {
+                        resolved = true;
+                        cleanup();
+                        resolve(true);
+                    }
+                } catch (error) {
+                    // Silently continue listening on message processing errors
+                }
+            };
+
+            const cleanup = (clearTimer = true) => {
+                // Clear timeout if still active
+                if (clearTimer && timeoutHandle) {
+                    clearTimeout(timeoutHandle);
+                    timeoutHandle = null;
+                }
+
+                // Remove listener to prevent memory leak
+                if (this.conversation && this.liveChatVersion === LiveChatVersion.V2) {
+                    const acsConversation = this.conversation as ACSConversation;
+                    acsConversation.removeListener("chatMessageReceived", checkForTags);
+                    acsConversation.removeListener("chatMessageEdited", checkForTags);
+                }
+            };
+
+            // Set timeout to prevent indefinite hang
+            timeoutHandle = setTimeout(() => {
+                if (!resolved) {
+                    resolved = true;
+                    cleanup(false); // Don't clear timeout since we're in the timeout handler
+
+                    // Log telemetry for timeout
+                    this.scenarioMarker?.failScenario(TelemetryEvent.WaitForConversationalSurvey, {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken?.chatId as string,
+                        Reason: 'Timeout',
+                        ExpectedTags: requiredTags.join(','),
+                        TimeoutMs: timeoutMs
+                    });
+
+                    reject(new Error(`Timeout waiting for message with tags: ${requiredTags.join(', ')}`));
+                }
+            }, timeoutMs);
+
+            try {
+                if (this.conversation && this.liveChatVersion === LiveChatVersion.V2) {
+                    const acsConversation = this.conversation as ACSConversation;
+                    acsConversation.addListener("chatMessageReceived", checkForTags);
+                    acsConversation.addListener("chatMessageEdited", checkForTags);
+                }
+            } catch (error) {
+                if (!resolved) {
+                    resolved = true;
+                    cleanup();
+                    reject(error);
+                }
+            }
+        });
+    }
+
+    private async waitForSurveyStart(): Promise<boolean> {
+        return this.waitForMessageTags(['system', 'startconversationalsurvey']);
+    }
+
+    private async waitForConversationalSurveyEnd(): Promise<void> {
+        await this.waitForMessageTags(['system', 'endconversationalsurvey']);
     }
 
     public async getCurrentLiveChatContext(): Promise<GetCurrentLiveChatContextResponse> {
