@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ## [1.11.8] - 2026-01-29
 
+### Fixed
+
+- Fixed conversational survey handling when customer ends conversation in React Native
+
 ### Security
 
 - Fixed all npm audit vulnerabilities (8 total)
@@ -36,7 +40,6 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Fixed conversational survey handling when customer ends conversation in React Native
 - Fixed version information not being passed to backend for React Native and other platforms by implementing robust version detection that works in both development and bundled environments
 - Fixed timer cleanup logic, if getChatToken refresh mechanisam failed to potentially avoid infinite loop
 - Fixed data masking crash when invalid regex patterns or zero-width match patterns are configured
