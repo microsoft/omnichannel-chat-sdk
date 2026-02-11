@@ -314,7 +314,7 @@ class AMSFileManager {
             let response: any;  // eslint-disable-line @typescript-eslint/no-explicit-any
 
             try {
-                response = await this.amsClient.getViewStatus(fileMetadata, this.omnichannelChatToken, this.supportedImagesMimeTypes);  // eslint-disable-line @typescript-eslint/no-explicit-any
+                response = await this.amsClient.getViewStatus(fileMetadata, this.omnichannelChatToken, this.supportedImagesMimeTypes);
             } catch (error) {
                 const exceptionDetails = {
                     response: 'AMSGetViewStatusFailure',
@@ -349,7 +349,7 @@ class AMSFileManager {
             }
 
             try {
-                blob = await this.amsClient.getView(fileMetadata, view_location, this.omnichannelChatToken, this.supportedImagesMimeTypes);  // eslint-disable-line @typescript-eslint/no-explicit-any
+                blob = await this.amsClient.getView(fileMetadata, view_location, this.omnichannelChatToken, this.supportedImagesMimeTypes);
             } catch (error) {
                 const exceptionDetails = {
                     response: 'AMSGetViewFailure',
