@@ -28,17 +28,17 @@ const defaultChatSDKConfig: ChatSDKConfig = {
  */
 const validateDataMaskingConfig = (dataMaskingConfig: DataMaskingSDKConfig) => {
     if (typeof dataMaskingConfig.disable !== "boolean") {
-        dataMaskingConfig.disable = defaultChatSDKConfig!.dataMasking!.disable; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        dataMaskingConfig.disable = defaultChatSDKConfig!.dataMasking!.disable;
     }
 
     if (typeof dataMaskingConfig.maskingCharacter !== "string" || dataMaskingConfig.maskingCharacter.length !== 1) {
-        dataMaskingConfig.maskingCharacter = defaultChatSDKConfig!.dataMasking!.maskingCharacter; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        dataMaskingConfig.maskingCharacter = defaultChatSDKConfig!.dataMasking!.maskingCharacter;
     }
 }
 
 const validatePersistentChatConfig = (persistentChatConfig: PersistentChatConfig): void => {
     if (typeof persistentChatConfig.tokenUpdateTime !== "number" || !persistentChatConfig.tokenUpdateTime) {
-        persistentChatConfig.tokenUpdateTime = defaultChatSDKConfig!.persistentChat!.tokenUpdateTime; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        persistentChatConfig.tokenUpdateTime = defaultChatSDKConfig!.persistentChat!.tokenUpdateTime;
     }
 }
 

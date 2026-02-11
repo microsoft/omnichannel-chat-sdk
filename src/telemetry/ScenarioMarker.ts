@@ -88,7 +88,7 @@ class ScenarioMarker {
             OrgId: this.omnichannelConfig.orgId,
             OrgUrl: this.omnichannelConfig.orgUrl,
             WidgetId: this.omnichannelConfig.widgetId,
-            ElapsedTimeInMilliseconds: stopWatch!.stop(), // eslint-disable-line @typescript-eslint/no-non-null-assertion
+            ElapsedTimeInMilliseconds: stopWatch!.stop(),
             ...additionalProperties
         };
 
@@ -112,7 +112,7 @@ class ScenarioMarker {
             OrgId: this.omnichannelConfig.orgId,
             OrgUrl: this.omnichannelConfig.orgUrl,
             WidgetId: this.omnichannelConfig.widgetId,
-            ElapsedTimeInMilliseconds: stopWatch!.stop(), // eslint-disable-line @typescript-eslint/no-non-null-assertion
+            ElapsedTimeInMilliseconds: stopWatch!.stop(),
             ...additionalProperties
         };
 

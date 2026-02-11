@@ -60,7 +60,7 @@ export const isRegionBasedUrlSupported = (widgetSnippetBaseUrl: string) => {
 }
 
 export const isRegionBasedUrlVersionSupported = () => {
-    const version = require('@microsoft/omnichannel-amsclient/package.json').version // eslint-disable-line @typescript-eslint/no-var-requires
+    const version = require('@microsoft/omnichannel-amsclient/package.json').version
     return regionBasedUrlSupportedVersions.includes(version);
 }
 

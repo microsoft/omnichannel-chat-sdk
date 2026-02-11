@@ -1,6 +1,6 @@
 import { getOmnichannelChatSdkVersion } from "./version";
 
-const setOcUserAgent = (OCClient: any, ocUserAgent?: string[]): void => { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+const setOcUserAgent = (OCClient: any, ocUserAgent?: string[]): void => { // eslint-disable-line @typescript-eslint/no-explicit-any
     const version = getOmnichannelChatSdkVersion();
     const userAgent = `omnichannel-chat-sdk/${version}`;
 
