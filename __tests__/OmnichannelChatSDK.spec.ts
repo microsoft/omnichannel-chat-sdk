@@ -4066,7 +4066,8 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             await chatSDK.startChat();
             chatSDK.conversation = {
-                stopPolling: jest.fn()
+                stopPolling: jest.fn(),
+                disconnect: jest.fn()
             };
 
             try {

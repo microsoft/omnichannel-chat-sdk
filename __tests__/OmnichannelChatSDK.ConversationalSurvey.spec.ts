@@ -24,14 +24,19 @@ describe('OmnichannelChatSDK - Conversational Survey', () => {
                 msdyn_isConversationalPostChatSurveyEnabled: 'false'
             }
         };
-        chatSDK.conversation = { disconnect: jest.fn() };
+        chatSDK.conversation = {
+            disconnect: jest.fn(),
+            removeListener: jest.fn()
+        };
+        chatSDK.liveChatVersion = 2; // V2/ACS for removeListener support
         chatSDK.IC3Client = null;
         chatSDK.OCClient = { sessionId: null };
         chatSDK.refreshTokenTimer = null;
         chatSDK.closeChat = jest.fn().mockResolvedValue(undefined);
         chatSDK.scenarioMarker = {
             startScenario: jest.fn(),
-            completeScenario: jest.fn()
+            completeScenario: jest.fn(),
+            failScenario: jest.fn()
         };
     });
 
@@ -42,11 +47,11 @@ describe('OmnichannelChatSDK - Conversational Survey', () => {
     describe('React Native Platform', () => {
         beforeEach(() => {
             // Mock React Native environment
-            global.navigator = { product: 'ReactNative' };
+            (global as any).navigator = { product: 'ReactNative' };
         });
 
         afterEach(() => {
-            delete global.navigator;
+            delete (global as any).navigator;
         });
 
         it('should wait for conversational survey when enabled', async () => {
@@ -58,6 +63,7 @@ describe('OmnichannelChatSDK - Conversational Survey', () => {
                 return Promise.resolve();
             });
 
+            const conversationSpy = chatSDK.conversation;
             const endChatPromise = chatSDK.endChat();
 
             // Simulate survey start message
@@ -77,7 +83,7 @@ describe('OmnichannelChatSDK - Conversational Survey', () => {
             await endChatPromise;
 
             expect(chatSDK.closeChat).toHaveBeenCalled();
-            expect(chatSDK.conversation.disconnect).toHaveBeenCalled();
+            expect(conversationSpy.disconnect).toHaveBeenCalled();
             expect(chatSDK.scenarioMarker.startScenario).toHaveBeenCalledWith(
                 'WaitForConversationalSurvey',
                 expect.objectContaining({
@@ -92,10 +98,11 @@ describe('OmnichannelChatSDK - Conversational Survey', () => {
             chatSDK.liveChatConfig.LiveWSAndLiveChatEngJoin.msdyn_isConversationalPostChatSurveyEnabled = 'false';
             chatSDK.onNewMessage = jest.fn();
 
+            const conversationSpy = chatSDK.conversation;
             await chatSDK.endChat();
 
             expect(chatSDK.closeChat).toHaveBeenCalled();
-            expect(chatSDK.conversation.disconnect).toHaveBeenCalled();
+            expect(conversationSpy.disconnect).toHaveBeenCalled();
             expect(chatSDK.onNewMessage).not.toHaveBeenCalled();
         });
 
@@ -103,10 +110,11 @@ describe('OmnichannelChatSDK - Conversational Survey', () => {
             chatSDK.liveChatConfig.LiveWSAndLiveChatEngJoin.msdyn_isConversationalPostChatSurveyEnabled = 'true';
             chatSDK.onNewMessage = jest.fn();
 
+            const conversationSpy = chatSDK.conversation;
             await chatSDK.endChat({ isSessionEnded: true });
 
             expect(chatSDK.closeChat).toHaveBeenCalled();
-            expect(chatSDK.conversation.disconnect).toHaveBeenCalled();
+            expect(conversationSpy.disconnect).toHaveBeenCalled();
             expect(chatSDK.onNewMessage).not.toHaveBeenCalled();
         });
 
@@ -119,6 +127,7 @@ describe('OmnichannelChatSDK - Conversational Survey', () => {
                 return Promise.resolve();
             });
 
+            const conversationSpy = chatSDK.conversation;
             const endChatPromise = chatSDK.endChat();
 
             // Send survey messages in sequence
@@ -131,7 +140,7 @@ describe('OmnichannelChatSDK - Conversational Survey', () => {
 
             await endChatPromise;
 
-            expect(chatSDK.conversation.disconnect).toHaveBeenCalled();
+            expect(conversationSpy.disconnect).toHaveBeenCalled();
         });
 
         it('should ignore non-survey messages while waiting', async () => {
@@ -143,6 +152,7 @@ describe('OmnichannelChatSDK - Conversational Survey', () => {
                 return Promise.resolve();
             });
 
+            const conversationSpy = chatSDK.conversation;
             const endChatPromise = chatSDK.endChat();
 
             setTimeout(() => {
@@ -150,58 +160,64 @@ describe('OmnichannelChatSDK - Conversational Survey', () => {
                 messageCallback({ tags: ['customer'] });
                 messageCallback({ tags: ['agent'] });
 
-                // Send survey messages
+                // Send survey start message
                 messageCallback({ tags: ['system', 'startconversationalsurvey'] });
-                messageCallback({ tags: ['system', 'endconversationalsurvey'] });
             }, 10);
+
+            // Send survey end message after start message
+            setTimeout(() => {
+                messageCallback({ tags: ['system', 'endconversationalsurvey'] });
+            }, 20);
 
             await endChatPromise;
 
-            expect(chatSDK.conversation.disconnect).toHaveBeenCalled();
+            expect(conversationSpy.disconnect).toHaveBeenCalled();
         });
     });
 
     describe('Web Platform', () => {
         beforeEach(() => {
             // Mock Web environment
-            global.window = { document: {} };
-            delete global.navigator;
+            (global as any).window = { document: {} };
+            delete (global as any).navigator;
         });
 
         afterEach(() => {
-            delete global.window;
+            delete (global as any).window;
         });
 
         it('should not wait for survey even when enabled', async () => {
             chatSDK.liveChatConfig.LiveWSAndLiveChatEngJoin.msdyn_isConversationalPostChatSurveyEnabled = 'true';
             chatSDK.onNewMessage = jest.fn();
 
+            const conversationSpy = chatSDK.conversation;
             await chatSDK.endChat();
 
             expect(chatSDK.closeChat).toHaveBeenCalled();
-            expect(chatSDK.conversation.disconnect).toHaveBeenCalled();
+            expect(conversationSpy.disconnect).toHaveBeenCalled();
             expect(chatSDK.onNewMessage).not.toHaveBeenCalled();
         });
 
         it('should disconnect immediately', async () => {
             chatSDK.liveChatConfig.LiveWSAndLiveChatEngJoin.msdyn_isConversationalPostChatSurveyEnabled = 'true';
 
+            const conversationSpy = chatSDK.conversation;
             const startTime = Date.now();
             await chatSDK.endChat();
             const duration = Date.now() - startTime;
 
             expect(duration).toBeLessThan(100); // Should complete quickly
-            expect(chatSDK.conversation.disconnect).toHaveBeenCalled();
+            expect(conversationSpy.disconnect).toHaveBeenCalled();
         });
     });
 
     describe('Telemetry', () => {
         beforeEach(() => {
-            global.navigator = { product: 'ReactNative' };
+            (global as any).navigator = { product: 'ReactNative' };
         });
 
         afterEach(() => {
-            delete global.navigator;
+            delete (global as any).navigator;
         });
 
         it('should log telemetry with correct metadata', async () => {
@@ -213,19 +229,23 @@ describe('OmnichannelChatSDK - Conversational Survey', () => {
                 return Promise.resolve();
             });
 
+            const requestId = chatSDK.requestId;
             const endChatPromise = chatSDK.endChat({ isSessionEnded: false });
 
             setTimeout(() => {
                 messageCallback({ tags: ['system', 'startconversationalsurvey'] });
-                messageCallback({ tags: ['system', 'endconversationalsurvey'] });
             }, 10);
+
+            setTimeout(() => {
+                messageCallback({ tags: ['system', 'endconversationalsurvey'] });
+            }, 20);
 
             await endChatPromise;
 
             expect(chatSDK.scenarioMarker.startScenario).toHaveBeenCalledWith(
                 'WaitForConversationalSurvey',
                 expect.objectContaining({
-                    RequestId: chatSDK.requestId,
+                    RequestId: requestId,
                     ChatId: 'test-chat-id',
                     IsReactNative: true,
                     SurveyEnabled: true,
@@ -246,12 +266,13 @@ describe('OmnichannelChatSDK - Conversational Survey', () => {
         it('should log when survey is not waited for', async () => {
             chatSDK.liveChatConfig.LiveWSAndLiveChatEngJoin.msdyn_isConversationalPostChatSurveyEnabled = 'false';
 
+            const requestId = chatSDK.requestId;
             await chatSDK.endChat();
 
             expect(chatSDK.scenarioMarker.startScenario).toHaveBeenCalledWith(
                 'EndChat',
                 expect.objectContaining({
-                    RequestId: chatSDK.requestId,
+                    RequestId: requestId,
                     ChatId: 'test-chat-id'
                 })
             );
@@ -266,18 +287,22 @@ describe('OmnichannelChatSDK - Conversational Survey', () => {
 
     describe('Error Handling', () => {
         beforeEach(() => {
-            global.navigator = { product: 'ReactNative' };
+            (global as any).navigator = { product: 'ReactNative' };
         });
 
         afterEach(() => {
-            delete global.navigator;
+            delete (global as any).navigator;
         });
 
         it('should handle onNewMessage listener registration errors', async () => {
             chatSDK.liveChatConfig.LiveWSAndLiveChatEngJoin.msdyn_isConversationalPostChatSurveyEnabled = 'true';
             chatSDK.onNewMessage = jest.fn().mockRejectedValue(new Error('Listener registration failed'));
 
-            await expect(chatSDK.endChat()).rejects.toThrow('Listener registration failed');
+            const conversationSpy = chatSDK.conversation;
+            // Survey errors are caught and logged, but endChat still completes successfully
+            await chatSDK.endChat();
+
+            expect(conversationSpy.disconnect).toHaveBeenCalled();
         });
 
         it('should handle message processing errors gracefully', async () => {
@@ -289,6 +314,7 @@ describe('OmnichannelChatSDK - Conversational Survey', () => {
                 return Promise.resolve();
             });
 
+            const conversationSpy = chatSDK.conversation;
             const endChatPromise = chatSDK.endChat();
 
             setTimeout(() => {
@@ -296,47 +322,52 @@ describe('OmnichannelChatSDK - Conversational Survey', () => {
                 try {
                     messageCallback({ tags: null }); // Invalid message
                 } catch (e) {
-                    // Expected
+                    // Expected - error should be caught gracefully
                 }
 
-                // Send valid messages
+                // Send valid survey start message
                 messageCallback({ tags: ['system', 'startconversationalsurvey'] });
-                messageCallback({ tags: ['system', 'endconversationalsurvey'] });
             }, 10);
+
+            setTimeout(() => {
+                messageCallback({ tags: ['system', 'endconversationalsurvey'] });
+            }, 20);
 
             await endChatPromise;
 
-            expect(chatSDK.conversation.disconnect).toHaveBeenCalled();
+            expect(conversationSpy.disconnect).toHaveBeenCalled();
         });
     });
 
     describe('Backward Compatibility', () => {
         beforeEach(() => {
-            global.navigator = { product: 'ReactNative' };
+            (global as any).navigator = { product: 'ReactNative' };
         });
 
         afterEach(() => {
-            delete global.navigator;
+            delete (global as any).navigator;
         });
 
         it('should handle widget calling endChat after survey completed', async () => {
             chatSDK.liveChatConfig.LiveWSAndLiveChatEngJoin.msdyn_isConversationalPostChatSurveyEnabled = 'true';
             chatSDK.onNewMessage = jest.fn();
 
+            const conversationSpy = chatSDK.conversation;
             await chatSDK.endChat({ isSessionEnded: true });
 
             expect(chatSDK.closeChat).toHaveBeenCalledWith({ isSessionEnded: true });
-            expect(chatSDK.conversation.disconnect).toHaveBeenCalled();
+            expect(conversationSpy.disconnect).toHaveBeenCalled();
             expect(chatSDK.onNewMessage).not.toHaveBeenCalled();
         });
 
         it('should handle endChat without parameters', async () => {
             chatSDK.liveChatConfig.LiveWSAndLiveChatEngJoin.msdyn_isConversationalPostChatSurveyEnabled = 'false';
 
+            const conversationSpy = chatSDK.conversation;
             await chatSDK.endChat();
 
             expect(chatSDK.closeChat).toHaveBeenCalled();
-            expect(chatSDK.conversation.disconnect).toHaveBeenCalled();
+            expect(conversationSpy.disconnect).toHaveBeenCalled();
         });
     });
 });
