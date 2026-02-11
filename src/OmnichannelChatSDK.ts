@@ -166,6 +166,7 @@ class OmnichannelChatSDK {
     private debugACS = false;
     private detailedDebugEnabled = false;
     private regexCompiledForDataMasking: RegExp[] = [];
+    private isEndingChat = false;
 
     constructor(omnichannelConfig: OmnichannelConfig, chatSDKConfig: ChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
@@ -688,6 +689,8 @@ class OmnichannelChatSDK {
     }
 
     private async internalStartChat(optionalParams: StartChatOptionalParams = {}): Promise<void> {
+        this.isEndingChat = false;
+
         this.scenarioMarker.startScenario(TelemetryEvent.StartChat, {
             RequestId: this.requestId
         });
@@ -1061,6 +1064,8 @@ class OmnichannelChatSDK {
             exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.EndChat);
         }
 
+        this.isEndingChat = true;
+
         try {
             // calling close chat, internally will handle the session close
             try {
@@ -1104,6 +1109,8 @@ class OmnichannelChatSDK {
                 exceptionThrowers.throwConversationClosureFailure(new Error(JSON.stringify(error.exceptionDetails)), this.scenarioMarker, TelemetryEvent.EndChat, telemetryData);
             }
             exceptionThrowers.throwConversationClosureFailure(error, this.scenarioMarker, TelemetryEvent.EndChat, telemetryData);
+        } finally {
+            this.isEndingChat = false;
         }
     }
 
@@ -1680,11 +1687,48 @@ class OmnichannelChatSDK {
             exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.OnAgentEndSession);
         }
         try {
+            let agentEndSessionFired = false;
             (this.conversation as ACSConversation).registerOnThreadUpdate(async (event: ParticipantsRemovedEvent) => {
-                const liveWorkItemDetails = await this.getConversationDetails();
-                if (Object.keys(liveWorkItemDetails).length === 0 || liveWorkItemDetails.state == LiveWorkItemState.WrapUp || liveWorkItemDetails.state == LiveWorkItemState.Closed) {
-                    onAgentEndSessionCallback(event);
-                    this.stopPolling();
+                if (this.isEndingChat) {
+                    return;
+                }
+
+                if (agentEndSessionFired) {
+                    return;
+                }
+
+                // Retry: the backend conversation state may lag behind the ACS participantsRemoved event
+                const maxRetries = 3;
+                const retryDelayMs = 2000;
+                for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                    let liveWorkItemDetails;
+                    try {
+                        liveWorkItemDetails = await this.getConversationDetails();
+                    } catch {
+                        if (attempt < maxRetries) {
+                            await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+                            continue;
+                        }
+                        return;
+                    }
+
+                    if (Object.keys(liveWorkItemDetails).length === 0 || liveWorkItemDetails.state == LiveWorkItemState.WrapUp || liveWorkItemDetails.state == LiveWorkItemState.Closed) {
+                        if (agentEndSessionFired) {
+                            return;
+                        }
+                        agentEndSessionFired = true;
+                        onAgentEndSessionCallback(event);
+                        this.stopPolling();
+                        return;
+                    }
+
+                    if (attempt < maxRetries) {
+                        await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+
+                        if (this.isEndingChat) {
+                            return;
+                        }
+                    }
                 }
             });
 
