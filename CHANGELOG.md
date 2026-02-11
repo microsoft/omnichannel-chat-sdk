@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fixed conversational survey handling when customer ends conversation in React Native
 
 ## [Unreleased]
 
