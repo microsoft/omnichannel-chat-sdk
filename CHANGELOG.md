@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix `onAgentEndSession` callback incorrectly firing during customer-initiated `endChat()` by adding `isEndingChat` guard flag to suppress spurious ACS `participantsRemoved` events triggered by the disconnect cleanup
+- Fix `onAgentEndSession` callback not firing when agent ends the session due to a race condition where the backend conversation state has not yet transitioned from `Active` to `WrapUp`/`Closed` at the time the ACS `participantsRemoved` event arrives; added retry logic (3 attempts, 2s delay) to poll `getConversationDetails()` until the state catches up
+- Fix `onAgentEndSession` callback firing multiple times per agent-end-session due to multiple `participantsRemoved` events (agent removed + customer removed); added `agentEndSessionFired` guard to ensure the callback is invoked exactly once
+- Reset `isEndingChat` flag defensively at the start of `internalStartChat()` to prevent flag leakage across sessions
+- Add unit tests for `isEndingChat` guard covering customer-close suppression, agent-close pass-through, flag reset, and error-path cleanup
+
 ## [1.11.8] - 2026-01-29
 
 ### Fixed
