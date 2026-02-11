@@ -447,6 +447,11 @@ export class ACSConversation {
         this.eventListeners[event].push(listener);
     }
 
+    public addListener(event: string, listener: CallableFunction): void {
+        this.chatClient?.on(event as any, listener as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
+        this.trackListener(event, listener);
+    }
+
     public removeListener(event: string, listener: CallableFunction): void {
         // Remove from tracked listeners
         if (event in this.eventListeners) {

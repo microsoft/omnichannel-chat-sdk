@@ -1158,11 +1158,13 @@ class OmnichannelChatSDK {
             let resolved = false;
             let timeoutHandle: NodeJS.Timeout | null = null;
 
-            const checkForTags = (message: OmnichannelMessage) => {
+            const checkForTags = (event: any) => {  // eslint-disable-line @typescript-eslint/no-explicit-any
                 if (resolved) return;
 
                 try {
-                    const hasTags = requiredTags.every(tag => message.tags?.includes(tag));
+                    const tagsString = event?.metadata?.tags || '';
+                    const tags = tagsString.replace(/\"/g, "").split(",").filter((tag: string) => tag.length > 0);  // eslint-disable-line no-useless-escape
+                    const hasTags = requiredTags.every(tag => tags.includes(tag));
                     if (hasTags) {
                         resolved = true;
                         cleanup();
@@ -1207,13 +1209,19 @@ class OmnichannelChatSDK {
                 }
             }, timeoutMs);
 
-            this.onNewMessage(checkForTags).catch((error) => {
+            try {
+                if (this.conversation && this.liveChatVersion === LiveChatVersion.V2) {
+                    const acsConversation = this.conversation as ACSConversation;
+                    acsConversation.addListener("chatMessageReceived", checkForTags);
+                    acsConversation.addListener("chatMessageEdited", checkForTags);
+                }
+            } catch (error) {
                 if (!resolved) {
                     resolved = true;
                     cleanup();
                     reject(error);
                 }
-            });
+            }
         });
     }
 
