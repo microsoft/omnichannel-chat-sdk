@@ -11,7 +11,7 @@ export default interface StartChatOptionalParams {
     device?: string;
     initContext?: InitContext;
     reconnectId?: string;
-    deferInitialAuth?: boolean;
+    wasAuthenticated?: boolean;
     sendDefaultInitContext?: true;
     isProactiveChat?: boolean;
     latitude?: string;

@@ -132,6 +132,7 @@ class OmnichannelChatSDK {
     // Operation queue for serializing chat operations
     private chatOperationInProgress = false;
     private pendingOperations: Array<() => Promise<void>> = [];
+    private deferInitialAuth = false;
     private unqServicesOrgUrl: string | null = null;
     private coreServicesOrgUrl: string | null = null;
     private dynamicsLocationCode: string | null = null;
@@ -759,7 +760,9 @@ class OmnichannelChatSDK {
             }
         }
 
-        const deferInitialAuth = optionalParams?.deferInitialAuth === true;
+        // Set by FacadeChatSDK for mid-auth to capture value and reset immediately to avoid affecting subsequent calls
+        const deferInitialAuth = this.deferInitialAuth;
+        this.deferInitialAuth = false; // Reset for next call
 
         if (deferInitialAuth) {
             this.scenarioMarker.singleRecord(TelemetryEvent.StartChat, {
@@ -2343,15 +2346,6 @@ class OmnichannelChatSDK {
                 TelemetryEvent.MidConversationAuth,
                 { RequestId: this.requestId, ChatId: this.chatToken?.chatId ?? "" }
             );
-        }
-
-        // If already authenticated - no action required
-        if (this.authenticatedUserToken) {
-            this.scenarioMarker.completeScenario(TelemetryEvent.MidConversationAuth, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken?.chatId as string
-            });
-            return;
         }
 
         // Resolve token
