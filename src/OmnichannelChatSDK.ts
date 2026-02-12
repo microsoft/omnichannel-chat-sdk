@@ -2329,10 +2329,12 @@ class OmnichannelChatSDK {
     }
 
     public async authenticateChat(tokenOrProvider: string | (() => Promise<string>), optionalParams: { refreshChatToken?: boolean } = {}): Promise<void> {
-        this.scenarioMarker.startScenario(TelemetryEvent.MidConversationAuth, {
+        const telemetryData = {
             RequestId: this.requestId,
             ChatId: this.chatToken?.chatId as string
-        });
+        };
+
+        this.scenarioMarker.startScenario(TelemetryEvent.MidConversationAuth, telemetryData);
 
         if (!this.isInitialized) {
             exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.MidConversationAuth);
@@ -2352,21 +2354,27 @@ class OmnichannelChatSDK {
         try {
             token = typeof tokenOrProvider === "function" ? await tokenOrProvider() : tokenOrProvider;
         } catch (e) {
+            const exceptionDetails: ChatSDKExceptionDetails = {
+                response: ChatSDKErrorName.MidConversationAuthFailure,
+                errorObject: `${e}`
+            };
             this.scenarioMarker.failScenario(TelemetryEvent.MidConversationAuth, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken?.chatId as string,
-                ExceptionDetails: "Token provider threw"
+                ...telemetryData,
+                ExceptionDetails: JSON.stringify(exceptionDetails)
             });
-            throw e;
+            throw new ChatSDKError(ChatSDKErrorName.MidConversationAuthFailure, undefined, exceptionDetails);
         }
 
         if (!token || token.trim().length === 0) {
+            const exceptionDetails: ChatSDKExceptionDetails = {
+                response: ChatSDKErrorName.MidConversationAuthFailure,
+                message: "Authentication token is empty or invalid"
+            };
             this.scenarioMarker.failScenario(TelemetryEvent.MidConversationAuth, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken?.chatId as string,
-                ExceptionDetails: "Empty token"
+                ...telemetryData,
+                ExceptionDetails: JSON.stringify(exceptionDetails)
             });
-            throw new Error("MidConversationAuth: Empty token");
+            throw new ChatSDKError(ChatSDKErrorName.MidConversationAuthFailure, undefined, exceptionDetails);
         }
 
         try {
@@ -2382,22 +2390,22 @@ class OmnichannelChatSDK {
             // Persist token
             this.authenticatedUserToken = token;
 
-            // Optionally refresh chat token so subsequent calls use authenticated endpoint set
+            this.scenarioMarker.completeScenario(TelemetryEvent.MidConversationAuth, telemetryData);
+
+            // Refresh chat token so subsequent calls use authenticated endpoints
             if (optionalParams.refreshChatToken) {
                 await this.getChatToken(false);
             }
-
-            this.scenarioMarker.completeScenario(TelemetryEvent.MidConversationAuth, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken?.chatId as string
-            });
         } catch (error) {
+            const exceptionDetails: ChatSDKExceptionDetails = {
+                response: ChatSDKErrorName.MidConversationAuthFailure,
+                errorObject: `${error}`
+            };
             this.scenarioMarker.failScenario(TelemetryEvent.MidConversationAuth, {
-                RequestId: this.requestId,
-                ChatId: this.chatToken?.chatId as string,
-                ExceptionDetails: `${error}`
+                ...telemetryData,
+                ExceptionDetails: JSON.stringify(exceptionDetails)
             });
-            throw error;
+            throw new ChatSDKError(ChatSDKErrorName.MidConversationAuthFailure, undefined, exceptionDetails);
         }
     }
 

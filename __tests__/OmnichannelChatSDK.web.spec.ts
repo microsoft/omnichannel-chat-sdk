@@ -305,7 +305,8 @@ describe('Omnichannel Chat SDK (Web), Sequential', () => {
             jest.spyOn(platform, 'isReactNative').mockReturnValue(false);
             jest.spyOn(platform, 'isBrowser').mockReturnValue(true);
 
-            await chatSDK.startChat({ deferInitialAuth: true } as any);
+            chatSDK["deferInitialAuth"] = true;
+            await chatSDK.startChat();
 
             // Verify chat started without authentication
             expect(chatSDK.authenticatedUserToken).toBe(null);
@@ -332,7 +333,8 @@ describe('Omnichannel Chat SDK (Web), Sequential', () => {
             jest.spyOn(platform, 'isBrowser').mockReturnValue(true);
 
             // Step 1: Start chat with deferred authentication
-            await chatSDK.startChat({ deferInitialAuth: true } as any);
+            chatSDK["deferInitialAuth"] = true;
+            await chatSDK.startChat();
 
             expect(chatSDK.authenticatedUserToken).toBe(null);
             expect(chatSDK.chatToken.chatId).toBe('test-chat-id');

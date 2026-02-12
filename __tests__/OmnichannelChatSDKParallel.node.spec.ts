@@ -256,7 +256,8 @@ describe('Omnichannel Chat SDK (Node) Parallel initialization', () => {
             chatSDK.ACSClient.initialize = jest.fn();
             chatSDK.ACSClient.joinConversation = jest.fn();
 
-            await chatSDK.startChat({ deferInitialAuth: true } as any);
+            chatSDK["deferInitialAuth"] = true;
+            await chatSDK.startChat();
 
             // Verify chat started without authentication
             expect(chatSDK.authenticatedUserToken).toBe(null);

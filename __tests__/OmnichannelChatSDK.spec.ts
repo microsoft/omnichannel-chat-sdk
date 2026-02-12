@@ -5239,7 +5239,8 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 jest.spyOn(chatSDK.AMSClient, 'initialize').mockResolvedValue(Promise.resolve());
                 jest.spyOn(chatSDK, 'setAuthTokenProvider');
 
-                await chatSDK.startChat({ deferInitialAuth: true } as any);
+                chatSDK["deferInitialAuth"] = true;
+                await chatSDK.startChat();
 
                 // setAuthTokenProvider should NOT be called when deferInitialAuth is true
                 expect(chatSDK.setAuthTokenProvider).not.toHaveBeenCalled();
@@ -5276,9 +5277,9 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 jest.spyOn(chatSDK.AMSClient, 'initialize').mockResolvedValue(Promise.resolve());
                 jest.spyOn(chatSDK, 'setAuthTokenProvider');
 
-                await chatSDK.startChat({ deferInitialAuth: false } as any);
+                await chatSDK.startChat();
 
-                // setAuthTokenProvider should be called when deferInitialAuth is false
+                // setAuthTokenProvider should be called when deferInitialAuth is false (default)
                 expect(chatSDK.setAuthTokenProvider).toHaveBeenCalled();
             });
 
@@ -5336,7 +5337,8 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 jest.spyOn(chatSDK.AMSClient, 'initialize').mockResolvedValue(Promise.resolve());
                 const singleRecordSpy = jest.spyOn(chatSDK.scenarioMarker, 'singleRecord');
 
-                await chatSDK.startChat({ deferInitialAuth: true } as any);
+                chatSDK["deferInitialAuth"] = true;
+                await chatSDK.startChat();
 
                 // Verify telemetry was recorded for deferred authentication
                 expect(singleRecordSpy).toHaveBeenCalledWith(
@@ -5379,7 +5381,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 }
             });
 
-            it('ChatSDK.authenticateChat() should skip if already authenticated', async () => {
+            it('ChatSDK.authenticateChat() should re-authenticate even if already authenticated', async () => {
                 const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
                 chatSDK.getChatConfig = jest.fn();
                 chatSDK["isAMSClientAllowed"] = true;
@@ -5391,13 +5393,14 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 chatSDK.chatToken = { chatId: 'test-chat-id' };
                 chatSDK.authenticatedUserToken = 'existing-token';
 
-                chatSDK.OCClient.midConversationAuthenticateChat = jest.fn();
+                chatSDK.OCClient.midConversationAuthenticateChat = jest.fn().mockResolvedValue(Promise.resolve());
                 const completeSpy = jest.spyOn(chatSDK.scenarioMarker, 'completeScenario');
 
                 await chatSDK.authenticateChat('new-token');
 
-                // Should not call midConversationAuthenticateChat if already authenticated
-                expect(chatSDK.OCClient.midConversationAuthenticateChat).not.toHaveBeenCalled();
+                // Should call midConversationAuthenticateChat and update token
+                expect(chatSDK.OCClient.midConversationAuthenticateChat).toHaveBeenCalledTimes(1);
+                expect(chatSDK.authenticatedUserToken).toBe('new-token');
                 expect(completeSpy).toHaveBeenCalledWith(
                     expect.any(String),
                     expect.objectContaining({
@@ -5482,13 +5485,13 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                     await chatSDK.authenticateChat(tokenProvider);
                     fail("Exception was expected");
                 } catch (e: any) {
-                    expect(e.message).toBe('Token provider failed');
+                    expect(e.message).toBe('MidConversationAuthFailure');
                 }
 
                 expect(failScenarioSpy).toHaveBeenCalledWith(
                     expect.any(String),
                     expect.objectContaining({
-                        ExceptionDetails: 'Token provider threw'
+                        ExceptionDetails: expect.stringContaining('MidConversationAuthFailure')
                     })
                 );
             });
@@ -5511,13 +5514,13 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                     await chatSDK.authenticateChat('');
                     fail("Exception was expected");
                 } catch (e: any) {
-                    expect(e.message).toBe('MidConversationAuth: Empty token');
+                    expect(e.message).toBe('MidConversationAuthFailure');
                 }
 
                 expect(failScenarioSpy).toHaveBeenCalledWith(
                     expect.any(String),
                     expect.objectContaining({
-                        ExceptionDetails: 'Empty token'
+                        ExceptionDetails: expect.stringContaining('MidConversationAuthFailure')
                     })
                 );
             });
@@ -5538,7 +5541,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                     await chatSDK.authenticateChat('   ');
                     fail("Exception was expected");
                 } catch (e: any) {
-                    expect(e.message).toBe('MidConversationAuth: Empty token');
+                    expect(e.message).toBe('MidConversationAuthFailure');
                 }
             });
 
@@ -5561,7 +5564,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                     await chatSDK.authenticateChat('test-token');
                     fail("Exception was expected");
                 } catch (e: any) {
-                    expect(e.message).toBe('OCClient.midConversationAuthenticateChat is not available');
+                    expect(e.message).toBe('MidConversationAuthFailure');
                 }
             });
 
@@ -5585,7 +5588,8 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                     await chatSDK.authenticateChat('test-token');
                     fail("Exception was expected");
                 } catch (e: any) {
-                    expect(e.message).toBe('Authentication failed on server');
+                    expect(e.message).toBe('MidConversationAuthFailure');
+                    expect(e.exceptionDetails.errorObject).toContain('Authentication failed on server');
                 }
 
                 expect(chatSDK.authenticatedUserToken).toBe(null);
@@ -5696,7 +5700,8 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 jest.spyOn(chatSDK.AMSClient, 'initialize').mockResolvedValue(Promise.resolve());
 
                 // Step 1: Start chat with deferred authentication
-                await chatSDK.startChat({ deferInitialAuth: true } as any);
+                chatSDK["deferInitialAuth"] = true;
+                await chatSDK.startChat();
 
                 // Verify chat started without authentication
                 expect(chatSDK.authenticatedUserToken).toBe(null);
@@ -5718,7 +5723,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 );
             });
 
-            it('ChatSDK should allow calling authenticateChat multiple times (idempotent when already authenticated)', async () => {
+            it('ChatSDK should allow calling authenticateChat multiple times', async () => {
                 const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
                 chatSDK.getChatConfig = jest.fn();
                 chatSDK["isAMSClientAllowed"] = true;
@@ -5735,13 +5740,14 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 // First authentication
                 await chatSDK.authenticateChat('token-1');
                 expect(chatSDK.OCClient.midConversationAuthenticateChat).toHaveBeenCalledTimes(1);
-
-                // Second authentication should skip (already authenticated)
-                await chatSDK.authenticateChat('token-2');
-                expect(chatSDK.OCClient.midConversationAuthenticateChat).toHaveBeenCalledTimes(1);
-
-                // Token should remain from first authentication
                 expect(chatSDK.authenticatedUserToken).toBe('token-1');
+
+                // Second authentication should also call through
+                await chatSDK.authenticateChat('token-2');
+                expect(chatSDK.OCClient.midConversationAuthenticateChat).toHaveBeenCalledTimes(2);
+
+                // Token should be updated to second authentication
+                expect(chatSDK.authenticatedUserToken).toBe('token-2');
             });
         });
     });
