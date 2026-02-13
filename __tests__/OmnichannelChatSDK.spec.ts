@@ -3880,6 +3880,214 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.conversation.registerOnThreadUpdate).toHaveBeenCalledTimes(count);
         });
 
+        it('onAgentEndSession callback should NOT fire when customer initiates endChat()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient.sessionInit = jest.fn();
+            chatSDK.OCClient.createConversation = jest.fn();
+            chatSDK.OCClient.sessionClose = jest.fn();
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
+            await chatSDK.startChat();
+
+            // Capture the callback registered via registerOnThreadUpdate
+            const handlers: {captured: any} = { captured: null };
+            const onAgentEndSessionSpy = jest.fn();
+
+            chatSDK.conversation = {
+                registerOnThreadUpdate: jest.fn((handler: any) => { handlers.captured = handler; }),
+                // When disconnect() is called during endChat(), simulate the ACS
+                // participantsRemoved event firing synchronously (as happens in practice
+                // before the listener is unsubscribed). The isEndingChat flag should be
+                // true at this point, suppressing the callback.
+                disconnect: jest.fn(() => {
+                    if (handlers.captured) {
+                        handlers.captured({ participantsRemoved: [] });
+                    }
+                }),
+                stopPolling: jest.fn()
+            };
+
+            await chatSDK.onAgentEndSession(onAgentEndSessionSpy);
+            expect(handlers.captured).not.toBeNull();
+
+            // Mock getConversationDetails to return Closed state (as it would after sessionClose)
+            jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue({ state: "Closed" });
+
+            // Customer ends chat — disconnect() fires the captured handler while isEndingChat is true
+            await chatSDK.endChat();
+
+            expect(onAgentEndSessionSpy).not.toHaveBeenCalled();
+        });
+
+        it('onAgentEndSession callback SHOULD fire when agent ends session (isEndingChat is false)', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient.sessionInit = jest.fn();
+            chatSDK.OCClient.createConversation = jest.fn();
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
+            await chatSDK.startChat();
+
+            // Capture the callback registered via registerOnThreadUpdate
+            const handlers: {captured: any} = { captured: null };
+            chatSDK.conversation = {
+                registerOnThreadUpdate: jest.fn((handler: any) => { handlers.captured = handler; }),
+                disconnect: jest.fn(),
+                stopPolling: jest.fn()
+            };
+
+            const onAgentEndSessionSpy = jest.fn();
+            await chatSDK.onAgentEndSession(onAgentEndSessionSpy);
+            expect(handlers.captured).not.toBeNull();
+
+            // Mock getConversationDetails to return WrapUp state (agent-initiated close)
+            jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue({ state: "WrapUp" });
+
+            // Do NOT call endChat — isEndingChat remains false (agent-initiated scenario)
+            const mockEvent = { participantsRemoved: [{ id: "agent-id" }] };
+            await handlers.captured(mockEvent);
+
+            expect(onAgentEndSessionSpy).toHaveBeenCalledTimes(1);
+            expect(onAgentEndSessionSpy).toHaveBeenCalledWith(mockEvent);
+        });
+
+        it('isEndingChat flag resets to false after endChat(), allowing new session onAgentEndSession to work', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient.sessionInit = jest.fn();
+            chatSDK.OCClient.createConversation = jest.fn();
+            chatSDK.OCClient.sessionClose = jest.fn();
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
+            await chatSDK.startChat();
+
+            chatSDK.conversation = {
+                disconnect: jest.fn(),
+                stopPolling: jest.fn()
+            };
+
+            await chatSDK.endChat();
+
+            // Flag should be reset after endChat completes
+            expect((chatSDK as any).isEndingChat).toBe(false);
+
+            // Start a new session
+            await chatSDK.startChat();
+
+            // Register onAgentEndSession for the new session
+            const handlers: {captured: any} = { captured: null };
+            chatSDK.conversation = {
+                registerOnThreadUpdate: jest.fn((handler: any) => { handlers.captured = handler; }),
+                disconnect: jest.fn(),
+                stopPolling: jest.fn()
+            };
+
+            const onAgentEndSessionSpy = jest.fn();
+            await chatSDK.onAgentEndSession(onAgentEndSessionSpy);
+
+            jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue({ state: "WrapUp" });
+
+            // Simulate agent-end event in new session — should fire
+            await handlers.captured({ participantsRemoved: [] });
+
+            expect(onAgentEndSessionSpy).toHaveBeenCalledTimes(1);
+        });
+
+        it('isEndingChat flag resets to false even when closeChat() throws', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient.sessionInit = jest.fn();
+            chatSDK.OCClient.createConversation = jest.fn();
+            chatSDK.OCClient.sessionClose = jest.fn().mockRejectedValue(new Error("session close failed"));
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
+            await chatSDK.startChat();
+
+            chatSDK.conversation = {
+                disconnect: jest.fn(),
+                stopPolling: jest.fn()
+            };
+
+            try {
+                await chatSDK.endChat();
+            } catch (e) {
+                // Expected to throw due to sessionClose failure
+            }
+
+            // Flag must be reset even after error
+            expect((chatSDK as any).isEndingChat).toBe(false);
+        });
+
+        it('onAgentEndSession callback is only suppressed during endChat execution, not permanently', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient.sessionInit = jest.fn();
+            chatSDK.OCClient.createConversation = jest.fn();
+            chatSDK.OCClient.sessionClose = jest.fn();
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
+            await chatSDK.startChat();
+
+            const handlers: {captured: any} = { captured: null };
+            chatSDK.conversation = {
+                registerOnThreadUpdate: jest.fn((handler: any) => { handlers.captured = handler; }),
+                disconnect: jest.fn(),
+                stopPolling: jest.fn()
+            };
+
+            const onAgentEndSessionSpy = jest.fn();
+            await chatSDK.onAgentEndSession(onAgentEndSessionSpy);
+
+            jest.spyOn(chatSDK, 'getConversationDetails').mockResolvedValue({ state: "WrapUp" });
+
+            // isEndingChat is false initially — callback should fire
+            expect((chatSDK as any).isEndingChat).toBe(false);
+            await handlers.captured({ participantsRemoved: [] });
+            expect(onAgentEndSessionSpy).toHaveBeenCalledTimes(1);
+
+            // Now end the chat
+            await chatSDK.endChat();
+
+            // After endChat completes, flag should be false again
+            expect((chatSDK as any).isEndingChat).toBe(false);
+        });
+
         it('[LiveChatV1] ChatSDK.endChat() should end conversation', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
@@ -4066,7 +4274,8 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             await chatSDK.startChat();
             chatSDK.conversation = {
-                stopPolling: jest.fn()
+                stopPolling: jest.fn(),
+                disconnect: jest.fn()
             };
 
             try {

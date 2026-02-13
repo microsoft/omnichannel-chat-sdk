@@ -446,6 +446,28 @@ export class ACSConversation {
 
         this.eventListeners[event].push(listener);
     }
+
+    public addListener(event: string, listener: CallableFunction): void {
+        this.chatClient?.on(event as any, listener as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
+        this.trackListener(event, listener);
+    }
+
+    public removeListener(event: string, listener: CallableFunction): void {
+        // Remove from tracked listeners
+        if (event in this.eventListeners) {
+            const index = this.eventListeners[event].indexOf(listener);
+            if (index > -1) {
+                this.eventListeners[event].splice(index, 1);
+            }
+        }
+
+        // Unregister from ACS SDK
+        try {
+            this.chatClient?.off(event as any, listener as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
+        } catch (error) {
+            // Silently ignore unregister failures
+        }
+    }
 }
 
 class ACSClient {
