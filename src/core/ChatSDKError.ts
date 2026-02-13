@@ -64,6 +64,8 @@ export enum ChatSDKErrorName {
     AttachmentClientNotLoaded = "AttachmentClientNotLoaded",
     NotPersistentChatEnabled = "NotPersistentChatEnabled",
     AuthenticatedUserTokenNotFound = "AuthenticatedUserTokenNotFound",
+    /** Failure in mid-conversation authentication */
+    MidConversationAuthFailure = "MidConversationAuthFailure",
 
 }
 

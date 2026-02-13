@@ -253,4 +253,105 @@ describe('Omnichannel Chat SDK (Web), Sequential', () => {
             expect(error.message).toBe(ChatSDKErrorName.AuthenticatedUserTokenNotFound);
         }
     });
+
+    describe('Mid-Conversation Authentication (MidAuth) - Web', () => {
+        it('ChatSDK.authenticateChat() should work on Web platform', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            // Set up active conversation
+            chatSDK.conversation = { disconnect: jest.fn() };
+            chatSDK.chatToken = { chatId: 'test-chat-id' };
+            chatSDK.authenticatedUserToken = null;
+
+            chatSDK.OCClient.midConversationAuthenticateChat = jest.fn().mockResolvedValue(Promise.resolve());
+
+            jest.spyOn(platform, 'isNode').mockReturnValue(false);
+            jest.spyOn(platform, 'isReactNative').mockReturnValue(false);
+            jest.spyOn(platform, 'isBrowser').mockReturnValue(true);
+
+            await chatSDK.authenticateChat('web-auth-token');
+
+            expect(chatSDK.OCClient.midConversationAuthenticateChat).toHaveBeenCalledTimes(1);
+            expect(chatSDK.authenticatedUserToken).toBe('web-auth-token');
+        });
+
+        it('ChatSDK.startChat() with deferInitialAuth=true should work on Web platform', async () => {
+            const chatSDKConfig = {
+                getAuthToken: async () => {
+                    return 'authenticatedUserToken'
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.authSettings = { authenticationEndpoint: 'https://auth.endpoint' };
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve({
+                ChatId: 'test-chat-id',
+                Token: 'test-token',
+                RegionGtms: '{}'
+            }));
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+
+            jest.spyOn(platform, 'isNode').mockReturnValue(false);
+            jest.spyOn(platform, 'isReactNative').mockReturnValue(false);
+            jest.spyOn(platform, 'isBrowser').mockReturnValue(true);
+
+            chatSDK["deferInitialAuth"] = true;
+            await chatSDK.startChat();
+
+            // Verify chat started without authentication
+            expect(chatSDK.authenticatedUserToken).toBe(null);
+        });
+
+        it('ChatSDK full MidAuth flow should work on Web: startChat with deferInitialAuth -> authenticateChat', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.authSettings = { authenticationEndpoint: 'https://auth.endpoint' };
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve({
+                ChatId: 'test-chat-id',
+                Token: 'test-token',
+                RegionGtms: '{}'
+            }));
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn().mockResolvedValue({ disconnect: jest.fn() });
+
+            jest.spyOn(platform, 'isNode').mockReturnValue(false);
+            jest.spyOn(platform, 'isReactNative').mockReturnValue(false);
+            jest.spyOn(platform, 'isBrowser').mockReturnValue(true);
+
+            // Step 1: Start chat with deferred authentication
+            chatSDK["deferInitialAuth"] = true;
+            await chatSDK.startChat();
+
+            expect(chatSDK.authenticatedUserToken).toBe(null);
+            expect(chatSDK.chatToken.chatId).toBe('test-chat-id');
+
+            // Step 2: Authenticate the chat mid-conversation
+            chatSDK.OCClient.midConversationAuthenticateChat = jest.fn().mockResolvedValue(Promise.resolve());
+
+            await chatSDK.authenticateChat('mid-conversation-token');
+
+            expect(chatSDK.authenticatedUserToken).toBe('mid-conversation-token');
+            expect(chatSDK.OCClient.midConversationAuthenticateChat).toHaveBeenCalledWith(
+                chatSDK.requestId,
+                {
+                    chatId: 'test-chat-id',
+                    authenticatedUserToken: 'mid-conversation-token'
+                }
+            );
+        });
+    });
 });

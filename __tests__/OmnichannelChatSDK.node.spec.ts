@@ -152,4 +152,75 @@ describe('Omnichannel Chat SDK (Node), Sequential', () => {
             (global as any).navigator = undefined;
         }
     });
+
+    describe('Mid-Conversation Authentication (MidAuth) - Node', () => {
+        it('ChatSDK.authenticateChat() should work on Node platform', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            // Set up active conversation
+            chatSDK.conversation = { disconnect: jest.fn() };
+            chatSDK.chatToken = { chatId: 'test-chat-id' };
+            chatSDK.authenticatedUserToken = null;
+
+            chatSDK.OCClient.midConversationAuthenticateChat = jest.fn().mockResolvedValue(Promise.resolve());
+
+            await chatSDK.authenticateChat('node-auth-token');
+
+            expect(chatSDK.OCClient.midConversationAuthenticateChat).toHaveBeenCalledTimes(1);
+            expect(chatSDK.authenticatedUserToken).toBe('node-auth-token');
+        });
+
+        it('ChatSDK.startChat() with deferInitialAuth=true should work on Node platform', async () => {
+            const chatSDKConfig = {
+                getAuthToken: async () => {
+                    return 'authenticatedUserToken'
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.authSettings = { authenticationEndpoint: 'https://auth.endpoint' };
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve({
+                ChatId: 'test-chat-id',
+                Token: 'test-token',
+                RegionGtms: '{}'
+            }));
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient = { initialize: jest.fn() };
+
+            chatSDK["deferInitialAuth"] = true;
+            await chatSDK.startChat();
+
+            // Verify chat started without authentication
+            expect(chatSDK.authenticatedUserToken).toBe(null);
+        });
+
+        it('ChatSDK.authenticateChat() should throw error if no active conversation on Node platform', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            // conversation is null, chatToken.chatId is not set
+            chatSDK.conversation = null;
+            chatSDK.chatToken = {};
+
+            try {
+                await chatSDK.authenticateChat('test-token');
+                fail("Error expected");
+            } catch (error: any) {
+                expect(error.message).toBe('InvalidConversation');
+            }
+        });
+    });
 });

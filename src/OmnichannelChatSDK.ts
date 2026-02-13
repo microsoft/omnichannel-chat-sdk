@@ -131,6 +131,7 @@ class OmnichannelChatSDK {
     // Operation queue for serializing chat operations
     private chatOperationInProgress = false;
     private pendingOperations: Array<() => Promise<void>> = [];
+    private deferInitialAuth = false;
     private unqServicesOrgUrl: string | null = null;
     private coreServicesOrgUrl: string | null = null;
     private dynamicsLocationCode: string | null = null;
@@ -761,7 +762,17 @@ class OmnichannelChatSDK {
             }
         }
 
-        if (this.authSettings) {
+        // Set by FacadeChatSDK for mid-auth to capture value and reset immediately to avoid affecting subsequent calls
+        const deferInitialAuth = this.deferInitialAuth;
+        this.deferInitialAuth = false; // Reset for next call
+
+        if (deferInitialAuth) {
+            this.scenarioMarker.singleRecord(TelemetryEvent.StartChat, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken.chatId as string,
+                CustomProperties: "Deferred initial authentication"
+            });
+        } else if (this.authSettings) {
             if (!this.authenticatedUserToken) {
                 await this.setAuthTokenProvider(this.chatSDKConfig.getAuthToken, { throwError: true });
             }
@@ -2483,6 +2494,87 @@ class OmnichannelChatSDK {
         } catch (e) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             reportError("GetAgentAvailabilityFailed", (e as any).message as string);
+        }
+    }
+
+    public async authenticateChat(tokenOrProvider: string | (() => Promise<string>), optionalParams: { refreshChatToken?: boolean } = {}): Promise<void> {
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.MidConversationAuth);
+        }
+        if (!this.conversation || !this.chatToken?.chatId) {
+            exceptionThrowers.throwChatSDKError(
+                ChatSDKErrorName.InvalidConversation,
+                new Error("No active conversation to authenticate"),
+                this.scenarioMarker,
+                TelemetryEvent.MidConversationAuth,
+                { RequestId: this.requestId, ChatId: this.chatToken?.chatId ?? "" }
+            );
+        }
+
+        const telemetryData = {
+            RequestId: this.requestId,
+            ChatId: this.chatToken?.chatId as string
+        };
+
+        this.scenarioMarker.startScenario(TelemetryEvent.MidConversationAuth, telemetryData);
+
+        // Resolve token
+        let token: string;
+        try {
+            token = typeof tokenOrProvider === "function" ? await tokenOrProvider() : tokenOrProvider;
+        } catch (e) {
+            const exceptionDetails: ChatSDKExceptionDetails = {
+                response: ChatSDKErrorName.MidConversationAuthFailure,
+                errorObject: `${e}`
+            };
+            this.scenarioMarker.failScenario(TelemetryEvent.MidConversationAuth, {
+                ...telemetryData,
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+            throw new ChatSDKError(ChatSDKErrorName.MidConversationAuthFailure, undefined, exceptionDetails);
+        }
+
+        if (!token || token.trim().length === 0) {
+            const exceptionDetails: ChatSDKExceptionDetails = {
+                response: ChatSDKErrorName.MidConversationAuthFailure,
+                message: "Authentication token is empty or invalid"
+            };
+            this.scenarioMarker.failScenario(TelemetryEvent.MidConversationAuth, {
+                ...telemetryData,
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+            throw new ChatSDKError(ChatSDKErrorName.MidConversationAuthFailure, undefined, exceptionDetails);
+        }
+
+        try {
+            if (!this.OCClient?.midConversationAuthenticateChat) {
+                throw new Error("OCClient.midConversationAuthenticateChat is not available");
+            }
+
+            await this.OCClient.midConversationAuthenticateChat(this.requestId, {
+                chatId: this.chatToken.chatId,
+                authenticatedUserToken: token
+            });
+
+            // Persist token
+            this.authenticatedUserToken = token;
+
+            // Refresh chat token so subsequent calls use authenticated endpoints
+            if (optionalParams.refreshChatToken) {
+                await this.getChatToken(false);
+            }
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.MidConversationAuth, telemetryData);
+        } catch (error) {
+            const exceptionDetails: ChatSDKExceptionDetails = {
+                response: ChatSDKErrorName.MidConversationAuthFailure,
+                errorObject: `${error}`
+            };
+            this.scenarioMarker.failScenario(TelemetryEvent.MidConversationAuth, {
+                ...telemetryData,
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+            throw new ChatSDKError(ChatSDKErrorName.MidConversationAuthFailure, undefined, exceptionDetails);
         }
     }
 

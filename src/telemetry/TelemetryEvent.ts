@@ -48,6 +48,7 @@ enum TelemetryEvent {
     MessageReceived = "MessageReceived",
     GetPersistentChatHistory = "GetPersistentChatHistory",
     WaitForConversationalSurvey = "WaitForConversationalSurvey",
+    MidConversationAuth = "MidConversationAuth",
 }
 
 export default TelemetryEvent;
