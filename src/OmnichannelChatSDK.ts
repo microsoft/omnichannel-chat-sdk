@@ -2498,13 +2498,6 @@ class OmnichannelChatSDK {
     }
 
     public async authenticateChat(tokenOrProvider: string | (() => Promise<string>), optionalParams: { refreshChatToken?: boolean } = {}): Promise<void> {
-        const telemetryData = {
-            RequestId: this.requestId,
-            ChatId: this.chatToken?.chatId as string
-        };
-
-        this.scenarioMarker.startScenario(TelemetryEvent.MidConversationAuth, telemetryData);
-
         if (!this.isInitialized) {
             exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.MidConversationAuth);
         }
@@ -2517,6 +2510,13 @@ class OmnichannelChatSDK {
                 { RequestId: this.requestId, ChatId: this.chatToken?.chatId ?? "" }
             );
         }
+
+        const telemetryData = {
+            RequestId: this.requestId,
+            ChatId: this.chatToken?.chatId as string
+        };
+
+        this.scenarioMarker.startScenario(TelemetryEvent.MidConversationAuth, telemetryData);
 
         // Resolve token
         let token: string;
@@ -2559,12 +2559,12 @@ class OmnichannelChatSDK {
             // Persist token
             this.authenticatedUserToken = token;
 
-            this.scenarioMarker.completeScenario(TelemetryEvent.MidConversationAuth, telemetryData);
-
             // Refresh chat token so subsequent calls use authenticated endpoints
             if (optionalParams.refreshChatToken) {
                 await this.getChatToken(false);
             }
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.MidConversationAuth, telemetryData);
         } catch (error) {
             const exceptionDetails: ChatSDKExceptionDetails = {
                 response: ChatSDKErrorName.MidConversationAuthFailure,

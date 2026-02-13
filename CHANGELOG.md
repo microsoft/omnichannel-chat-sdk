@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-### Added MidConversationAuthenticateChat Feature
+### Added
 
 - Added `authenticateChat` public method to authenticate an ongoing unauthenticated chat session mid-conversation
 - Added `MidConversationAuth` telemetry event for scenario tracking

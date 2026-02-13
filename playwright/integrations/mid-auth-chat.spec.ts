@@ -54,7 +54,9 @@ test.describe('MidAuthChat @MidAuthChat', () => {
                 };
 
                 // Start chat with deferInitialAuth=true (mid-auth unauthenticated flow)
-                await chatSDK.startChat({ deferInitialAuth: true });
+                // deferInitialAuth is a private instance property, not a startChat option
+                chatSDK.deferInitialAuth = true;
+                await chatSDK.startChat();
 
                 await sleep(chatDuration);
 
@@ -106,7 +108,9 @@ test.describe('MidAuthChat @MidAuthChat', () => {
                 await chatSDK.initialize();
 
                 // Start unauthenticated
-                await chatSDK.startChat({ deferInitialAuth: true });
+                // deferInitialAuth is a private instance property, not a startChat option
+                chatSDK.deferInitialAuth = true;
+                await chatSDK.startChat();
 
                 // Simulate user login - get auth token
                 const payload = { method: "POST" };
@@ -191,8 +195,8 @@ test.describe('MidAuthChat @MidAuthChat', () => {
                 };
 
                 // Start chat - should use authenticated flow since token is available
-                // deferInitialAuth should be false (or undefined) for pre-auth flow
-                await chatSDK.startChat({ deferInitialAuth: false });
+                // deferInitialAuth defaults to false, no need to set it
+                await chatSDK.startChat();
 
                 await sleep(chatDuration);
 
@@ -239,7 +243,9 @@ test.describe('MidAuthChat @MidAuthChat', () => {
             await chatSDK1.initialize();
 
             // Start unauthenticated
-            await chatSDK1.startChat({ deferInitialAuth: true });
+            // deferInitialAuth is a private instance property, not a startChat option
+            chatSDK1.deferInitialAuth = true;
+            await chatSDK1.startChat();
 
             // Get auth token and authenticate mid-conversation
             const payload = { method: "POST" };
@@ -288,10 +294,9 @@ test.describe('MidAuthChat @MidAuthChat', () => {
 
             try {
                 // Reconnect with liveChatContext - should use authenticated flow
-                // deferInitialAuth=false because user is already authenticated (hasUserAuthenticated=true)
-                await chatSDK2.startChat({ 
-                    liveChatContext: runtimeContext.liveChatContext,
-                    deferInitialAuth: false 
+                // deferInitialAuth defaults to false (user is already authenticated)
+                await chatSDK2.startChat({
+                    liveChatContext: runtimeContext.liveChatContext
                 });
                 runtimeContext.secondSessionStarted = true;
             } catch (err) {
