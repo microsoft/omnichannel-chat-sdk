@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- Upgraded [@azure/communication-chat](https://www.npmjs.com/package/@azure/communication-chat) from `1.5.4` to `1.6.0`
+- Upgraded [@azure/communication-common](https://www.npmjs.com/package/@azure/communication-common) from `2.3.1` to `2.4.0`
+- Transitive: `@azure/communication-signaling` bumped from `1.0.0-beta.29` to `1.0.0-beta.34`
+- **Note:** `@azure/communication-chat@1.6.0` now requires Node.js `>=20.0.0` (previously `>=18.0.0`)
+
 ### Fixed
 
 - Fix `onAgentEndSession` callback incorrectly firing during customer-initiated `endChat()` by adding `isEndingChat` guard flag to suppress spurious ACS `participantsRemoved` events triggered by the disconnect cleanup
