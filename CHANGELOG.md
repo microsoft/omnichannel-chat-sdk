@@ -7,7 +7,8 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Switch npm publishing to GitHub Actions OIDC trusted publishing (no NPM_TOKEN needed)
-- Dev versions now auto-publish on push to main (e.g. `1.11.8-main.abc1234`)
+- Dev versions now auto-publish on push to main (e.g. `1.11.9-main.abc1234`)
+- Use latest dist-tag for all npm publishes
 
 ### Fixed
 
