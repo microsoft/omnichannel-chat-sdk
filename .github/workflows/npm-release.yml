@@ -45,4 +45,4 @@ jobs:
         run: npm run build:tsc
 
       - name: Publish ${{ steps.read-package-json.outputs.name }}@${{ steps.read-package-json.outputs.version }}
-        run: npm publish --provenance --access public
+        run: npm publish --provenance --tag latest --access public
