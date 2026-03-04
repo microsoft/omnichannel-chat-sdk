@@ -8,9 +8,10 @@ All notable changes to this project will be documented in this file.
 
 - Switch npm publishing to GitHub Actions OIDC trusted publishing (no NPM_TOKEN needed)
 - Dev versions now auto-publish on push to main (e.g. `1.11.9-main.abc1234`)
-- Use latest dist-tag for all npm publishes
 
 ### Fixed
+
+- Fix npm publish failing for prerelease versions by adding `--tag latest` to publish command
 
 - Fix `onAgentEndSession` callback incorrectly firing during customer-initiated `endChat()` by adding `isEndingChat` guard flag to suppress spurious ACS `participantsRemoved` events triggered by the disconnect cleanup
 - Fix `onAgentEndSession` callback not firing when agent ends the session due to a race condition where the backend conversation state has not yet transitioned from `Active` to `WrapUp`/`Closed` at the time the ACS `participantsRemoved` event arrives; added retry logic (3 attempts, 2s delay) to poll `getConversationDetails()` until the state catches up
