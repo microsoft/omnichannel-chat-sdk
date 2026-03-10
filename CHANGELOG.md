@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Uptake [@microsoft/ocsdk@0.5.22-main.12fe119](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.22-main.12fe119) (adds en-au to supportedLocales)
 - Switch npm publishing to GitHub Actions OIDC trusted publishing (no NPM_TOKEN needed)
 - Dev versions now auto-publish on push to main (e.g. `1.11.9-main.abc1234`)
 - Add `hotfix/**` branch trigger to npm-release workflow
