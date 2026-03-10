@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - 'hotfix/**'
     tags:
       - 'v*'
   workflow_dispatch:
@@ -29,7 +30,7 @@ jobs:
         run: npm install -g npm@latest
 
       - name: Update package version from git
-        if: ${{ startsWith(github.ref, 'refs/heads/') }}
+        if: ${{ github.ref == 'refs/heads/main' }}
         run: npx version-from-git --no-git-tag-version
 
       - name: Read package.json
