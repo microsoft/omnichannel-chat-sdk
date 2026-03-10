@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Dev versions now auto-publish on push to main (e.g. `1.11.9-main.abc1234`)
 
 ### Fixed
+- Fix `sendTypingEvent` failing silently for authenticated and persistent chat when `OCClient.sendTypingIndicator()` returns a `404`; changed to fire-and-forget so `ACSConversation.sendTyping()` always executes regardless of the OC indicator result
 
 - Fix npm publish failing for prerelease versions by adding `--tag latest` to publish command
 
