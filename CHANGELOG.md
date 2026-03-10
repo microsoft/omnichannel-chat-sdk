@@ -4,10 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Add `en-AU` (Australian English) locale code `3081` to locale mapping
+
 ### Changed
 
 - Switch npm publishing to GitHub Actions OIDC trusted publishing (no NPM_TOKEN needed)
 - Dev versions now auto-publish on push to main (e.g. `1.11.9-main.abc1234`)
+- Add `hotfix/**` branch trigger to npm-release workflow
 
 ### Fixed
 
