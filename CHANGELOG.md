@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.11.7-hotfix.enau.1]
+## [1.11.7-hotfix.enau.2]
 
 ### Added
 
@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Uptake @microsoft/ocsdk@0.5.20-hotfix.enau.1 (adds en-au to supportedLocales)
 - Switch npm publishing to GitHub Actions OIDC trusted publishing (no NPM_TOKEN needed)
 - Add `hotfix/**` branch trigger to npm-release workflow
 
