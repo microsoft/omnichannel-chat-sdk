@@ -2114,7 +2114,7 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.OCClient = {
                 sessionInit: jest.fn(),
                 createConversation: jest.fn(),
-                sendTypingIndicator: jest.fn()
+                sendTypingIndicator: jest.fn().mockResolvedValue(undefined)
             }
 
             chatSDK.AMSClient = {

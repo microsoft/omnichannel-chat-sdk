@@ -2936,7 +2936,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             chatSDK.OCClient = {
                 sessionInit: jest.fn(),
-                sendTypingIndicator: jest.fn(),
+                sendTypingIndicator: jest.fn().mockResolvedValue(undefined),
                 createConversation: jest.fn()
             }
 

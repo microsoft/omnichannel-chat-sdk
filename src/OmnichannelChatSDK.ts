@@ -1732,9 +1732,9 @@ class OmnichannelChatSDK {
             try {
                 // sendTyping fail for auth/persistent chat with stale token.
                 // Fire & forget so ACS conversation.sendTyping() always runs regardless.
-                void Promise.resolve(this.OCClient.sendTypingIndicator(this.requestId, LiveChatVersion.V2, {
+                void this.OCClient.sendTypingIndicator(this.requestId, LiveChatVersion.V2, {
                     customerDisplayName: ACSParticipantDisplayName.Customer
-                })).catch(() => {});
+                }).catch(() => {});
 
                 // when ACSClient.joinConversation() failed.
                 if (!this.conversation) {
