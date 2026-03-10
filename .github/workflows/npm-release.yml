@@ -39,6 +39,15 @@ jobs:
           echo "name=$(jq -r '.name' package.json)" >> "$GITHUB_OUTPUT"
           echo "version=$(jq -r '.version' package.json)" >> "$GITHUB_OUTPUT"
 
+      - name: Determine npm dist-tag
+        id: dist-tag
+        run: |
+          if [[ "${{ github.ref }}" == refs/heads/hotfix/* ]]; then
+            echo "tag=hotfix" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Install packages
         run: npm install
 
@@ -46,4 +55,4 @@ jobs:
         run: npm run build:tsc
 
       - name: Publish ${{ steps.read-package-json.outputs.name }}@${{ steps.read-package-json.outputs.version }}
-        run: npm publish --provenance --tag latest --access public
+        run: npm publish --provenance --tag ${{ steps.dist-tag.outputs.tag }} --access public
