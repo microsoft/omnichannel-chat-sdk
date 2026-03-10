@@ -2956,6 +2956,62 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.conversation.sendTyping).toHaveBeenCalledTimes(1);
         });
 
+        it('[LiveChatV2] ChatSDK.sendTypingEvent() should call conversation.sendTyping() even if OCClient.sendTypingIndicator() rejects', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                sendTypingIndicator: jest.fn().mockRejectedValue({ status: 404 }),
+                createConversation: jest.fn()
+            }
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendTyping: jest.fn()
+            }));
+
+            await chatSDK.startChat();
+            await chatSDK.sendTypingEvent();
+
+            expect(chatSDK.OCClient.sendTypingIndicator).toHaveBeenCalledTimes(1);
+            expect(chatSDK.conversation.sendTyping).toHaveBeenCalledTimes(1);
+        });
+
+        it('[LiveChatV2] ChatSDK.sendTypingEvent() should return early without throwing if conversation is null', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                sendTypingIndicator: jest.fn().mockRejectedValue({ status: 404 }),
+                createConversation: jest.fn()
+            }
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            }
+
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve(undefined));
+
+            await chatSDK.startChat();
+
+            await expect(chatSDK.sendTypingEvent()).resolves.toBeUndefined();
+        });
+
         it('[LiveChatV1] ChatSDK.uploadFileAttachment() should call conversation.sendFileData() & conversation.sendFileMessage()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
