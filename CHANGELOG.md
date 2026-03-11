@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - Add `hotfix/**` branch trigger to npm-release workflow
 
 ### Fixed
+- Fix `sendTypingEvent` failing silently for authenticated and persistent chat when `OCClient.sendTypingIndicator()` returns a `404`; changed to fire-and-forget so `ACSConversation.sendTyping()` always executes regardless of the OC indicator result
 
 - Fix npm publish failing for prerelease versions by adding `--tag latest` to publish command
 
