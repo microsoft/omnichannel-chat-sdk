@@ -15,6 +15,7 @@ permissions:
 
 jobs:
   publish:
+    if: github.repository == 'microsoft/omnichannel-chat-sdk'
     runs-on: ubuntu-latest
     steps:
       - name: Checking out for ${{ github.ref }}

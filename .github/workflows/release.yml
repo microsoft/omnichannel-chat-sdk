@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   build:
+    if: github.repository == 'microsoft/omnichannel-chat-sdk'
     runs-on: ubuntu-latest
 
     steps:
