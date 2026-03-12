@@ -7,6 +7,7 @@ const localeList: any = { // eslint-disable-line @typescript-eslint/no-explicit-
     "1031": "de-de",
     "1032": "el-gr",
     "1033": "en-us",
+    "3081": "en-au",
     "3082": "es-es",
     "1061": "et-ee",
     "1069": "eu-es",

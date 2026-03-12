@@ -1088,6 +1088,10 @@ const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, cha
 await chatSDK.initialize();
 ```
 
+# Releasing
+
+See [docs/RELEASING.md](docs/RELEASING.md) for how to publish new versions to npm.
+
 # Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a

@@ -13,7 +13,21 @@ All notable changes to this project will be documented in this file.
 - Uses structured `ChatSDKExceptionDetails` with `JSON.stringify` for all telemetry `ExceptionDetails`
 - Throws `ChatSDKError` consistently on all failure paths (token resolution, empty token, API call, token refresh)
 
+### Added
+
+- Add `en-AU` (Australian English) locale code `3081` to locale mapping
+
+### Changed
+
+- Uptake [@microsoft/ocsdk@0.5.22-main.12fe119](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.22-main.12fe119) (adds en-au to supportedLocales)
+- Switch npm publishing to GitHub Actions OIDC trusted publishing (no NPM_TOKEN needed)
+- Dev versions now auto-publish on push to main (e.g. `1.11.9-main.abc1234`)
+- Add `hotfix/**` branch trigger to npm-release workflow
+
 ### Fixed
+- Fix `sendTypingEvent` failing silently for authenticated and persistent chat when `OCClient.sendTypingIndicator()` returns a `404`; changed to fire-and-forget so `ACSConversation.sendTyping()` always executes regardless of the OC indicator result
+
+- Fix npm publish failing for prerelease versions by adding `--tag latest` to publish command
 
 - Fix `onAgentEndSession` callback incorrectly firing during customer-initiated `endChat()` by adding `isEndingChat` guard flag to suppress spurious ACS `participantsRemoved` events triggered by the disconnect cleanup
 - Fix `onAgentEndSession` callback not firing when agent ends the session due to a race condition where the backend conversation state has not yet transitioned from `Active` to `WrapUp`/`Closed` at the time the ACS `participantsRemoved` event arrives; added retry logic (3 attempts, 2s delay) to poll `getConversationDetails()` until the state catches up
