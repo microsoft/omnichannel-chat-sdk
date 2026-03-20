@@ -83,10 +83,11 @@ describe('Omnichannel Chat SDK (Node), Sequential', () => {
         (global.navigator as any).product = 'ReactNative';
 
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
-        chatSDK.scenarioMarker = {
+        (chatSDK as any).scenarioMarker = {
             startScenario: jest.fn(),
             failScenario: jest.fn(),
-            completeScenario: jest.fn()
+            completeScenario: jest.fn(),
+            singleRecord: jest.fn()
         };
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
@@ -116,10 +117,11 @@ describe('Omnichannel Chat SDK (Node), Sequential', () => {
         (global.navigator as any).product = 'ReactNative';
 
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
-        chatSDK.scenarioMarker = {
+        (chatSDK as any).scenarioMarker = {
             startScenario: jest.fn(),
             failScenario: jest.fn(),
-            completeScenario: jest.fn()
+            completeScenario: jest.fn(),
+            singleRecord: jest.fn()
         };
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
@@ -185,6 +187,11 @@ describe('Omnichannel Chat SDK (Node), Sequential', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.authSettings = { authenticationEndpoint: 'https://auth.endpoint' };
             chatSDK["isAMSClientAllowed"] = true;
+            chatSDK.liveChatConfig = {
+                LiveWSAndLiveChatEngJoin: {
+                    msdyn_authenticatedsigninoptional: 'true'
+                }
+            };
 
             await chatSDK.initialize();
 

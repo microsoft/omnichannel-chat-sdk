@@ -290,6 +290,11 @@ describe('Omnichannel Chat SDK (Web), Sequential', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.authSettings = { authenticationEndpoint: 'https://auth.endpoint' };
             chatSDK["isAMSClientAllowed"] = true;
+            chatSDK.liveChatConfig = {
+                LiveWSAndLiveChatEngJoin: {
+                    msdyn_authenticatedsigninoptional: 'true'
+                }
+            };
 
             await chatSDK.initialize();
 
@@ -317,6 +322,11 @@ describe('Omnichannel Chat SDK (Web), Sequential', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.authSettings = { authenticationEndpoint: 'https://auth.endpoint' };
             chatSDK["isAMSClientAllowed"] = true;
+            chatSDK.liveChatConfig = {
+                LiveWSAndLiveChatEngJoin: {
+                    msdyn_authenticatedsigninoptional: 'true'
+                }
+            };
 
             await chatSDK.initialize();
 

@@ -217,7 +217,7 @@ test.describe('MidAuthChat @MidAuthChat', () => {
         expect(sessionInitRequestHeaders['authenticatedusertoken']).toBe(runtimeContext.authToken);
     });
 
-    test('Widget reconnect with hasUserAuthenticated should preserve authenticated state', async ({ page }) => {
+    test('Widget reconnect with isUserAuthenticated should preserve authenticated state', async ({ page }) => {
         await page.goto(testPage);
 
         const requestUrls: string[] = [];

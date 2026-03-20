@@ -5485,6 +5485,11 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 chatSDK.getChatConfig = jest.fn();
                 chatSDK.authSettings = { authenticationEndpoint: 'https://auth.endpoint' };
                 chatSDK["isAMSClientAllowed"] = true;
+                chatSDK.liveChatConfig = {
+                    LiveWSAndLiveChatEngJoin: {
+                        msdyn_authenticatedsigninoptional: 'true'
+                    }
+                };
 
                 await chatSDK.initialize();
 
@@ -5589,6 +5594,11 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 chatSDK.getChatConfig = jest.fn();
                 chatSDK.authSettings = { authenticationEndpoint: 'https://auth.endpoint' };
                 chatSDK["isAMSClientAllowed"] = true;
+                chatSDK.liveChatConfig = {
+                    LiveWSAndLiveChatEngJoin: {
+                        msdyn_authenticatedsigninoptional: 'true'
+                    }
+                };
 
                 await chatSDK.initialize();
 
@@ -5609,7 +5619,11 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 expect(singleRecordSpy).toHaveBeenCalledWith(
                     expect.any(String),
                     expect.objectContaining({
-                        CustomProperties: "Deferred initial authentication"
+                        CustomProperties: JSON.stringify({
+                            action: "DeferredInitialAuth",
+                            deferInitialAuth: "true",
+                            hasAuthToken: "false"
+                        })
                     })
                 );
             });
@@ -5952,6 +5966,11 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 chatSDK.getChatConfig = jest.fn();
                 chatSDK.authSettings = { authenticationEndpoint: 'https://auth.endpoint' };
                 chatSDK["isAMSClientAllowed"] = true;
+                chatSDK.liveChatConfig = {
+                    LiveWSAndLiveChatEngJoin: {
+                        msdyn_authenticatedsigninoptional: 'true'
+                    }
+                };
 
                 await chatSDK.initialize();
 
