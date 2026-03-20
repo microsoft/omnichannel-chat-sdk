@@ -26,5 +26,10 @@ AuthenticatedChatWithPrechat:
 AuthenticatedChatWithChatReconnect:
 AuthenticatedChatWithPersistentChat:
 AuthenticatedChatWithMasking:
+MidAuthChat:
+  orgId: ''
+  orgUrl: ''
+  widgetId: ''
+  authUrl: ''
 UnauthenticatedChatWithEscalationToVoiceAndVideo:
 AuthenticatedChatWithEscalationToVoiceAndVideo:

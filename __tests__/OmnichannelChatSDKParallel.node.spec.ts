@@ -80,10 +80,11 @@ describe('Omnichannel Chat SDK (Node) Parallel initialization', () => {
         (global.navigator as any).product = 'ReactNative';
 
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
-        chatSDK.scenarioMarker = {
+        (chatSDK as any).scenarioMarker = {
             startScenario: jest.fn(),
             failScenario: jest.fn(),
-            completeScenario: jest.fn()
+            completeScenario: jest.fn(),
+            singleRecord: jest.fn()
         };
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
@@ -120,10 +121,11 @@ describe('Omnichannel Chat SDK (Node) Parallel initialization', () => {
         (global.navigator as any).product = 'ReactNative';
 
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
-        chatSDK.scenarioMarker = {
+        (chatSDK as any).scenarioMarker = {
             startScenario: jest.fn(),
             failScenario: jest.fn(),
-            completeScenario: jest.fn()
+            completeScenario: jest.fn(),
+            singleRecord: jest.fn()
         };
         chatSDK.getChatConfig = jest.fn();
         chatSDK.getChatToken = jest.fn();
@@ -226,6 +228,97 @@ describe('Omnichannel Chat SDK (Node) Parallel initialization', () => {
         } catch (error: any) {
             expect(error.message).toBe(ChatSDKErrorName.UninitializedChatSDK);
         }
+    });
+
+    describe('Mid-Conversation Authentication (MidAuth) - Node Parallel Initialization', () => {
+        it('ChatSDK.startChat() with deferInitialAuth=true should work with parallel initialization on Node', async () => {
+            const chatSDKConfig = {
+                getAuthToken: async () => {
+                    return 'authenticatedUserToken'
+                }
+            };
+
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.authSettings = { authenticationEndpoint: 'https://auth.endpoint' };
+            chatSDK["isAMSClientAllowed"] = true;
+            chatSDK.liveChatConfig = {
+                LiveWSAndLiveChatEngJoin: {
+                    msdyn_authenticatedsigninoptional: 'true'
+                }
+            };
+
+            await chatSDK.initialize({ useParallelLoad: true });
+
+            // Wait for AMSClient to be ready
+            while (chatSDK.AMSClient === null) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+
+            jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve({
+                ChatId: 'test-chat-id',
+                Token: 'test-token',
+                RegionGtms: '{}'
+            }));
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+
+            chatSDK["deferInitialAuth"] = true;
+            await chatSDK.startChat();
+
+            // Verify chat started without authentication
+            expect(chatSDK.authenticatedUserToken).toBe(null);
+            expect(chatSDK.chatToken.chatId).toBe('test-chat-id');
+        });
+
+        it('ChatSDK.authenticateChat() should work after parallel initialization on Node', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize({ useParallelLoad: true });
+
+            // Wait for AMSClient to be ready
+            while (chatSDK.AMSClient === null) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+
+            // Set up active conversation
+            chatSDK.conversation = { disconnect: jest.fn() };
+            chatSDK.chatToken = { chatId: 'test-chat-id' };
+            chatSDK.authenticatedUserToken = null;
+
+            chatSDK.OCClient.midConversationAuthenticateChat = jest.fn().mockResolvedValue(Promise.resolve());
+
+            await chatSDK.authenticateChat('node-parallel-auth-token');
+
+            expect(chatSDK.OCClient.midConversationAuthenticateChat).toHaveBeenCalledTimes(1);
+            expect(chatSDK.authenticatedUserToken).toBe('node-parallel-auth-token');
+        });
+
+        it('ChatSDK.authenticateChat() should throw error if no active conversation with parallel initialization on Node', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize({ useParallelLoad: true });
+
+            // Wait for AMSClient to be ready
+            while (chatSDK.AMSClient === null) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+
+            // conversation is null, chatToken.chatId is not set
+            chatSDK.conversation = null;
+            chatSDK.chatToken = {};
+
+            try {
+                await chatSDK.authenticateChat('test-token');
+                fail("Error expected");
+            } catch (error: any) {
+                expect(error.message).toBe('InvalidConversation');
+            }
+        });
     });
 
     afterEach(() => {

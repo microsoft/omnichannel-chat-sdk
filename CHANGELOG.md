@@ -6,6 +6,15 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added `authenticateChat` public method to authenticate an ongoing unauthenticated chat session mid-conversation
+- Added `MidConversationAuth` telemetry event for scenario tracking
+- Added `MidConversationAuthFailure` to `ChatSDKErrorName` enum
+- Added `deferInitialAuth` instance property to skip authentication during `startChat` for mid-auth flows
+- Uses structured `ChatSDKExceptionDetails` with `JSON.stringify` for all telemetry `ExceptionDetails`
+- Throws `ChatSDKError` consistently on all failure paths (token resolution, empty token, API call, token refresh)
+
+### Added
+
 - Add `en-AU` (Australian English) locale code `3081` to locale mapping
 
 ### Changed

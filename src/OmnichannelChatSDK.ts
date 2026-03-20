@@ -131,6 +131,7 @@ class OmnichannelChatSDK {
     // Operation queue for serializing chat operations
     private chatOperationInProgress = false;
     private pendingOperations: Array<() => Promise<void>> = [];
+    private deferInitialAuth = false;
     private unqServicesOrgUrl: string | null = null;
     private coreServicesOrgUrl: string | null = null;
     private dynamicsLocationCode: string | null = null;
@@ -761,27 +762,58 @@ class OmnichannelChatSDK {
             }
         }
 
+        // Mid-auth: capture and reset deferInitialAuth flag (set by FacadeChatSDK)
+        const deferInitialAuth = this.deferInitialAuth;
+        this.deferInitialAuth = false;
+
+        // Mid-auth: check if mid-conversation auth is enabled in admin config
+        const isMidAuthEnabled = this.liveChatConfig?.LiveWSAndLiveChatEngJoin
+            ?.msdyn_authenticatedsigninoptional?.toString()?.toLowerCase() === "true";
+
+        this.scenarioMarker.singleRecord(TelemetryEvent.StartChat, {
+            RequestId: this.requestId || "",
+            ChatId: this.chatToken?.chatId as string || "",
+            CustomProperties: JSON.stringify({
+                authSettings: !!this.authSettings,
+                isMidAuthEnabled: String(isMidAuthEnabled),
+                deferInitialAuth: String(deferInitialAuth),
+                hasAuthToken: String(!!this.authenticatedUserToken)
+            })
+        });
+
         if (this.authSettings) {
-            if (!this.authenticatedUserToken) {
-                await this.setAuthTokenProvider(this.chatSDKConfig.getAuthToken, { throwError: true });
-            }
+            if (isMidAuthEnabled && (deferInitialAuth || !this.authenticatedUserToken)) {
+                this.scenarioMarker.singleRecord(TelemetryEvent.StartChat, {
+                    RequestId: this.requestId || "",
+                    ChatId: this.chatToken?.chatId as string || "",
+                    CustomProperties: JSON.stringify({
+                        action: "DeferredInitialAuth",
+                        deferInitialAuth: String(deferInitialAuth),
+                        hasAuthToken: String(!!this.authenticatedUserToken)
+                    })
+                });
+            }  else {
+                if (!this.authenticatedUserToken) {
+                    await this.setAuthTokenProvider(this.chatSDKConfig.getAuthToken, { throwError: true });
+                }
 
-            if (optionalParams.liveChatContext && Object.keys(optionalParams.liveChatContext).length > 0) {
-                this.chatToken = optionalParams.liveChatContext.chatToken || {};
-                this.requestId = optionalParams.liveChatContext.requestId || uuidv4();
+                if (optionalParams.liveChatContext && Object.keys(optionalParams.liveChatContext).length > 0) {
+                    this.chatToken = optionalParams.liveChatContext.chatToken || {};
+                    this.requestId = optionalParams.liveChatContext.requestId || uuidv4();
 
-                try {
-                    await this.OCClient.validateAuthChatRecord(this.requestId, {
-                        authenticatedUserToken: this.authenticatedUserToken,
-                        chatId: this.chatToken.chatId
-                    });
-                } catch (e) {
-                    const telemetryData = {
-                        RequestId: this.requestId,
-                        ChatId: this.chatToken.chatId as string,
-                    };
+                    try {
+                        await this.OCClient.validateAuthChatRecord(this.requestId, {
+                            authenticatedUserToken: this.authenticatedUserToken,
+                            chatId: this.chatToken.chatId
+                        });
+                    } catch (e) {
+                        const telemetryData = {
+                            RequestId: this.requestId,
+                            ChatId: this.chatToken.chatId as string,
+                        };
 
-                    exceptionThrowers.throwAuthenticatedChatConversationRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
+                        exceptionThrowers.throwAuthenticatedChatConversationRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.StartChat, telemetryData);
+                    }
                 }
             }
         }
@@ -2490,6 +2522,87 @@ class OmnichannelChatSDK {
         } catch (e) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             reportError("GetAgentAvailabilityFailed", (e as any).message as string);
+        }
+    }
+
+    public async authenticateChat(tokenOrProvider: string | (() => Promise<string>), optionalParams: { refreshChatToken?: boolean } = {}): Promise<void> {
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.MidConversationAuth);
+        }
+        if (!this.conversation || !this.chatToken?.chatId) {
+            exceptionThrowers.throwChatSDKError(
+                ChatSDKErrorName.InvalidConversation,
+                new Error("No active conversation to authenticate"),
+                this.scenarioMarker,
+                TelemetryEvent.MidConversationAuth,
+                { RequestId: this.requestId, ChatId: this.chatToken?.chatId ?? "" }
+            );
+        }
+
+        const telemetryData = {
+            RequestId: this.requestId,
+            ChatId: this.chatToken?.chatId as string
+        };
+
+        this.scenarioMarker.startScenario(TelemetryEvent.MidConversationAuth, telemetryData);
+
+        // Resolve token
+        let token: string;
+        try {
+            token = typeof tokenOrProvider === "function" ? await tokenOrProvider() : tokenOrProvider;
+        } catch (e) {
+            const exceptionDetails: ChatSDKExceptionDetails = {
+                response: ChatSDKErrorName.MidConversationAuthFailure,
+                errorObject: `${e}`
+            };
+            this.scenarioMarker.failScenario(TelemetryEvent.MidConversationAuth, {
+                ...telemetryData,
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+            throw new ChatSDKError(ChatSDKErrorName.MidConversationAuthFailure, undefined, exceptionDetails);
+        }
+
+        if (!token || token.trim().length === 0) {
+            const exceptionDetails: ChatSDKExceptionDetails = {
+                response: ChatSDKErrorName.MidConversationAuthFailure,
+                message: "Authentication token is empty or invalid"
+            };
+            this.scenarioMarker.failScenario(TelemetryEvent.MidConversationAuth, {
+                ...telemetryData,
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+            throw new ChatSDKError(ChatSDKErrorName.MidConversationAuthFailure, undefined, exceptionDetails);
+        }
+
+        try {
+            if (!this.OCClient?.midConversationAuthenticateChat) {
+                throw new Error("OCClient.midConversationAuthenticateChat is not available");
+            }
+
+            await this.OCClient.midConversationAuthenticateChat(this.requestId, {
+                chatId: this.chatToken.chatId,
+                authenticatedUserToken: token
+            });
+
+            // Persist token
+            this.authenticatedUserToken = token;
+
+            // Refresh chat token so subsequent calls use authenticated endpoints
+            if (optionalParams.refreshChatToken) {
+                await this.getChatToken(false);
+            }
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.MidConversationAuth, telemetryData);
+        } catch (error) {
+            const exceptionDetails: ChatSDKExceptionDetails = {
+                response: ChatSDKErrorName.MidConversationAuthFailure,
+                errorObject: `${error}`
+            };
+            this.scenarioMarker.failScenario(TelemetryEvent.MidConversationAuth, {
+                ...telemetryData,
+                ExceptionDetails: JSON.stringify(exceptionDetails)
+            });
+            throw new ChatSDKError(ChatSDKErrorName.MidConversationAuthFailure, undefined, exceptionDetails);
         }
     }
 
