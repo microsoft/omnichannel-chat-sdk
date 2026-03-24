@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/omnichannel-chat-sdk",
-  "version": "1.11.9",
+  "version": "1.11.9-hotfix.safari-iframe.1",
   "description": "Microsoft Omnichannel Chat SDK",
   "files": [
     "lib/**/*"
@@ -50,7 +50,7 @@
     "@azure/communication-common": "2.3.1",
     "@microsoft/botframework-webchat-adapter-azure-communication-chat": "^0.0.1-beta.5",
     "@microsoft/ocsdk": "0.5.22-main.27b39ce",
-    "@microsoft/omnichannel-amsclient": "^0.1.12",
+    "@microsoft/omnichannel-amsclient": "0.1.14-hotfix.safari-iframe.1",
     "@microsoft/omnichannel-ic3core": "^0.1.5"
   },
   "overrides": {
