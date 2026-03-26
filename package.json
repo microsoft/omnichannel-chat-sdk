@@ -48,7 +48,7 @@
   "dependencies": {
     "@azure/communication-chat": "1.5.4",
     "@azure/communication-common": "2.3.1",
-    "@microsoft/botframework-webchat-adapter-azure-communication-chat": "^0.0.1-beta.5",
+    "@microsoft/botframework-webchat-adapter-azure-communication-chat": "^0.0.1-beta.6",
     "@microsoft/ocsdk": "0.5.22-main.27b39ce",
     "@microsoft/omnichannel-amsclient": "0.1.14-main.9951e38",
     "@microsoft/omnichannel-ic3core": "^0.1.5"
