@@ -13,6 +13,9 @@ All notable changes to this project will be documented in this file.
 - Uses structured `ChatSDKExceptionDetails` with `JSON.stringify` for all telemetry `ExceptionDetails`
 - Throws `ChatSDKError` consistently on all failure paths (token resolution, empty token, API call, token refresh)
 
+### Changed
+- Updated botframework-webchat-adapter-azure-communication-chat to "^0.0.1-beta.6"
+
 ### Added
 
 - Add `en-AU` (Australian English) locale code `3081` to locale mapping
