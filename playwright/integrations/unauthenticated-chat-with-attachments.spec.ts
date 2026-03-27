@@ -104,6 +104,7 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithAttachments', () => 
                 await chatSDK.initialize();
 
                 await chatSDK.startChat();
+                await sleep(4000);
 
                 const runtimeContext = {
                     requestId: chatSDK.requestId

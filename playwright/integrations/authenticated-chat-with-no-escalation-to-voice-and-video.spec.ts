@@ -1,29 +1,26 @@
 import fetchOmnichannelConfig from '../utils/fetchOmnichannelConfig';
 import fetchTestPageUrl from '../utils/fetchTestPageUrl';
-import fetchAuthUrl from '../utils/fetchAuthUrl';
 import { test, expect } from '@playwright/test';
+import fetchAuthToken from '../utils/fetchAuthToken';
 
 const testPage = fetchTestPageUrl();
 const omnichannelConfig = fetchOmnichannelConfig('AuthenticatedChatWithNoEscalationToVoiceAndVideo');
-const authUrl = fetchAuthUrl('AuthenticatedChatWithNoEscalationToVoiceAndVideo');
+const authToken = fetchAuthToken('AuthenticatedChatWithNoEscalationToVoiceAndVideo');
 
 test.describe('AuthenticatedChat @AuthenticatedChatWithNoEscalationToVoiceAndVideo', () => {
     test('ChatSDK.getVoiceVideoCalling() should throw a FeatureDisabled exception', async ({ page }) => {
         await page.goto(testPage);
 
         const [runtimeContext] = await Promise.all([
-            await page.evaluate(async ({ omnichannelConfig, authUrl }) => {
+            await page.evaluate(async ({ omnichannelConfig, authToken }) => {
                 const { OmnichannelChatSDK_1: OmnichannelChatSDK } = window;
 
                 const payload = {
                     method: "POST"
                 };
 
-                const response = await fetch(authUrl, payload);
-                const authToken = await response.text();
-
                 const chatSDKConfig = {
-                    getAuthToken: () => authToken
+                    getAuthToken: () => Promise.resolve(authToken),
                 };
 
                 const chatSDK = new OmnichannelChatSDK.default(omnichannelConfig, chatSDKConfig);
@@ -41,7 +38,7 @@ test.describe('AuthenticatedChat @AuthenticatedChatWithNoEscalationToVoiceAndVid
                 }
 
                 return runtimeContext;
-            }, { omnichannelConfig, authUrl })
+            }, { omnichannelConfig, authToken })
         ]);
 
         const { errorMessage } = runtimeContext;
