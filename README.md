@@ -44,6 +44,7 @@ Please make sure you have a chat widget configured before using this package or 
   - [Create Chat Adapter](#create-chat-adapter)
   - [Get Voice & Video Calling](#get-voice--video-calling)
   - [Get Post Chat Survey Context](#get-post-chat-survey-context)
+  - [Get Persistent Chat History](#get-persistent-chat-history)
 - [Common Scenarios](#common-scenarios)
   - [Using BotFramework-WebChat](#using-botframework-webchat)
   - [Escalation to Voice & Video](#escalation-to-voice--video)
@@ -52,6 +53,7 @@ Please make sure you have a chat widget configured before using this package or 
   - [Reconnect to existing Chat](#reconnect-to-existing-chat)
   - [Authenticated Chat](#authenticated-chat)
   - [Persistent Chat](#persistent-chat)
+  - [Persistent Chat History](#persistent-chat-history)
   - [Chat Reconnect with Authenticated User](#chat-reconnect-with-authenticated-user)
   - [Chat Reconnect with Unauthenticated User](#chat-reconnect-with-unauthenticated-user)
   - [Best Practices for Chat Session Management: Handling Disconnections and Network Instabilit(#best-practices-for-chat-session-management:-handling-disconnections-and-network-instability)
@@ -579,6 +581,24 @@ It gets the participant type that should be used for the survey and both the def
 const postChatSurveyContext = await chatSDK.getPostChatSurveyContext();
 ```
 
+### Get Persistent Chat History
+
+It fetches paginated chat history from previous persistent chat conversations for authenticated users. Returns messages in chronological order along with a pagination token to fetch the next page.
+
+> :warning: Requires **persistent chat** to be enabled and the user must be **authenticated**.
+
+```ts
+const optionalParams = {
+    pageSize: 25, // Number of messages per page (optional)
+    pageToken: '' // Token from a previous response to fetch the next page (optional, omit for first call)
+};
+
+const response = await chatSDK.getPersistentChatHistory(optionalParams);
+
+// response.chatMessages: PersistentChatHistoryMessage[] — Array of chat messages
+// response.nextPageToken: string | null — Token to pass in the next call; null means no more history
+```
+
 ### Get Agent Availability
 
 It gets information on whether a queue is available, and whether there are agents available in that queue, as well as queue position and average wait time. This call only supports authenticated chat.
@@ -733,6 +753,200 @@ const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, cha
 await chatSDK.initialize();
 
 // from this point, this acts like a persistent chat
+```
+
+### Persistent Chat History
+
+> See <https://docs.microsoft.com/en-us/dynamics365/customer-service/persistent-chat> on how to set up persistent chat
+
+When persistent chat is enabled, you can retrieve the chat history from previous conversations using `getPersistentChatHistory()`. This method returns paginated results, allowing you to load history incrementally (e.g., as the user scrolls up).
+
+> :warning: **Prerequisites:**
+> - Persistent chat must be **enabled** in the admin portal (conversation mode set to Persistent Chat) and in the SDK config (`persistentChat.disable: false`)
+> - The user must be **authenticated** (`getAuthToken` must be configured)
+> - `chatSDK.initialize()` and `chatSDK.startChat()` must be called before fetching history
+> - Chat history is available for up to **12 months**
+
+#### Page Size
+
+The `pageSize` parameter controls how many messages are returned per call.
+
+| | Value |
+| --- | --- |
+| **Default** | `50` (used when `pageSize` is omitted) |
+| **Minimum** | `1` |
+| **Maximum** | `100` |
+
+If `pageSize` is not provided, the backend defaults to **50**. Values outside the 1–100 range will be rejected with an error.
+
+#### How Pagination Works
+
+| Call | `pageToken` param | What happens |
+| --- | --- | --- |
+| **First call** | Omit or `undefined` | Fetches the most recent page of messages. The response includes `nextPageToken` if older messages exist. |
+| **Subsequent calls** | Pass the `nextPageToken` from the previous response | Fetches the next (older) page. Again returns `nextPageToken` if more messages remain. |
+| **Last page** | Pass the `nextPageToken` from the previous response | Returns the remaining messages. `nextPageToken` is `null`, indicating there are no more messages in the history. |
+
+In short: keep passing the `nextPageToken` from each response into the next call until the backend returns `nextPageToken: null` — that signals the entire history has been retrieved.
+
+#### Basic Usage
+
+```ts
+const chatSDKConfig = {
+    persistentChat: {
+        disable: false,
+        tokenUpdateTime: 21600000
+    },
+    getAuthToken: async () => {
+        const response = await fetch("http://contosohelp.com/token");
+        if (response.ok) {
+            return await response.text();
+        }
+        else {
+            return null
+        }
+    }
+}
+
+const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, chatSDKConfig);
+await chatSDK.initialize();
+
+await chatSDK.startChat();
+
+// Fetch the first page of chat history
+const history = await chatSDK.getPersistentChatHistory({
+    pageSize: 25
+});
+
+if (history) {
+    // Render messages
+    history.chatMessages.forEach((message) => {
+        console.log(`[${message.createdDateTime}] ${message.content}`);
+    });
+
+    // Check if more history is available
+    if (history.nextPageToken) {
+        console.log("More history available");
+    }
+}
+```
+
+#### Pagination — Loading More History on Scroll Up
+
+After the first call returns a `nextPageToken`, you can fetch older pages on demand — for example, each time the customer scrolls up in the chat window. The loop below shows fetching all remaining history, but in practice you would call `getPersistentChatHistory` once per scroll-up action, passing the `nextPageToken` from the previous response.
+
+```ts
+// After the first call (Basic Usage above), save the nextPageToken
+let pageToken: string | undefined = history?.nextPageToken ?? undefined;
+
+// Example: fetch the next page when the customer scrolls up
+const loadMoreHistory = async () => {
+    if (!pageToken) {
+        console.log("No more history to load");
+        return;
+    }
+
+    const response = await chatSDK.getPersistentChatHistory({
+        pageSize: 25,
+        pageToken
+    });
+
+    if (response && response.chatMessages.length > 0) {
+        // Render the older messages in the chat UI
+        response.chatMessages.forEach((message) => {
+            console.log(`[${message.createdDateTime}] ${message.content}`);
+        });
+
+        // Update the token for the next scroll-up action
+        pageToken = response.nextPageToken ?? undefined;
+    }
+};
+
+// Bind to your scroll-up event (e.g., user reaches the top of the chat container)
+chatContainer.addEventListener('scroll', () => {
+    if (chatContainer.scrollTop === 0) {
+        loadMoreHistory();
+    }
+});
+```
+
+Alternatively, to fetch all history at once in a loop:
+
+```ts
+let token: string | undefined = history?.nextPageToken ?? undefined;
+let allMessages = [...(history?.chatMessages ?? [])];
+
+while (token) {
+    const response = await chatSDK.getPersistentChatHistory({
+        pageSize: 25,
+        pageToken: token
+    });
+
+    if (response && response.chatMessages.length > 0) {
+        allMessages = [...allMessages, ...response.chatMessages];
+        token = response.nextPageToken ?? undefined;
+    } else {
+        break;
+    }
+}
+
+console.log(`Total messages retrieved: ${allMessages.length}`);
+```
+
+#### Response Shape
+
+The response type is exported from the SDK and can be imported for TypeScript usage:
+
+```ts
+import { GetPersistentChatHistoryResponse } from '@microsoft/omnichannel-chat-sdk';
+```
+
+```ts
+type GetPersistentChatHistoryResponse = {
+    chatMessages: PersistentChatHistoryMessage[];
+    nextPageToken: string | null; // null when no more pages
+}
+
+type PersistentChatHistoryMessage = {
+    content: string;                  // Message text
+    contentType: number;              // Content type identifier
+    createdDateTime: string;          // ISO 8601 timestamp
+    from: {
+        application: {                // Sender application info
+            displayName: string;      // e.g., agent name or bot name
+            id: string;
+        } | null;
+    };
+    id: string;                       // Unique message identifier
+    attachments: unknown[];           // File attachments if any
+    additionalData: {
+        deliveryMode: string;         // Delivery channel
+        ConversationId: string;       // Conversation the message belongs to
+        tags: string;                 // Message tags
+    };
+}
+```
+
+#### Error Handling
+
+```ts
+try {
+    const history = await chatSDK.getPersistentChatHistory({ pageSize: 25 });
+    // Process messages...
+} catch (error) {
+    if (error.message === 'ChatSDKNotInitialized') {
+        // SDK not initialized — call chatSDK.initialize() first
+    }
+    if (error.message === 'PersistentChatNotEnabled') {
+        // Persistent chat is not enabled for this widget
+    }
+    if (error.message === 'AuthenticatedUserTokenNotFound') {
+        // User is not authenticated — configure getAuthToken
+    }
+    if (error.message === 'PersistentChatConversationRetrievalFailure') {
+        // Server error fetching history — retry or handle gracefully
+    }
+}
 ```
 
 ### Chat Reconnect with Authenticated User
