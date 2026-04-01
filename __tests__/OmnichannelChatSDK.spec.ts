@@ -3346,6 +3346,43 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.OCClient.getChatTranscripts).toHaveBeenCalledTimes(1);
         });
 
+        it('ChatSDK.getLiveChatTranscript() should set OCClient.sessionId before calling getChatTranscripts()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+
+            jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve({
+                ChatId: 124,
+                Token: '',
+                RegionGtms: '{}'
+            }));
+
+            // Track OCClient.sessionId at the time getChatTranscripts is called
+            let sessionIdAtCallTime: string | null = null;
+            jest.spyOn(chatSDK.OCClient, 'getChatTranscripts').mockImplementation(async () => {
+                sessionIdAtCallTime = chatSDK.OCClient.sessionId;
+                return Promise.resolve();
+            });
+
+            await chatSDK.startChat();
+
+            // Simulate sessionId being set from createConversation response headers
+            const testSessionId = 'test-session-id-123';
+            chatSDK.sessionId = testSessionId;
+
+            await chatSDK.getLiveChatTranscript();
+
+            expect(sessionIdAtCallTime).toBe(testSessionId);
+        });
+
         it('ChatSDK.getLiveChatTranscript() with authenticatedUserToken should pass it to OCClient.getChatTranscripts()', async () => {
             const chatSDKConfig = {
                 getAuthToken: async () => {
