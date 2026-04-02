@@ -2208,16 +2208,17 @@ class OmnichannelChatSDK {
                 getChatTranscriptOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
             }
 
+            // Ensure OCClient has sessionId before the call (reconnect may have set it via sessionInit/getChatToken)
+            if (sessionId) {
+                this.OCClient.sessionId = sessionId;
+            }
+
             // by definition, OCSDK returns a string (JSON)
             const transcriptResponse = await this.OCClient.getChatTranscripts(
                 requestId,
                 chatToken.chatId,
                 chatToken.token,
                 getChatTranscriptOptionalParams);
-
-            if (this.sessionId) {
-                this.OCClient.sessionId = this.sessionId;
-            }
 
             this.scenarioMarker.completeScenario(TelemetryEvent.GetLiveChatTranscript, {
                 RequestId: requestId,
