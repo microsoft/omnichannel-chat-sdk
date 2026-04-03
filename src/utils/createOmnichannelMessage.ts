@@ -101,6 +101,7 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
         const { clientmessageid } = message as IRawMessage;
         omnichannelMessage.id = clientmessageid as string;
         omnichannelMessage = { ...message } as OmnichannelMessage;
+        omnichannelMessage.role = getMessageRole(omnichannelMessage);
     }
 
     return omnichannelMessage as OmnichannelMessage;
