@@ -220,13 +220,14 @@ export class ACSConversation {
                     } catch {
                         // Ignore polling failures
                     }
-                }
 
-                const defaultInterval = optionalParams.pollingInterval || 10000;
-                const delay = delayGenerator.next();
-                this.pollingTimer = setTimeout(() => {
-                    pollForMessages(delayGenerator);
-                }, delay.done === true ? defaultInterval : delay.value);
+                    // Only reschedule if still polling — breaks the timer chain when stopPolling() is called
+                    const defaultInterval = optionalParams.pollingInterval || 10000;
+                    const delay = delayGenerator.next();
+                    this.pollingTimer = setTimeout(() => {
+                        pollForMessages(delayGenerator);
+                    }, delay.done === true ? defaultInterval : delay.value);
+                }
             };
 
             await this.startPolling();
