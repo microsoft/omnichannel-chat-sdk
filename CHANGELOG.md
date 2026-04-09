@@ -32,6 +32,7 @@ All notable changes to this project will be documented in this file.
 - Fix `sendTypingEvent` failing silently for authenticated and persistent chat when `OCClient.sendTypingIndicator()` returns a `404`; changed to fire-and-forget so `ACSConversation.sendTyping()` always executes regardless of the OC indicator result
 
 - Fix npm publish failing for prerelease versions by adding `--tag latest` to publish command
+- Use `npx npm@11.12.1` for publish step to fix OIDC trusted publishing (npm 10.9.7 can't do OIDC, and `npm install -g` crashes during self-upgrade)
 
 - Fix `onAgentEndSession` callback incorrectly firing during customer-initiated `endChat()` by adding `isEndingChat` guard flag to suppress spurious ACS `participantsRemoved` events triggered by the disconnect cleanup
 - Fix `onAgentEndSession` callback not firing when agent ends the session due to a race condition where the backend conversation state has not yet transitioned from `Active` to `WrapUp`/`Closed` at the time the ACS `participantsRemoved` event arrives; added retry logic (3 attempts, 2s delay) to poll `getConversationDetails()` until the state catches up
