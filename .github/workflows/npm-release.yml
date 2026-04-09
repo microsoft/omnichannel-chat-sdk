@@ -27,9 +27,6 @@ jobs:
           node-version: 22.x
           registry-url: https://registry.npmjs.org
 
-      - name: Upgrade npm for OIDC trusted publishing
-        run: npm install -g npm@latest
-
       - name: Update package version from git
         if: ${{ github.ref == 'refs/heads/main' }}
         run: npx version-from-git --no-git-tag-version
@@ -56,4 +53,4 @@ jobs:
         run: npm run build:tsc
 
       - name: Publish ${{ steps.read-package-json.outputs.name }}@${{ steps.read-package-json.outputs.version }}
-        run: npm publish --provenance --tag ${{ steps.dist-tag.outputs.tag }} --access public
+        run: npx npm@11.12.1 publish --provenance --tag ${{ steps.dist-tag.outputs.tag }} --access public
