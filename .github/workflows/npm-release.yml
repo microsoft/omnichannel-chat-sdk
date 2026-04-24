@@ -59,11 +59,31 @@ jobs:
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         run: npm pack
 
+      - name: Extract CHANGELOG section for ${{ github.ref_name }}
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        id: changelog
+        run: |
+          # Strip the leading "v" from the tag (e.g. v1.11.9 -> 1.11.9)
+          VERSION="${GITHUB_REF_NAME#v}"
+          # Extract lines between "## [VERSION]" and the next "## [" heading
+          awk -v ver="$VERSION" '
+            $0 ~ "^## \\[" ver "\\]" {flag=1; next}
+            flag && /^## \[/ {flag=0}
+            flag {print}
+          ' CHANGELOG.md > RELEASE_NOTES.md
+          if [ ! -s RELEASE_NOTES.md ]; then
+            echo "::warning::No CHANGELOG entry found for version $VERSION; falling back to auto-generated notes."
+            echo "fallback=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "fallback=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Create GitHub Release
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
         with:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
-          generate_release_notes: true
+          body_path: ${{ steps.changelog.outputs.fallback == 'false' && 'RELEASE_NOTES.md' || '' }}
+          generate_release_notes: ${{ steps.changelog.outputs.fallback == 'true' }}
           files: '*.tgz'
