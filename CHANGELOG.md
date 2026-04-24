@@ -27,6 +27,7 @@ All notable changes to this project will be documented in this file.
 - Switch npm publishing to GitHub Actions OIDC trusted publishing (no NPM_TOKEN needed)
 - Dev versions now auto-publish on push to main (e.g. `1.11.9-main.abc1234`)
 - Add `hotfix/**` branch trigger to npm-release workflow
+- Publish a GitHub Release with the packed `.tgz` and auto-generated release notes whenever a `v*` tag is pushed (runs after the npm publish step in `npm-release.yml`)
 
 ### Fixed
 - Fix `sendTypingEvent` failing silently for authenticated and persistent chat when `OCClient.sendTypingIndicator()` returns a `404`; changed to fire-and-forget so `ACSConversation.sendTyping()` always executes regardless of the OC indicator result
