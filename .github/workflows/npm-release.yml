@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 jobs:
@@ -54,3 +54,16 @@ jobs:
 
       - name: Publish ${{ steps.read-package-json.outputs.name }}@${{ steps.read-package-json.outputs.version }}
         run: npx npm@11.12.1 publish --provenance --tag ${{ steps.dist-tag.outputs.tag }} --access public
+
+      - name: Pack tarball for GitHub Release
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        run: npm pack
+
+      - name: Create GitHub Release
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: '*.tgz'
