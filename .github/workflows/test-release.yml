@@ -1,0 +1,65 @@
+name: Test GitHub Release (dry-run)
+
+# Dry-run workflow for validating the GitHub Release pipeline without
+# touching npm. Produces a DRAFT release with the packed tarball and
+# CHANGELOG-derived body. Delete the draft (and this workflow) once the
+# GitHub Release flow in npm-release.yml is verified.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'CHANGELOG version to extract (e.g. 1.11.8). Must have a matching "## [VERSION]" heading in CHANGELOG.md.'
+        required: true
+        default: '1.11.8'
+
+permissions:
+  contents: write
+
+jobs:
+  dry-run:
+    if: github.repository == 'microsoft/omnichannel-chat-sdk'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ${{ github.ref }}
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: Install packages
+        run: npm install
+
+      - name: Build
+        run: npm run build:tsc
+
+      - name: Pack tarball
+        run: npm pack
+
+      - name: Extract CHANGELOG section for ${{ inputs.version }}
+        id: changelog
+        run: |
+          VERSION="${{ inputs.version }}"
+          awk -v ver="$VERSION" '
+            $0 ~ "^## \\[" ver "\\]" {flag=1; next}
+            flag && /^## \[/ {flag=0}
+            flag {print}
+          ' CHANGELOG.md > RELEASE_NOTES.md
+          if [ ! -s RELEASE_NOTES.md ]; then
+            echo "::error::No CHANGELOG entry found for version $VERSION."
+            exit 1
+          fi
+          echo "---- Extracted release notes ----"
+          cat RELEASE_NOTES.md
+          echo "---------------------------------"
+
+      - name: Create DRAFT GitHub Release
+        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
+        with:
+          tag_name: test-run-${{ github.run_id }}
+          name: "DRY RUN — v${{ inputs.version }} (run ${{ github.run_id }})"
+          body_path: RELEASE_NOTES.md
+          draft: true
+          files: '*.tgz'
