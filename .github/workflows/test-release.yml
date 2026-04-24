@@ -12,13 +12,6 @@ on:
         description: 'CHANGELOG version to extract (e.g. 1.11.8). Must have a matching "## [VERSION]" heading in CHANGELOG.md.'
         required: true
         default: '1.11.8'
-  # Temporary: auto-run on every push to the test branch so we can validate
-  # the flow before the workflow is merged to main (workflow_dispatch only
-  # surfaces in the UI after the file exists on the default branch). Remove
-  # this push trigger once validated.
-  push:
-    branches:
-      - users/mugdham/githubRelease
 
 permissions:
   contents: write
