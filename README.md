@@ -454,6 +454,49 @@ chatSDK.onNewMessage((message) => {
 }, optionalParams);
 ```
 
+### On Streaming Message
+
+Subscribe to ACS-driven streaming message chunks for typing-style progressive UX. Streaming requires `LiveChatVersion.V2` and the signaling websocket to be connected.
+
+```ts
+chatSDK.onStreamingMessage((message) => {
+    switch (message.streamingMetadata.streamingMessageType) {
+        case "start":
+            // Bot started a streaming response — create the bubble
+            break;
+        case "informative":
+            // Optional progress signal (e.g., "AI is thinking...")
+            break;
+        case "streaming":
+            // Replace bubble content with message.content (full assembled-so-far text)
+            break;
+        case "final":
+            // Stream complete — check streamingMetadata.streamEndReason
+            //   "completed" — normal end
+            //   "expired"   — server-side timeout
+            //   "canceled"  — operator/server canceled
+            break;
+    }
+    // Optional: check for content moderation
+    if (message.policyViolation?.result === "contentBlocked") {
+        // Strip / show moderation notice
+    }
+});
+```
+
+**Constraints:**
+
+- Available only in `LiveChatVersion.V2`. Throws `ChatSDKError` with `UnsupportedLiveChatVersion` otherwise.
+- Must be called after `startChat()`. Throws `ChatSDKError` with `UninitializedConversation` otherwise.
+- Streaming events fire over the signaling websocket. If the websocket is unavailable, no streaming events fire.
+- No client-initiated abort. To stop a streaming response, send a custom message to the bot.
+- Each chunk's `content` field carries the **full assembled-so-far** message content (replace semantics, not delta). To compute deltas, diff against the previous chunk for the same message id.
+- Multiple handlers may register; they all receive each chunk. There is no `unregisterOnStreamingMessage` — cleanup happens via `endChat()`.
+- Historical streaming messages on reconnect arrive via `onNewMessage` with their final assembled content; `onStreamingMessage` is live-only.
+- Chunks may arrive without a preceding `"start"` (e.g., on websocket reconnect mid-stream). Render defensively from any chunk.
+
+**Backwards compatibility:** Consumers who only use `onNewMessage` (not `onStreamingMessage`) will still receive streaming-bot responses — the SDK fires `onNewMessage` once with the assembled content when the stream's `"final"` chunk arrives. This means existing integrations continue to work without code changes when a bot adds streaming support; they just see the message arrive once at completion rather than progressively. To render progressive UX, consumers must opt in by calling `onStreamingMessage`.
+
 ### On Typing Event
 
 It subscribes to an agent typing event.

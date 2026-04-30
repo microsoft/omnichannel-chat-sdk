@@ -83,7 +83,9 @@ import OmnichannelChatToken from "@microsoft/omnichannel-amsclient/lib/Omnichann
 import OmnichannelConfig from "./core/OmnichannelConfig";
 import OmnichannelErrorCodes from "./core/OmnichannelErrorCodes";
 import OmnichannelMessage from "./core/messaging/OmnichannelMessage";
+import OmnichannelStreamingMessage from "./core/messaging/OmnichannelStreamingMessage";
 import OnNewMessageOptionalParams from "./core/messaging/OnNewMessageOptionalParams";
+import OnStreamingMessageOptionalParams from "./core/messaging/OnStreamingMessageOptionalParams";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import PluggableLogger from "@microsoft/omnichannel-amsclient/lib/PluggableLogger";
 import PostChatContext from "./core/PostChatContext";
@@ -1838,6 +1840,62 @@ class OmnichannelChatSDK {
                     ChatId: this.chatToken.chatId as string
                 });
             }
+        }
+    }
+
+    public async onStreamingMessage(
+        onStreamingMessageCallback: (message: OmnichannelStreamingMessage) => void,
+        optionalParams?: OnStreamingMessageOptionalParams
+    ): Promise<void> {
+        this.scenarioMarker.startScenario(TelemetryEvent.OnStreamingMessage, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken?.chatId as string ?? ""
+        });
+
+        // Mirror the isInitialized check used by sibling subscription APIs
+        // (onNewMessage, onTypingEvent, onAgentEndSession) so the error
+        // surface for "called before initialize()" is consistent across the
+        // SDK. The conversation check below catches the separate
+        // "initialize() but not startChat()" case.
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.OnStreamingMessage);
+        }
+
+        try {
+            if (this.liveChatVersion !== LiveChatVersion.V2) {
+                throw new ChatSDKError(ChatSDKErrorName.UnsupportedLiveChatVersion);
+            }
+            if (!this.conversation) {
+                throw new ChatSDKError(ChatSDKErrorName.UninitializedConversation);
+            }
+
+            await (this.conversation as ACSConversation).registerOnStreamingMessage(
+                onStreamingMessageCallback,
+                optionalParams
+            );
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.OnStreamingMessage, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string ?? ""
+            });
+        } catch (error) {
+            // Wrap generic errors from ACSConversation into a typed ChatSDKError.
+            // Validation errors above are already ChatSDKError — preserve them.
+            const wrappedError = (error instanceof ChatSDKError)
+                ? error
+                : new ChatSDKError(
+                    ChatSDKErrorName.StreamingSubscriptionFailure,
+                    undefined,
+                    { response: 'StreamingSubscriptionFailure', errorObject: `${error}` }
+                );
+
+            this.scenarioMarker.failScenario(TelemetryEvent.OnStreamingMessage, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string ?? "",
+                ExceptionDetails: JSON.stringify(wrappedError.exceptionDetails ?? wrappedError.message)
+            });
+
+            throw wrappedError;
         }
     }
 

@@ -6,6 +6,13 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added `OmnichannelChatSDK.onStreamingMessage(callback)` — subscribe to ACS-driven streaming message chunks for typing-style progressive UX. Available in `LiveChatVersion.V2` over the signaling websocket. See README "On Streaming Message" section for full lifecycle and constraints.
+- Backwards-compat: consumers who only use `onNewMessage` continue to receive streaming-bot responses as a single message at completion (when the streaming `"final"` chunk arrives). No code changes required for existing integrations — only consumers who want progressive UX need to call the new `onStreamingMessage`.
+- Added new public types: `OmnichannelStreamingMessage`, `StreamingMetadata`, `PolicyViolation`, `OnStreamingMessageOptionalParams`.
+- Added `UninitializedConversation` and `StreamingSubscriptionFailure` to `ChatSDKErrorName` enum.
+- Added streaming telemetry events to `TelemetryEvent` (`OnStreamingMessage`, `StreamingMessageReceived`, `StreamingDuplicateFinal`, `StreamingPolicyViolation`, and others).
+- Added `MessageSource.WebSocketStreaming` for distinguishing streaming chunks from regular WebSocket messages in telemetry.
+- Stamps `@microsoft/botframework-webchat-adapter-azure-communication-chat` package version into telemetry context (`ACSAdapter` / `ACSAdapterVersion` fields).
 - Added `authenticateChat` public method to authenticate an ongoing unauthenticated chat session mid-conversation
 - Added `MidConversationAuth` telemetry event for scenario tracking
 - Added `MidConversationAuthFailure` to `ChatSDKErrorName` enum
@@ -14,7 +21,8 @@ All notable changes to this project will be documented in this file.
 - Throws `ChatSDKError` consistently on all failure paths (token resolution, empty token, API call, token refresh)
 
 ### Changed
-- Updated botframework-webchat-adapter-azure-communication-chat to "^0.0.1-beta.6"
+
+- Bumped `@azure/communication-chat` to `1.6.0-beta.7`, `@azure/communication-common` to `2.4.0`, and `@microsoft/botframework-webchat-adapter-azure-communication-chat` to `0.0.1-beta.7` to enable ACS message streaming support.
 
 ### Added
 
