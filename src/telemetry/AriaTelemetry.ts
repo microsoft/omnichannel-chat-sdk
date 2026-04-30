@@ -29,6 +29,7 @@ interface NPMPackagesInfo {
     IC3Core?: string;
     ACSChat?: string;
     ACSCommon?: string;
+    ACSAdapter?: string;
     AMSClient?: string;
 }
 
@@ -90,6 +91,7 @@ interface ACSClientContract {
     ExceptionDetails?: string;
     ElapsedTimeInMilliseconds?: string;
     ACSChatVersion: string;
+    ACSAdapterVersion?: string;
 }
 
 interface ACSAdapterContract {
@@ -675,6 +677,7 @@ class AriaTelemetry {
             IC3Core: require('@microsoft/omnichannel-ic3core/package.json').version,
             ACSChat: require('@azure/communication-chat/package.json').version,
             ACSCommon: require('@azure/communication-common/package.json').version,
+            ACSAdapter: require('@microsoft/botframework-webchat-adapter-azure-communication-chat/package.json').version,
             AMSClient:  require('@microsoft/omnichannel-amsclient/package.json').version,
         };
 
@@ -808,7 +811,8 @@ class AriaTelemetry {
             Event: '',
             ExceptionDetails: '',
             ElapsedTimeInMilliseconds: '',
-            ACSChatVersion: require('@azure/communication-chat/package.json').version
+            ACSChatVersion: require('@azure/communication-chat/package.json').version,
+            ACSAdapterVersion: require('@microsoft/botframework-webchat-adapter-azure-communication-chat/package.json').version
         }
     }
 

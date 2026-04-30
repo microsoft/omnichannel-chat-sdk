@@ -696,4 +696,226 @@ describe('ACSClient', () => {
 
         expect(response).not.toBeDefined();
     });
+
+    describe('registerOnStreamingMessage', () => {
+        async function setupConversation() {
+            const client: any = new ACSClient();
+            const config = { token: 'token', environmentUrl: 'url' };
+            await client.initialize(config);
+
+            const chatThreadClient: any = {};
+            chatThreadClient.listParticipants = jest.fn(() => ({
+                next: jest.fn(() => ({ value: 'value', done: jest.fn() })),
+            }));
+
+            const onMock = jest.fn();
+            const offMock = jest.fn();
+            client.chatClient = {};
+            client.chatClient.getChatThreadClient = jest.fn(() => chatThreadClient);
+            client.chatClient.startRealtimeNotifications = jest.fn();
+            client.chatClient.on = onMock;
+            client.chatClient.off = offMock;
+
+            const conversation = await client.joinConversation({
+                id: 'id',
+                threadId: 'threadId',
+                pollingInterval: 1000,
+            });
+            return { conversation, onMock, offMock, client };
+        }
+
+        it('attaches listeners for streamingChatMessageStarted and streamingChatMessageChunkReceived', async () => {
+            const { conversation, onMock } = await setupConversation();
+
+            await conversation.registerOnStreamingMessage(jest.fn());
+
+            const eventNames = onMock.mock.calls.map((c: any[]) => c[0]);
+            expect(eventNames).toContain('streamingChatMessageStarted');
+            expect(eventNames).toContain('streamingChatMessageChunkReceived');
+        });
+
+        it('records start/complete scenario telemetry on successful registration', async () => {
+            const { conversation } = await setupConversation();
+            // Inject a mock logger directly to verify scenario calls.
+            const mockLogger = {
+                startScenario: jest.fn(),
+                completeScenario: jest.fn(),
+                failScenario: jest.fn(),
+                recordIndividualEvent: jest.fn(),
+            };
+            (conversation as any).logger = mockLogger;
+
+            await conversation.registerOnStreamingMessage(jest.fn());
+
+            expect(mockLogger.startScenario).toHaveBeenCalledWith('RegisterOnStreamingMessage');
+            expect(mockLogger.completeScenario).toHaveBeenCalledWith('RegisterOnStreamingMessage');
+            expect(mockLogger.failScenario).not.toHaveBeenCalled();
+        });
+
+        it('throws and logs failScenario when chatClient.on throws', async () => {
+            const { conversation, client } = await setupConversation();
+            client.chatClient.on = jest.fn(() => { throw new Error('subscribe failed'); });
+
+            await expect(conversation.registerOnStreamingMessage(jest.fn())).rejects.toThrow('RegisterOnStreamingMessage');
+        });
+
+        it('fires the consumer callback with an OmnichannelStreamingMessage for start events', async () => {
+            const { conversation, onMock } = await setupConversation();
+            const callback = jest.fn();
+            await conversation.registerOnStreamingMessage(callback);
+
+            const startListener = onMock.mock.calls.find((c: any[]) => c[0] === 'streamingChatMessageStarted')[1];
+            const startEvent = {
+                id: 'm1',
+                message: '',
+                threadId: 't',
+                sender: { kind: 'communicationUser', communicationUserId: 'b' },
+                senderDisplayName: 'Bot',
+                recipient: { kind: 'communicationUser', communicationUserId: 'u' },
+                type: 'Text',
+                version: '1',
+                createdOn: new Date(),
+                metadata: {},
+                streamingMetadata: { streamingMessageType: 'start', streamingSequenceNumber: 0 },
+            };
+            startListener(startEvent);
+
+            expect(callback).toHaveBeenCalledTimes(1);
+            const delivered = callback.mock.calls[0][0];
+            expect(delivered.id).toBe('m1');
+            expect(delivered.streamingMetadata.streamingMessageType).toBe('start');
+        });
+
+        it('does not propagate errors when consumer callback throws synchronously', async () => {
+            const { conversation, onMock } = await setupConversation();
+            const callback = jest.fn(() => { throw new Error('consumer bug'); });
+            await conversation.registerOnStreamingMessage(callback);
+
+            const startListener = onMock.mock.calls.find((c: any[]) => c[0] === 'streamingChatMessageStarted')[1];
+            const event = {
+                id: 'm1',
+                message: '',
+                threadId: 't',
+                sender: { kind: 'communicationUser', communicationUserId: 'b' },
+                senderDisplayName: 'Bot',
+                recipient: { kind: 'communicationUser', communicationUserId: 'u' },
+                type: 'Text',
+                version: '1',
+                createdOn: new Date(),
+                metadata: {},
+                streamingMetadata: { streamingMessageType: 'start', streamingSequenceNumber: 0 },
+            };
+
+            expect(() => startListener(event)).not.toThrow();
+        });
+
+        it('removes streaming listeners via existing eventListeners cleanup on disconnect', async () => {
+            const { conversation, offMock } = await setupConversation();
+            await conversation.registerOnStreamingMessage(jest.fn());
+            await conversation.disconnect();
+
+            const offEventNames = offMock.mock.calls.map((c: any[]) => c[0]);
+            expect(offEventNames).toContain('streamingChatMessageStarted');
+            expect(offEventNames).toContain('streamingChatMessageChunkReceived');
+        });
+
+        // Backwards-compat fire-through: when streaming "final" arrives, the SDK
+        // also invokes the registered chatMessageReceived listeners so consumers
+        // who only use onNewMessage still see the assembled message once at the
+        // end. This protects them from silent message loss when bots upgrade to
+        // streaming responses.
+        describe('backwards-compat fire-through to onNewMessage', () => {
+            const finalChunkEvent = (id = 'm1', content = 'Hello world') => ({
+                id,
+                message: content,
+                threadId: 't',
+                sender: { kind: 'communicationUser', communicationUserId: 'b' },
+                senderDisplayName: 'Bot',
+                recipient: { kind: 'communicationUser', communicationUserId: 'u' },
+                type: 'Text',
+                version: '1',
+                createdOn: new Date(),
+                editedOn: new Date(),
+                metadata: {},
+                streamingMetadata: {
+                    streamingMessageType: 'final',
+                    streamingSequenceNumber: 5,
+                    streamEndReason: 'completed',
+                },
+            });
+
+            const nonFinalChunkEvent = (id = 'm1', content = 'partial') => ({
+                ...finalChunkEvent(id, content),
+                streamingMetadata: {
+                    streamingMessageType: 'streaming',
+                    streamingSequenceNumber: 2,
+                },
+            });
+
+            it('"final" chunk fires through to chatMessageReceived listeners', async () => {
+                const { conversation, onMock } = await setupConversation();
+
+                // Register a fake chatMessageReceived listener (simulating what
+                // registerOnNewMessage would do — pushed via trackListener).
+                const newMessageListener = jest.fn();
+                (conversation as any).eventListeners['chatMessageReceived'] = [newMessageListener];
+
+                // Register streaming
+                await conversation.registerOnStreamingMessage(jest.fn());
+
+                // Simulate ACS firing a "final" chunk
+                const chunkListener = onMock.mock.calls.find((c: any[]) => c[0] === 'streamingChatMessageChunkReceived')[1];
+                const event = finalChunkEvent();
+                chunkListener(event);
+
+                // The chatMessageReceived listener should have been invoked with the chunk event
+                expect(newMessageListener).toHaveBeenCalledTimes(1);
+                expect(newMessageListener).toHaveBeenCalledWith(event);
+            });
+
+            it('non-final chunks do NOT fire through to chatMessageReceived listeners', async () => {
+                const { conversation, onMock } = await setupConversation();
+
+                const newMessageListener = jest.fn();
+                (conversation as any).eventListeners['chatMessageReceived'] = [newMessageListener];
+
+                await conversation.registerOnStreamingMessage(jest.fn());
+
+                const chunkListener = onMock.mock.calls.find((c: any[]) => c[0] === 'streamingChatMessageChunkReceived')[1];
+                chunkListener(nonFinalChunkEvent());
+
+                expect(newMessageListener).not.toHaveBeenCalled();
+            });
+
+            it('fire-through still happens when consumer registers onlystreaming, no chatMessageReceived listeners', async () => {
+                const { conversation, onMock } = await setupConversation();
+                // No chatMessageReceived listeners registered.
+                const streamingCallback = jest.fn();
+                await conversation.registerOnStreamingMessage(streamingCallback);
+
+                const chunkListener = onMock.mock.calls.find((c: any[]) => c[0] === 'streamingChatMessageChunkReceived')[1];
+                expect(() => chunkListener(finalChunkEvent())).not.toThrow();
+
+                // Streaming callback still fires
+                expect(streamingCallback).toHaveBeenCalledTimes(1);
+            });
+
+            it('exception in chatMessageReceived listener does not break streaming delivery', async () => {
+                const { conversation, onMock } = await setupConversation();
+
+                const buggyListener = jest.fn(() => { throw new Error('newMessage handler bug'); });
+                (conversation as any).eventListeners['chatMessageReceived'] = [buggyListener];
+                const streamingCallback = jest.fn();
+                await conversation.registerOnStreamingMessage(streamingCallback);
+
+                const chunkListener = onMock.mock.calls.find((c: any[]) => c[0] === 'streamingChatMessageChunkReceived')[1];
+                expect(() => chunkListener(finalChunkEvent())).not.toThrow();
+
+                // Buggy listener was attempted
+                expect(buggyListener).toHaveBeenCalledTimes(1);
+                // Streaming callback still fired
+                expect(streamingCallback).toHaveBeenCalledTimes(1);
+            });
+        });
+    });
 });

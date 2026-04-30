@@ -1,15 +1,18 @@
 import { ChatMessage, ChatMessageEditedEvent, ChatMessageReceivedEvent } from "@azure/communication-chat";
+import { StreamingChatMessageChunkReceivedEvent, StreamingChatMessageStartEvent } from "@azure/communication-signaling";
 
 import { MessageType } from "./types/MessageType";
 import OmnichannelMessage from "../../core/messaging/OmnichannelMessage";
 import { OmnichannelMessagePrinter } from "./OmnichannelMessagePrinter";
 import { PollingMessagePrinter } from "./PollingMessagePrinter";
 import { PrintableMessage } from "./types/PrintableMessageType";
+import { StreamingMessagePrinter } from "./StreamingMessagePrinter";
 import { WebSocketMessagePrinter } from "./WebsocketMessagePrinter";
 
 export enum PrinterType {
     Polling = "Polling",
     WebSocket = "WebSocket",
+    Streaming = "Streaming",
     Omnichannel = "Rest"
 }
 
@@ -20,6 +23,8 @@ export class MessagePrinterFactory {
             return PollingMessagePrinter;
         case PrinterType.WebSocket:
             return WebSocketMessagePrinter;
+        case PrinterType.Streaming:
+            return StreamingMessagePrinter;
         case PrinterType.Omnichannel:
             return OmnichannelMessagePrinter;
         default:
@@ -35,6 +40,10 @@ export class MessagePrinterFactory {
             return (printer as typeof PollingMessagePrinter).printify(message as ChatMessage);
         case PrinterType.WebSocket:
             return (printer as typeof WebSocketMessagePrinter).printify(message as ChatMessageReceivedEvent | ChatMessageEditedEvent);
+        case PrinterType.Streaming:
+            return (printer as typeof StreamingMessagePrinter).printify(
+                message as StreamingChatMessageStartEvent | StreamingChatMessageChunkReceivedEvent
+            );
         case PrinterType.Omnichannel:
             return (printer as typeof OmnichannelMessagePrinter).printify(message as OmnichannelMessage);
         default:

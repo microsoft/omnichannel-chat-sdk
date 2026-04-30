@@ -1,6 +1,6 @@
 import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
 import { ChatClient, ChatMessage, ChatParticipant, ChatThreadClient } from "@azure/communication-chat";
-import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
+import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent, StreamingChatMessageChunkReceivedEvent, StreamingChatMessageStartEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
 import { MessagePrinterFactory, PrinterType } from "../../utils/printers/MessagePrinterFactory";
 
 import ACSChatMessageType from "./ACSChatMessageType";
@@ -15,8 +15,11 @@ import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode"
 import LiveChatVersion from "../LiveChatVersion";
 import { MessageSource } from "../../telemetry/MessageSource";
 import OmnichannelMessage from "./OmnichannelMessage";
+import OmnichannelStreamingMessage from "./OmnichannelStreamingMessage";
+import OnStreamingMessageOptionalParams from "./OnStreamingMessageOptionalParams";
 import TelemetryEvent from "../../telemetry/TelemetryEvent";
 import createOmnichannelMessage from "../../utils/createOmnichannelMessage";
+import createOmnichannelStreamingMessage from "../../utils/createOmnichannelStreamingMessage";
 import { defaultMessageTags } from "./MessageTags";
 
 enum ACSClientEvent {
@@ -24,6 +27,7 @@ enum ACSClientEvent {
     InitializeACSConversation = 'InitializeACSConversation',
     GetParticipants = 'GetParticipants',
     RegisterOnNewMessage = 'RegisterOnNewMessage',
+    RegisterOnStreamingMessage = 'RegisterOnStreamingMessage',
     RegisterOnThreadUpdate = 'RegisterOnThreadUpdate',
     OnTypingEvent = 'OnTypingEvent',
     GetMessages = 'GetMessages',
@@ -55,6 +59,8 @@ export class ACSConversation {
     private eventListeners: EventListenersMapping;
     private keepPolling = false;
     private pollingTimer: NodeJS.Timeout | number | null = null;
+    private streamSequenceCounters: Map<string, number> = new Map();
+    private finalizedMessageIds: Set<string> = new Set();
 
     constructor(tokenCredential: AzureCommunicationTokenCredential, chatClient: ChatClient, logger: ACSClientLogger | null = null) {
         this.logger = logger;
@@ -270,6 +276,152 @@ export class ACSConversation {
             });
 
             throw new Error(ACSClientEvent.RegisterOnNewMessage);
+        }
+    }
+
+    public async registerOnStreamingMessage(
+        onStreamingMessageCallback: (message: OmnichannelStreamingMessage) => void,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        optionalParams: OnStreamingMessageOptionalParams = {}
+    ): Promise<void> {
+        this.logger?.startScenario(ACSClientEvent.RegisterOnStreamingMessage);
+
+        try {
+            const invokeWithIsolation = (event: { id: string }, message: OmnichannelStreamingMessage) => {
+                // Listener-isolation guarantee: a consumer's callback must never
+                // break the streaming subscription, whether it throws sync or
+                // returns a rejecting Promise (async callbacks). Sync throws are
+                // caught by the surrounding try/catch; async rejections need an
+                // explicit .catch on the returned Promise (the callback is typed
+                // as () => void, but consumers commonly pass async functions).
+                // Cast through unknown because the callback is typed () => void;
+                // TS strict mode rejects testing void for truthiness, but consumers
+                // commonly pass async functions whose returned Promise we need to
+                // observe for rejection.
+                const result = onStreamingMessageCallback(message) as unknown;
+                if (result && typeof (result as Promise<unknown>).catch === 'function') {
+                    (result as Promise<unknown>).catch((rejected: unknown) => {
+                        this.logger?.recordIndividualEvent(
+                            TelemetryEvent.StreamingHandlerAsyncRejected,
+                            MessageSource.WebSocketStreaming,
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            { messageId: event.id, error: `${rejected}` } as any
+                        );
+                    });
+                }
+            };
+
+            const onStart = (event: StreamingChatMessageStartEvent) => {
+                try {
+                    const message = createOmnichannelStreamingMessage(event, {
+                        liveChatVersion: LiveChatVersion.V2,
+                        eventName: 'streamingChatMessageStarted',
+                        sequenceCounters: this.streamSequenceCounters,
+                        finalizedMessageIds: this.finalizedMessageIds,
+                        logger: this.logger,
+                    });
+                    if (message === undefined) {
+                        return;
+                    }
+                    this.logger?.recordIndividualEvent(
+                        TelemetryEvent.StreamingMessageReceived,
+                        MessageSource.WebSocketStreaming,
+                        MessagePrinterFactory.printifyMessage(event, PrinterType.Streaming)
+                    );
+                    invokeWithIsolation(event, message);
+                } catch (err) {
+                    this.logger?.recordIndividualEvent(
+                        TelemetryEvent.StreamingHandlerThrew,
+                        MessageSource.WebSocketStreaming,
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        { messageId: event.id, error: `${err}` } as any
+                    );
+                }
+            };
+
+            const onChunk = (event: StreamingChatMessageChunkReceivedEvent) => {
+                try {
+                    const message = createOmnichannelStreamingMessage(event, {
+                        liveChatVersion: LiveChatVersion.V2,
+                        eventName: 'streamingChatMessageChunkReceived',
+                        sequenceCounters: this.streamSequenceCounters,
+                        finalizedMessageIds: this.finalizedMessageIds,
+                        logger: this.logger,
+                    });
+                    if (message === undefined) {
+                        return;
+                    }
+                    this.logger?.recordIndividualEvent(
+                        TelemetryEvent.StreamingMessageReceived,
+                        MessageSource.WebSocketStreaming,
+                        MessagePrinterFactory.printifyMessage(event, PrinterType.Streaming)
+                    );
+                    invokeWithIsolation(event, message);
+
+                    // Backwards-compat: when a streaming message reaches "final",
+                    // also deliver the assembled message to consumers who only
+                    // registered onNewMessage. Without this fire-through, a bot
+                    // that switches from non-streaming to streaming responses
+                    // would silently disappear from existing consumers' UIs.
+                    //
+                    // Assumption: ACS does NOT fire chatMessageReceived for
+                    // streaming messages (only the streamingChat* events). If
+                    // this assumption is incorrect under any ACS configuration,
+                    // this fire-through could cause duplicate onNewMessage
+                    // invocations and a dedup tracking step would be needed.
+                    //
+                    // Note on event shape: the StreamingChatMessageChunkReceivedEvent
+                    // is structurally compatible with ChatMessageEditedEvent (carries
+                    // editedOn). The chatMessageReceived inner listener at
+                    // registerOnNewMessage uses Object.keys(event).includes("editedOn")
+                    // to detect edits — so this fire-through is treated as an "edit"
+                    // by that path, which means the consumer's onNewMessage callback
+                    // fires regardless of whether the message id was already posted.
+                    // That's intentional — the final-chunk fire is the authoritative
+                    // assembled content and should win over any earlier delivery.
+                    if (message.streamingMetadata.streamingMessageType === 'final') {
+                        const newMessageListeners = this.eventListeners['chatMessageReceived'] ?? [];
+                        for (const listener of newMessageListeners) {
+                            try {
+                                listener(event);
+                            } catch (err) {
+                                this.logger?.recordIndividualEvent(
+                                    TelemetryEvent.StreamingHandlerThrew,
+                                    MessageSource.WebSocketStreaming,
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    { messageId: event.id, error: `${err}`, source: 'newMessageFireThrough' } as any
+                                );
+                            }
+                        }
+                    }
+                } catch (err) {
+                    this.logger?.recordIndividualEvent(
+                        TelemetryEvent.StreamingHandlerThrew,
+                        MessageSource.WebSocketStreaming,
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        { messageId: event.id, error: `${err}` } as any
+                    );
+                }
+            };
+
+            this.chatClient?.on('streamingChatMessageStarted', onStart);
+            this.chatClient?.on('streamingChatMessageChunkReceived', onChunk);
+            this.trackListener('streamingChatMessageStarted', onStart);
+            this.trackListener('streamingChatMessageChunkReceived', onChunk);
+
+            this.logger?.completeScenario(ACSClientEvent.RegisterOnStreamingMessage);
+        } catch (error) {
+            const exceptionDetails = { errorObject: `${error}` };
+            this.logger?.failScenario(ACSClientEvent.RegisterOnStreamingMessage, {
+                ExceptionDetails: JSON.stringify(exceptionDetails),
+            });
+
+            // Preserve the original cause in the thrown message so downstream
+            // error classifiers (e.g., CORS detection in consuming apps) can
+            // inspect the underlying failure. Mirrors the pattern used by
+            // ACSConversation.initialize() which embeds `${error}` into the
+            // exceptionDetails it throws.
+            throw new Error(`${ACSClientEvent.RegisterOnStreamingMessage}: ${error}`);
         }
     }
 

@@ -6035,4 +6035,107 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             });
         });
     });
+
+    describe('ChatSDK.onStreamingMessage', () => {
+        const omnichannelConfig = {
+            orgUrl: '[data-org-url]',
+            orgId: '[data-org-id]',
+            widgetId: '[data-app-id]'
+        };
+
+        beforeEach(() => {
+            jest.clearAllMocks();
+        });
+
+        it('throws UnsupportedLiveChatVersion when liveChatVersion is V1', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
+            chatSDK["isAMSClientAllowed"] = true;
+            await chatSDK.initialize();
+
+            try {
+                await chatSDK.onStreamingMessage(jest.fn());
+                fail('Expected onStreamingMessage to throw');
+            } catch (e: any) {
+                expect(e).toBeInstanceOf(ChatSDKError);
+                expect(e.message).toBe(ChatSDKErrorName.UnsupportedLiveChatVersion);
+            }
+        });
+
+        it('throws UninitializedConversation when called before startChat()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            await chatSDK.initialize();
+            // Don't call startChat — conversation field stays null
+
+            try {
+                await chatSDK.onStreamingMessage(jest.fn());
+                fail('Expected onStreamingMessage to throw');
+            } catch (e: any) {
+                expect(e).toBeInstanceOf(ChatSDKError);
+                expect(e.message).toBe(ChatSDKErrorName.UninitializedConversation);
+            }
+        });
+
+        it('delegates to ACSConversation.registerOnStreamingMessage and records scenario telemetry on success', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            await chatSDK.initialize();
+
+            chatSDK.OCClient.sessionInit = jest.fn();
+            chatSDK.OCClient.createConversation = jest.fn();
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+            await chatSDK.startChat();
+
+            const registerSpy = jest.fn().mockResolvedValue(undefined);
+            chatSDK.conversation = {
+                registerOnStreamingMessage: registerSpy,
+            };
+
+            const startScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'startScenario');
+            const completeScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'completeScenario');
+
+            const handler = jest.fn();
+            await chatSDK.onStreamingMessage(handler);
+
+            expect(registerSpy).toHaveBeenCalledWith(handler, undefined);
+            expect(startScenarioSpy).toHaveBeenCalledWith('OnStreamingMessage', expect.any(Object));
+            expect(completeScenarioSpy).toHaveBeenCalledWith('OnStreamingMessage', expect.any(Object));
+        });
+
+        it('wraps generic ACSConversation errors into ChatSDKError with StreamingSubscriptionFailure', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            await chatSDK.initialize();
+
+            chatSDK.OCClient.sessionInit = jest.fn();
+            chatSDK.OCClient.createConversation = jest.fn();
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+            await chatSDK.startChat();
+
+            chatSDK.conversation = {
+                registerOnStreamingMessage: jest.fn().mockRejectedValue(new Error('RegisterOnStreamingMessage')),
+            };
+
+            try {
+                await chatSDK.onStreamingMessage(jest.fn());
+                fail('Expected onStreamingMessage to throw');
+            } catch (e: any) {
+                expect(e).toBeInstanceOf(ChatSDKError);
+                expect(e.message).toBe(ChatSDKErrorName.StreamingSubscriptionFailure);
+            }
+        });
+    });
 })

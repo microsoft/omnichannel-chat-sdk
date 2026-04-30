@@ -49,6 +49,25 @@ enum TelemetryEvent {
     GetPersistentChatHistory = "GetPersistentChatHistory",
     WaitForConversationalSurvey = "WaitForConversationalSurvey",
     MidConversationAuth = "MidConversationAuth",
+
+    // ACS streaming
+    OnStreamingMessage = "OnStreamingMessage",
+    StreamingMessageReceived = "StreamingMessageReceived",
+    StreamingMessageStarted = "StreamingMessageStarted",
+    StreamingMessageEnded = "StreamingMessageEnded",
+    StreamingEndedExpired = "StreamingEndedExpired",
+    StreamingEndedCanceled = "StreamingEndedCanceled",
+    StreamingDisconnect = "StreamingDisconnect",
+    StreamingHandlerThrew = "StreamingHandlerThrew",
+    StreamingHandlerAsyncRejected = "StreamingHandlerAsyncRejected",
+    StreamingMetadataMissingType = "StreamingMetadataMissingType",
+    StreamingFinalMissingReason = "StreamingFinalMissingReason",
+    StreamingChunkNoContent = "StreamingChunkNoContent",
+    StreamingDuplicateFinal = "StreamingDuplicateFinal",
+    StreamingChunkAfterFinal = "StreamingChunkAfterFinal",
+    StreamingCounterEvicted = "StreamingCounterEvicted",
+    StreamingSubscriptionFailed = "StreamingSubscriptionFailed",
+    StreamingPolicyViolation = "StreamingPolicyViolation",
 }
 
 export default TelemetryEvent;
