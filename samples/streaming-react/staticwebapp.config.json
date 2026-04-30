@@ -1,0 +1,19 @@
+{
+    "$schema": "https://json.schemastore.org/staticwebapp.config.json",
+    "navigationFallback": {
+        "rewrite": "/index.html",
+        "exclude": ["/static/*", "/*.{js,css,map}"]
+    },
+    "globalHeaders": {
+        "Cache-Control": "no-cache, no-store, must-revalidate"
+    },
+    "mimeTypes": {
+        ".json": "application/json",
+        ".map": "application/json"
+    },
+    "responseOverrides": {
+        "404": {
+            "rewrite": "/index.html"
+        }
+    }
+}
