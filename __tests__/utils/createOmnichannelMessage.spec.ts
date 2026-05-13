@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import LiveChatVersion from '../../src/core/LiveChatVersion';
-import { MessageType } from '../../src/core/messaging/OmnichannelMessage';
+import { MessageType, Role } from '../../src/core/messaging/OmnichannelMessage';
 import PersonType from '@microsoft/omnichannel-ic3core/lib/model/PersonType';
 import createOmnichannelMessage from '../../src/utils/createOmnichannelMessage';
 
@@ -299,5 +299,48 @@ describe('createOmnichannelMessage', () => {
         if (omnichannelMessage.properties) {
             expect(omnichannelMessage.properties.originalMessageId).toEqual(sampleMessage.metadata.OriginalMessageId);
         }
+
+    it('createOmnichannelMessage with LiveChatV1 agent message should include role', () => {
+        const sampleMessage = {
+            clientmessageid: 'client-id-1',
+            messageType: MessageType.UserMessage,
+            properties: {
+                tags: ['public']
+            },
+            tags: [],
+            content: 'agent content',
+            sender: {
+                id: 'agent-sender-id',
+                displayName: 'Agent'
+            }
+        };
+
+        const omnichannelMessage = createOmnichannelMessage(sampleMessage as any, {
+            liveChatVersion: LiveChatVersion.V1
+        });
+
+        expect(omnichannelMessage.role).toBe(Role.Agent);
+    });
+
+    it('createOmnichannelMessage with LiveChatV1 system message should include role', () => {
+        const sampleMessage = {
+            clientmessageid: 'client-id-2',
+            messageType: MessageType.UserMessage,
+            properties: {
+                tags: ['system']
+            },
+            tags: [],
+            content: 'system content',
+            sender: {
+                id: 'system-sender-id',
+                displayName: 'System'
+            }
+        };
+
+        const omnichannelMessage = createOmnichannelMessage(sampleMessage as any, {
+            liveChatVersion: LiveChatVersion.V1
+        });
+
+        expect(omnichannelMessage.role).toBe(Role.System);
     });
 });
