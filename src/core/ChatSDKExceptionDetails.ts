@@ -5,7 +5,6 @@
  *  @param message {string} User friendly message. Usually used to be displayed to the users.
  *  @param errorObject {string} Error object in string format. It's useful for investigation.
  *  @param clientElapsedMs {number} [OPTIONAL] Elapsed time in milliseconds from client's perspective for the operation
- *  @param configuredTimeoutMs {number} [OPTIONAL] Configured timeout value in milliseconds for the operation
  *  @param cancellationReason {string} [OPTIONAL] Reason for cancellation (timeout, user, network, etc.)
  *  @param online {boolean} [OPTIONAL] Browser's online status at the time of failure (navigator.onLine)
  */
@@ -15,7 +14,6 @@ interface ChatSDKExceptionDetails {
     errorObject?: string;
     // Tier 1 telemetry fields (ADO 6373382)
     clientElapsedMs?: number;
-    configuredTimeoutMs?: number;
     cancellationReason?: string;
     online?: boolean;
 }

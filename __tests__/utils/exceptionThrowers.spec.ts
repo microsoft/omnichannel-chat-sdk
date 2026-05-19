@@ -92,7 +92,6 @@ describe('exceptionThrowers', () => {
         const telemetryEvent: any = "TestEvent";
         const diagnosticData = {
             clientElapsedMs: 1234,
-            configuredTimeoutMs: 5000,
             cancellationReason: 'timeout',
             online: false
         };
@@ -100,7 +99,6 @@ describe('exceptionThrowers', () => {
         const expectedExceptionDetails = {
             response: chatSDKError,
             clientElapsedMs: 1234,
-            configuredTimeoutMs: 5000,
             cancellationReason: 'timeout',
             online: false
         };
@@ -138,7 +136,6 @@ describe('exceptionThrowers', () => {
             expect(actualExceptionDetails.response).toBe(expectedExceptionDetails.response);
             expect(actualExceptionDetails.clientElapsedMs).toBe(expectedExceptionDetails.clientElapsedMs);
             expect(actualExceptionDetails.online).toBe(expectedExceptionDetails.online);
-            expect(actualExceptionDetails.configuredTimeoutMs).toBeUndefined();
             expect(actualExceptionDetails.cancellationReason).toBeUndefined();
         }
     });

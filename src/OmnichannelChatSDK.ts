@@ -168,9 +168,6 @@ class OmnichannelChatSDK {
     private detailedDebugEnabled = false;
     private regexCompiledForDataMasking: RegExp[] = [];
     private isEndingChat = false;
-    // ADO 6373382: Diagnostic fields for getChatConfig telemetry
-    private _lastGetChatConfigStartTime?: number;
-    private _lastGetChatConfigElapsed?: number;
 
     constructor(omnichannelConfig: OmnichannelConfig, chatSDKConfig: ChatSDKConfig = defaultChatSDKConfig) {
         this.debug = false;
@@ -472,7 +469,10 @@ class OmnichannelChatSDK {
             const { getLiveChatConfigOptionalParams } = optionalParams;
             await this.getChatConfig(getLiveChatConfigOptionalParams || {});
         } catch (e) {
-            const diagnosticData = this.createGetChatConfigDiagnosticData(e);
+            // Extract elapsed time attached by getChatConfig
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const clientElapsedMs = (e as any).__chatConfigElapsedMs;
+            const diagnosticData = this.createGetChatConfigDiagnosticData(e, clientElapsedMs);
             exceptionThrowers.throwChatConfigRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.InitializeChatSDK, diagnosticData);
         }
 
@@ -548,7 +548,10 @@ class OmnichannelChatSDK {
             await this.getChatConfig(getLiveChatConfigOptionalParams || {});
             // once we have the config, we can check if we need to load AMS
         } catch (e) {
-            const diagnosticData = this.createGetChatConfigDiagnosticData(e);
+            // Extract elapsed time attached by getChatConfig
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const clientElapsedMs = (e as any).__chatConfigElapsedMs;
+            const diagnosticData = this.createGetChatConfigDiagnosticData(e, clientElapsedMs);
             exceptionThrowers.throwChatConfigRetrievalFailure(e, this.scenarioMarker, TelemetryEvent.InitializeLoadChatConfig, diagnosticData);
         }
 
@@ -2940,9 +2943,10 @@ class OmnichannelChatSDK {
     /**
      * Determines the cancellation reason and creates diagnostic data for getChatConfig errors
      * @param e The error object
+     * @param clientElapsedMs Optional elapsed time in milliseconds from client's perspective
      * @returns Diagnostic data with clientElapsedMs, online status, and cancellation reason
      */
-    private createGetChatConfigDiagnosticData(e: unknown): { clientElapsedMs?: number; online?: boolean; cancellationReason: string } {
+    private createGetChatConfigDiagnosticData(e: unknown, clientElapsedMs?: number): { clientElapsedMs?: number; online?: boolean; cancellationReason: string } {
         const online = typeof navigator !== 'undefined' && 'onLine' in navigator ? navigator.onLine : undefined;
 
         // Type guard for error objects with common properties
@@ -2974,7 +2978,7 @@ class OmnichannelChatSDK {
         }
 
         return {
-            clientElapsedMs: this._lastGetChatConfigElapsed,
+            clientElapsedMs,
             online,
             cancellationReason
         };
@@ -2985,7 +2989,7 @@ class OmnichannelChatSDK {
         const bypassCache = sendCacheHeaders === true;
 
         let liveChatConfig;
-        this._lastGetChatConfigStartTime = performance.now();
+        const startTime = typeof performance !== 'undefined' ? performance.now() : undefined;
 
         try {
 
@@ -2998,9 +3002,15 @@ class OmnichannelChatSDK {
             return this.liveChatConfig;
 
         } catch (error) {
-            this._lastGetChatConfigElapsed = this._lastGetChatConfigStartTime
-                ? Math.round(performance.now() - this._lastGetChatConfigStartTime)
+            // Calculate elapsed time locally to avoid concurrency issues
+            const clientElapsedMs = startTime !== undefined
+                ? Math.round(performance.now() - startTime)
                 : undefined;
+
+            // Attach timing info to error object for outer catch blocks to use
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (error as any).__chatConfigElapsedMs = clientElapsedMs;
+
             // Fallback on orgUrl which got converted to Core Services orgUrl
             if (isCoreServicesOrgUrlDNSError(error, this.coreServicesOrgUrl, this.dynamicsLocationCode)) {
                 this.omnichannelConfig.orgUrl = this.unqServicesOrgUrl as string;
