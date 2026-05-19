@@ -26,6 +26,25 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
         omnichannelMessage.deliveryMode = undefined; // Backward compatibility
         omnichannelMessage.properties = {}; // Backward compatibility
 
+        // Propagate the ACS message type so receivers (LiveChatWidget,
+        // chat-widget) can honor html-typed agent messages (e.g. from the
+        // D365 Edge agent desktop) instead of rendering the HTML body as
+        // plain text. We read via a narrow cast to avoid widening the
+        // existing `as any` above.
+        //
+        // The two V2 sources use different spellings for the same idea:
+        //   - WebSocket signaling event (ChatMessageReceivedEvent /
+        //     ChatMessageEditedEvent) — 'Text' / 'RichText/Html'
+        //   - REST rehydrate (ChatMessage from ChatThreadClient.listMessages)
+        //     — 'text' / 'html'
+        // Normalize to lowercase 'text' / 'html' so consumers see a single
+        // contract regardless of which path delivered the message.
+        const incomingType = (message as { type?: string }).type;
+        omnichannelMessage.contentType =
+            typeof incomingType === 'string'
+                ? (incomingType.toLowerCase() === 'richtext/html' ? 'html' : incomingType.toLowerCase())
+                : '';
+
         omnichannelMessage.content = '';
         omnichannelMessage.properties.tags = metadata && metadata.tags ? metadata.tags : [];
         omnichannelMessage.tags = metadata && metadata.tags ? metadata.tags.replace(/\"/g, "").split(",").filter((tag: string) => tag.length > 0) : []; // eslint-disable-line no-useless-escape
