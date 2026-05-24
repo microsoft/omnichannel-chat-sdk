@@ -319,37 +319,37 @@ describe('exceptionThrowers', () => {
             }
         });
 
-        it('should detect server_error_5xx cancellation reasons', () => {
+        it('should detect server_error cancellation reason (5xx category)', () => {
             const scenarioMarker: any = { failScenario: jest.fn() };
             const telemetryEvent: any = "TestEvent";
             const diagnosticData = {
                 clientElapsedMs: 1234,
                 online: true,
-                cancellationReason: 'server_error_503'
+                cancellationReason: 'server_error'
             };
 
             try {
                 exceptionThrowers.throwChatConfigRetrievalFailure(new Error('Service Unavailable'), scenarioMarker, telemetryEvent, diagnosticData);
             } catch (e : any) {
                 const actualExceptionDetails = JSON.parse(scenarioMarker.failScenario.mock.calls[0][1].ExceptionDetails);
-                expect(actualExceptionDetails.cancellationReason).toBe('server_error_503');
+                expect(actualExceptionDetails.cancellationReason).toBe('server_error');
             }
         });
 
-        it('should detect client_error_4xx cancellation reasons', () => {
+        it('should detect client_error cancellation reason (4xx category)', () => {
             const scenarioMarker: any = { failScenario: jest.fn() };
             const telemetryEvent: any = "TestEvent";
             const diagnosticData = {
                 clientElapsedMs: 456,
                 online: true,
-                cancellationReason: 'client_error_404'
+                cancellationReason: 'client_error'
             };
 
             try {
                 exceptionThrowers.throwChatConfigRetrievalFailure(new Error('Not Found'), scenarioMarker, telemetryEvent, diagnosticData);
             } catch (e : any) {
                 const actualExceptionDetails = JSON.parse(scenarioMarker.failScenario.mock.calls[0][1].ExceptionDetails);
-                expect(actualExceptionDetails.cancellationReason).toBe('client_error_404');
+                expect(actualExceptionDetails.cancellationReason).toBe('client_error');
             }
         });
 

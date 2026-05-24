@@ -12,6 +12,7 @@ import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/ch
 import { createCoreServicesOrgUrl, getCoreServicesGeoName, isCoreServicesOrgUrl, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
 import { defaultLocaleId, getLocaleStringFromId } from "./utils/locale";
 import exceptionThrowers, { throwAMSLoadFailure } from "./utils/exceptionThrowers";
+import { classifyNetworkError } from "./utils/errorClassifier";
 import { getRuntimeId, isClientIdNotFoundErrorMessage, isCustomerMessage } from "./utils/utilities";
 import { loadScript, removeElementById, sleep } from "./utils/WebUtils";
 import { retrieveRegionBasedUrl, shouldUseFramedMode } from "./utils/AMSClientUtils";
@@ -2941,41 +2942,14 @@ class OmnichannelChatSDK {
     }
 
     /**
-     * Determines the cancellation reason and creates diagnostic data for getChatConfig errors
+     * Creates diagnostic data for getChatConfig errors using the error classifier
      * @param e The error object
      * @param clientElapsedMs Optional elapsed time in milliseconds from client's perspective
      * @returns Diagnostic data with clientElapsedMs, online status, and cancellation reason
      */
     private createGetChatConfigDiagnosticData(e: unknown, clientElapsedMs?: number): { clientElapsedMs?: number; online?: boolean; cancellationReason: string } {
         const online = typeof navigator !== 'undefined' && 'onLine' in navigator ? navigator.onLine : undefined;
-
-        // Type guard for error objects with common properties
-        const error = e as { code?: string; message?: string; response?: { status?: number } };
-        const errorCode = error.code;
-        const errorMessage = error.message || '';
-        const httpStatus = error.response?.status;
-
-        // Determine cancellation reason with enhanced logic
-        let cancellationReason = 'unknown';
-        if (errorCode === 'ECONNABORTED') {
-            cancellationReason = 'timeout';
-        } else if (errorCode === 'ERR_CANCELED' || errorCode === 'ECONNRESET') {
-            cancellationReason = 'request_cancelled';
-        } else if (online === false) {
-            cancellationReason = 'browser_offline';
-        } else if (errorCode === 'ENOTFOUND' || errorMessage.includes('getaddrinfo')) {
-            cancellationReason = 'dns_lookup_failed';
-        } else if (errorCode === 'ETIMEDOUT') {
-            cancellationReason = 'connection_timeout';
-        } else if (errorCode === 'ECONNREFUSED') {
-            cancellationReason = 'connection_refused';
-        } else if (httpStatus === 0 && errorMessage.includes('Network Error')) {
-            cancellationReason = 'network_error_no_response';
-        } else if (httpStatus && httpStatus >= 500) {
-            cancellationReason = `server_error_${httpStatus}`;
-        } else if (httpStatus && httpStatus >= 400) {
-            cancellationReason = `client_error_${httpStatus}`;
-        }
+        const cancellationReason = classifyNetworkError(e, online);
 
         return {
             clientElapsedMs,
