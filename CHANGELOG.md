@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Throws `ChatSDKError` consistently on all failure paths (token resolution, empty token, API call, token refresh)
 
 ### Changed
+- Pinned `@microsoft/botframework-webchat-adapter-azure-communication-chat` to exact version `0.0.1-beta.8` (removed caret). The previous `^0.0.1-beta.6` range resolved (per semver §11) to the rogue prerelease `0.0.1-beta-1`, which ships an older adapter build whose 15s polling watchdog caused a ~15s delay before the first bot reply rendered in LCW. Pinning forces npm to install the intended `beta.8` build, which contains the fast-poll fix (`iteration <= 45 ? 1000 : delaytm`).
 - Updated botframework-webchat-adapter-azure-communication-chat to "^0.0.1-beta.6"
 
 ### Added
