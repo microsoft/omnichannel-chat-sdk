@@ -1733,10 +1733,25 @@ class OmnichannelChatSDK {
                     console.log("[OmnichannelChatSDK][onNewMessage] New message received", event);
                     console.log("[OmnichannelChatSDK][onNewMessage] isChatMessageEditedEvent=>", isChatMessageEditedEvent);
 
-                    const omnichannelMessage = createOmnichannelMessage(event, {
-                        liveChatVersion: this.liveChatVersion,
-                        debug: (this.detailedDebugEnabled ? this.debugACS : this.debug),
-                    });
+                    // Guard message transformation: createOmnichannelMessage() can throw
+                    // (e.g. unexpected event shape). Without this, the throw became an
+                    // unhandled rejection in the WebSocket callback, breaking the callback
+                    // chain so the customer's onNewMessage never fired. Log telemetry and
+                    // skip the bad message instead of letting it break reception.
+                    let omnichannelMessage;
+                    try {
+                        omnichannelMessage = createOmnichannelMessage(event, {
+                            liveChatVersion: this.liveChatVersion,
+                            debug: (this.detailedDebugEnabled ? this.debugACS : this.debug),
+                        });
+                    } catch (error) {
+                        this.scenarioMarker.failScenario(TelemetryEvent.OnNewMessage, {
+                            RequestId: this.requestId,
+                            ChatId: this.chatToken.chatId as string,
+                            ExceptionDetails: JSON.stringify({ errorObject: `${error}` })
+                        });
+                        return;
+                    }
 
                     // send callback for new messages or edited existent messages
                     if (!postedMessages.has(id) || isChatMessageEditedEvent) {

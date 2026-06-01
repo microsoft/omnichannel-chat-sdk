@@ -3782,6 +3782,53 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(1);
         });
 
+        it('ChatSDK.onNewMessage() WebSocket callback should log failScenario and not break the chain when createOmnichannelMessage throws', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn()
+            }
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            }
+
+            let registeredCallback: any;
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                registerOnNewMessage: jest.fn((cb: any) => { registeredCallback = cb; })
+            }));
+
+            await chatSDK.startChat();
+
+            // Force the V2 transformation path; an event without a `sender` makes
+            // createOmnichannelMessage throw (the documented failure for this bug).
+            chatSDK.liveChatVersion = LiveChatVersion.V2;
+            jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+            const customerCallback = jest.fn();
+            await chatSDK.onNewMessage(customerCallback);
+
+            expect(registeredCallback).toBeDefined();
+
+            const badEvent = { id: 'id', content: 'content', metadata: { tags: 'tags' } };
+
+            // The wrapper must swallow the transformation error (no throw out of the callback)
+            expect(() => registeredCallback(badEvent)).not.toThrow();
+
+            // Telemetry is recorded and the customer callback is not invoked with a bad message
+            expect(chatSDK.scenarioMarker.failScenario).toHaveBeenCalled();
+            const failCall = chatSDK.scenarioMarker.failScenario.mock.calls.find((c: any) => c[1] && c[1].ExceptionDetails);
+            expect(failCall).toBeDefined();
+            expect(customerCallback).not.toHaveBeenCalled();
+        });
+
         it('ChatSDK.onNewMessage() with disablePolling flag should pass it to conversation.registerOnNewMessage()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
