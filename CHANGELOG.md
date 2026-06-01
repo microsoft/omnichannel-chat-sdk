@@ -39,6 +39,7 @@ All notable changes to this project will be documented in this file.
 - Publish a GitHub Release with the packed `.tgz` and auto-generated release notes whenever a `v*` tag is pushed (runs after the npm publish step in `npm-release.yml`)
 
 ### Fixed
+- Fix type-assumption exception in `createOmnichannelMessage` when `metadata.tags` is not a string. Previously `.replace()` was called unconditionally, throwing when `tags` was an array, null, or another type (e.g. backend/API-version mismatch or custom metadata). Now only strings are parsed via `.replace()/.split()`, arrays are filtered to their string entries, and any other type falls back to an empty list so message transformation never throws
 - Fix V2 `onNewMessage` and `getMessages` losing the ACS message-type field. `createOmnichannelMessage` now propagates it as `contentType` on the returned `OmnichannelMessage` so receivers can render html-typed agent messages (e.g. from D365 Edge) instead of treating the raw HTML body as plain text. Field already existed on the interface; previously left empty. The WebSocket signaling event (`'Text'` / `'RichText/Html'`) and the REST rehydrate path (`'text'` / `'html'`) are normalized to a single lowercase `'text'` / `'html'` contract so consumers don't have to handle both spellings.
 - Fix `sendTypingEvent` failing silently for authenticated and persistent chat when `OCClient.sendTypingIndicator()` returns a `404`; changed to fire-and-forget so `ACSConversation.sendTyping()` always executes regardless of the OC indicator result
 

@@ -46,8 +46,21 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
                 : '';
 
         omnichannelMessage.content = '';
-        omnichannelMessage.properties.tags = metadata && metadata.tags ? metadata.tags : [];
-        omnichannelMessage.tags = metadata && metadata.tags ? metadata.tags.replace(/\"/g, "").split(",").filter((tag: string) => tag.length > 0) : []; // eslint-disable-line no-useless-escape
+        // `metadata.tags` is normally a comma-separated string, but the backend
+        // (or an API-version mismatch / custom metadata) can deliver it as an
+        // array or some other type. Only call string methods when it is actually
+        // a string; gracefully handle arrays and fall back to an empty list
+        // otherwise so message transformation never throws. `properties.tags` is
+        // also consumed via `.includes()` downstream (getMessageRole), so only
+        // keep string/array values there and default anything else to [].
+        omnichannelMessage.properties.tags = metadata && metadata.tags && (typeof metadata.tags === "string" || Array.isArray(metadata.tags)) ? metadata.tags : [];
+        if (metadata && typeof metadata.tags === "string") {
+            omnichannelMessage.tags = metadata.tags.replace(/\"/g, "").split(",").filter((tag: string) => tag.length > 0); // eslint-disable-line no-useless-escape
+        } else if (metadata && Array.isArray(metadata.tags)) {
+            omnichannelMessage.tags = metadata.tags.filter((tag: unknown): tag is string => typeof tag === "string" && tag.length > 0);
+        } else {
+            omnichannelMessage.tags = [];
+        }
         omnichannelMessage.timestamp = editedOn ?? createdOn;
         omnichannelMessage.messageType = MessageType.UserMessage; // Backward compatibility
         omnichannelMessage.sender = {
