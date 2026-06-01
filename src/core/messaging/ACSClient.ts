@@ -32,6 +32,7 @@ enum ACSClientEvent {
     SendReadReceipt = 'SendReadReceipt',
     StartPolling = 'StartPolling',
     StopPolling = 'StopPolling',
+    MessageProcessingError = 'MessageProcessingError',
     Disconnect = 'Disconnect'
 }
 
@@ -213,8 +214,13 @@ export class ACSConversation {
                                     onNewMessageCallback(message);
                                     postedMessageIds.add(id);
                                 }
-                            } catch {
-                                console.warn('[ACSClient][registerOnNewMessage] Error occurred while processing messages');
+                            } catch (error) {
+                                // Surface message-processing failures to telemetry instead of
+                                // swallowing them with a console warning. Keep iterating so a
+                                // single bad message does not stop the rest of the batch.
+                                this.logger?.failScenario(ACSClientEvent.MessageProcessingError, {
+                                    ExceptionDetails: JSON.stringify({ errorObject: `${error}` })
+                                });
                             }
 
                         }

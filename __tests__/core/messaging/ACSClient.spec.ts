@@ -245,6 +245,67 @@ describe('ACSClient', () => {
         expect(conversation.getMessages).toHaveBeenCalledTimes(0);
     });
 
+    it('ACSClient.conversation.registerOnNewMessage() should log failScenario telemetry when message processing throws and keep polling', async () => {
+        const client: any = new ACSClient();
+        const config = {
+            token: 'token',
+            environmentUrl: 'url'
+        }
+
+        await client.initialize(config);
+
+        const chatThreadClient: any = {};
+        chatThreadClient.listParticipants = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+        chatThreadClient.listMessages = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+
+        client.chatClient = {};
+        client.chatClient.getChatThreadClient = jest.fn(() => chatThreadClient);
+        client.chatClient.startRealtimeNotifications = jest.fn();
+        client.chatClient.on = jest.fn();
+
+        const conversation: any = await client.joinConversation({
+            id: 'id',
+            threadId: 'threadId',
+            pollingInterval: 1000,
+        });
+
+        // Inject a mock logger so we can assert telemetry is recorded
+        const logger = {
+            startScenario: jest.fn(),
+            completeScenario: jest.fn(),
+            failScenario: jest.fn(),
+            recordIndividualEvent: jest.fn()
+        };
+        conversation.logger = logger;
+
+        conversation.keepPolling = true;
+        jest.spyOn(conversation, 'getMessages').mockResolvedValue([{id: 'id', sender: {displayName: 'name'}}]);
+
+        (global as any).setTimeout = jest.fn();
+
+        // Customer callback throws while processing the message
+        const throwingCallback = jest.fn(() => { throw new Error('transformation failed'); });
+
+        // Should not throw out of registerOnNewMessage despite the callback throwing
+        await expect(conversation.registerOnNewMessage(throwingCallback)).resolves.toBeUndefined();
+
+        expect(throwingCallback).toHaveBeenCalledTimes(1);
+        expect(logger.failScenario).toHaveBeenCalledTimes(1);
+        expect(logger.failScenario.mock.calls[0][0]).toEqual('MessageProcessingError');
+        const exceptionDetails = JSON.parse(logger.failScenario.mock.calls[0][1].ExceptionDetails);
+        expect(exceptionDetails.errorObject).toContain('transformation failed');
+    });
+
     it('ACSClient.conversation.registerOnThreadUpdate() should register to "participantsRemoved" event', async () => {
         const client: any = new ACSClient();
         const config = {
