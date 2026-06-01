@@ -5,9 +5,9 @@
 ![Release CI](https://github.com/microsoft/omnichannel-chat-sdk/workflows/Release%20CI/badge.svg)
 ![npm](https://img.shields.io/npm/dm/@microsoft/omnichannel-chat-sdk)
 
-> ❗ We recommend using official release versions in production as listed [here](#releases). Support will be provided only on official versions.
-
-> 📢 Try out our new React component library [omnichannel-chat-widget](https://github.com/microsoft/omnichannel-chat-widget) with Chat SDK
+> [!IMPORTANT]
+> * We recommend using official release versions in production as listed [here](#releases). Support will be provided only on official versions.
+> * Microsoft provides this SDK to ensure a scaleable and secure use of our platform. Using the APIs from this repository outside of the SDK is an off-label of our product -- you may experience breaking changes, and support will not be provided for any issues.
 
 Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel Services.
 
@@ -106,9 +106,9 @@ Omnichannel offers a live chat widget (LCW) by default. You can use the Chat SDK
 
 New releases are published on a regular basis to ensure the product quality.
 
-for a detailed tracking of the releases, please refer to the [Changelog document](https://github.com/microsoft/omnichannel-chat-sdk/blob/main/CHANGELOG.md)
+For a detailed tracking of the releases, please refer to the [Changelog document](https://github.com/microsoft/omnichannel-chat-sdk/blob/main/CHANGELOG.md)
 
-_**Important Note:**_ Versions below 1.11.0 will not be supported after November 1st, 2025. Please update to recent versions to ensure you have the latest features and bug fixes.
+_**Important Note:**_ Versions below 1.11.0 are no longer supported after November 1st, 2025. Please update to recent versions to ensure you have the latest features and bug fixes.
 
 
 | Version | Docs | Release Date | End of Support | Deprecated |
