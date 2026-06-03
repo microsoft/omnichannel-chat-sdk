@@ -7,7 +7,7 @@
 
 > [!IMPORTANT]
 > * We recommend using official release versions in production as listed [here](#releases). Support will be provided only on official versions.
-> * Microsoft provides this SDK to ensure a scaleable and secure use of our platform. Using the APIs from this repository outside of the SDK is an off-label of our product -- you may experience breaking changes, and support will not be provided for any issues.
+> * Microsoft provides this SDK to ensure a scaleable and secure use of our platform. Do not directly access the APIs used in this repository — you may experience breaking changes, and we will not be able to provide support for any issues.
 
 Headless Chat SDK to build your own chat widget against Dynamics 365 Omnichannel Services.
 
