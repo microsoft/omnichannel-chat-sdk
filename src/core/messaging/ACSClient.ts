@@ -215,12 +215,29 @@ export class ACSConversation {
                                     postedMessageIds.add(id);
                                 }
                             } catch (error) {
-                                // Surface message-processing failures to telemetry instead of
-                                // swallowing them with a console warning. Keep iterating so a
-                                // single bad message does not stop the rest of the batch.
+                                // Surface message-processing failures instead of
+                                // swallowing them. Keep iterating so a single bad
+                                // message does not stop the rest of the batch.
+                                //
+                                // Telemetry (centralized monitoring): record only
+                                // bounded, non-content error metadata — the error
+                                // type and message. We deliberately avoid
+                                // serializing the full error object, stack, or any
+                                // service response so customer/conversation data
+                                // that an upstream error might embed does not leak
+                                // into centralized telemetry.
+                                const errorName = (error as Error)?.name ?? 'Error';
+                                const errorMessage = (error as Error)?.message ?? `${error}`;
                                 this.logger?.failScenario(ACSClientEvent.MessageProcessingError, {
-                                    ExceptionDetails: JSON.stringify({ errorObject: `${error}` })
+                                    ExceptionDetails: JSON.stringify({ errorName, errorObject: errorMessage })
                                 });
+
+                                // Dev-facing log for local debugging only. Gated to
+                                // non-production builds so it never adds noise (or
+                                // surfaces verbose error detail) in production.
+                                if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production') {
+                                    console.warn(`ACSClient/registerOnNewMessage: failed to process message: ${error}`);
+                                }
                             }
 
                         }

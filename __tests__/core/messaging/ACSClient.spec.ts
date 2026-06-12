@@ -296,14 +296,95 @@ describe('ACSClient', () => {
         // Customer callback throws while processing the message
         const throwingCallback = jest.fn(() => { throw new Error('transformation failed'); });
 
-        // Should not throw out of registerOnNewMessage despite the callback throwing
-        await expect(conversation.registerOnNewMessage(throwingCallback)).resolves.toBeUndefined();
+        // Capture dev-facing console.warn (emitted only in non-production)
+        const originalNodeEnv = process.env.NODE_ENV;
+        process.env.NODE_ENV = 'development';
+        const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
 
-        expect(throwingCallback).toHaveBeenCalledTimes(1);
-        expect(logger.failScenario).toHaveBeenCalledTimes(1);
-        expect(logger.failScenario.mock.calls[0][0]).toEqual('MessageProcessingError');
-        const exceptionDetails = JSON.parse(logger.failScenario.mock.calls[0][1].ExceptionDetails);
-        expect(exceptionDetails.errorObject).toContain('transformation failed');
+        try {
+            // Should not throw out of registerOnNewMessage despite the callback throwing
+            await expect(conversation.registerOnNewMessage(throwingCallback)).resolves.toBeUndefined();
+
+            expect(throwingCallback).toHaveBeenCalledTimes(1);
+            expect(logger.failScenario).toHaveBeenCalledTimes(1);
+            expect(logger.failScenario.mock.calls[0][0]).toEqual('MessageProcessingError');
+            const exceptionDetails = JSON.parse(logger.failScenario.mock.calls[0][1].ExceptionDetails);
+            // Telemetry carries only bounded error metadata (type + message)
+            expect(exceptionDetails.errorName).toEqual('Error');
+            expect(exceptionDetails.errorObject).toContain('transformation failed');
+            // Dev-facing console.warn fires in non-production builds
+            expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('transformation failed'));
+        } finally {
+            consoleWarnSpy.mockRestore();
+            process.env.NODE_ENV = originalNodeEnv;
+        }
+    });
+
+    it('ACSClient.conversation.registerOnNewMessage() should not emit a dev console.warn in production builds', async () => {
+        const client: any = new ACSClient();
+        const config = {
+            token: 'token',
+            environmentUrl: 'url'
+        }
+
+        await client.initialize(config);
+
+        const chatThreadClient: any = {};
+        chatThreadClient.listParticipants = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+        chatThreadClient.listMessages = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+
+        client.chatClient = {};
+        client.chatClient.getChatThreadClient = jest.fn(() => chatThreadClient);
+        client.chatClient.startRealtimeNotifications = jest.fn();
+        client.chatClient.on = jest.fn();
+
+        const conversation: any = await client.joinConversation({
+            id: 'id',
+            threadId: 'threadId',
+            pollingInterval: 1000,
+        });
+
+        const logger = {
+            startScenario: jest.fn(),
+            completeScenario: jest.fn(),
+            failScenario: jest.fn(),
+            recordIndividualEvent: jest.fn()
+        };
+        conversation.logger = logger;
+
+        conversation.keepPolling = true;
+        jest.spyOn(conversation, 'getMessages').mockResolvedValue([{id: 'id', sender: {displayName: 'name'}}]);
+
+        (global as any).setTimeout = jest.fn();
+
+        const throwingCallback = jest.fn(() => { throw new Error('transformation failed'); });
+
+        const originalNodeEnv = process.env.NODE_ENV;
+        process.env.NODE_ENV = 'production';
+        const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+        try {
+            await expect(conversation.registerOnNewMessage(throwingCallback)).resolves.toBeUndefined();
+
+            // Telemetry still recorded in production
+            expect(logger.failScenario).toHaveBeenCalledTimes(1);
+            expect(logger.failScenario.mock.calls[0][0]).toEqual('MessageProcessingError');
+            // No dev-facing console noise in production
+            expect(consoleWarnSpy).not.toHaveBeenCalled();
+        } finally {
+            consoleWarnSpy.mockRestore();
+            process.env.NODE_ENV = originalNodeEnv;
+        }
     });
 
     it('ACSClient.conversation.registerOnThreadUpdate() should register to "participantsRemoved" event', async () => {
