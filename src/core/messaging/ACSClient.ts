@@ -232,12 +232,12 @@ export class ACSConversation {
                                     ExceptionDetails: JSON.stringify({ errorName, errorObject: errorMessage })
                                 });
 
-                                // Dev-facing log for local debugging only. Gated to
-                                // non-production builds so it never adds noise (or
-                                // surfaces verbose error detail) in production.
-                                if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production') {
-                                    console.warn(`ACSClient/registerOnNewMessage: failed to process message: ${error}`);
-                                }
+                                // Always emit a console warning so consumers without
+                                // access to telemetry still know a message failed to
+                                // process. The message is intentionally static and
+                                // content-free to avoid leaking customer/conversation
+                                // data that an upstream error might embed.
+                                console.warn('[ACSClient][registerOnNewMessage] Error occurred while processing messages');
                             }
 
                         }
