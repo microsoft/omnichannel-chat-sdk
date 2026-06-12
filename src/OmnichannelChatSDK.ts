@@ -1736,8 +1736,14 @@ class OmnichannelChatSDK {
                     // Guard message transformation: createOmnichannelMessage() can throw
                     // (e.g. unexpected event shape). Without this, the throw became an
                     // unhandled rejection in the WebSocket callback, breaking the callback
-                    // chain so the customer's onNewMessage never fired. Log telemetry and
-                    // skip the bad message instead of letting it break reception.
+                    // chain so the customer's onNewMessage never fired. Record telemetry
+                    // and skip the bad message instead of letting it break reception.
+                    //
+                    // Use singleRecord (fire-and-forget) rather than failScenario: by the
+                    // time this callback fires for an incoming message, the OnNewMessage
+                    // scenario has already been completed (and removed from the telemetry
+                    // map) further below, so failScenario would short-circuit on its
+                    // "event has not started" guard and never emit.
                     let omnichannelMessage;
                     try {
                         omnichannelMessage = createOmnichannelMessage(event, {
@@ -1745,7 +1751,7 @@ class OmnichannelChatSDK {
                             debug: (this.detailedDebugEnabled ? this.debugACS : this.debug),
                         });
                     } catch (error) {
-                        this.scenarioMarker.failScenario(TelemetryEvent.OnNewMessage, {
+                        this.scenarioMarker.singleRecord(TelemetryEvent.OnNewMessage, {
                             RequestId: this.requestId,
                             ChatId: this.chatToken.chatId as string,
                             ExceptionDetails: JSON.stringify({ errorObject: `${error}` })

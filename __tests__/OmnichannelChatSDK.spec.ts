@@ -3810,6 +3810,10 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             // Force the V2 transformation path; an event without a `sender` makes
             // createOmnichannelMessage throw (the documented failure for this bug).
             chatSDK.liveChatVersion = LiveChatVersion.V2;
+            // Spy on singleRecord (fire-and-forget): failScenario can't be used here
+            // because the OnNewMessage scenario is already completed by the time the
+            // callback fires, so it would short-circuit on its "not started" guard.
+            jest.spyOn(chatSDK.scenarioMarker, 'singleRecord');
             jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
 
             const customerCallback = jest.fn();
@@ -3822,10 +3826,10 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             // The wrapper must swallow the transformation error (no throw out of the callback)
             expect(() => registeredCallback(badEvent)).not.toThrow();
 
-            // Telemetry is recorded and the customer callback is not invoked with a bad message
-            expect(chatSDK.scenarioMarker.failScenario).toHaveBeenCalled();
-            const failCall = chatSDK.scenarioMarker.failScenario.mock.calls.find((c: any) => c[1] && c[1].ExceptionDetails);
-            expect(failCall).toBeDefined();
+            // Telemetry is recorded via singleRecord (which always emits) and the
+            // customer callback is not invoked with a bad message
+            const singleRecordCall = chatSDK.scenarioMarker.singleRecord.mock.calls.find((c: any) => c[0] === 'OnNewMessage' && c[1] && c[1].ExceptionDetails);
+            expect(singleRecordCall).toBeDefined();
             expect(customerCallback).not.toHaveBeenCalled();
         });
 
