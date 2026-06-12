@@ -306,10 +306,8 @@ describe('ACSClient', () => {
             expect(throwingCallback).toHaveBeenCalledTimes(1);
             expect(logger.failScenario).toHaveBeenCalledTimes(1);
             expect(logger.failScenario.mock.calls[0][0]).toEqual('MessageProcessingError');
-            const exceptionDetails = JSON.parse(logger.failScenario.mock.calls[0][1].ExceptionDetails);
-            // Telemetry carries only the safe error type — never the error message
-            expect(exceptionDetails.errorName).toEqual('Error');
-            expect(exceptionDetails.errorObject).toBeUndefined();
+            // Telemetry records the same static, type-only message as the console — never the error message
+            expect(logger.failScenario.mock.calls[0][1].ExceptionDetails).toEqual('[ACSClient][registerOnNewMessage] Error occurred while processing messages: Error');
             expect(logger.failScenario.mock.calls[0][1].ExceptionDetails).not.toContain('transformation failed');
             // console.warn always fires so consumers without telemetry still see it
             expect(consoleWarnSpy).toHaveBeenCalledWith('[ACSClient][registerOnNewMessage] Error occurred while processing messages: Error');
@@ -381,7 +379,7 @@ describe('ACSClient', () => {
             expect(logger.failScenario).toHaveBeenCalledTimes(1);
             // Telemetry records only the safe error type, not the message content
             const exceptionDetails = logger.failScenario.mock.calls[0][1].ExceptionDetails;
-            expect(JSON.parse(exceptionDetails).errorName).toEqual('TypeError');
+            expect(exceptionDetails).toEqual('[ACSClient][registerOnNewMessage] Error occurred while processing messages: TypeError');
             expect(exceptionDetails).not.toContain(secret);
             // console.warn surfaces the safe error type only — no content leaks
             expect(consoleWarnSpy).toHaveBeenCalledTimes(1);

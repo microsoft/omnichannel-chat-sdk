@@ -226,15 +226,17 @@ export class ACSConversation {
                                 // message content or identifiers), so we deliberately
                                 // exclude it from both telemetry and the console.
                                 const errorName = (error as Error)?.name ?? 'Error';
+                                const errorMessage = `[ACSClient][registerOnNewMessage] Error occurred while processing messages: ${errorName}`;
+
                                 this.logger?.failScenario(ACSClientEvent.MessageProcessingError, {
-                                    ExceptionDetails: JSON.stringify({ errorName })
+                                    ExceptionDetails: errorMessage
                                 });
 
                                 // Always emit a console warning so consumers without
                                 // access to telemetry still know a message failed to
                                 // process. The message is static apart from the safe
                                 // error type, so no error content can leak.
-                                console.warn(`[ACSClient][registerOnNewMessage] Error occurred while processing messages: ${errorName}`);
+                                console.warn(errorMessage);
                             }
 
                         }
