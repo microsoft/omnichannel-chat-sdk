@@ -219,25 +219,22 @@ export class ACSConversation {
                                 // swallowing them. Keep iterating so a single bad
                                 // message does not stop the rest of the batch.
                                 //
-                                // Telemetry (centralized monitoring): record only
-                                // bounded, non-content error metadata — the error
-                                // type and message. We deliberately avoid
-                                // serializing the full error object, stack, or any
-                                // service response so customer/conversation data
-                                // that an upstream error might embed does not leak
-                                // into centralized telemetry.
+                                // Record only the error type (error.name), never the
+                                // error message/object/stack or any service response.
+                                // error.message can embed customer/conversation data
+                                // (e.g. a consumer callback or the ACS SDK may include
+                                // message content or identifiers), so we deliberately
+                                // exclude it from both telemetry and the console.
                                 const errorName = (error as Error)?.name ?? 'Error';
-                                const errorMessage = (error as Error)?.message ?? `${error}`;
                                 this.logger?.failScenario(ACSClientEvent.MessageProcessingError, {
-                                    ExceptionDetails: JSON.stringify({ errorName, errorObject: errorMessage })
+                                    ExceptionDetails: JSON.stringify({ errorName })
                                 });
 
                                 // Always emit a console warning so consumers without
                                 // access to telemetry still know a message failed to
-                                // process. The message is intentionally static and
-                                // content-free to avoid leaking customer/conversation
-                                // data that an upstream error might embed.
-                                console.warn('[ACSClient][registerOnNewMessage] Error occurred while processing messages');
+                                // process. The message is static apart from the safe
+                                // error type, so no error content can leak.
+                                console.warn(`[ACSClient][registerOnNewMessage] Error occurred while processing messages: ${errorName}`);
                             }
 
                         }

@@ -307,17 +307,18 @@ describe('ACSClient', () => {
             expect(logger.failScenario).toHaveBeenCalledTimes(1);
             expect(logger.failScenario.mock.calls[0][0]).toEqual('MessageProcessingError');
             const exceptionDetails = JSON.parse(logger.failScenario.mock.calls[0][1].ExceptionDetails);
-            // Telemetry carries only bounded error metadata (type + message)
+            // Telemetry carries only the safe error type — never the error message
             expect(exceptionDetails.errorName).toEqual('Error');
-            expect(exceptionDetails.errorObject).toContain('transformation failed');
+            expect(exceptionDetails.errorObject).toBeUndefined();
+            expect(logger.failScenario.mock.calls[0][1].ExceptionDetails).not.toContain('transformation failed');
             // console.warn always fires so consumers without telemetry still see it
-            expect(consoleWarnSpy).toHaveBeenCalledWith('[ACSClient][registerOnNewMessage] Error occurred while processing messages');
+            expect(consoleWarnSpy).toHaveBeenCalledWith('[ACSClient][registerOnNewMessage] Error occurred while processing messages: Error');
         } finally {
             consoleWarnSpy.mockRestore();
         }
     });
 
-    it('ACSClient.conversation.registerOnNewMessage() console.warn should not leak error content', async () => {
+    it('ACSClient.conversation.registerOnNewMessage() should not leak error content to telemetry or console', async () => {
         const client: any = new ACSClient();
         const config = {
             token: 'token',
@@ -364,20 +365,27 @@ describe('ACSClient', () => {
 
         (global as any).setTimeout = jest.fn();
 
-        // Error message embeds sensitive-looking content that must not reach the console
+        // Error carries a custom name plus sensitive-looking content in its message
         const secret = 'sensitive-customer-pii-12345';
-        const throwingCallback = jest.fn(() => { throw new Error(secret); });
+        const throwingCallback = jest.fn(() => {
+            const err = new Error(secret);
+            err.name = 'TypeError';
+            throw err;
+        });
 
         const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
 
         try {
             await expect(conversation.registerOnNewMessage(throwingCallback)).resolves.toBeUndefined();
 
-            // Telemetry still recorded
             expect(logger.failScenario).toHaveBeenCalledTimes(1);
-            // console.warn emits a static, content-free message — no error detail leaks
+            // Telemetry records only the safe error type, not the message content
+            const exceptionDetails = logger.failScenario.mock.calls[0][1].ExceptionDetails;
+            expect(JSON.parse(exceptionDetails).errorName).toEqual('TypeError');
+            expect(exceptionDetails).not.toContain(secret);
+            // console.warn surfaces the safe error type only — no content leaks
             expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
-            expect(consoleWarnSpy).toHaveBeenCalledWith('[ACSClient][registerOnNewMessage] Error occurred while processing messages');
+            expect(consoleWarnSpy).toHaveBeenCalledWith('[ACSClient][registerOnNewMessage] Error occurred while processing messages: TypeError');
             expect(consoleWarnSpy.mock.calls[0].join(' ')).not.toContain(secret);
         } finally {
             consoleWarnSpy.mockRestore();
