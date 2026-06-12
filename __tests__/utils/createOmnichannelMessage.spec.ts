@@ -461,4 +461,55 @@ describe('createOmnichannelMessage', () => {
             type: PersonType.Bot
         });
     });
+
+    it('createOmnichannelMessage with LiveChatV2 message should emit a debug warning when sender is missing and debug is enabled', () => {
+        const sampleMessage = {
+            id: 'id',
+            content: 'content',
+            metadata: {
+                tags: 'tags',
+            },
+            sender: null,
+            senderDisplayName: 'senderDisplayName',
+            createdOn: 'createdOn'
+        };
+
+        const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+        try {
+            createOmnichannelMessage(sampleMessage as any, {
+                liveChatVersion: LiveChatVersion.V2,
+                debug: true
+            });
+
+            expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('has no sender'));
+        } finally {
+            consoleWarnSpy.mockRestore();
+        }
+    });
+
+    it('createOmnichannelMessage with LiveChatV2 message should not emit a debug warning when sender is missing and debug is disabled', () => {
+        const sampleMessage = {
+            id: 'id',
+            content: 'content',
+            metadata: {
+                tags: 'tags',
+            },
+            sender: null,
+            senderDisplayName: 'senderDisplayName',
+            createdOn: 'createdOn'
+        };
+
+        const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+        try {
+            createOmnichannelMessage(sampleMessage as any, {
+                liveChatVersion: LiveChatVersion.V2
+            });
+
+            expect(consoleWarnSpy).not.toHaveBeenCalled();
+        } finally {
+            consoleWarnSpy.mockRestore();
+        }
+    });
 });
