@@ -408,4 +408,103 @@ describe('createOmnichannelMessage', () => {
             expect(omnichannelMessage.properties.originalMessageId).toEqual(sampleMessage.metadata.OriginalMessageId);
         }
     });
+
+    it('createOmnichannelMessage with LiveChatV2 message should not throw when metadata.tags is an array', () => {
+        const sampleMessage = {
+            id: 'id',
+            content: 'content',
+            metadata: {
+                tags: ['tagA', '', 'tagB']
+            },
+            sender: {
+                communicationUserId: 'id',
+                kind: "communicationUser"
+            },
+            senderDisplayName: 'senderDisplayName',
+            createdOn: 'createdOn'
+        };
+
+        let omnichannelMessage: any;
+        expect(() => {
+            omnichannelMessage = createOmnichannelMessage(sampleMessage as any, {
+                liveChatVersion: LiveChatVersion.V2
+            });
+        }).not.toThrow();
+
+        // empty strings are filtered out, non-empty string tags are preserved
+        expect(omnichannelMessage.tags).toEqual(['tagA', 'tagB']);
+    });
+
+    it('createOmnichannelMessage with LiveChatV2 message should not throw when metadata.tags is null', () => {
+        const sampleMessage = {
+            id: 'id',
+            content: 'content',
+            metadata: {
+                tags: null
+            },
+            sender: {
+                communicationUserId: 'id',
+                kind: "communicationUser"
+            },
+            senderDisplayName: 'senderDisplayName',
+            createdOn: 'createdOn'
+        };
+
+        let omnichannelMessage: any;
+        expect(() => {
+            omnichannelMessage = createOmnichannelMessage(sampleMessage as any, {
+                liveChatVersion: LiveChatVersion.V2
+            });
+        }).not.toThrow();
+
+        expect(omnichannelMessage.tags).toEqual([]);
+    });
+
+    it('createOmnichannelMessage with LiveChatV2 message should not throw when metadata.tags is a non-string primitive', () => {
+        const sampleMessage = {
+            id: 'id',
+            content: 'content',
+            metadata: {
+                tags: 12345
+            },
+            sender: {
+                communicationUserId: 'id',
+                kind: "communicationUser"
+            },
+            senderDisplayName: 'senderDisplayName',
+            createdOn: 'createdOn'
+        };
+
+        let omnichannelMessage: any;
+        expect(() => {
+            omnichannelMessage = createOmnichannelMessage(sampleMessage as any, {
+                liveChatVersion: LiveChatVersion.V2
+            });
+        }).not.toThrow();
+
+        expect(omnichannelMessage.tags).toEqual([]);
+    });
+
+    it('createOmnichannelMessage with LiveChatV2 message should still parse a comma-separated string of tags', () => {
+        const sampleMessage = {
+            id: 'id',
+            content: 'content',
+            metadata: {
+                tags: '"tagA","tagB"'
+            },
+            sender: {
+                communicationUserId: 'id',
+                kind: "communicationUser"
+            },
+            senderDisplayName: 'senderDisplayName',
+            createdOn: 'createdOn'
+        };
+
+        const omnichannelMessage = createOmnichannelMessage(sampleMessage as any, {
+            liveChatVersion: LiveChatVersion.V2
+        });
+
+        // quotes stripped, split on comma, empty entries filtered
+        expect(omnichannelMessage.tags).toEqual(['tagA', 'tagB']);
+    });
 });
