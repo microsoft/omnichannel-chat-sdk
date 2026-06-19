@@ -245,6 +245,151 @@ describe('ACSClient', () => {
         expect(conversation.getMessages).toHaveBeenCalledTimes(0);
     });
 
+    it('ACSClient.conversation.registerOnNewMessage() should log failScenario telemetry when message processing throws and keep polling', async () => {
+        const client: any = new ACSClient();
+        const config = {
+            token: 'token',
+            environmentUrl: 'url'
+        }
+
+        await client.initialize(config);
+
+        const chatThreadClient: any = {};
+        chatThreadClient.listParticipants = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+        chatThreadClient.listMessages = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+
+        client.chatClient = {};
+        client.chatClient.getChatThreadClient = jest.fn(() => chatThreadClient);
+        client.chatClient.startRealtimeNotifications = jest.fn();
+        client.chatClient.on = jest.fn();
+
+        const conversation: any = await client.joinConversation({
+            id: 'id',
+            threadId: 'threadId',
+            pollingInterval: 1000,
+        });
+
+        // Inject a mock logger so we can assert telemetry is recorded
+        const logger = {
+            startScenario: jest.fn(),
+            completeScenario: jest.fn(),
+            failScenario: jest.fn(),
+            recordIndividualEvent: jest.fn()
+        };
+        conversation.logger = logger;
+
+        conversation.keepPolling = true;
+        jest.spyOn(conversation, 'getMessages').mockResolvedValue([{id: 'id', sender: {displayName: 'name'}}]);
+
+        (global as any).setTimeout = jest.fn();
+
+        // Customer callback throws while processing the message
+        const throwingCallback = jest.fn(() => { throw new Error('transformation failed'); });
+
+        // Capture the console.warn that surfaces processing failures
+        const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+        try {
+            // Should not throw out of registerOnNewMessage despite the callback throwing
+            await expect(conversation.registerOnNewMessage(throwingCallback)).resolves.toBeUndefined();
+
+            expect(throwingCallback).toHaveBeenCalledTimes(1);
+            expect(logger.failScenario).toHaveBeenCalledTimes(1);
+            expect(logger.failScenario.mock.calls[0][0]).toEqual('MessageProcessingError');
+            // Telemetry records the same static, type-only message as the console — never the error message
+            expect(logger.failScenario.mock.calls[0][1].ExceptionDetails).toEqual('[ACSClient][registerOnNewMessage] Error occurred while processing messages: Error');
+            expect(logger.failScenario.mock.calls[0][1].ExceptionDetails).not.toContain('transformation failed');
+            // console.warn always fires so consumers without telemetry still see it
+            expect(consoleWarnSpy).toHaveBeenCalledWith('[ACSClient][registerOnNewMessage] Error occurred while processing messages: Error');
+        } finally {
+            consoleWarnSpy.mockRestore();
+        }
+    });
+
+    it('ACSClient.conversation.registerOnNewMessage() should not leak error content to telemetry or console', async () => {
+        const client: any = new ACSClient();
+        const config = {
+            token: 'token',
+            environmentUrl: 'url'
+        }
+
+        await client.initialize(config);
+
+        const chatThreadClient: any = {};
+        chatThreadClient.listParticipants = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+        chatThreadClient.listMessages = jest.fn(() => ({
+            next: jest.fn(() => ({
+                value: 'value',
+                done: jest.fn()
+            })),
+        }));
+
+        client.chatClient = {};
+        client.chatClient.getChatThreadClient = jest.fn(() => chatThreadClient);
+        client.chatClient.startRealtimeNotifications = jest.fn();
+        client.chatClient.on = jest.fn();
+
+        const conversation: any = await client.joinConversation({
+            id: 'id',
+            threadId: 'threadId',
+            pollingInterval: 1000,
+        });
+
+        const logger = {
+            startScenario: jest.fn(),
+            completeScenario: jest.fn(),
+            failScenario: jest.fn(),
+            recordIndividualEvent: jest.fn()
+        };
+        conversation.logger = logger;
+
+        conversation.keepPolling = true;
+        jest.spyOn(conversation, 'getMessages').mockResolvedValue([{id: 'id', sender: {displayName: 'name'}}]);
+
+        (global as any).setTimeout = jest.fn();
+
+        // Error carries a custom name plus sensitive-looking content in its message
+        const secret = 'sensitive-customer-pii-12345';
+        const throwingCallback = jest.fn(() => {
+            const err = new Error(secret);
+            err.name = 'TypeError';
+            throw err;
+        });
+
+        const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+        try {
+            await expect(conversation.registerOnNewMessage(throwingCallback)).resolves.toBeUndefined();
+
+            expect(logger.failScenario).toHaveBeenCalledTimes(1);
+            // Telemetry records only the safe error type, not the message content
+            const exceptionDetails = logger.failScenario.mock.calls[0][1].ExceptionDetails;
+            expect(exceptionDetails).toEqual('[ACSClient][registerOnNewMessage] Error occurred while processing messages: TypeError');
+            expect(exceptionDetails).not.toContain(secret);
+            // console.warn surfaces the safe error type only — no content leaks
+            expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
+            expect(consoleWarnSpy).toHaveBeenCalledWith('[ACSClient][registerOnNewMessage] Error occurred while processing messages: TypeError');
+            expect(consoleWarnSpy.mock.calls[0].join(' ')).not.toContain(secret);
+        } finally {
+            consoleWarnSpy.mockRestore();
+        }
+    });
+
     it('ACSClient.conversation.registerOnThreadUpdate() should register to "participantsRemoved" event', async () => {
         const client: any = new ACSClient();
         const config = {

@@ -36,6 +36,7 @@ enum ACSClientEvent {
     SendReadReceipt = 'SendReadReceipt',
     StartPolling = 'StartPolling',
     StopPolling = 'StopPolling',
+    MessageProcessingError = 'MessageProcessingError',
     Disconnect = 'Disconnect'
 }
 
@@ -220,8 +221,29 @@ export class ACSConversation {
                                     onNewMessageCallback(message);
                                     postedMessageIds.add(id);
                                 }
-                            } catch {
-                                console.warn('[ACSClient][registerOnNewMessage] Error occurred while processing messages');
+                            } catch (error) {
+                                // Surface message-processing failures instead of
+                                // swallowing them. Keep iterating so a single bad
+                                // message does not stop the rest of the batch.
+                                //
+                                // Record only the error type (error.name), never the
+                                // error message/object/stack or any service response.
+                                // error.message can embed customer/conversation data
+                                // (e.g. a consumer callback or the ACS SDK may include
+                                // message content or identifiers), so we deliberately
+                                // exclude it from both telemetry and the console.
+                                const errorName = (error as Error)?.name ?? 'Error';
+                                const errorMessage = `[ACSClient][registerOnNewMessage] Error occurred while processing messages: ${errorName}`;
+
+                                this.logger?.failScenario(ACSClientEvent.MessageProcessingError, {
+                                    ExceptionDetails: errorMessage
+                                });
+
+                                // Always emit a console warning so consumers without
+                                // access to telemetry still know a message failed to
+                                // process. The message is static apart from the safe
+                                // error type, so no error content can leak.
+                                console.warn(errorMessage);
                             }
 
                         }
