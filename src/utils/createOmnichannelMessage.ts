@@ -50,8 +50,16 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
         omnichannelMessage.tags = metadata && metadata.tags ? metadata.tags.replace(/\"/g, "").split(",").filter((tag: string) => tag.length > 0) : []; // eslint-disable-line no-useless-escape
         omnichannelMessage.timestamp = editedOn ?? createdOn;
         omnichannelMessage.messageType = MessageType.UserMessage; // Backward compatibility
+        // `sender` can be null/undefined for system messages or certain ACS
+        // event types. Use optional chaining so message transformation does not
+        // throw a null reference exception and silently drop customer callbacks.
+        // Surface a debug log (gated on the same `debug` flag used above) so
+        // unexpected upstream null-sender cases remain observable.
+        if (!sender) {
+            optionalParams.debug && console.warn(`createOmnichannelMessage: message ${id} has no sender; sender.id will be undefined`);
+        }
         omnichannelMessage.sender = {
-            id: sender.communicationUserId,
+            id: sender?.communicationUserId,
             displayName: senderDisplayName,
             type: PersonType.Bot
         } as IPerson;

@@ -84,7 +84,9 @@ import OmnichannelChatToken from "@microsoft/omnichannel-amsclient/lib/Omnichann
 import OmnichannelConfig from "./core/OmnichannelConfig";
 import OmnichannelErrorCodes from "./core/OmnichannelErrorCodes";
 import OmnichannelMessage from "./core/messaging/OmnichannelMessage";
+import OmnichannelStreamingMessage from "./core/messaging/OmnichannelStreamingMessage";
 import OnNewMessageOptionalParams from "./core/messaging/OnNewMessageOptionalParams";
+import OnStreamingMessageOptionalParams from "./core/messaging/OnStreamingMessageOptionalParams";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import PluggableLogger from "@microsoft/omnichannel-amsclient/lib/PluggableLogger";
 import PostChatContext from "./core/PostChatContext";
@@ -1938,6 +1940,72 @@ class OmnichannelChatSDK {
         }
     }
 
+    /**
+     * Subscribes to ACS-driven streaming message chunks for progressive bot message rendering.
+     * Each chunk contains the full assembled text so far (not just the delta).
+     * Existing onNewMessage consumers continue receiving final messages without changes.
+     *
+     * Available only in LiveChatVersion.V2. Must call startChat() before registering.
+     *
+     * @param onStreamingMessageCallback - Called for each streaming chunk
+     * @param optionalParams - Reserved for future configuration
+     * @example
+     * chatSDK.onStreamingMessage((message) => {
+     *     switch (message.streamingMetadata.streamingMessageType) {
+     *         case "streaming": // Update bubble with message.content
+     *         case "final":     // Stream complete
+     *     }
+     * });
+     */
+    public async onStreamingMessage(
+        onStreamingMessageCallback: (message: OmnichannelStreamingMessage) => void,
+        optionalParams?: OnStreamingMessageOptionalParams
+    ): Promise<void> {
+        this.scenarioMarker.startScenario(TelemetryEvent.OnStreamingMessage, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken?.chatId as string ?? ""
+        });
+
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.OnStreamingMessage);
+        }
+
+        try {
+            if (this.liveChatVersion !== LiveChatVersion.V2) {
+                throw new ChatSDKError(ChatSDKErrorName.UnsupportedLiveChatVersion);
+            }
+            if (!this.conversation) {
+                throw new ChatSDKError(ChatSDKErrorName.UninitializedConversation);
+            }
+
+            await (this.conversation as ACSConversation).registerOnStreamingMessage(
+                onStreamingMessageCallback,
+                optionalParams
+            );
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.OnStreamingMessage, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string ?? ""
+            });
+        } catch (error) {
+            const wrappedError = (error instanceof ChatSDKError)
+                ? error
+                : new ChatSDKError(
+                    ChatSDKErrorName.StreamingSubscriptionFailure,
+                    undefined,
+                    { response: 'StreamingSubscriptionFailure', errorObject: `${error}` }
+                );
+
+            this.scenarioMarker.failScenario(TelemetryEvent.OnStreamingMessage, {
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string ?? "",
+                ExceptionDetails: JSON.stringify(wrappedError.exceptionDetails ?? wrappedError.message)
+            });
+
+            throw wrappedError;
+        }
+    }
+
     public async onAgentEndSession(onAgentEndSessionCallback: (message: IRawThread | ParticipantsRemovedEvent) => void): Promise<void> {
         this.scenarioMarker.startScenario(TelemetryEvent.OnAgentEndSession, {
             RequestId: this.requestId,
@@ -2768,6 +2836,24 @@ class OmnichannelChatSDK {
         // Override initContext completely
         if (optionalParams.initContext) {
             requestOptionalParams.initContext = optionalParams.initContext;
+        }
+
+        // Forward the widget's streaming-capability signal to the server via customContextData
+        // pass-through. Only inject when the caller explicitly provided the flag — omitting it
+        // preserves the legacy contract (server sees no signal → non-streaming behavior).
+        // The {value, isDisplayable} wrapper is the customContextData variable contract;
+        // isDisplayable: false marks this as an internal capability signal, not for agent UI.
+        // NOTE: This runs AFTER the initContext override to ensure the flag survives even when
+        // the consumer provides their own initContext.
+        const supportsLcwStreaming = (optionalParams as StartChatOptionalParams)?.supportsLcwStreaming;
+        if (supportsLcwStreaming !== undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const ctx = ((requestOptionalParams.initContext! as any).customContextData ?? {}) as any;
+            ctx.supportsLcwStreaming = {
+                value: supportsLcwStreaming ? "true" : "false",
+                isDisplayable: false
+            };
+            (requestOptionalParams.initContext! as any).customContextData = ctx; // eslint-disable-line @typescript-eslint/no-explicit-any
         }
 
         if (this.authenticatedUserToken) {

@@ -72,6 +72,11 @@ export enum ChatSDKErrorName {
     SendReadReceiptInvalidParams = "SendReadReceiptInvalidParams",
     /** Failure in retrieving unread message count */
     UnreadMessageCountRetrievalFailure = "UnreadMessageCountRetrievalFailure",
+
+    /** Streaming requires an active conversation; called before startChat() */
+    UninitializedConversation = "UninitializedConversation",
+    /** Failure to subscribe to ACS streaming events */
+    StreamingSubscriptionFailure = "StreamingSubscriptionFailure",
 }
 
 export class ChatSDKError {

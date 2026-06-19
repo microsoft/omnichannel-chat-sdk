@@ -51,6 +51,28 @@ enum TelemetryEvent {
     MidConversationAuth = "MidConversationAuth",
     GetUnreadMessageCount = "GetUnreadMessageCount",
     SendReadReceipt = "SendReadReceipt",
+
+    // ACS streaming
+    OnStreamingMessage = "OnStreamingMessage",
+    StreamingMessageReceived = "StreamingMessageReceived",
+    StreamingMessageStarted = "StreamingMessageStarted",
+    StreamingMessageEnded = "StreamingMessageEnded",
+    StreamingEndedExpired = "StreamingEndedExpired",
+    StreamingEndedCanceled = "StreamingEndedCanceled",
+    StreamingDisconnect = "StreamingDisconnect",
+    StreamingHandlerThrew = "StreamingHandlerThrew",
+    StreamingHandlerAsyncRejected = "StreamingHandlerAsyncRejected",
+    StreamingMetadataMissingType = "StreamingMetadataMissingType",
+    StreamingFinalMissingReason = "StreamingFinalMissingReason",
+    StreamingChunkNoContent = "StreamingChunkNoContent",
+    StreamingDuplicateFinal = "StreamingDuplicateFinal",
+    StreamingChunkAfterFinal = "StreamingChunkAfterFinal",
+    StreamingCounterEvicted = "StreamingCounterEvicted",
+    StreamingFinalizedIdEvicted = "StreamingFinalizedIdEvicted",
+    StreamingRegistrationReplaced = "StreamingRegistrationReplaced",
+    StreamingUnexpectedTypeOnNewMessage = "StreamingUnexpectedTypeOnNewMessage",
+    StreamingSubscriptionFailed = "StreamingSubscriptionFailed",
+    StreamingPolicyViolation = "StreamingPolicyViolation",
 }
 
 export default TelemetryEvent;
