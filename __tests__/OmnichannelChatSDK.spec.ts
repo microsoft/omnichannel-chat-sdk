@@ -3807,8 +3807,9 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             await chatSDK.startChat();
 
-            // Force the V2 transformation path; an event without a `sender` makes
-            // createOmnichannelMessage throw (the documented failure for this bug).
+            // Force the V2 transformation path; an event whose `metadata.tags` is a
+            // non-string makes createOmnichannelMessage throw (`.replace is not a
+            // function`) during transformation — the documented failure for this bug.
             chatSDK.liveChatVersion = LiveChatVersion.V2;
             // Spy on singleRecord (fire-and-forget): failScenario can't be used here
             // because the OnNewMessage scenario is already completed by the time the
@@ -3821,7 +3822,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             expect(registeredCallback).toBeDefined();
 
-            const badEvent = { id: 'id', content: 'content', metadata: { tags: 'tags' } };
+            const badEvent = { id: 'id', content: 'content', metadata: { tags: 12345 } };
 
             // The wrapper must swallow the transformation error (no throw out of the callback)
             expect(() => registeredCallback(badEvent)).not.toThrow();

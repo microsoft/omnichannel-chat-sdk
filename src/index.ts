@@ -13,7 +13,11 @@ import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
 import MessageContentType from "@microsoft/omnichannel-ic3core/lib/model/MessageContentType";
 import MessageType from "@microsoft/omnichannel-ic3core/lib/model/MessageType";
 import OmnichannelChatSDK from "./OmnichannelChatSDK";
+import OmnichannelStreamingMessage from "./core/messaging/OmnichannelStreamingMessage";
+import OnStreamingMessageOptionalParams from "./core/messaging/OnStreamingMessageOptionalParams";
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
+import PolicyViolation from "./core/messaging/PolicyViolation";
+import StreamingMetadata from "./core/messaging/StreamingMetadata";
 
 export {
     OmnichannelChatSDK,
@@ -57,6 +61,10 @@ export {
     UploadFileAttachmentResponse,
     GetMessagesResponse,
     GetCurrentLiveChatContextResponse,
+    OmnichannelStreamingMessage,
+    OnStreamingMessageOptionalParams,
+    PolicyViolation,
+    StreamingMetadata,
 }
 
 export default {

@@ -1,6 +1,6 @@
 import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
 import { ChatClient, ChatMessage, ChatParticipant, ChatThreadClient } from "@azure/communication-chat";
-import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
+import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent, StreamingChatMessageChunkReceivedEvent, StreamingChatMessageStartEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
 import { MessagePrinterFactory, PrinterType } from "../../utils/printers/MessagePrinterFactory";
 
 import ACSChatMessageType from "./ACSChatMessageType";
@@ -15,8 +15,11 @@ import DeliveryMode from "@microsoft/omnichannel-ic3core/lib/model/DeliveryMode"
 import LiveChatVersion from "../LiveChatVersion";
 import { MessageSource } from "../../telemetry/MessageSource";
 import OmnichannelMessage from "./OmnichannelMessage";
+import OmnichannelStreamingMessage from "./OmnichannelStreamingMessage";
+import OnStreamingMessageOptionalParams from "./OnStreamingMessageOptionalParams";
 import TelemetryEvent from "../../telemetry/TelemetryEvent";
 import createOmnichannelMessage from "../../utils/createOmnichannelMessage";
+import createOmnichannelStreamingMessage from "../../utils/createOmnichannelStreamingMessage";
 import { defaultMessageTags } from "./MessageTags";
 
 enum ACSClientEvent {
@@ -24,6 +27,7 @@ enum ACSClientEvent {
     InitializeACSConversation = 'InitializeACSConversation',
     GetParticipants = 'GetParticipants',
     RegisterOnNewMessage = 'RegisterOnNewMessage',
+    RegisterOnStreamingMessage = 'RegisterOnStreamingMessage',
     RegisterOnThreadUpdate = 'RegisterOnThreadUpdate',
     OnTypingEvent = 'OnTypingEvent',
     GetMessages = 'GetMessages',
@@ -56,6 +60,9 @@ export class ACSConversation {
     private eventListeners: EventListenersMapping;
     private keepPolling = false;
     private pollingTimer: NodeJS.Timeout | number | null = null;
+    private streamSequenceCounters: Map<string, number> = new Map();
+    private finalizedMessageIds: Set<string> = new Set();
+    private streamingMessageCallback: ((message: OmnichannelStreamingMessage) => void) | null = null;
 
     constructor(tokenCredential: AzureCommunicationTokenCredential, chatClient: ChatClient, logger: ACSClientLogger | null = null) {
         this.logger = logger;
@@ -247,10 +254,51 @@ export class ACSConversation {
                     return;
                 }
 
+                // Route streaming finals that arrive on chatMessageReceived to the streaming callback.
+                // ACS may deliver the final streaming message as event 200 (chatMessageReceived) instead
+                // of event 251 (streamingChatMessageChunkReceived). Detect this by checking streamingMetadata.
+                const streamingType = (event as ChatMessageReceivedEvent).streamingMetadata?.streamingMessageType;
+                if (streamingType === 'final' && this.streamingMessageCallback) {
+                    try {
+                        const streamingMessage = createOmnichannelStreamingMessage(event as unknown as StreamingChatMessageChunkReceivedEvent, {
+                            liveChatVersion: LiveChatVersion.V2,
+                            eventName: 'streamingChatMessageChunkReceived',
+                            sequenceCounters: this.streamSequenceCounters,
+                            finalizedMessageIds: this.finalizedMessageIds,
+                            logger: this.logger,
+                        });
+                        if (streamingMessage) {
+                            this.streamingMessageCallback(streamingMessage);
+                            this.logger?.recordIndividualEvent(
+                                TelemetryEvent.StreamingMessageReceived,
+                                MessageSource.WebSocketStreaming,
+                                MessagePrinterFactory.printifyMessage(event, PrinterType.Streaming)
+                            );
+                        }
+                    } catch (err) {
+                        this.logger?.recordIndividualEvent(
+                            TelemetryEvent.StreamingHandlerThrew,
+                            MessageSource.WebSocketStreaming,
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            { messageId: event.id, error: `${err}`, source: 'chatMessageReceivedFinalRouting' } as any
+                        );
+                    }
+                } else if (streamingType && streamingType !== 'final') {
+                    // Unexpected: chatMessageReceived should only carry 'final' streaming metadata.
+                    // Log for observability but still deliver to onNewMessage below.
+                    this.logger?.recordIndividualEvent(
+                        TelemetryEvent.StreamingUnexpectedTypeOnNewMessage,
+                        MessageSource.WebSocketStreaming,
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        { messageId: event.id, streamingType } as any
+                    );
+                }
+
                 // Filter out duplicate messages
                 if (postedMessageIds.has(id) && !isChatMessageEditedEvent) {
                     return;
                 }
+                // Always deliver to onNewMessage for backward compatibility
                 onNewMessageCallback(event);
                 postedMessageIds.add(id);
                 this.logger?.recordIndividualEvent(TelemetryEvent.MessageReceived, MessageSource.WebSocket, MessagePrinterFactory.printifyMessage(event, PrinterType.WebSocket));
@@ -271,6 +319,143 @@ export class ACSConversation {
             });
 
             throw new Error(ACSClientEvent.RegisterOnNewMessage);
+        }
+    }
+
+    public async registerOnStreamingMessage(
+        onStreamingMessageCallback: (message: OmnichannelStreamingMessage) => void,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        optionalParams: OnStreamingMessageOptionalParams = {}
+    ): Promise<void> {
+        this.logger?.startScenario(ACSClientEvent.RegisterOnStreamingMessage);
+
+        // Guard against duplicate registration — remove previous listeners before adding new ones.
+        // This prevents listener leaks if the consumer calls onStreamingMessage() multiple times.
+        if (this.streamingMessageCallback) {
+            this.logger?.recordIndividualEvent(
+                TelemetryEvent.StreamingRegistrationReplaced,
+                MessageSource.WebSocketStreaming,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                { reason: 'registerOnStreamingMessage called while already registered' } as any
+            );
+            const existingStartListeners = this.eventListeners['streamingChatMessageStarted'] ?? [];
+            const existingChunkListeners = this.eventListeners['streamingChatMessageChunkReceived'] ?? [];
+            for (const listener of existingStartListeners) {
+                this.chatClient?.off('streamingChatMessageStarted' as any, listener as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+            }
+            for (const listener of existingChunkListeners) {
+                this.chatClient?.off('streamingChatMessageChunkReceived' as any, listener as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+            }
+            this.eventListeners['streamingChatMessageStarted'] = [];
+            this.eventListeners['streamingChatMessageChunkReceived'] = [];
+        }
+
+        // Store reference so chatMessageReceived listener can route streaming finals
+        this.streamingMessageCallback = onStreamingMessageCallback;
+
+        try {
+            const invokeWithIsolation = (event: { id: string }, message: OmnichannelStreamingMessage) => {
+                const result = onStreamingMessageCallback(message) as unknown;
+                if (result && typeof (result as Promise<unknown>).catch === 'function') {
+                    (result as Promise<unknown>).catch((rejected: unknown) => {
+                        this.logger?.recordIndividualEvent(
+                            TelemetryEvent.StreamingHandlerAsyncRejected,
+                            MessageSource.WebSocketStreaming,
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            { messageId: event.id, error: `${rejected}` } as any
+                        );
+                    });
+                }
+            };
+
+            const onStart = (event: StreamingChatMessageStartEvent) => {
+                try {
+                    const message = createOmnichannelStreamingMessage(event, {
+                        liveChatVersion: LiveChatVersion.V2,
+                        eventName: 'streamingChatMessageStarted',
+                        sequenceCounters: this.streamSequenceCounters,
+                        finalizedMessageIds: this.finalizedMessageIds,
+                        logger: this.logger,
+                    });
+                    if (message === undefined) {
+                        return;
+                    }
+                    this.logger?.recordIndividualEvent(
+                        TelemetryEvent.StreamingMessageReceived,
+                        MessageSource.WebSocketStreaming,
+                        MessagePrinterFactory.printifyMessage(event, PrinterType.Streaming)
+                    );
+                    invokeWithIsolation(event, message);
+                } catch (err) {
+                    this.logger?.recordIndividualEvent(
+                        TelemetryEvent.StreamingHandlerThrew,
+                        MessageSource.WebSocketStreaming,
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        { messageId: event.id, error: `${err}` } as any
+                    );
+                }
+            };
+
+            const onChunk = (event: StreamingChatMessageChunkReceivedEvent) => {
+                try {
+                    const message = createOmnichannelStreamingMessage(event, {
+                        liveChatVersion: LiveChatVersion.V2,
+                        eventName: 'streamingChatMessageChunkReceived',
+                        sequenceCounters: this.streamSequenceCounters,
+                        finalizedMessageIds: this.finalizedMessageIds,
+                        logger: this.logger,
+                    });
+                    if (message === undefined) {
+                        return;
+                    }
+                    this.logger?.recordIndividualEvent(
+                        TelemetryEvent.StreamingMessageReceived,
+                        MessageSource.WebSocketStreaming,
+                        MessagePrinterFactory.printifyMessage(event, PrinterType.Streaming)
+                    );
+                    invokeWithIsolation(event, message);
+
+                    // Backwards-compat fire-through: when a streaming message reaches
+                    // "final", also deliver it to chatMessageReceived listeners so
+                    // consumers using only onNewMessage still see the complete message.
+                    if (message.streamingMetadata.streamingMessageType === 'final') {
+                        const newMessageListeners = this.eventListeners['chatMessageReceived'] ?? [];
+                        for (const listener of newMessageListeners) {
+                            try {
+                                listener(event);
+                            } catch (err) {
+                                this.logger?.recordIndividualEvent(
+                                    TelemetryEvent.StreamingHandlerThrew,
+                                    MessageSource.WebSocketStreaming,
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    { messageId: event.id, error: `${err}`, source: 'newMessageFireThrough' } as any
+                                );
+                            }
+                        }
+                    }
+                } catch (err) {
+                    this.logger?.recordIndividualEvent(
+                        TelemetryEvent.StreamingHandlerThrew,
+                        MessageSource.WebSocketStreaming,
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        { messageId: event.id, error: `${err}` } as any
+                    );
+                }
+            };
+
+            this.chatClient?.on('streamingChatMessageStarted', onStart);
+            this.chatClient?.on('streamingChatMessageChunkReceived', onChunk);
+            this.trackListener('streamingChatMessageStarted', onStart);
+            this.trackListener('streamingChatMessageChunkReceived', onChunk);
+
+            this.logger?.completeScenario(ACSClientEvent.RegisterOnStreamingMessage);
+        } catch (error) {
+            const exceptionDetails = { errorObject: `${error}` };
+            this.logger?.failScenario(ACSClientEvent.RegisterOnStreamingMessage, {
+                ExceptionDetails: JSON.stringify(exceptionDetails),
+            });
+
+            throw new Error(`${ACSClientEvent.RegisterOnStreamingMessage}: ${error}`);
         }
     }
 
@@ -439,6 +624,11 @@ export class ACSConversation {
             if (this.pollingTimer) {
                 clearTimeout(this.pollingTimer as number);
             }
+
+            // Clear streaming state to prevent memory leaks across sessions
+            this.streamSequenceCounters.clear();
+            this.finalizedMessageIds.clear();
+            this.streamingMessageCallback = null;
 
             this.logger?.completeScenario(ACSClientEvent.Disconnect);
         } catch {
