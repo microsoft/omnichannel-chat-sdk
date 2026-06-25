@@ -3782,6 +3782,58 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.conversation.registerOnNewMessage).toHaveBeenCalledTimes(1);
         });
 
+        it('ChatSDK.onNewMessage() WebSocket callback should log failScenario and not break the chain when createOmnichannelMessage throws', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn()
+            }
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            }
+
+            let registeredCallback: any;
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                registerOnNewMessage: jest.fn((cb: any) => { registeredCallback = cb; })
+            }));
+
+            await chatSDK.startChat();
+
+            // Force the V2 transformation path; an event whose `metadata.tags` is a
+            // non-string makes createOmnichannelMessage throw (`.replace is not a
+            // function`) during transformation — the documented failure for this bug.
+            chatSDK.liveChatVersion = LiveChatVersion.V2;
+            // Spy on singleRecord (fire-and-forget): failScenario can't be used here
+            // because the OnNewMessage scenario is already completed by the time the
+            // callback fires, so it would short-circuit on its "not started" guard.
+            jest.spyOn(chatSDK.scenarioMarker, 'singleRecord');
+            jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+            const customerCallback = jest.fn();
+            await chatSDK.onNewMessage(customerCallback);
+
+            expect(registeredCallback).toBeDefined();
+
+            const badEvent = { id: 'id', content: 'content', metadata: { tags: 12345 } };
+
+            // The wrapper must swallow the transformation error (no throw out of the callback)
+            expect(() => registeredCallback(badEvent)).not.toThrow();
+
+            // Telemetry is recorded via singleRecord (which always emits) and the
+            // customer callback is not invoked with a bad message
+            const singleRecordCall = chatSDK.scenarioMarker.singleRecord.mock.calls.find((c: any) => c[0] === 'OnNewMessage' && c[1] && c[1].ExceptionDetails);
+            expect(singleRecordCall).toBeDefined();
+            expect(customerCallback).not.toHaveBeenCalled();
+        });
+
         it('ChatSDK.onNewMessage() with disablePolling flag should pass it to conversation.registerOnNewMessage()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
