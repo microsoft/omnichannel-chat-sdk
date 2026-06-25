@@ -45,6 +45,8 @@ Please make sure you have a chat widget configured before using this package or 
   - [Get Voice & Video Calling](#get-voice--video-calling)
   - [Get Post Chat Survey Context](#get-post-chat-survey-context)
   - [Get Persistent Chat History](#get-persistent-chat-history)
+  - [Send Read Receipt](#send-read-receipt)
+  - [Get Unread Message Count](#get-unread-message-count)
 - [Common Scenarios](#common-scenarios)
   - [Using BotFramework-WebChat](#using-botframework-webchat)
   - [Escalation to Voice & Video](#escalation-to-voice--video)
@@ -605,6 +607,25 @@ It gets information on whether a queue is available, and whether there are agent
 
 ```ts
 const agentAvailability = await chatSDK.getAgentAvailability();
+```
+
+### Send Read Receipt
+
+Logs a particular message (and all previous messages) as read by the user. Read indicators will appear for Contact Center Representatives and Admins in the Admin Center.
+
+```ts
+await chatSDK.sendReadReceipt(messageId: string);
+```
+
+### Get Unread Message Count
+
+Returns the number of unread messages in an authenticated persistent conversation. This call is **authenticated-only** — the user must be authenticated, otherwise an `UndefinedAuthToken` error is thrown.
+
+```ts
+const response = await chatSDK.getUnreadMessageCount();
+
+// response.unreadMessageCount: number — Number of unread messages in the conversation
+// response.mostRecentUnreadMessage: object | null — The most recent unread message, or null if there are none
 ```
 
 ## Common Scenarios
