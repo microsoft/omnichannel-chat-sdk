@@ -58,7 +58,7 @@ Please make sure you have a chat widget configured before using this package or 
   - [Persistent Chat History](#persistent-chat-history)
   - [Chat Reconnect with Authenticated User](#chat-reconnect-with-authenticated-user)
   - [Chat Reconnect with Unauthenticated User](#chat-reconnect-with-unauthenticated-user)
-  - [Best Practices for Chat Session Management: Handling Disconnections and Network Instabilit(#best-practices-for-chat-session-management:-handling-disconnections-and-network-instability)
+  - [Best Practices for Chat Session Management: Handling Disconnections and Network Instability](#best-practices-for-chat-session-management-handling-disconnections-and-network-instability)
   - [Operating Hours](#operating-hours)
   - [Single Sign-on for Bots](/docs/scenarios/SINGLE_SIGN_ON_FOR_BOTS.md)
 - [Sample Apps](https://github.com/microsoft/omnichannel-chat-sdk-samples)
