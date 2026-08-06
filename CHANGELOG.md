@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Standardized local, pull-request, and release builds on Node.js 22 and declared Node.js `>=22.12.0` as the supported runtime.
+- Standardized local, pull-request, and release builds on Node.js 22 without changing the public package's consumer runtime contract.
 - Updated `@microsoft/ocsdk` to `0.6.0-main.dcb2d46` and `@microsoft/omnichannel-amsclient` to `0.2.0-main.3e03701`.
 
 ### Added
