@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Security
+
+- Updated Azure Communication dependencies and constrained vulnerable Axios, `form-data`, `follow-redirects`, and Babel runtime dependencies to patched versions.
+- Azure Communication Signaling still declares UUID 8 because no compatible fixed release exists; its only UUID call is `uuidv4()` without the vulnerable buffer argument. First-party consumers continue to pin UUID 14.
+
+### Changed
+
+- Standardized local, pull-request, and release builds on Node.js 22 and declared Node.js `>=22.12.0` as the supported runtime.
+- Updated `@microsoft/ocsdk` to `0.6.0-main.dcb2d46` and `@microsoft/omnichannel-amsclient` to `0.2.0-main.3e03701`.
+
 ### Added
 
 - Added `onStreamingMessage` public API for progressive bot message rendering via ACS streaming
