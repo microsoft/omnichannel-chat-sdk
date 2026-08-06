@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Standardized local, pull-request, and release builds on Node.js 22 without changing the public package's consumer runtime contract.
+- Standardized local, pull-request, release, and consumer runtime support on Node.js `>=22.12.0`. This support-policy change follows the Node requirements of the remediated OC SDK and AMS client dependencies.
 - Updated `@microsoft/ocsdk` to `0.6.0-main.dcb2d46` and `@microsoft/omnichannel-amsclient` to `0.2.0-main.3e03701`.
 
 ### Added
