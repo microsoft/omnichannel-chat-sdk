@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Breaking
+
+- Raised the supported consumer runtime to Node.js `>=22.12.0`, matching the remediated OC SDK and AMS client dependencies. This support-policy change requires a major release.
+
+### Security
+
+- Updated Azure Communication dependencies and constrained vulnerable Axios, `form-data`, `follow-redirects`, and Babel runtime dependencies to patched versions through their owning packages and local development overrides.
+- Azure Communication Signaling still declares UUID 8 because no compatible fixed release exists; its only UUID call is `uuidv4()` without the vulnerable buffer argument. First-party consumers continue to pin UUID 14.
+
+### Changed
+
+- Standardized local, pull-request, release, and consumer runtime support on Node.js `>=22.12.0`.
+- Updated `@microsoft/ocsdk` to `0.6.0-main.dcb2d46` and `@microsoft/omnichannel-amsclient` to `0.2.0-main.3e03701`.
+- Removed unused direct Axios, `form-data`, and `follow-redirects` dependencies; the remediated OC SDK now owns the patched HTTP dependency floor.
+- Removed the obsolete brace-expansion override after the regenerated lockfile resolved patched dev-only versions.
+
 ### Added
 
 - Added `onStreamingMessage` public API for progressive bot message rendering via ACS streaming
@@ -14,6 +30,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Corrected ACS adapter telemetry to report the installed `0.0.1-beta.8` version.
 - Fixed streaming final messages not delivered to `onStreamingMessage` when ACS sends them as `chatMessageReceived` (event 200) instead of `streamingChatMessageChunkReceived` (event 251)
 - Fixed `streamingMessageType` never being `"start"` — ACS sends `"streaming"` for start events; SDK now overrides to `"start"` based on event name
 - Backward compatibility: `onNewMessage` always fires for the final complete message alongside `onStreamingMessage`, ensuring existing consumers are unaffected

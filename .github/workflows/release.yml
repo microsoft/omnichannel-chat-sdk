@@ -22,7 +22,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20.X
+          node-version-file: .nvmrc
 
       - name: Update package version
         run: npx version-from-git --no-git-tag-version
@@ -49,4 +49,3 @@ jobs:
         with:
           name: npm-tarball
           path: '*.tgz'
-
