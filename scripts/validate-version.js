@@ -14,6 +14,7 @@ function validateVersions() {
         const packageJsonPath = path.join(process.cwd(), 'package.json');
         const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
         const packageVersion = packageJson.version;
+        const adapterPackageVersion = packageJson.dependencies['@microsoft/botframework-webchat-adapter-azure-communication-chat'];
 
         // Read settings.ts version
         const settingsPath = path.join(process.cwd(), 'src/config/settings.ts');
@@ -22,9 +23,13 @@ function validateVersions() {
         // Extract version from settings.ts using regex
         const versionMatch = settingsContent.match(/omnichannelChatSdkVersion\s*=\s*['"`]([^'"`]+)['"`]/);
         const settingsVersion = versionMatch ? versionMatch[1] : null;
+        const adapterVersionMatch = settingsContent.match(/webChatACSAdapterVersion\s*=\s*['"`]([^'"`]+)['"`]/);
+        const adapterSettingsVersion = adapterVersionMatch ? adapterVersionMatch[1] : null;
 
         console.log(`📦 package.json version: ${packageVersion}`);
         console.log(`⚙️  settings.ts version: ${settingsVersion || 'NOT FOUND'}\n`);
+        console.log(`📦 ACS adapter package version: ${adapterPackageVersion}`);
+        console.log(`⚙️  ACS adapter settings version: ${adapterSettingsVersion || 'NOT FOUND'}\n`);
 
         // Validate versions
         if (!settingsVersion) {
@@ -48,8 +53,17 @@ function validateVersions() {
             process.exit(1);
         }
 
+        if (adapterPackageVersion !== adapterSettingsVersion) {
+            console.error(
+                `❌ ACS adapter version mismatch detected!\n\n` +
+                `📦 package.json version: ${adapterPackageVersion}\n` +
+                `⚙️  settings.ts version: ${adapterSettingsVersion || 'NOT FOUND'}`
+            );
+            process.exit(1);
+        }
+
         console.log('✅ Version consistency check passed!');
-        console.log('Both package.json and settings.ts have matching versions.\n');
+        console.log('SDK and ACS adapter versions match package.json and settings.ts.\n');
 
     } catch (error) {
         console.error('❌ Error during version validation:');

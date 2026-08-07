@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/omnichannel-chat-sdk",
-  "version": "1.12.0",
+  "version": "2.0.0",
   "description": "Microsoft Omnichannel Chat SDK",
   "files": [
     "lib/**/*"
@@ -54,10 +54,7 @@
     "@microsoft/botframework-webchat-adapter-azure-communication-chat": "0.0.1-beta.8",
     "@microsoft/ocsdk": "0.6.0-main.dcb2d46",
     "@microsoft/omnichannel-amsclient": "0.2.0-main.3e03701",
-    "@microsoft/omnichannel-ic3core": "^0.1.5",
-    "axios": "1.19.0",
-    "follow-redirects": "1.16.0",
-    "form-data": "4.0.6"
+    "@microsoft/omnichannel-ic3core": "^0.1.5"
   },
   "overrides": {
     "@babel/helpers": "^7.29.7",
