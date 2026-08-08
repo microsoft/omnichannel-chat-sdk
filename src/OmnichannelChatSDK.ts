@@ -1824,6 +1824,12 @@ class OmnichannelChatSDK {
     /**
      * Fetches unread message count for the authenticated user.
      * Auth-only — does not require an active chat session.
+     *
+     * Available after 05/22/2026.
+     *
+     * @returns Object containing the unread message count
+     * @example
+     * const result = await chatSDK.getUnreadMessageCount();
      */
     public async getUnreadMessageCount(): Promise<object> {
         const telemetryData = {
@@ -1866,6 +1872,12 @@ class OmnichannelChatSDK {
      * Sends a read receipt for a specific message.
      * Authenticated: calls MRT (updates NRD + forwards to ACS).
      * Unauthenticated: calls ACS directly.
+     *
+     * Available after 05/22/2026.
+     *
+     * @param messageId - The ID of the message to mark as read
+     * @example
+     * await chatSDK.sendReadReceipt(message.id);
      */
     public async sendReadReceipt(messageId: string): Promise<void> {
         const telemetryData = {

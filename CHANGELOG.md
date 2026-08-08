@@ -37,8 +37,9 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Added `getUnreadMessageCount` public method to fetch unread message count for authenticated users (auth-only, pre-session badge use case)
-- Added `sendReadReceipt` public method to mark messages as read (authenticated: via MRT, unauthenticated: via ACS directly)
+- Added `getUnreadMessageCount` public method to fetch unread message count for authenticated users (auth-only, pre-session badge use case). Available after 05/22/2026.
+- Added `sendReadReceipt` public method to mark messages as read (authenticated: via MRT, unauthenticated: via ACS directly). Available after 05/22/2026.
+- Added JSDoc documentation for `getUnreadMessageCount` and `sendReadReceipt` public APIs
 - Added `sendReadReceipt` to `ACSClient` for direct ACS read receipt delivery (unauthenticated path)
 - Added `GetUnreadMessageCount` and `SendReadReceipt` telemetry events
 - Added `SendReadReceiptFailure`, `SendReadReceiptInvalidParams`, `UnreadMessageCountRetrievalFailure` to `ChatSDKErrorName` enum
