@@ -33,6 +33,7 @@ All notable changes to this project will be documented in this file.
 - Corrected ACS adapter telemetry to report the installed `0.0.1-beta.8` version.
 - Fixed streaming final messages not delivered to `onStreamingMessage` when ACS sends them as `chatMessageReceived` (event 200) instead of `streamingChatMessageChunkReceived` (event 251)
 - Fixed `streamingMessageType` never being `"start"` — ACS sends `"streaming"` for start events; SDK now overrides to `"start"` based on event name
+- Fixed `"informative"` streaming updates (transient status such as "Searching for references...") being collapsed to `"start"` when delivered as the first streaming event; the `"informative"` type is now preserved end-to-end so consumers can render it as a status indicator rather than response content
 - Backward compatibility: `onNewMessage` always fires for the final complete message alongside `onStreamingMessage`, ensuring existing consumers are unaffected
 
 ### Added

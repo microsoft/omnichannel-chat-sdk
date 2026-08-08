@@ -94,6 +94,78 @@ describe('createOmnichannelStreamingMessage', () => {
             expect(result!.streamingMetadata.streamingMessageType).toBe('start');
         });
 
+        it('should preserve "informative" type on chunk events', () => {
+            const event = makeFakeEvent({
+                streamingMetadata: { streamingMessageType: 'informative', streamingSequenceNumber: 2 },
+            });
+            const params = makeParams({ eventName: 'streamingChatMessageChunkReceived' });
+
+            const result = createOmnichannelStreamingMessage(event, params);
+
+            expect(result).toBeDefined();
+            expect(result!.streamingMetadata.streamingMessageType).toBe('informative');
+        });
+
+        it('should preserve "informative" type on the start event (not force "start")', () => {
+            // An informative status ("Searching for references...") can be the very first
+            // streaming event. Its type must survive the start-event normalization so
+            // downstream renders it as a status indicator, not response content.
+            const event = makeFakeEvent({
+                streamingMetadata: { streamingMessageType: 'informative', streamingSequenceNumber: 1 },
+            });
+            const params = makeParams({ eventName: 'streamingChatMessageStarted' });
+
+            const result = createOmnichannelStreamingMessage(event, params);
+
+            expect(result).toBeDefined();
+            expect(result!.streamingMetadata.streamingMessageType).toBe('informative');
+        });
+
+        it('should still override to "start" for non-informative start events', () => {
+            // Guards the informative exception: streaming/undefined start events must
+            // continue to normalize to "start".
+            const streamingStart = createOmnichannelStreamingMessage(
+                makeFakeEvent({ streamingMetadata: { streamingMessageType: 'streaming', streamingSequenceNumber: 1 } }),
+                makeParams({ eventName: 'streamingChatMessageStarted' }),
+            );
+            expect(streamingStart!.streamingMetadata.streamingMessageType).toBe('start');
+        });
+
+        it('should carry informative content through unchanged', () => {
+            const event = makeFakeEvent({
+                message: 'Searching for references...',
+                streamingMetadata: { streamingMessageType: 'informative', streamingSequenceNumber: 1 },
+            });
+            const params = makeParams({ eventName: 'streamingChatMessageChunkReceived' });
+
+            const result = createOmnichannelStreamingMessage(event, params);
+
+            expect(result!.content).toBe('Searching for references...');
+            expect(result!.streamingMetadata.streamingMessageType).toBe('informative');
+        });
+
+        it('should not finalize or drop an informative chunk (informative precedes final)', () => {
+            const finalizedMessageIds = new Set<string>();
+            const params = makeParams({ finalizedMessageIds, eventName: 'streamingChatMessageChunkReceived' });
+
+            // Two informative updates for the same message id both flow through — informative
+            // is transient and must never be treated as a (deduped) final.
+            const first = createOmnichannelStreamingMessage(
+                makeFakeEvent({ message: 'Searching...', streamingMetadata: { streamingMessageType: 'informative', streamingSequenceNumber: 1 } }),
+                params,
+            );
+            const second = createOmnichannelStreamingMessage(
+                makeFakeEvent({ message: 'Generating response...', streamingMetadata: { streamingMessageType: 'informative', streamingSequenceNumber: 2 } }),
+                params,
+            );
+
+            expect(first).toBeDefined();
+            expect(second).toBeDefined();
+            expect(second!.content).toBe('Generating response...');
+            // Informative never marks the message id as finalized.
+            expect(finalizedMessageIds.has('msg-1')).toBe(false);
+        });
+
         it('should use ACS sequence number when provided', () => {
             const event = makeFakeEvent({
                 streamingMetadata: { streamingMessageType: 'streaming', streamingSequenceNumber: 42 },

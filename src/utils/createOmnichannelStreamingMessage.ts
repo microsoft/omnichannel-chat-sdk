@@ -111,12 +111,20 @@ function normalizeStreamingMetadata(
         );
     }
 
-    // For start events, the event name takes precedence over what ACS sends.
-    // ACS currently sends streamingMessageType: "streaming" even for the start event
+    // For start events, the event name normally takes precedence over what ACS sends.
+    // ACS sends streamingMessageType: "streaming" (or omits it) for the start event
     // (event 250 / streamingChatMessageStarted), so we override to "start".
+    //
+    // Exception: an "informative" update (e.g. "Searching for references...") is a
+    // transient status shown before the response streams, and it can arrive as the very
+    // first streaming event. Its type must be preserved end-to-end so consumers render it
+    // as a status indicator rather than as response content — forcing it to "start" would
+    // lose that distinction. We therefore only override to "start" when ACS did not
+    // explicitly mark the start event as informative.
+    const acsType = event.streamingMetadata?.streamingMessageType;
     const inferredType = params.eventName === 'streamingChatMessageStarted'
-        ? 'start'
-        : (event.streamingMetadata?.streamingMessageType ?? fallbackType);
+        ? (acsType === 'informative' ? 'informative' : 'start')
+        : (acsType ?? fallbackType);
     const inferredSequence = recordAndGetSequence(event, params);
 
     let endReason = event.streamingMetadata?.streamEndReason;

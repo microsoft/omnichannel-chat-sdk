@@ -89,6 +89,44 @@ describe('ACSClient - Streaming', () => {
             expect(msg.content).toBe('Hello');
         });
 
+        it('should preserve "informative" type when it arrives as the start event', async () => {
+            const { client, conversation } = await createConversation();
+            const callback = jest.fn();
+
+            await conversation.registerOnStreamingMessage(callback);
+
+            const onStart = client.chatClient.on.mock.calls[0][1];
+
+            const fakeInformativeStartEvent = {
+                id: 'msg-1',
+                message: 'Searching for references...',
+                sender: { communicationUserId: 'bot', kind: 'communicationUser' },
+                senderDisplayName: 'Bot',
+                createdOn: new Date(),
+                editedOn: new Date(),
+                threadId: 'thread-1',
+                recipient: { communicationUserId: 'user', kind: 'communicationUser' },
+                type: 'text',
+                version: '1',
+                metadata: {},
+                streamingMetadata: {
+                    streamingMessageType: 'informative',
+                    streamingSequenceNumber: 1,
+                },
+            };
+
+            onStart(fakeInformativeStartEvent);
+
+            expect(callback).toHaveBeenCalledTimes(1);
+            const msg = callback.mock.calls[0][0];
+            // An informative status delivered as the first streaming event must not be
+            // collapsed into "start" — consumers rely on the "informative" type to render
+            // it as a transient status indicator rather than response content.
+            expect(msg.streamingMetadata.streamingMessageType).toBe('informative');
+            expect(msg.content).toBe('Searching for references...');
+        });
+
+
         it('should invoke callback when a chunk event fires', async () => {
             const { client, conversation } = await createConversation();
             const callback = jest.fn();
