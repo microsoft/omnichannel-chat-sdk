@@ -47,7 +47,7 @@ import FramedlessClient from "@microsoft/omnichannel-amsclient/lib/FramedlessCli
 import GetAgentAvailabilityOptionalParams from "./core/GetAgentAvailabilityOptionalParams";
 import GetChatTokenOptionalParams from "./core/GetChatTokenOptionalParams";
 import GetConversationDetailsOptionalParams from "./core/GetConversationDetailsOptionalParams";
-import GetLiveChatConfigOptionalParams from "./core/GetLiveChatConfigOptionalParams";
+import GetLiveChatConfigOptionalParams, { InjectedLiveChatConfigAttestation } from "./core/GetLiveChatConfigOptionalParams";
 import GetLiveChatTranscriptOptionalParams from "./core/GetLiveChatTranscriptOptionalParams";
 import GetPersistentChatHistoryOptionalParams from "./core/GetPersistentChatHistoryOptionalParams";
 import HostType from "@microsoft/omnichannel-ic3core/lib/interfaces/HostType";
@@ -3065,9 +3065,91 @@ class OmnichannelChatSDK {
         };
     }
 
+    /**
+     * Validates an injected getLiveChatConfig payload before it is used. Returns a verdict and a short reason so the
+     * caller can emit telemetry and fall back to a network fetch on failure. Confirms the payload has the required
+     * blocks (LiveWSAndLiveChatEngJoin, LiveChatVersion) and that the attested and payload identities match this
+     * SDK instance's orgId/widgetId.
+     */
+    private validateInjectedLiveChatConfig(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        injectedLiveChatConfig: any,
+        injectedConfigAttestation?: InjectedLiveChatConfigAttestation
+    ): { valid: boolean; reason?: string } {
+        if (!injectedLiveChatConfig || typeof injectedLiveChatConfig !== "object") {
+            return { valid: false, reason: "notAnObject" };
+        }
+
+        if (!injectedLiveChatConfig.LiveWSAndLiveChatEngJoin || typeof injectedLiveChatConfig.LiveWSAndLiveChatEngJoin !== "object") {
+            return { valid: false, reason: "missingLiveWSAndLiveChatEngJoin" };
+        }
+
+        if (injectedLiveChatConfig.LiveChatVersion === undefined || injectedLiveChatConfig.LiveChatVersion === null) {
+            return { valid: false, reason: "missingLiveChatVersion" };
+        }
+
+        if (!injectedConfigAttestation || !injectedConfigAttestation.orgId || !injectedConfigAttestation.widgetId) {
+            return { valid: false, reason: "missingAttestation" };
+        }
+
+        const expectedOrgId = (this.omnichannelConfig.orgId || "").toLowerCase();
+        const expectedWidgetId = (this.omnichannelConfig.widgetId || "").toLowerCase();
+
+        if (injectedConfigAttestation.orgId.toLowerCase() !== expectedOrgId || injectedConfigAttestation.widgetId.toLowerCase() !== expectedWidgetId) {
+            return { valid: false, reason: "attestationMismatch" };
+        }
+
+        const payloadOrgId = injectedLiveChatConfig.SalOrgId;
+        if (typeof payloadOrgId === "string" && payloadOrgId.length > 0 && payloadOrgId.toLowerCase() !== expectedOrgId) {
+            return { valid: false, reason: "payloadOrgIdMismatch" };
+        }
+
+        const payloadWidgetId = injectedLiveChatConfig.LiveWSAndLiveChatEngJoin?.msdyn_widgetappid;
+        if (typeof payloadWidgetId === "string" && payloadWidgetId.length > 0 && payloadWidgetId.toLowerCase() !== expectedWidgetId) {
+            return { valid: false, reason: "payloadWidgetIdMismatch" };
+        }
+
+        return { valid: true };
+    }
+
     private async getChatConfig(optionalParams: GetLiveChatConfigOptionalParams = {}): Promise<ChatConfig> {
-        const { sendCacheHeaders } = optionalParams;
+        const { sendCacheHeaders, injectedLiveChatConfig, injectedConfigAttestation } = optionalParams;
         const bypassCache = sendCacheHeaders === true;
+
+        // If an injected config is provided, reuse it instead of making a network call. It is used only when the
+        // attested identity matches this SDK instance and the payload passes validation; on any failure the code
+        // falls back to the network fetch below. Skipped when a cache bypass is requested.
+        if (injectedLiveChatConfig !== undefined && injectedLiveChatConfig !== null && !bypassCache) {
+            try {
+                const validation = this.validateInjectedLiveChatConfig(injectedLiveChatConfig, injectedConfigAttestation);
+                if (validation.valid) {
+                    this.liveChatConfig = injectedLiveChatConfig;
+                    this.evaluateAMSAvailability();
+                    this.buildConfigurations(injectedLiveChatConfig);
+                    this.scenarioMarker.singleRecord(TelemetryEvent.InjectedLiveChatConfigUsed, {
+                        RequestId: this.requestId || "",
+                    });
+                    /* istanbul ignore next */
+                    this.debug && console.log(`[OmnichannelChatSDK][getChatConfig][injected] used pre-fetched config, liveChatVersion ${this.liveChatVersion}`);
+                    return this.liveChatConfig;
+                }
+
+                this.scenarioMarker.singleRecord(TelemetryEvent.InjectedLiveChatConfigRejected, {
+                    RequestId: this.requestId || "",
+                    ExceptionDetails: JSON.stringify({ reason: validation.reason }),
+                });
+                /* istanbul ignore next */
+                this.debug && console.warn(`[OmnichannelChatSDK][getChatConfig][injected] rejected (${validation.reason}); falling through to network fetch`);
+            } catch (injectionError) {
+                this.scenarioMarker.singleRecord(TelemetryEvent.InjectedLiveChatConfigRejected, {
+                    RequestId: this.requestId || "",
+                    ExceptionDetails: JSON.stringify({ reason: "exception" }),
+                });
+                /* istanbul ignore next */
+                this.debug && console.warn("[OmnichannelChatSDK][getChatConfig][injected] threw; falling through to network fetch", injectionError);
+            }
+            // Intentional fall-through to the network fetch below on any injection failure.
+        }
 
         let liveChatConfig;
         const startTime = typeof performance !== 'undefined' ? performance.now() : undefined;

@@ -678,6 +678,143 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.OCClient.getChatConfig.mock.calls[0][1]).toEqual(optionalParams.sendCacheHeaders);
         });
 
+        it('ChatSDK.getChatConfig() with a valid injectedLiveChatConfig + matching attestation should NOT call OCClient.getChatConfig()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.OCClient = {};
+            chatSDK.OCClient.getChatConfig = jest.fn(() => Promise.resolve({}));
+
+            const injectedLiveChatConfig = {
+                SalOrgId: omnichannelConfig.orgId,
+                LiveChatVersion: 2,
+                DataMaskingInfo: { setting: { msdyn_maskforcustomer: false } },
+                LiveWSAndLiveChatEngJoin: { msdyn_widgetappid: omnichannelConfig.widgetId, PreChatSurvey: { msdyn_prechatenabled: false } },
+                LiveChatConfigAuthSettings: {},
+                ChatWidgetLanguage: { msdyn_localeid: '1033', msdyn_languagename: 'English - United States' }
+            };
+
+            const result = await chatSDK.getChatConfig({
+                injectedLiveChatConfig,
+                injectedConfigAttestation: { orgId: omnichannelConfig.orgId, widgetId: omnichannelConfig.widgetId }
+            });
+
+            expect(chatSDK.OCClient.getChatConfig).toHaveBeenCalledTimes(0);
+            expect(result).toEqual(injectedLiveChatConfig);
+            expect(chatSDK.liveChatConfig).toEqual(injectedLiveChatConfig);
+        });
+
+        it('ChatSDK.getChatConfig() with injectedLiveChatConfig but sendCacheHeaders=true (bypassCache) should skip injection and call OCClient.getChatConfig()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.OCClient = {};
+            chatSDK.OCClient.getChatConfig = jest.fn(() => Promise.resolve({
+                LiveChatVersion: 2,
+                DataMaskingInfo: { setting: { msdyn_maskforcustomer: false } },
+                LiveWSAndLiveChatEngJoin: { PreChatSurvey: { msdyn_prechatenabled: false } },
+                LiveChatConfigAuthSettings: {},
+                ChatWidgetLanguage: { msdyn_localeid: '1033', msdyn_languagename: 'English - United States' }
+            }));
+
+            const injectedLiveChatConfig = {
+                SalOrgId: omnichannelConfig.orgId,
+                LiveChatVersion: 2,
+                LiveWSAndLiveChatEngJoin: { msdyn_widgetappid: omnichannelConfig.widgetId }
+            };
+
+            await chatSDK.getChatConfig({
+                sendCacheHeaders: true,
+                injectedLiveChatConfig,
+                injectedConfigAttestation: { orgId: omnichannelConfig.orgId, widgetId: omnichannelConfig.widgetId }
+            });
+
+            expect(chatSDK.OCClient.getChatConfig).toHaveBeenCalledTimes(1);
+        });
+
+        it('ChatSDK.getChatConfig() should reject an injectedLiveChatConfig whose attestation does not match the SDK instance and fall through to OCClient.getChatConfig()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.OCClient = {};
+            chatSDK.OCClient.getChatConfig = jest.fn(() => Promise.resolve({
+                LiveChatVersion: 2,
+                DataMaskingInfo: { setting: { msdyn_maskforcustomer: false } },
+                LiveWSAndLiveChatEngJoin: { PreChatSurvey: { msdyn_prechatenabled: false } },
+                LiveChatConfigAuthSettings: {},
+                ChatWidgetLanguage: { msdyn_localeid: '1033', msdyn_languagename: 'English - United States' }
+            }));
+
+            const injectedLiveChatConfig = {
+                LiveChatVersion: 2,
+                LiveWSAndLiveChatEngJoin: { msdyn_widgetappid: omnichannelConfig.widgetId }
+            };
+
+            await chatSDK.getChatConfig({
+                injectedLiveChatConfig,
+                injectedConfigAttestation: { orgId: 'a-different-org', widgetId: omnichannelConfig.widgetId }
+            });
+
+            expect(chatSDK.OCClient.getChatConfig).toHaveBeenCalledTimes(1);
+        });
+
+        it('ChatSDK.getChatConfig() should reject an injectedLiveChatConfig with no attestation and fall through to OCClient.getChatConfig()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.OCClient = {};
+            chatSDK.OCClient.getChatConfig = jest.fn(() => Promise.resolve({
+                LiveChatVersion: 2,
+                DataMaskingInfo: { setting: { msdyn_maskforcustomer: false } },
+                LiveWSAndLiveChatEngJoin: { PreChatSurvey: { msdyn_prechatenabled: false } },
+                LiveChatConfigAuthSettings: {},
+                ChatWidgetLanguage: { msdyn_localeid: '1033', msdyn_languagename: 'English - United States' }
+            }));
+
+            await chatSDK.getChatConfig({
+                injectedLiveChatConfig: { LiveChatVersion: 2, LiveWSAndLiveChatEngJoin: {} }
+            });
+
+            expect(chatSDK.OCClient.getChatConfig).toHaveBeenCalledTimes(1);
+        });
+
+        it('ChatSDK.getChatConfig() should reject an injectedLiveChatConfig missing required blocks and fall through to OCClient.getChatConfig()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.OCClient = {};
+            chatSDK.OCClient.getChatConfig = jest.fn(() => Promise.resolve({
+                LiveChatVersion: 2,
+                DataMaskingInfo: { setting: { msdyn_maskforcustomer: false } },
+                LiveWSAndLiveChatEngJoin: { PreChatSurvey: { msdyn_prechatenabled: false } },
+                LiveChatConfigAuthSettings: {},
+                ChatWidgetLanguage: { msdyn_localeid: '1033', msdyn_languagename: 'English - United States' }
+            }));
+
+            // Missing LiveWSAndLiveChatEngJoin.
+            await chatSDK.getChatConfig({
+                injectedLiveChatConfig: { LiveChatVersion: 2 },
+                injectedConfigAttestation: { orgId: omnichannelConfig.orgId, widgetId: omnichannelConfig.widgetId }
+            });
+
+            expect(chatSDK.OCClient.getChatConfig).toHaveBeenCalledTimes(1);
+        });
+
+        it('ChatSDK.getChatConfig() should reject an injectedLiveChatConfig whose payload identity (SalOrgId) does not match and fall through to OCClient.getChatConfig()', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.OCClient = {};
+            chatSDK.OCClient.getChatConfig = jest.fn(() => Promise.resolve({
+                LiveChatVersion: 2,
+                DataMaskingInfo: { setting: { msdyn_maskforcustomer: false } },
+                LiveWSAndLiveChatEngJoin: { PreChatSurvey: { msdyn_prechatenabled: false } },
+                LiveChatConfigAuthSettings: {},
+                ChatWidgetLanguage: { msdyn_localeid: '1033', msdyn_languagename: 'English - United States' }
+            }));
+
+            const injectedLiveChatConfig = {
+                SalOrgId: 'some-other-org-in-the-payload',
+                LiveChatVersion: 2,
+                LiveWSAndLiveChatEngJoin: { msdyn_widgetappid: omnichannelConfig.widgetId }
+            };
+
+            await chatSDK.getChatConfig({
+                injectedLiveChatConfig,
+                injectedConfigAttestation: { orgId: omnichannelConfig.orgId, widgetId: omnichannelConfig.widgetId }
+            });
+
+            expect(chatSDK.OCClient.getChatConfig).toHaveBeenCalledTimes(1);
+        });
+
         it('ChatSDK.getChatConfig() with AuthSettings should call ChatSDK.setAuthTokenProvider()', async () => {
             const chatSDKConfig = {
                 getAuthToken: async () => {

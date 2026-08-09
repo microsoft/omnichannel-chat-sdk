@@ -73,6 +73,8 @@ enum TelemetryEvent {
     StreamingUnexpectedTypeOnNewMessage = "StreamingUnexpectedTypeOnNewMessage",
     StreamingSubscriptionFailed = "StreamingSubscriptionFailed",
     StreamingPolicyViolation = "StreamingPolicyViolation",
+    InjectedLiveChatConfigUsed = "InjectedLiveChatConfigUsed",
+    InjectedLiveChatConfigRejected = "InjectedLiveChatConfigRejected",
 }
 
 export default TelemetryEvent;
