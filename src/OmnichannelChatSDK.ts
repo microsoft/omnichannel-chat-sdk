@@ -47,7 +47,7 @@ import FramedlessClient from "@microsoft/omnichannel-amsclient/lib/FramedlessCli
 import GetAgentAvailabilityOptionalParams from "./core/GetAgentAvailabilityOptionalParams";
 import GetChatTokenOptionalParams from "./core/GetChatTokenOptionalParams";
 import GetConversationDetailsOptionalParams from "./core/GetConversationDetailsOptionalParams";
-import GetLiveChatConfigOptionalParams, { InjectedLiveChatConfigAttestation } from "./core/GetLiveChatConfigOptionalParams";
+import GetLiveChatConfigOptionalParams, { InjectedLiveChatConfigAttestation, InternalInjectedConfigParams } from "./core/GetLiveChatConfigOptionalParams";
 import GetLiveChatTranscriptOptionalParams from "./core/GetLiveChatTranscriptOptionalParams";
 import GetPersistentChatHistoryOptionalParams from "./core/GetPersistentChatHistoryOptionalParams";
 import HostType from "@microsoft/omnichannel-ic3core/lib/interfaces/HostType";
@@ -3113,7 +3113,8 @@ class OmnichannelChatSDK {
     }
 
     private async getChatConfig(optionalParams: GetLiveChatConfigOptionalParams = {}): Promise<ChatConfig> {
-        const { sendCacheHeaders, injectedLiveChatConfig, injectedConfigAttestation } = optionalParams;
+        const { sendCacheHeaders } = optionalParams;
+        const { injectedLiveChatConfig, injectedConfigAttestation } = optionalParams as InternalInjectedConfigParams;
         const bypassCache = sendCacheHeaders === true;
 
         // If an injected config is provided, reuse it instead of making a network call. It is used only when the

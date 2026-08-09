@@ -6,18 +6,19 @@ interface InjectedLiveChatConfigAttestation {
 interface GetLiveChatConfigOptionalParams {
     sendCacheHeaders?: boolean;
     useRuntimeCache?: boolean;
-    /**
-     * A pre-fetched getLiveChatConfig payload the host may pass so the SDK can reuse it instead of making its own
-     * network call. Used only when {@link injectedConfigAttestation} matches this SDK instance and the payload passes
-     * validation; otherwise the SDK falls back to a network fetch. Ignored when sendCacheHeaders is set.
-     */
+}
+
+/**
+ * Not part of the public GetLiveChatConfigOptionalParams surface. These fields are read internally by getChatConfig
+ * and are intentionally excluded from the public type so they do not appear in the consumer-facing API. A pre-fetched
+ * payload is honored only when its attestation matches the orgId/widgetId this SDK was constructed with and it passes
+ * validation; otherwise the SDK falls back to a network fetch. Ignored when sendCacheHeaders is set.
+ */
+interface InternalInjectedConfigParams {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     injectedLiveChatConfig?: any;
-    /**
-     * Identity for {@link injectedLiveChatConfig}, which must match the orgId/widgetId this SDK was constructed with.
-     */
     injectedConfigAttestation?: InjectedLiveChatConfigAttestation;
 }
 
-export type { InjectedLiveChatConfigAttestation };
+export type { InjectedLiveChatConfigAttestation, InternalInjectedConfigParams };
 export default GetLiveChatConfigOptionalParams;
