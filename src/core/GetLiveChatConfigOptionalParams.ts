@@ -27,6 +27,11 @@ interface GetLiveChatConfigOptionalParams {
  * orgId/widgetId this SDK was constructed with; otherwise the SDK falls back to a
  * network fetch. Ignored when `sendCacheHeaders` is set, since a deliberate cache
  * bypass must always reach the network.
+ *
+ * The payload should be the config response body exactly as the config endpoint
+ * returned it. A config obtained through this SDK's own fetch additionally carries
+ * a `headers.date` stamp taken from the HTTP response; a prefetched payload only
+ * carries it if the caller preserved it.
  */
 interface InternalPrefetchedConfigParams {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

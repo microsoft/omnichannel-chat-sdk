@@ -3091,9 +3091,13 @@ class OmnichannelChatSDK {
                 );
 
                 if (prefetchResult.accepted) {
+                    // Ordered so nothing is latched from a payload we may still
+                    // reject: building the configuration is the step that can
+                    // throw, and evaluating attachment support flips a flag that
+                    // is never turned back off.
+                    await this.buildConfigurations(prefetchedLiveChatConfig);
                     this.liveChatConfig = prefetchedLiveChatConfig;
                     this.evaluateAMSAvailability();
-                    await this.buildConfigurations(prefetchedLiveChatConfig);
                     this.scenarioMarker.singleRecord(TelemetryEvent.PrefetchedLiveChatConfigUsed, {
                         RequestId: this.requestId || ""
                     });

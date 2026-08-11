@@ -54,14 +54,15 @@ const rejected = (reason: PrefetchedConfigRejectionReason): PrefetchedConfigVali
  * beyond returning the config:
  *
  * - The first fetch is also what proves the org url currently in use actually
- *   resolves; when that url was rewritten at runtime and has not been exercised
- *   yet, skipping the fetch would strand later calls on an unproven host.
+ *   resolves. When that url was rewritten at runtime, nothing else exercises it,
+ *   so those callers always take the fetch and never the fast path.
  * - The fetch also settles the live chat version on the underlying client. Only
  *   the version that client already defaults to can be adopted without the fetch,
  *   so any other version is rejected rather than half-applied.
  *
- * Any failure is a rejection, never an error: the caller falls back to its normal
- * network fetch, so a bad prefetch costs a round-trip and nothing else.
+ * Any failure is a rejection, never an error: every input is type-checked before
+ * it is used, and the caller falls back to its normal network fetch, so a bad
+ * prefetch costs a round-trip and nothing else.
  *
  * Identity comparison is case-insensitive because org and widget ids are GUIDs
  * whose casing is not stable across the surfaces that pass them around.
@@ -88,11 +89,11 @@ export const validatePrefetchedLiveChatConfig = (
         return rejected(PrefetchedConfigRejectionReason.CacheBypass);
     }
 
-    if (!attestation || !attestation.orgId || !attestation.widgetId) {
+    if (!attestation || typeof attestation.orgId !== "string" || typeof attestation.widgetId !== "string" || !attestation.orgId || !attestation.widgetId) {
         return rejected(PrefetchedConfigRejectionReason.MissingAttestation);
     }
 
-    if (!expected.orgId || !expected.widgetId) {
+    if (typeof expected.orgId !== "string" || typeof expected.widgetId !== "string" || !expected.orgId || !expected.widgetId) {
         return rejected(PrefetchedConfigRejectionReason.MissingAttestation);
     }
 

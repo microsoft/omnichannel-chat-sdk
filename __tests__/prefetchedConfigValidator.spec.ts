@@ -89,6 +89,19 @@ describe("prefetchedConfigValidator", () => {
             expect(result.accepted).toBe(false);
             expect(result.reason).toBe(PrefetchedConfigRejectionReason.MissingAttestation);
         });
+
+        it.each([
+            ["numbers", { orgId: 123, widgetId: 456 }],
+            ["objects", { orgId: {}, widgetId: {} }],
+            ["arrays", { orgId: [], widgetId: [] }],
+            ["a numeric orgId only", { orgId: 123, widgetId: "widget-1" }]
+        ])("rejects an attestation whose ids are %s rather than throwing", (_label, attestation) => {
+            // These are truthy, so a bare falsy check would let them through and
+            // then throw on the case-insensitive comparison. Rejecting is what the
+            // documented contract promises: never an error, always a fallback.
+            expect(() => validate(validConfig, attestation as never)).not.toThrow();
+            expect(validate(validConfig, attestation as never).reason).toBe(PrefetchedConfigRejectionReason.MissingAttestation);
+        });
     });
 
     describe("identity mismatch", () => {
