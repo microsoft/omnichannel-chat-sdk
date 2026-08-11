@@ -8,17 +8,28 @@ const validConfig = {
 };
 const matchingAttestation = { orgId: "org-1", widgetId: "widget-1" };
 
+// The org url in use is proven for the vast majority of callers, so tests default
+// to that and the ones that care about an unproven url opt in explicitly.
+const validate = (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    payload: any,
+    attestation: { orgId: string; widgetId: string } | undefined = matchingAttestation,
+    instanceIdentity: { orgId: string; widgetId: string } = expected,
+    bypassCache = false,
+    orgUrlVerified = true
+) => validatePrefetchedLiveChatConfig(payload, attestation, instanceIdentity, bypassCache, orgUrlVerified);
+
 describe("prefetchedConfigValidator", () => {
     describe("acceptance", () => {
         it("accepts a well-formed config with a matching attestation", () => {
-            const result = validatePrefetchedLiveChatConfig(validConfig, matchingAttestation, expected, false);
+            const result = validate(validConfig, matchingAttestation, expected, false);
 
             expect(result.accepted).toBe(true);
             expect(result.reason).toBeUndefined();
         });
 
         it("accepts when identity matches but casing differs", () => {
-            const result = validatePrefetchedLiveChatConfig(
+            const result = validate(
                 validConfig,
                 { orgId: "ORG-1", widgetId: "Widget-1" },
                 expected,
@@ -31,7 +42,7 @@ describe("prefetchedConfigValidator", () => {
 
     describe("no prefetch attempted", () => {
         it.each([undefined, null])("rejects %p as NotProvided", (payload) => {
-            const result = validatePrefetchedLiveChatConfig(payload, matchingAttestation, expected, false);
+            const result = validate(payload, matchingAttestation, expected, false);
 
             expect(result.accepted).toBe(false);
             expect(result.reason).toBe(PrefetchedConfigRejectionReason.NotProvided);
@@ -42,7 +53,7 @@ describe("prefetchedConfigValidator", () => {
         it("rejects prefetch when the caller requested a cache bypass", () => {
             // A deliberate bypass must reach the network, otherwise sendCacheHeaders
             // would be silently defeated by a stale prefetched payload.
-            const result = validatePrefetchedLiveChatConfig(validConfig, matchingAttestation, expected, true);
+            const result = validate(validConfig, matchingAttestation, expected, true);
 
             expect(result.accepted).toBe(false);
             expect(result.reason).toBe(PrefetchedConfigRejectionReason.CacheBypass);
@@ -51,7 +62,7 @@ describe("prefetchedConfigValidator", () => {
 
     describe("attestation", () => {
         it("rejects a payload with no attestation at all", () => {
-            const result = validatePrefetchedLiveChatConfig(validConfig, undefined, expected, false);
+            const result = validate(validConfig, undefined, expected, false);
 
             expect(result.accepted).toBe(false);
             expect(result.reason).toBe(PrefetchedConfigRejectionReason.MissingAttestation);
@@ -61,14 +72,14 @@ describe("prefetchedConfigValidator", () => {
             ["empty orgId", { orgId: "", widgetId: "widget-1" }],
             ["empty widgetId", { orgId: "org-1", widgetId: "" }]
         ])("rejects an attestation with %s", (_label, attestation) => {
-            const result = validatePrefetchedLiveChatConfig(validConfig, attestation, expected, false);
+            const result = validate(validConfig, attestation, expected, false);
 
             expect(result.accepted).toBe(false);
             expect(result.reason).toBe(PrefetchedConfigRejectionReason.MissingAttestation);
         });
 
         it("rejects when this instance has no identity to compare against", () => {
-            const result = validatePrefetchedLiveChatConfig(
+            const result = validate(
                 validConfig,
                 matchingAttestation,
                 { orgId: "", widgetId: "" },
@@ -82,7 +93,7 @@ describe("prefetchedConfigValidator", () => {
 
     describe("identity mismatch", () => {
         it("rejects a config attested for a different org", () => {
-            const result = validatePrefetchedLiveChatConfig(
+            const result = validate(
                 validConfig,
                 { orgId: "other-org", widgetId: "widget-1" },
                 expected,
@@ -96,7 +107,7 @@ describe("prefetchedConfigValidator", () => {
         it("rejects a config attested for a different widget in the same org", () => {
             // This is the cross-widget case: same tenant, wrong widget. Adopting it
             // would silently serve one widget's configuration to another.
-            const result = validatePrefetchedLiveChatConfig(
+            const result = validate(
                 validConfig,
                 { orgId: "org-1", widgetId: "other-widget" },
                 expected,
@@ -115,14 +126,14 @@ describe("prefetchedConfigValidator", () => {
             ["a boolean", true],
             ["an array", [{ LiveWSAndLiveChatEngJoin: {} }]]
         ])("rejects %s", (_label, payload) => {
-            const result = validatePrefetchedLiveChatConfig(payload, matchingAttestation, expected, false);
+            const result = validate(payload, matchingAttestation, expected, false);
 
             expect(result.accepted).toBe(false);
             expect(result.reason).toBe(PrefetchedConfigRejectionReason.MalformedPayload);
         });
 
         it("rejects an object missing LiveWSAndLiveChatEngJoin", () => {
-            const result = validatePrefetchedLiveChatConfig({ SomethingElse: true }, matchingAttestation, expected, false);
+            const result = validate({ SomethingElse: true }, matchingAttestation, expected, false);
 
             expect(result.accepted).toBe(false);
             expect(result.reason).toBe(PrefetchedConfigRejectionReason.MalformedPayload);
@@ -135,7 +146,7 @@ describe("prefetchedConfigValidator", () => {
             // attests properly but hands over the wrong object would hit, e.g. two
             // widgets on one page with their configs swapped. Attestation alone
             // would have accepted it.
-            const result = validatePrefetchedLiveChatConfig(
+            const result = validate(
                 { ...validConfig, SalOrgId: "other-org" },
                 matchingAttestation,
                 expected,
@@ -147,7 +158,7 @@ describe("prefetchedConfigValidator", () => {
         });
 
         it("rejects a payload whose own widget id belongs to a different widget", () => {
-            const result = validatePrefetchedLiveChatConfig(
+            const result = validate(
                 { ...validConfig, LiveWSAndLiveChatEngJoin: { msdyn_widgetappid: "other-widget" } },
                 matchingAttestation,
                 expected,
@@ -159,7 +170,7 @@ describe("prefetchedConfigValidator", () => {
         });
 
         it("accepts a payload whose identity matches with different casing", () => {
-            const result = validatePrefetchedLiveChatConfig(
+            const result = validate(
                 { ...validConfig, SalOrgId: "ORG-1", LiveWSAndLiveChatEngJoin: { msdyn_widgetappid: "WIDGET-1" } },
                 matchingAttestation,
                 expected,
@@ -176,7 +187,7 @@ describe("prefetchedConfigValidator", () => {
             ["SalOrgId is empty", { LiveChatVersion: 2, SalOrgId: "", LiveWSAndLiveChatEngJoin: {} }],
             ["SalOrgId is not a string", { LiveChatVersion: 2, SalOrgId: 42, LiveWSAndLiveChatEngJoin: {} }]
         ])("accepts when %s, since not every config carries them", (_label, payload) => {
-            const result = validatePrefetchedLiveChatConfig(payload, matchingAttestation, expected, false);
+            const result = validate(payload, matchingAttestation, expected, false);
 
             expect(result.accepted).toBe(true);
         });
@@ -189,22 +200,67 @@ describe("prefetchedConfigValidator", () => {
         ])("rejects a payload whose LiveChatVersion is %s", (_label, payload) => {
             // Without it the SDK cannot tell which chat stack to build, and would
             // fail later in buildConfigurations rather than here.
-            const result = validatePrefetchedLiveChatConfig(payload, matchingAttestation, expected, false);
+            const result = validate(payload, matchingAttestation, expected, false);
 
             expect(result.accepted).toBe(false);
             expect(result.reason).toBe(PrefetchedConfigRejectionReason.MissingLiveChatVersion);
+        });
+
+        it.each([
+            ["an older version", 1],
+            ["an unknown future version", 3],
+            ["a string that looks like a version", "2"]
+        ])("rejects %s", (_label, version) => {
+            // The skipped network fetch is also what settles the version on the
+            // underlying client. Only the version that client already defaults to
+            // can be adopted without it; anything else would leave the two halves
+            // disagreeing and fail later at token or transcript calls.
+            const result = validate({ ...validConfig, LiveChatVersion: version });
+
+            expect(result.accepted).toBe(false);
+            expect(result.reason).toBe(PrefetchedConfigRejectionReason.UnsupportedLiveChatVersion);
+        });
+    });
+
+    describe("unproven org url", () => {
+        it("rejects an otherwise valid payload when the org url has not been proven", () => {
+            // The fetch being skipped is the only thing that exercises an org url
+            // that was rewritten at runtime. Adopting here would leave every later
+            // call pointed at a host nothing has ever reached.
+            const result = validate(validConfig, matchingAttestation, expected, false, false);
+
+            expect(result.accepted).toBe(false);
+            expect(result.reason).toBe(PrefetchedConfigRejectionReason.UnverifiedOrgUrl);
+        });
+
+        it("accepts the same payload once the org url is proven", () => {
+            const result = validate(validConfig, matchingAttestation, expected, false, true);
+
+            expect(result.accepted).toBe(true);
+        });
+
+        it("reports an identity mismatch ahead of an unproven org url", () => {
+            const result = validate(
+                validConfig,
+                { orgId: "other-org", widgetId: "widget-1" },
+                expected,
+                false,
+                false
+            );
+
+            expect(result.reason).toBe(PrefetchedConfigRejectionReason.IdentityMismatch);
         });
     });
 
     describe("check ordering", () => {
         it("reports NotProvided ahead of a cache bypass", () => {
-            const result = validatePrefetchedLiveChatConfig(undefined, matchingAttestation, expected, true);
+            const result = validate(undefined, matchingAttestation, expected, true);
 
             expect(result.reason).toBe(PrefetchedConfigRejectionReason.NotProvided);
         });
 
         it("reports a cache bypass ahead of an identity mismatch", () => {
-            const result = validatePrefetchedLiveChatConfig(
+            const result = validate(
                 validConfig,
                 { orgId: "other-org", widgetId: "other-widget" },
                 expected,
@@ -217,7 +273,7 @@ describe("prefetchedConfigValidator", () => {
         it("reports an identity mismatch ahead of a malformed payload", () => {
             // Identity is checked first on purpose: a mismatched payload must be
             // reported as a mismatch even when it is also junk.
-            const result = validatePrefetchedLiveChatConfig(
+            const result = validate(
                 "junk",
                 { orgId: "other-org", widgetId: "other-widget" },
                 expected,

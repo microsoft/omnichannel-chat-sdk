@@ -3074,9 +3074,10 @@ class OmnichannelChatSDK {
         // Caller-prefetched config fast path. A caller that already fetched the config
         // can hand it over so we skip a duplicate round-trip. The payload is
         // untrusted, so it is adopted only if both the attestation and the payload's
-        // own identity match this instance. Any rejection — or any throw while
-        // adopting — falls through to the normal fetch below, so this path can cost
-        // a round-trip but can never fail chat.
+        // own identity match this instance, and only while the fetch being skipped
+        // has no other work left to do — see the validator for what that covers. Any
+        // rejection — or any throw while adopting — falls through to the normal fetch
+        // below, so this path can cost a round-trip but can never fail chat.
         const prefetchAttempted = prefetchedLiveChatConfig !== undefined && prefetchedLiveChatConfig !== null;
 
         if (prefetchAttempted) {
@@ -3085,13 +3086,14 @@ class OmnichannelChatSDK {
                     prefetchedLiveChatConfig,
                     prefetchedConfigAttestation,
                     { orgId: this.omnichannelConfig.orgId, widgetId: this.omnichannelConfig.widgetId },
-                    bypassCache
+                    bypassCache,
+                    this.unqServicesOrgUrl === null
                 );
 
                 if (prefetchResult.accepted) {
                     this.liveChatConfig = prefetchedLiveChatConfig;
                     this.evaluateAMSAvailability();
-                    this.buildConfigurations(prefetchedLiveChatConfig);
+                    await this.buildConfigurations(prefetchedLiveChatConfig);
                     this.scenarioMarker.singleRecord(TelemetryEvent.PrefetchedLiveChatConfigUsed, {
                         RequestId: this.requestId || ""
                     });
@@ -3163,7 +3165,7 @@ class OmnichannelChatSDK {
             ChatWidgetLanguage: chatWidgetLanguage
         } = liveChatConfig;
 
-        Promise.all([
+        await Promise.all([
             this.setDataMaskingConfiguration(dataMaskingConfig),
             this.setPrechatConfigurations(liveWSAndLiveChatEngJoin),
             this.setAuthSettingConfig(authSettings),

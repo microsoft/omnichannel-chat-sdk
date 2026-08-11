@@ -1,4 +1,5 @@
 import { PrefetchedConfigAttestation } from "../core/GetLiveChatConfigOptionalParams";
+import LiveChatVersion from "../core/LiveChatVersion";
 
 /**
  * Reason a prefetched live chat config was not adopted. Emitted as telemetry so a
@@ -9,8 +10,10 @@ export enum PrefetchedConfigRejectionReason {
     CacheBypass = "CacheBypass",
     MissingAttestation = "MissingAttestation",
     IdentityMismatch = "IdentityMismatch",
+    UnverifiedOrgUrl = "UnverifiedOrgUrl",
     MalformedPayload = "MalformedPayload",
     MissingLiveChatVersion = "MissingLiveChatVersion",
+    UnsupportedLiveChatVersion = "UnsupportedLiveChatVersion",
     PayloadOrgIdMismatch = "PayloadOrgIdMismatch",
     PayloadWidgetIdMismatch = "PayloadWidgetIdMismatch"
 }
@@ -47,6 +50,16 @@ const rejected = (reason: PrefetchedConfigRejectionReason): PrefetchedConfigVali
  * Payload identity is enforced only when the payload carries those fields, since
  * not every config does; a config that omits them is still gated by checks 3-5.
  *
+ * Two further conditions block adoption because the network fetch has side effects
+ * beyond returning the config:
+ *
+ * - The first fetch is also what proves the org url currently in use actually
+ *   resolves; when that url was rewritten at runtime and has not been exercised
+ *   yet, skipping the fetch would strand later calls on an unproven host.
+ * - The fetch also settles the live chat version on the underlying client. Only
+ *   the version that client already defaults to can be adopted without the fetch,
+ *   so any other version is rejected rather than half-applied.
+ *
  * Any failure is a rejection, never an error: the caller falls back to its normal
  * network fetch, so a bad prefetch costs a round-trip and nothing else.
  *
@@ -57,13 +70,15 @@ const rejected = (reason: PrefetchedConfigRejectionReason): PrefetchedConfigVali
  * @param attestation The identity the caller claims the payload was fetched for.
  * @param expected This SDK instance's own configured identity.
  * @param bypassCache Whether the caller requested a deliberate cache bypass.
+ * @param orgUrlVerified Whether the org url in use is already known to resolve.
  */
 export const validatePrefetchedLiveChatConfig = (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     prefetchedLiveChatConfig: any,
     attestation: PrefetchedConfigAttestation | undefined,
     expected: PrefetchedConfigAttestation,
-    bypassCache: boolean
+    bypassCache: boolean,
+    orgUrlVerified: boolean
 ): PrefetchedConfigValidationResult => {
     if (prefetchedLiveChatConfig === undefined || prefetchedLiveChatConfig === null) {
         return rejected(PrefetchedConfigRejectionReason.NotProvided);
@@ -89,6 +104,10 @@ export const validatePrefetchedLiveChatConfig = (
         return rejected(PrefetchedConfigRejectionReason.IdentityMismatch);
     }
 
+    if (!orgUrlVerified) {
+        return rejected(PrefetchedConfigRejectionReason.UnverifiedOrgUrl);
+    }
+
     if (typeof prefetchedLiveChatConfig !== "object" || Array.isArray(prefetchedLiveChatConfig)) {
         return rejected(PrefetchedConfigRejectionReason.MalformedPayload);
     }
@@ -102,6 +121,10 @@ export const validatePrefetchedLiveChatConfig = (
 
     if (prefetchedLiveChatConfig.LiveChatVersion === undefined || prefetchedLiveChatConfig.LiveChatVersion === null) {
         return rejected(PrefetchedConfigRejectionReason.MissingLiveChatVersion);
+    }
+
+    if (prefetchedLiveChatConfig.LiveChatVersion !== LiveChatVersion.V2) {
+        return rejected(PrefetchedConfigRejectionReason.UnsupportedLiveChatVersion);
     }
 
     // The attestation above is only the caller's CLAIM about this payload. These
