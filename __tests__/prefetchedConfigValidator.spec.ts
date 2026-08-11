@@ -62,7 +62,9 @@ describe("prefetchedConfigValidator", () => {
 
     describe("attestation", () => {
         it("rejects a payload with no attestation at all", () => {
-            const result = validate(validConfig, undefined, expected, false);
+            // Calls through directly: the wrapper above substitutes a default for
+            // an omitted attestation, which is exactly what this test must not get.
+            const result = validatePrefetchedLiveChatConfig(validConfig, undefined, expected, false, true);
 
             expect(result.accepted).toBe(false);
             expect(result.reason).toBe(PrefetchedConfigRejectionReason.MissingAttestation);
