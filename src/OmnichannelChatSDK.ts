@@ -3095,7 +3095,7 @@ class OmnichannelChatSDK {
                     // reject: building the configuration is the step that can
                     // throw, and evaluating attachment support flips a flag that
                     // is never turned back off.
-                    await this.buildConfigurations(prefetchedLiveChatConfig);
+                    await this.buildConfigurations(prefetchedLiveChatConfig, true);
                     this.liveChatConfig = prefetchedLiveChatConfig;
                     this.evaluateAMSAvailability();
                     this.scenarioMarker.singleRecord(TelemetryEvent.PrefetchedLiveChatConfigUsed, {
@@ -3159,7 +3159,7 @@ class OmnichannelChatSDK {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private async buildConfigurations(liveChatConfig: any): Promise<void> {
+    private async buildConfigurations(liveChatConfig: any, awaitCompletion = false): Promise<void> {
 
         const {
             DataMaskingInfo: dataMaskingConfig,
@@ -3169,7 +3169,7 @@ class OmnichannelChatSDK {
             ChatWidgetLanguage: chatWidgetLanguage
         } = liveChatConfig;
 
-        await Promise.all([
+        const configurationTasks = Promise.all([
             this.setDataMaskingConfiguration(dataMaskingConfig),
             this.setPrechatConfigurations(liveWSAndLiveChatEngJoin),
             this.setAuthSettingConfig(authSettings),
@@ -3179,6 +3179,14 @@ class OmnichannelChatSDK {
             this.setLiveChatVersionConfiguration(liveChatVersion),
             this.setWidgetSnippetBaseUrl(liveWSAndLiveChatEngJoin)
         ]);
+
+        // Off by default so the established caller keeps its exact behaviour: it does
+        // not await this method, so it never observed a failure here either way.
+        // Only a caller that must know whether the configuration actually applied --
+        // and can undo its own work if not -- opts in.
+        if (awaitCompletion) {
+            await configurationTasks;
+        }
     }
 
     private resolveIC3ClientUrl(): string {
