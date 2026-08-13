@@ -2,7 +2,7 @@
 
 [![npm version](https://badge.fury.io/js/%40microsoft%2Fomnichannel-chat-sdk.svg)](https://badge.fury.io/js/%40microsoft%2Fomnichannel-chat-sdk)
 [![install size](https://packagephobia.com/badge?p=@microsoft/omnichannel-chat-sdk)](https://packagephobia.com/result?p=@microsoft/omnichannel-chat-sdk)
-![Release CI](https://github.com/microsoft/omnichannel-chat-sdk/workflows/Release%20CI/badge.svg)
+[![npm Release](https://github.com/microsoft/omnichannel-chat-sdk/actions/workflows/npm-release.yml/badge.svg)](https://github.com/microsoft/omnichannel-chat-sdk/actions/workflows/npm-release.yml)
 ![npm](https://img.shields.io/npm/dm/@microsoft/omnichannel-chat-sdk)
 
 > [!IMPORTANT]
@@ -112,9 +112,9 @@ For a detailed tracking of the releases, please refer to the [Changelog document
 
 _**Important Note:**_ Versions below 1.11.0 are no longer supported after November 1st, 2025. Please update to recent versions to ensure you have the latest features and bug fixes.
 
-
 | Version | Docs | Release Date | End of Support | Deprecated |
 | -- | -- | -- | -- | -- |
+| 2.0.0 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v2.0.0) | Aug 13th 2026 | Aug 13th 2027 | |
 | 1.11.4 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.11.4) | Jul 17th 2025 | Jul 17th 2026 | |
 | 1.11.3 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.11.3) | Jul 14th 2025 | Jul 14th 2026 | |
 | 1.11.2 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.11.2) | Jun 24th 2025 | Jun 24th 2026 | |
@@ -123,6 +123,8 @@ _**Important Note:**_ Versions below 1.11.0 are no longer supported after Novemb
 
 
 ## Installation
+
+Node.js `>=22.12.0` is required.
 
 ```console
 npm install @microsoft/omnichannel-chat-sdk --save
@@ -1323,11 +1325,11 @@ const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, cha
 await chatSDK.initialize();
 ```
 
-# Releasing
+## Releasing
 
-See [docs/RELEASING.md](docs/RELEASING.md) for how to publish new versions to npm.
+See [docs/RELEASING.md](docs/RELEASING.md) for development builds, official npm and GitHub releases, release notes, and hotfixes.
 
-# Contributing
+## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us

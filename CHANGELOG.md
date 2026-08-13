@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-08-13
+
 ### Breaking
 
 - Raised the supported consumer runtime to Node.js `>=22.12.0`, matching the remediated OC SDK and AMS client dependencies. This support-policy change requires a major release.
@@ -16,7 +18,8 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Standardized local, pull-request, release, and consumer runtime support on Node.js `>=22.12.0`.
-- Updated `@microsoft/ocsdk` to `0.6.0-main.dcb2d46` and `@microsoft/omnichannel-amsclient` to `0.2.0-main.3e03701`.
+- Updated `@microsoft/ocsdk` to `0.6.0` and `@microsoft/omnichannel-amsclient` to `0.2.0`.
+- Hardened official releases with tag validation, scoped GitHub permissions, and one tarball shared by npm and GitHub Releases.
 - Removed unused direct Axios, `form-data`, and `follow-redirects` dependencies; the remediated OC SDK now owns the patched HTTP dependency floor.
 - Removed the obsolete brace-expansion override after the regenerated lockfile resolved patched dev-only versions.
 
@@ -54,7 +57,6 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Pinned `@microsoft/botframework-webchat-adapter-azure-communication-chat` to exact version `0.0.1-beta.8` (removed caret). The previous `^0.0.1-beta.6` range resolved (per semver §11) to the rogue prerelease `0.0.1-beta-1`, which ships an older adapter build whose 15s polling watchdog caused a ~15s delay before the first bot reply rendered in LCW. Pinning forces npm to install the intended `beta.8` build, which contains the fast-poll fix (`iteration <= 45 ? 1000 : delaytm`).
-- Updated botframework-webchat-adapter-azure-communication-chat to "^0.0.1-beta.6"
 
 ### Added
 
@@ -63,11 +65,10 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Add `github.repository` guard to release workflows to prevent them from running on forks
-- Uptake [@microsoft/ocsdk@0.5.22-main.12fe119](https://www.npmjs.com/package/@microsoft/ocsdk/v/0.5.22-main.12fe119) (adds en-au to supportedLocales)
 - Switch npm publishing to GitHub Actions OIDC trusted publishing (no NPM_TOKEN needed)
 - Dev versions now auto-publish on push to main (e.g. `1.11.9-main.abc1234`)
 - Add `hotfix/**` branch trigger to npm-release workflow
-- Publish a GitHub Release with the packed `.tgz` and auto-generated release notes whenever a `v*` tag is pushed (runs after the npm publish step in `npm-release.yml`)
+- Publish a GitHub Release with changelog notes and the exact npm `.tgz` whenever a `v*` tag is pushed
 
 ### Fixed
 - Fix unhandled exception in the WebSocket `onNewMessage` callback wrapper in `OmnichannelChatSDK`. `createOmnichannelMessage()` was called without a try/catch, so a transformation error became an unhandled promise rejection that broke the callback chain and prevented the customer `onNewMessage` callback from firing for subsequent messages. The transformation is now wrapped in try/catch: failures are recorded via `scenarioMarker.singleRecord` (structured `ExceptionDetails`) and the bad message is skipped, keeping message reception alive

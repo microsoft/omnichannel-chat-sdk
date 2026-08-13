@@ -9,63 +9,104 @@ This package uses **GitHub Actions OIDC trusted publishing** — no npm tokens o
 Every push to `main` automatically publishes a dev version to npm:
 
 ```
-1.11.8-main.abc1234
+2.0.0-main.abc1234
        ^^^^^^^^^^^^
        branch + short commit SHA (via version-from-git)
 ```
 
-- **npm tag**: `main` (not `latest`)
-- **Install**: `npm install @microsoft/omnichannel-chat-sdk@main`
+- **npm dist-tag**: `latest`
+- **Install**: Use the exact version from the workflow output, such as `npm install @microsoft/omnichannel-chat-sdk@2.0.0-main.abc1234`
 - **Triggered by**: Any merge/push to the `main` branch
 
-### Release Versions (Manual — Tag Push)
+The workflow intentionally moves `latest` to each `main` prerelease. An install without a version can receive a prerelease.
 
-To publish a release version (e.g. `1.12.0`):
+### Official Releases (Release PR and Tag)
 
-1. **Update the version** in `package.json`:
+Use an approved semantic version. In the examples below, replace `2.0.1` and `578` with the new version and pull-request number.
+
+```bash
+VERSION=2.0.1
+PR_NUMBER=578
+```
+
+1. **Create a release branch from current `upstream/main`.**
+
    ```bash
-   # Edit package.json version field to the new version
+   git fetch upstream
+   git checkout -b "release/v$VERSION" upstream/main
    ```
 
-2. **Update the changelog** in `CHANGELOG.md`
+2. **Set the version in `package.json` and `package-lock.json`.**
 
-3. **Commit and push** to main:
    ```bash
-   git add package.json CHANGELOG.md
-   git commit -m "Bump version to 1.12.0"
-   git push
+   npm version "$VERSION" --no-git-tag-version
    ```
 
-4. **Create and push a tag**:
+3. **Finalize `CHANGELOG.md`.**
+
+   Move all release entries below `## [$VERSION] - YYYY-MM-DD`. Keep a new `## [Unreleased]` section above that heading.
+
+4. **Open a pull request.**
+
+   Include `package.json`, `package-lock.json`, and `CHANGELOG.md`. Merge the pull request only after all required checks pass.
+
+   The merge to `main` publishes a `VERSION-main.SHA` prerelease with the npm `latest` dist-tag. This publish is expected.
+
+5. **Get the pull-request merge commit.**
+
    ```bash
-   git tag v1.12.0
-   git push origin v1.12.0
+   MERGE_SHA=$(gh pr view "$PR_NUMBER" --repo microsoft/omnichannel-chat-sdk --json mergeCommit --jq '.mergeCommit.oid')
+   test -n "$MERGE_SHA"
    ```
 
-5. The `npm-release.yml` workflow will:
-   - Build the package (`npm run build:tsc`)
-   - Publish to npm with `--tag latest`
-   - Include provenance attestation (visible on npmjs.com)
+6. **Create an annotated tag on that merge commit.**
+
+   ```bash
+   git fetch upstream --tags
+   git tag -a "v$VERSION" "$MERGE_SHA" -m "Release v$VERSION"
+   git push upstream "v$VERSION"
+   ```
+
+   The tag must equal `v` plus the version in `package.json`. The workflow rejects mismatched tags and prerelease tags.
+
+7. **Wait for the tag workflows.**
+
+Do not use **Run workflow** for an official release. The pushed tag starts the npm and legacy artifact workflows.
+
+The npm workflow publishes the package with `--tag latest`. Then it creates GitHub Release `v$VERSION` with notes and the published npm tarball.
+
+### GitHub Release Notes
+
+The workflow removes `v` from the tag. For example, it converts `v2.0.1` to `2.0.1`.
+
+It finds `## [2.0.1]` in `CHANGELOG.md`. It copies that section until the next `## [` version heading.
+
+The copied text becomes the GitHub Release body. If the matching section is empty or absent, GitHub generates notes from merged pull requests.
+
+The workflow packs the package once. It publishes that `.tgz` file to npm and attaches the same file to the GitHub Release.
 
 ### Verifying a Publish
 
 ```bash
-# Check latest release version
+# Read the version selected by latest
 npm view @microsoft/omnichannel-chat-sdk version
 
-# Check all dist-tags (latest + main)
+# Read all dist-tags
 npm view @microsoft/omnichannel-chat-sdk dist-tags
 
-# Check a specific dev version
-npm view @microsoft/omnichannel-chat-sdk@main version
+# Check the official version
+npm view "@microsoft/omnichannel-chat-sdk@$VERSION" version
+
+# Check the GitHub Release and its asset
+gh release view "v$VERSION" --repo microsoft/omnichannel-chat-sdk
 ```
 
 ### Tag Format
 
 | Tag pattern | What publishes | npm dist-tag |
 |-------------|---------------|--------------|
-| `v*` (e.g. `v1.12.0`) | Release version from `package.json` | `latest` |
-| Push to `main` | Dev version `X.Y.Z-main.<sha>` | `main` |
+| `v*` (e.g. `v2.0.1`) | Release version from `package.json` | `latest` |
+| Push to `main` | Dev version `X.Y.Z-main.<sha>` | `latest` |
 
 ### Hotfix Versions
 
@@ -95,6 +136,8 @@ For urgent fixes that need to ship against an older release (not `main`), use a 
    npm view @microsoft/omnichannel-chat-sdk@1.11.7-hotfix.<name>.1
    ```
 
+Do not create a `v*` tag for a hotfix prerelease. The workflow rejects prerelease tags to protect the `latest` dist-tag.
+
 #### Hotfix Version Naming Convention
 
 ```
@@ -109,6 +152,8 @@ Example: `1.11.7-hotfix.enau.1`
 
 ### Important Notes
 
-- **Burned versions**: If a publish fails, that version number is consumed by npm. You must bump to the next version.
+- **Published versions**: npm does not permit a second publish of the same version. Use a new version after npm accepts a bad publish.
 - **Trusted publisher**: Configured on npmjs.com to trust `microsoft/omnichannel-chat-sdk` → `npm-release.yml`. No npm tokens needed.
 - **Provenance**: All publishes include a signed provenance statement verifiable on npmjs.com.
+- **Release notes**: A matching changelog section supplies the GitHub Release notes. GitHub generates notes when the section is absent.
+- **Release asset**: Each GitHub Release contains the exact npm `.tgz` file.
