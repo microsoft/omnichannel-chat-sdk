@@ -16,6 +16,7 @@
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 
 import LiveChatVersion from "../src/core/LiveChatVersion";
+import { SDKProvider } from "@microsoft/ocsdk";
 
 describe('Prefetched live chat config adoption', () => {
     const omnichannelConfig = {
@@ -190,5 +191,92 @@ describe('Prefetched live chat config with a rewritten org url', () => {
         });
 
         expect(chatSDK.OCClient.getChatConfig).toHaveBeenCalledTimes(1);
+    });
+});
+
+/**
+ * The two independent optimizations meet here.
+ *
+ * `useParallelLoad` moves the config fetch onto a different code path
+ * (`parallelInitialization` -> `loadChatConfig`) than the default sequential
+ * one. A prefetched config that is only honoured on the sequential path would
+ * look completely correct in every unit test above -- they call `getChatConfig`
+ * directly -- and still cost a second network fetch in production, which is the
+ * entire saving the prefetch exists to deliver.
+ */
+describe('Prefetched live chat config under parallel initialization', () => {
+    const omnichannelConfig = {
+        orgUrl: 'https://contoso-crm4.omnichannelengagementhub.com',
+        orgId: 'org-id',
+        widgetId: 'widget-id'
+    };
+
+    const networkConfig = {
+        LiveWSAndLiveChatEngJoin: { msdyn_widgetappid: 'widget-id' },
+        LiveChatVersion: LiveChatVersion.V2,
+        DataMaskingInfo: { setting: { msdyn_maskforcustomer: false } },
+        ChatWidgetLanguage: { msdyn_localeid: '1033' }
+    };
+
+    const makeSDK = () => {
+        const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+        chatSDK.scenarioMarker = { singleRecord: jest.fn(), startScenario: jest.fn(), completeScenario: jest.fn(), failScenario: jest.fn() };
+        chatSDK.evaluateAMSAvailability = jest.fn();
+        // Narrow the test to the config path: component and attachment loading
+        // are what run *concurrently* with it, not what it is asserting.
+        chatSDK.loadInitComponents = jest.fn();
+        chatSDK.loadAmsClient = jest.fn();
+        return chatSDK;
+    };
+
+    let getChatConfig: jest.Mock;
+    let originalGetSDK: unknown;
+
+    beforeEach(() => {
+        getChatConfig = jest.fn().mockResolvedValue(networkConfig);
+        originalGetSDK = SDKProvider.getSDK;
+        // loadChatConfig builds its own client, replacing anything assigned to
+        // the instance beforehand, so the count has to be taken from here.
+        (SDKProvider as any).getSDK = jest.fn(() => ({ getChatConfig }));
+    });
+
+    afterEach(() => {
+        (SDKProvider as any).getSDK = originalGetSDK;
+    });
+
+    it('adopts the prefetched config, so the parallel path also makes no fetch', async () => {
+        const chatSDK = makeSDK();
+
+        await chatSDK.initialize({
+            useParallelLoad: true,
+            getLiveChatConfigOptionalParams: {
+                prefetchedLiveChatConfig: { ...networkConfig, prefetchMarker: true },
+                prefetchedConfigAttestation: {
+                    orgId: 'org-id',
+                    widgetId: 'widget-id',
+                    // What the caller reached, which is what the runtime rewrite
+                    // inside this very initialize() call produces.
+                    orgUrl: 'https://m-org-id.eu.omnichannelengagementhub.com'
+                }
+            }
+        });
+
+        expect(getChatConfig).toHaveBeenCalledTimes(0);
+        expect(chatSDK.liveChatConfig.prefetchMarker).toBe(true);
+    });
+
+    it('still fetches on the parallel path when the config is not proven', async () => {
+        const chatSDK = makeSDK();
+
+        await chatSDK.initialize({
+            useParallelLoad: true,
+            getLiveChatConfigOptionalParams: {
+                prefetchedLiveChatConfig: { ...networkConfig, prefetchMarker: true },
+                prefetchedConfigAttestation: { orgId: 'org-id', widgetId: 'widget-id' }
+            }
+        });
+
+        expect(getChatConfig).toHaveBeenCalledTimes(1);
+        expect(chatSDK.liveChatConfig.prefetchMarker).toBeUndefined();
     });
 });
