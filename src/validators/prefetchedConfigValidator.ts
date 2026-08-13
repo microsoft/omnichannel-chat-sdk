@@ -11,6 +11,7 @@ export enum PrefetchedConfigRejectionReason {
     MissingAttestation = "MissingAttestation",
     IdentityMismatch = "IdentityMismatch",
     UnverifiedOrgUrl = "UnverifiedOrgUrl",
+    OrgUrlMismatch = "OrgUrlMismatch",
     MalformedPayload = "MalformedPayload",
     MissingLiveChatVersion = "MissingLiveChatVersion",
     UnsupportedLiveChatVersion = "UnsupportedLiveChatVersion",
@@ -26,6 +27,23 @@ export interface PrefetchedConfigValidationResult {
 const accepted: PrefetchedConfigValidationResult = { accepted: true };
 
 const rejected = (reason: PrefetchedConfigRejectionReason): PrefetchedConfigValidationResult => ({ accepted: false, reason });
+
+/**
+ * Whether two org urls address the same endpoint.
+ *
+ * Compared on ORIGIN rather than on the raw string: the two sides are produced
+ * independently (the caller builds a fetch url, the SDK builds its org url), so
+ * they can legitimately differ in trailing slash, case, or path while naming the
+ * same host. Anything unparsable is not a match — this gates a fast path, so
+ * "cannot tell" must mean "take the network fetch".
+ */
+const sameOrigin = (a: string, b: string): boolean => {
+    try {
+        return new URL(a).origin.toLowerCase() === new URL(b).origin.toLowerCase();
+    } catch {
+        return false;
+    }
+};
 
 /**
  * Decide whether a caller-prefetched live chat config may be adopted in place of a
@@ -54,8 +72,14 @@ const rejected = (reason: PrefetchedConfigRejectionReason): PrefetchedConfigVali
  * beyond returning the config:
  *
  * - The first fetch is also what proves the org url currently in use actually
- *   resolves. When that url was rewritten at runtime, nothing else exercises it,
- *   so those callers always take the fetch and never the fast path.
+ *   resolves. The SDK may rewrite that url at runtime (unq -> Core Services) and
+ *   nothing else exercises the rewritten one; if it does not resolve, the fetch
+ *   is what discovers that and falls back. Skipping the fetch skips the proof, so
+ *   the caller must supply one: it attests the url it fetched from, and the
+ *   payload is adopted only when that is the same url this instance is about to
+ *   use. Then the caller's own successful fetch IS the proof. A caller that
+ *   attests nothing, or attests a different url, takes the network fetch exactly
+ *   as before.
  * - The fetch also settles the live chat version on the underlying client. Only
  *   the version that client already defaults to can be adopted without the fetch,
  *   so any other version is rejected rather than half-applied.
@@ -71,7 +95,8 @@ const rejected = (reason: PrefetchedConfigRejectionReason): PrefetchedConfigVali
  * @param attestation The identity the caller claims the payload was fetched for.
  * @param expected This SDK instance's own configured identity.
  * @param bypassCache Whether the caller requested a deliberate cache bypass.
- * @param orgUrlVerified Whether the org url in use is already known to resolve.
+ * @param effectiveOrgUrl The org url this SDK instance is about to use, after any
+ *   runtime rewrite. The attested fetch url must match it for the fast path.
  */
 export const validatePrefetchedLiveChatConfig = (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -79,7 +104,7 @@ export const validatePrefetchedLiveChatConfig = (
     attestation: PrefetchedConfigAttestation | undefined,
     expected: PrefetchedConfigAttestation,
     bypassCache: boolean,
-    orgUrlVerified: boolean
+    effectiveOrgUrl: string
 ): PrefetchedConfigValidationResult => {
     if (prefetchedLiveChatConfig === undefined || prefetchedLiveChatConfig === null) {
         return rejected(PrefetchedConfigRejectionReason.NotProvided);
@@ -105,8 +130,12 @@ export const validatePrefetchedLiveChatConfig = (
         return rejected(PrefetchedConfigRejectionReason.IdentityMismatch);
     }
 
-    if (!orgUrlVerified) {
+    if (typeof attestation.orgUrl !== "string" || !attestation.orgUrl) {
         return rejected(PrefetchedConfigRejectionReason.UnverifiedOrgUrl);
+    }
+
+    if (!sameOrigin(attestation.orgUrl, effectiveOrgUrl)) {
+        return rejected(PrefetchedConfigRejectionReason.OrgUrlMismatch);
     }
 
     if (typeof prefetchedLiveChatConfig !== "object" || Array.isArray(prefetchedLiveChatConfig)) {

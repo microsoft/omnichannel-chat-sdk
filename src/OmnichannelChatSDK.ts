@@ -3078,6 +3078,11 @@ class OmnichannelChatSDK {
         // has no other work left to do — see the validator for what that covers. Any
         // rejection — or any throw while adopting — falls through to the normal fetch
         // below, so this path can cost a round-trip but can never fail chat.
+        //
+        // `omnichannelConfig.orgUrl` is passed post-conversion on purpose: both
+        // initialization paths run `useCoreServicesOrgUrlIfNotSet()` before reaching
+        // here, so it is the url this instance will actually use, and it is what the
+        // caller's attested fetch url has to match.
         const prefetchAttempted = prefetchedLiveChatConfig !== undefined && prefetchedLiveChatConfig !== null;
 
         if (prefetchAttempted) {
@@ -3087,7 +3092,7 @@ class OmnichannelChatSDK {
                     prefetchedConfigAttestation,
                     { orgId: this.omnichannelConfig.orgId, widgetId: this.omnichannelConfig.widgetId },
                     bypassCache,
-                    this.unqServicesOrgUrl === null
+                    this.omnichannelConfig.orgUrl
                 );
 
                 if (prefetchResult.accepted) {

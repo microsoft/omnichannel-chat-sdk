@@ -8,6 +8,20 @@
 interface PrefetchedConfigAttestation {
     orgId: string;
     widgetId: string;
+    /**
+     * The org url the caller actually fetched this config from.
+     *
+     * The SDK may rewrite its own org url at runtime (unq -> Core Services), and
+     * the config fetch is what proves the rewritten url resolves — a caller that
+     * skips the fetch skips that proof. Attesting the url makes the caller's own
+     * successful fetch stand in for it, but only when it is the SAME url this
+     * instance is about to use; anything else falls back to the network fetch,
+     * which still carries the DNS-failure fallback.
+     *
+     * Optional for backward compatibility. A caller that omits it never takes the
+     * fast path.
+     */
+    orgUrl?: string;
 }
 
 interface GetLiveChatConfigOptionalParams {
