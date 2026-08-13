@@ -20,6 +20,10 @@ All notable changes to this project will be documented in this file.
 - Standardized local, pull-request, release, and consumer runtime support on Node.js `>=22.12.0`.
 - Updated `@microsoft/ocsdk` to `0.6.0` and `@microsoft/omnichannel-amsclient` to `0.2.0`.
 - Hardened official releases with tag validation, scoped GitHub permissions, and one tarball shared by npm and GitHub Releases.
+- Added public migration guidance and API examples for streaming messages and mid-conversation authentication.
+- Added a complete `2.0.0` migration, validation, deployment, and rollback guide.
+- Documented authentication, streaming, and read-state prerequisites for the new public APIs.
+- Replaced the obsolete release-agent prompt with the canonical pull-request and tag workflow.
 - Removed unused direct Axios, `form-data`, and `follow-redirects` dependencies; the remediated OC SDK now owns the patched HTTP dependency floor.
 - Removed the obsolete brace-expansion override after the regenerated lockfile resolved patched dev-only versions.
 

@@ -101,8 +101,10 @@ npm install
 - **Lint:** `npm run lint` - ESLint validation
 
 **Release:**
-- **Publish:** `npm publish` - Publish to npm registry (requires npm auth)
-- **Version bump:** `npm version <major|minor|patch>` - Semantic versioning
+- **Canonical process:** Follow [docs/RELEASING.md](docs/RELEASING.md)
+- **Official release:** Merge a release PR, then push `v<version>` on that exact merge commit
+- **Automation:** The tag publishes the package to npm and creates the GitHub Release with changelog notes and the exact npm tarball
+- **Prohibited:** Do not run `npm publish` manually and do not use workflow dispatch for an official release
 
 ---
 
