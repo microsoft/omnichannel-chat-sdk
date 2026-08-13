@@ -2,7 +2,7 @@
 
 [![npm version](https://badge.fury.io/js/%40microsoft%2Fomnichannel-chat-sdk.svg)](https://badge.fury.io/js/%40microsoft%2Fomnichannel-chat-sdk)
 [![install size](https://packagephobia.com/badge?p=@microsoft/omnichannel-chat-sdk)](https://packagephobia.com/result?p=@microsoft/omnichannel-chat-sdk)
-![Release CI](https://github.com/microsoft/omnichannel-chat-sdk/workflows/Release%20CI/badge.svg)
+[![npm Release](https://github.com/microsoft/omnichannel-chat-sdk/actions/workflows/npm-release.yml/badge.svg)](https://github.com/microsoft/omnichannel-chat-sdk/actions/workflows/npm-release.yml)
 ![npm](https://img.shields.io/npm/dm/@microsoft/omnichannel-chat-sdk)
 
 > [!IMPORTANT]
@@ -22,6 +22,7 @@ Please make sure you have a chat widget configured before using this package or 
 - [SDK Methods](#sdk-methods)
   - [Initialization](#initialization)
   - [Start Chat](#start-chat)
+  - [Authenticate Chat](#authenticate-chat)
   - [End Chat](#end-chat)
   - [Get Pre-Chat Survey](#get-pre-chat-survey)
   - [Get Live Chat Config](#get-live-chat-config)
@@ -34,6 +35,7 @@ Please make sure you have a chat widget configured before using this package or 
   - [Get Messages](#get-messages)
   - [Send Messages](#send-messages)
   - [On New Message](#on-new-message)
+  - [On Streaming Message](#on-streaming-message)
   - [On Typing Event](#on-typing-event)
   - [On Agent End Session](#on-agent-end-session)
   - [Send Typing Event](#send-typing-event)
@@ -112,17 +114,34 @@ For a detailed tracking of the releases, please refer to the [Changelog document
 
 _**Important Note:**_ Versions below 1.11.0 are no longer supported after November 1st, 2025. Please update to recent versions to ensure you have the latest features and bug fixes.
 
-
 | Version | Docs | Release Date | End of Support | Deprecated |
 | -- | -- | -- | -- | -- |
+| 2.0.0 | [Migration Guide](docs/MIGRATION_2.0.md) / [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v2.0.0) | Aug 13th 2026 | Aug 13th 2027 | |
 | 1.11.4 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.11.4) | Jul 17th 2025 | Jul 17th 2026 | |
 | 1.11.3 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.11.3) | Jul 14th 2025 | Jul 14th 2026 | |
 | 1.11.2 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.11.2) | Jun 24th 2025 | Jun 24th 2026 | |
 | 1.11.1 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.11.1) | Jun 5th 2025 | Jun 5th 2026 | |
 | 1.11.0 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.11.0) | May 27th 2025 | May 27th 2026 | |
 
+### Upgrade to 2.0.0
+
+Version `2.0.0` requires Node.js `>=22.12.0`. This requirement also applies to the official OC SDK and AMS client dependencies.
+
+```bash
+npm install @microsoft/omnichannel-chat-sdk@2.0.0 --save-exact
+```
+
+The npm `latest` dist-tag can point to a `main` prerelease. Use the exact version for production.
+
+Regenerate the application lockfile after the update. Then run the application build and tests on Node.js 22.
+
+Version `2.0.0` adds progressive bot-message streaming, mid-conversation authentication, read receipts, and unread-message counts. Existing `onNewMessage` handlers continue to receive final streaming messages.
+
+See the [2.0 migration guide](docs/MIGRATION_2.0.md) for the complete upgrade and validation procedure.
 
 ## Installation
+
+Node.js `>=22.12.0` is required.
 
 ```console
 npm install @microsoft/omnichannel-chat-sdk --save
@@ -312,6 +331,32 @@ const optionalParams = {
 await chatSDK.startChat(optionalParams);
 ```
 
+### Authenticate Chat
+
+It authenticates an active unauthenticated conversation. Enable optional authenticated sign-in for the workstream before you use this method.
+
+Call `initialize()` and `startChat()` before `authenticateChat()`. The first argument can be a token or an asynchronous token provider.
+
+```ts
+await chatSDK.initialize();
+await chatSDK.startChat();
+
+await chatSDK.authenticateChat(async () => {
+    const response = await fetch("https://contoso.example/token");
+    if (!response.ok) {
+        throw new Error("Token request failed");
+    }
+
+    return response.text();
+}, {
+    refreshChatToken: true
+});
+```
+
+Set `refreshChatToken` to `true` when subsequent SDK calls must use a refreshed authenticated chat token.
+
+The method throws `InvalidConversation` when no conversation is active. It throws `MidConversationAuthFailure` when token resolution or authentication fails.
+
 ### End Chat
 
 It ends the current Omnichannel conversation.
@@ -455,6 +500,38 @@ chatSDK.onNewMessage((message) => {
     console.log(message);
 }, optionalParams);
 ```
+
+### On Streaming Message
+
+It subscribes to progressive ACS bot-message updates. This API is available only for Live Chat version 2.
+
+Enable streaming when you start the conversation. Then register the handler after `startChat()` completes.
+
+```ts
+await chatSDK.initialize();
+await chatSDK.startChat({
+    supportsLcwStreaming: true
+});
+
+await chatSDK.onStreamingMessage((message) => {
+    const { streamingMessageType, streamEndReason } = message.streamingMetadata;
+
+    // Each event contains the full assembled content, not only the new text.
+    renderStreamingMessage(message.id, message.content);
+
+    if (message.policyViolation) {
+        handlePolicyViolation(message.policyViolation.result);
+    }
+
+    if (streamingMessageType === "final") {
+        completeStreamingMessage(message.id, streamEndReason);
+    }
+});
+```
+
+`streamingMessageType` can be `start`, `informative`, `streaming`, or `final`. A final message also reaches existing `onNewMessage` handlers.
+
+Calling this method before `startChat()` throws `UninitializedConversation`. Calling it for another Live Chat version throws `UnsupportedLiveChatVersion`.
 
 ### On Typing Event
 
@@ -613,13 +690,15 @@ const agentAvailability = await chatSDK.getAgentAvailability();
 
 Logs a particular message (and all previous messages) as read by the user. Read indicators will appear for Contact Center Representatives and Admins in the Admin Center.
 
+Authenticated chat sends the receipt through Messaging Runtime. Unauthenticated chat sends it through ACS and requires Live Chat version 2.
+
 ```ts
 await chatSDK.sendReadReceipt(messageId: string);
 ```
 
 ### Get Unread Message Count
 
-Returns the number of unread messages in an authenticated persistent conversation. This call is **authenticated-only** — the user must be authenticated, otherwise an `UndefinedAuthToken` error is thrown.
+Returns unread-message data for an authenticated user. An active chat session is not required. This call is **authenticated-only** — the user must be authenticated, otherwise an `UndefinedAuthToken` error is thrown.
 
 ```ts
 const response = await chatSDK.getUnreadMessageCount();
@@ -1323,11 +1402,11 @@ const chatSDK = new OmnichannelChatSDK.OmnichannelChatSDK(omnichannelConfig, cha
 await chatSDK.initialize();
 ```
 
-# Releasing
+## Releasing
 
-See [docs/RELEASING.md](docs/RELEASING.md) for how to publish new versions to npm.
+See [docs/RELEASING.md](docs/RELEASING.md) for development builds, official npm and GitHub releases, release notes, and hotfixes.
 
-# Contributing
+## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us

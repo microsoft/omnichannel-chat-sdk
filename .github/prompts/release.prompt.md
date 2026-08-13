@@ -3,22 +3,24 @@ mode: 'agent'
 description: 'Create a new Release of the Omnichannel Chat SDK'
 ---
 
-Your goals is to create a new release of the Omnichannel Chat SDK and ensure that all necessary actions are performed for the successfull release of new omnichannel chat sdk version.
-Release is created by the .github/workflows/release.yml file which is setted up as a github action.
+Create an official Omnichannel Chat SDK release.
 
-The workflow should perform the following steps:
-    Prompt the user to input the new prerelease version (e.g. 1.11.6-0).
-    Create and checkout a new branch named bump-<prerelease version>.
-    In package.json, update the current version by removing the prerelease tag (e.g., 1.11.5-0 → 1.11.5).
-    Update CHANGELOG.md:
-    Replace the [Unreleased] section with the new version and current date.
-    Add a new section at the top for the new version.
-    Commit the changes with the message: Release version - <version from package.json>.
-    Confirm with the user that the changes are correct and ask for permission to proceed.
-    Create a new Git tag with the release version (e.g., v1.11.5) and push it to the repository.
-    Update package.json to the new prerelease version (e.g., 1.11.6-0).
-    Add a new [Unreleased] section in CHANGELOG.md for the new prerelease version.
-    Commit the changes with the message: Bump version to <new prerelease version>.
-    Push the new branch to the remote repository.
+Read `docs/RELEASING.md` before you make changes. That file is the canonical release procedure.
 
-For reference, you can follow the steps in the PR https://github.com/microsoft/omnichannel-chat-sdk/pull/492 which contains a detailed steps of the release process.
+1. Get the approved semantic version.
+2. Create a release branch from current `upstream/main`.
+3. Update `package.json` and `package-lock.json` with `npm version <version> --no-git-tag-version`.
+4. Move all `CHANGELOG.md` entries from `Unreleased` to the dated version section.
+5. Keep a new empty `Unreleased` section.
+6. Update public API documentation and the README release table.
+7. Run the build, tests, lint, and `npm pack --dry-run`.
+8. Open a pull request and wait for all required checks and reviews.
+9. Do not create the release tag before the pull request merges.
+10. Get the pull-request merge commit.
+11. Create annotated tag `v<version>` on that exact commit.
+12. Push the tag to `microsoft/omnichannel-chat-sdk`.
+13. Do not use workflow dispatch and do not run `npm publish` manually.
+14. Wait for the `npm Release` workflow.
+15. Verify the exact npm version, npm provenance, GitHub Release notes, and attached `.tgz` file.
+
+The tag workflow validates the tag, publishes one tarball to npm, and attaches that same tarball to the GitHub Release.
