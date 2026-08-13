@@ -6,6 +6,34 @@ All notable changes to this project will be documented in this file.
 
 ## [2.0.0] - 2026-08-13
 
+### Changes published to npm after v1.11.6
+
+GitHub Release automation started with `v2.0.0`. Versions `1.11.7` and `1.11.8` were published to npm without corresponding GitHub Releases, so their changes are included here for continuity.
+
+#### 1.11.8 - 2026-01-29
+
+- **Fixed:** Corrected conversational survey handling when a customer ends a conversation in React Native.
+- **Security:** Fixed eight npm audit vulnerabilities.
+- **Security:** Upgraded `@babel/helpers`, `brace-expansion`, `js-yaml`, and ESLint to patched versions.
+- **Changed:** Updated `@microsoft/ocsdk` to `0.5.21`.
+- **Changed:** Upgraded the TypeScript ESLint packages and added the `globals` development dependency.
+- **Changed:** Migrated to the ESLint 9 flat configuration and removed obsolete disable directives.
+- **Changed:** Added a pull-request build step to detect TypeScript compilation errors before merge.
+
+#### 1.11.7 - 2026-01-23
+
+- **Added:** Added edited-message handling to `ChatSDK.onNewMessage()`.
+- **Added:** Added `ChatSDK.getPersistentChatHistory()` for authenticated chats.
+- **Added:** Added V2 data-masking coverage, including the parallel-initialization path.
+- **Added:** Added failure logging for file-attachment downloads.
+- **Fixed:** Corrected SDK version information for React Native and other bundled platforms.
+- **Fixed:** Corrected chat-token refresh timer cleanup to avoid a potential infinite loop.
+- **Fixed:** Prevented data-masking crashes from invalid or zero-width regular expressions.
+- **Changed:** Migrated `package-lock.json` from lockfile version 2 to version 3.
+- **Changed:** Parallelized survey-invite link requests in `getPostChatSurveyContext()`.
+- **Changed:** Removed V1 `onAgentEndSession` logic.
+- **Changed:** Updated `@microsoft/omnichannel-amsclient` to `0.1.12` and `@microsoft/ocsdk` to `^0.5.20`.
+
 ### Breaking
 
 - Raised the supported consumer runtime to Node.js `>=22.12.0`, matching the remediated OC SDK and AMS client dependencies. This support-policy change requires a major release.
