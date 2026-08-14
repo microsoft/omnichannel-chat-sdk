@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- Corrected the version `2.0.0` feature documentation.
+
 ## [2.0.0] - 2026-08-13
 
 ### Changes published to npm after v1.11.6
@@ -52,12 +56,6 @@ GitHub Release automation started with `v2.0.0`. Versions `1.11.7` and `1.11.8` 
 - Added `SendReadReceiptFailure`, `SendReadReceiptInvalidParams`, `UnreadMessageCountRetrievalFailure` to `ChatSDKErrorName` enum
 - Added throw helpers in `exceptionThrowers.ts` for read receipt error handling
 - HTTP error mapping: 404 → `InvalidConversation`, 400 → `SendReadReceiptInvalidParams`, others → retrieval/send failure
-- Added `authenticateChat` public method to authenticate an ongoing unauthenticated chat session mid-conversation
-- Added `MidConversationAuth` telemetry event for scenario tracking
-- Added `MidConversationAuthFailure` to `ChatSDKErrorName` enum
-- Added internal deferred-initial-authentication handling for optional sign-in flows
-- Uses structured `ChatSDKExceptionDetails` with `JSON.stringify` for all telemetry `ExceptionDetails`
-- Throws `ChatSDKError` consistently on all failure paths (token resolution, empty token, API call, token refresh)
 - Added `en-AU` (Australian English) locale code `3081` to locale mapping
 
 ### Changed
@@ -65,9 +63,9 @@ GitHub Release automation started with `v2.0.0`. Versions `1.11.7` and `1.11.8` 
 - Standardized local, pull-request, release, and consumer runtime support on Node.js `>=22.12.0`.
 - Updated `@microsoft/ocsdk` to `0.6.0` and `@microsoft/omnichannel-amsclient` to `0.2.0`.
 - Hardened official releases with tag validation, scoped GitHub permissions, and one tarball shared by npm and GitHub Releases.
-- Added public migration guidance and API examples for streaming messages and mid-conversation authentication.
+- Added public migration guidance and API examples for streaming messages and read-state APIs.
 - Added a complete `2.0.0` migration, validation, deployment, and rollback guide.
-- Documented authentication, streaming, and read-state prerequisites for the new public APIs.
+- Documented streaming and read-state prerequisites for the new public APIs.
 - Replaced the obsolete release-agent prompt with the canonical pull-request and tag workflow.
 - Removed unused direct Axios, `form-data`, and `follow-redirects` dependencies; the remediated OC SDK now owns the patched HTTP dependency floor.
 - Removed the obsolete brace-expansion override after the regenerated lockfile resolved patched dev-only versions.

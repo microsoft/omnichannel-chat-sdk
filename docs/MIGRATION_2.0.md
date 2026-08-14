@@ -41,14 +41,6 @@ Set `supportsLcwStreaming: true` only when the application can render progressiv
 
 See [On Streaming Message](../README.md#on-streaming-message) for the API contract and example.
 
-## Mid-Conversation Authentication
-
-The new `authenticateChat` method authenticates an active unauthenticated conversation.
-
-Enable optional authenticated sign-in for the workstream before you use this method. The method accepts a token or an asynchronous token provider.
-
-See [Authenticate Chat](../README.md#authenticate-chat) for the API contract, errors, and example.
-
 ## Read State APIs
 
 Version `2.0.0` adds these APIs:
