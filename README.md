@@ -22,7 +22,6 @@ Please make sure you have a chat widget configured before using this package or 
 - [SDK Methods](#sdk-methods)
   - [Initialization](#initialization)
   - [Start Chat](#start-chat)
-  - [Authenticate Chat](#authenticate-chat)
   - [End Chat](#end-chat)
   - [Get Pre-Chat Survey](#get-pre-chat-survey)
   - [Get Live Chat Config](#get-live-chat-config)
@@ -135,7 +134,7 @@ The npm `latest` dist-tag can point to a `main` prerelease. Use the exact versio
 
 Regenerate the application lockfile after the update. Then run the application build and tests on Node.js 22.
 
-Version `2.0.0` adds progressive bot-message streaming, mid-conversation authentication, read receipts, and unread-message counts. Existing `onNewMessage` handlers continue to receive final streaming messages.
+Version `2.0.0` adds progressive bot-message streaming, read receipts, and unread-message counts. Existing `onNewMessage` handlers continue to receive final streaming messages.
 
 See the [2.0 migration guide](docs/MIGRATION_2.0.md) for the complete upgrade and validation procedure.
 
@@ -330,32 +329,6 @@ const optionalParams = {
 
 await chatSDK.startChat(optionalParams);
 ```
-
-### Authenticate Chat
-
-It authenticates an active unauthenticated conversation. Enable optional authenticated sign-in for the workstream before you use this method.
-
-Call `initialize()` and `startChat()` before `authenticateChat()`. The first argument can be a token or an asynchronous token provider.
-
-```ts
-await chatSDK.initialize();
-await chatSDK.startChat();
-
-await chatSDK.authenticateChat(async () => {
-    const response = await fetch("https://contoso.example/token");
-    if (!response.ok) {
-        throw new Error("Token request failed");
-    }
-
-    return response.text();
-}, {
-    refreshChatToken: true
-});
-```
-
-Set `refreshChatToken` to `true` when subsequent SDK calls must use a refreshed authenticated chat token.
-
-The method throws `InvalidConversation` when no conversation is active. It throws `MidConversationAuthFailure` when token resolution or authentication fails.
 
 ### End Chat
 
