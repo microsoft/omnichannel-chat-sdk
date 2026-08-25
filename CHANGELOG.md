@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Corrected the version `2.0.0` feature documentation.
+- Removed redundant "Live Chat version 2" wording from the 2.0 migration guide and related API notes.
 
 ## [2.0.0] - 2026-08-13
 

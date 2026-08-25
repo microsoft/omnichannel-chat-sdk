@@ -48,7 +48,7 @@ Version `2.0.0` adds these APIs:
 - `sendReadReceipt(messageId)` marks a message and earlier messages as read.
 - `getUnreadMessageCount()` returns unread-message data for an authenticated user. An active chat session is not required.
 
-Authenticated read receipts use Messaging Runtime. Unauthenticated read receipts use ACS and require Live Chat version 2.
+Authenticated read receipts use Messaging Runtime. Unauthenticated read receipts use ACS.
 
 See [Send Read Receipt](../README.md#send-read-receipt) and [Get Unread Message Count](../README.md#get-unread-message-count).
 

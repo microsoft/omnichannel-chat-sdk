@@ -476,7 +476,7 @@ chatSDK.onNewMessage((message) => {
 
 ### On Streaming Message
 
-It subscribes to progressive ACS bot-message updates. This API is available only for Live Chat version 2.
+It subscribes to progressive ACS bot-message updates.
 
 Enable streaming when you start the conversation. Then register the handler after `startChat()` completes.
 
@@ -504,7 +504,7 @@ await chatSDK.onStreamingMessage((message) => {
 
 `streamingMessageType` can be `start`, `informative`, `streaming`, or `final`. A final message also reaches existing `onNewMessage` handlers.
 
-Calling this method before `startChat()` throws `UninitializedConversation`. Calling it for another Live Chat version throws `UnsupportedLiveChatVersion`.
+Calling this method before `startChat()` throws `UninitializedConversation`. If the conversation does not use ACS, this method throws `UnsupportedLiveChatVersion`.
 
 ### On Typing Event
 
@@ -663,7 +663,7 @@ const agentAvailability = await chatSDK.getAgentAvailability();
 
 Logs a particular message (and all previous messages) as read by the user. Read indicators will appear for Contact Center Representatives and Admins in the Admin Center.
 
-Authenticated chat sends the receipt through Messaging Runtime. Unauthenticated chat sends it through ACS and requires Live Chat version 2.
+Authenticated chat sends the receipt through Messaging Runtime. Unauthenticated chat sends the receipt through ACS.
 
 ```ts
 await chatSDK.sendReadReceipt(messageId: string);
