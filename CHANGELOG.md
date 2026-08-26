@@ -9,6 +9,10 @@ All notable changes to this project will be documented in this file.
 - Corrected the version `2.0.0` feature documentation.
 - Removed redundant "Live Chat version 2" wording from the 2.0 migration guide and related API notes.
 
+### Added
+
+- **Internal use only, not consumer API.** `getChatConfig` can now adopt a live chat config the caller already fetched, instead of issuing a duplicate request. The parameters are deliberately absent from the exported `GetLiveChatConfigOptionalParams` type and are unsupported for external callers — they exist for first-party loaders and may change or be withdrawn without notice. The payload is treated as untrusted: it is adopted only when the caller's attestation, the payload's own identity, and its shape all match the SDK instance, and any rejection or failure while applying it falls back to the normal network fetch. Sound only while the config stays inside the realm that fetched it.
+
 ## [2.0.0] - 2026-08-13
 
 ### Changes published to npm after v1.11.6
@@ -45,7 +49,6 @@ GitHub Release automation started with `v2.0.0`. Versions `1.11.7` and `1.11.8` 
 
 ### Added
 
-- **Internal use only, not consumer API.** `getChatConfig` can now adopt a live chat config the caller already fetched, instead of issuing a duplicate request. The parameters are deliberately absent from the exported `GetLiveChatConfigOptionalParams` type and are unsupported for external callers — they exist for first-party loaders and may change or be withdrawn without notice. The payload is treated as untrusted: it is adopted only when the caller's attestation, the payload's own identity, and its shape all match the SDK instance, and any rejection or failure while applying it falls back to the normal network fetch. Sound only while the config stays inside the realm that fetched it.
 - Added `onStreamingMessage` public API for progressive bot message rendering via ACS streaming
 - Added `OmnichannelStreamingMessage`, `StreamingMetadata`, `PolicyViolation`, `OnStreamingMessageOptionalParams` exported types
 - Added streaming message telemetry events: `StreamingMessageReceived`, `StreamingDuplicateFinal`, `StreamingChunkNoContent`, `StreamingChunkAfterFinal`, `StreamingPolicyViolation`, `StreamingMetadataMissingType`, `StreamingFinalMissingReason`, `StreamingCounterEvicted`, `StreamingHandlerThrew`, `StreamingHandlerAsyncRejected`
