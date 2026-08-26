@@ -47,7 +47,7 @@ import FramedlessClient from "@microsoft/omnichannel-amsclient/lib/FramedlessCli
 import GetAgentAvailabilityOptionalParams from "./core/GetAgentAvailabilityOptionalParams";
 import GetChatTokenOptionalParams from "./core/GetChatTokenOptionalParams";
 import GetConversationDetailsOptionalParams from "./core/GetConversationDetailsOptionalParams";
-import GetLiveChatConfigOptionalParams from "./core/GetLiveChatConfigOptionalParams";
+import GetLiveChatConfigOptionalParams, { InternalPrefetchedConfigParams } from "./core/GetLiveChatConfigOptionalParams";
 import GetLiveChatTranscriptOptionalParams from "./core/GetLiveChatTranscriptOptionalParams";
 import GetPersistentChatHistoryOptionalParams from "./core/GetPersistentChatHistoryOptionalParams";
 import HostType from "@microsoft/omnichannel-ic3core/lib/interfaces/HostType";
@@ -114,6 +114,7 @@ import startPolling from "./commands/startPolling";
 import stopPolling from "./commands/stopPolling";
 import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
+import validatePrefetchedLiveChatConfig from "./validators/prefetchedConfigValidator";
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -3067,7 +3068,61 @@ class OmnichannelChatSDK {
 
     private async getChatConfig(optionalParams: GetLiveChatConfigOptionalParams = {}): Promise<ChatConfig> {
         const { sendCacheHeaders } = optionalParams;
+        const { prefetchedLiveChatConfig, prefetchedConfigAttestation } = optionalParams as InternalPrefetchedConfigParams;
         const bypassCache = sendCacheHeaders === true;
+
+        // Caller-prefetched config fast path. A caller that already fetched the config
+        // can hand it over so we skip a duplicate round-trip. The payload is
+        // untrusted, so it is adopted only if both the attestation and the payload's
+        // own identity match this instance, and only while the fetch being skipped
+        // has no other work left to do — see the validator for what that covers. Any
+        // rejection — or any throw while adopting — falls through to the normal fetch
+        // below, so this path can cost a round-trip but can never fail chat.
+        //
+        // `omnichannelConfig.orgUrl` is passed post-conversion on purpose: both
+        // initialization paths run `useCoreServicesOrgUrlIfNotSet()` before reaching
+        // here, so it is the url this instance will actually use, and it is what the
+        // caller's attested fetch url has to match.
+        const prefetchAttempted = prefetchedLiveChatConfig !== undefined && prefetchedLiveChatConfig !== null;
+
+        if (prefetchAttempted) {
+            try {
+                const prefetchResult = validatePrefetchedLiveChatConfig(
+                    prefetchedLiveChatConfig,
+                    prefetchedConfigAttestation,
+                    { orgId: this.omnichannelConfig.orgId, widgetId: this.omnichannelConfig.widgetId },
+                    bypassCache,
+                    this.omnichannelConfig.orgUrl
+                );
+
+                if (prefetchResult.accepted) {
+                    // Ordered so nothing is latched from a payload we may still
+                    // reject: building the configuration is the step that can
+                    // throw, and evaluating attachment support flips a flag that
+                    // is never turned back off.
+                    await this.buildConfigurations(prefetchedLiveChatConfig);
+                    this.liveChatConfig = prefetchedLiveChatConfig;
+                    this.evaluateAMSAvailability();
+                    this.scenarioMarker.singleRecord(TelemetryEvent.PrefetchedLiveChatConfigUsed, {
+                        RequestId: this.requestId || ""
+                    });
+                    return this.liveChatConfig;
+                }
+
+                this.scenarioMarker.singleRecord(TelemetryEvent.PrefetchedLiveChatConfigRejected, {
+                    RequestId: this.requestId || "",
+                    ExceptionDetails: JSON.stringify({ reason: prefetchResult.reason })
+                });
+            } catch (prefetchError) {
+                // Adoption itself failed (e.g. buildConfigurations rejected the
+                // payload). Fall through rather than surface it: the network fetch
+                // below is the correct, working behavior.
+                this.scenarioMarker.singleRecord(TelemetryEvent.PrefetchedLiveChatConfigRejected, {
+                    RequestId: this.requestId || "",
+                    ExceptionDetails: JSON.stringify({ reason: "Exception", error: `${prefetchError}` })
+                });
+            }
+        }
 
         let liveChatConfig;
         const startTime = typeof performance !== 'undefined' ? performance.now() : undefined;
@@ -3119,7 +3174,7 @@ class OmnichannelChatSDK {
             ChatWidgetLanguage: chatWidgetLanguage
         } = liveChatConfig;
 
-        Promise.all([
+        await Promise.all([
             this.setDataMaskingConfiguration(dataMaskingConfig),
             this.setPrechatConfigurations(liveWSAndLiveChatEngJoin),
             this.setAuthSettingConfig(authSettings),
