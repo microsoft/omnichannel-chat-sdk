@@ -74,7 +74,7 @@ const createACSAdapter = async (optionalParams: ChatAdapterOptionalParams, chatS
     const ingressMiddleware = options?.ingressMiddleware ? [...options.ingressMiddleware, ...defaultIngressMiddlewares] : [...defaultIngressMiddlewares];
     const featuresOption = {
         enableAdaptiveCards: true, // Whether to enable adaptive card payload in adapter (payload in JSON string)
-        enableThreadMemberUpdateNotification: true, // Whether to enable chat thread member join/leave notification
+        enableThreadMemberUpdateNotification: false, // Whether to enable chat thread member join/leave notification
         enableLeaveThreadOnWindowClosed: false, // Whether to remove user on browser close event
         enableSenderDisplayNameInTypingNotification: true, // Whether to send sender display name in typing notification
         ...options, // overrides
@@ -159,4 +159,5 @@ export {
     createDirectLine,
     createACSAdapter,
     createIC3Adapter
+
 };
