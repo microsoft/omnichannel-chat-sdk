@@ -1069,14 +1069,11 @@ class OmnichannelChatSDK {
                     sessionCloseOptionalParams.isPersistentChat = this.isPersistentChat;
                     sessionCloseOptionalParams.isReconnectChat = isReconnectChat;
 
-                    const customerClosePersistentChatEnabled =
-                        parseLowerCaseString(this.liveChatConfig?.LiveWSAndLiveChatEngJoin?.msdyn_enablecustomerclosepersistentchat) === "true" &&
-                        parseLowerCaseString(this.liveChatConfig?.LcwFcbConfiguration?.lcwPersistentChatCustomerEndEnabled) === "true";
-
-                    if (isReconnectChat &&
-                        customerClosePersistentChatEnabled &&
+                    if (parseLowerCaseString(this.liveChatConfig?.LiveWSAndLiveChatEngJoin?.msdyn_enablecustomerclosepersistentchat) === "true" &&
+                        isReconnectChat &&
                         typeof this.reconnectId === "string" &&
-                        this.reconnectId.length > 0) {
+                        this.reconnectId.length > 0 &&
+                        parseLowerCaseString(this.liveChatConfig?.LcwFcbConfiguration?.lcwPersistentChatCustomerEndEnabled) === "true") {
                         sessionCloseRequestId = this.reconnectId;
                     }
                 }

@@ -4595,13 +4595,20 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
             chatSDK.isPersistentChat = true;
+            const lcwFcbConfiguration = workstreamGate === 'false'
+                ? Object.defineProperty({}, 'lcwPersistentChatCustomerEndEnabled', {
+                    get: () => {
+                        throw new Error('The rollout gate must not be read when the workstream gate is disabled');
+                    }
+                })
+                : {
+                    lcwPersistentChatCustomerEndEnabled: rolloutGate
+                };
             chatSDK.liveChatConfig = {
                 LiveWSAndLiveChatEngJoin: {
                     msdyn_enablecustomerclosepersistentchat: workstreamGate
                 },
-                LcwFcbConfiguration: {
-                    lcwPersistentChatCustomerEndEnabled: rolloutGate
-                }
+                LcwFcbConfiguration: lcwFcbConfiguration
             };
             chatSDK.updateChatToken = jest.fn();
             global.setInterval = jest.fn() as unknown as typeof setInterval;
