@@ -3220,7 +3220,18 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             expect(chatSDK.OCClient.getChatToken.mock.calls[0][1].reconnectId).toBe(chatSDK.reconnectId);
         });
 
-        it('ChatSDK.endChat() should pass isPersistentChat & isReconnectChat to OCClient.sessionClose() call \'s optional paramaters on Persistent Chat', async () => {
+        it.each([
+            ['both customer-close gates are enabled', 'true', 'true', 'reconnectid', 'reconnectid'],
+            ['the workstream gate is disabled', 'false', 'true', 'reconnectid', 'requestId'],
+            ['the rollout gate is disabled', 'true', 'false', 'reconnectid', 'requestId'],
+            ['there is no reconnectable chat', 'true', 'true', undefined, 'requestId']
+        ])('ChatSDK.endChat() should use the expected session-close identifier on Persistent Chat when %s', async (
+            _scenario,
+            workstreamGate,
+            rolloutGate,
+            reconnectId,
+            expectedIdentifier
+        ) => {
             const chatSDKConfig = {
                 telemetry: {
                     disable: true
@@ -3235,6 +3246,14 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
             chatSDK.isPersistentChat = true;
+            chatSDK.liveChatConfig = {
+                LiveWSAndLiveChatEngJoin: {
+                    msdyn_enablecustomerclosepersistentchat: workstreamGate
+                },
+                LcwFcbConfiguration: {
+                    lcwPersistentChatCustomerEndEnabled: rolloutGate
+                }
+            };
             chatSDK.updateChatToken = jest.fn();
             global.setInterval = jest.fn() as unknown as typeof setInterval;
 
@@ -3250,17 +3269,23 @@ describe('Omnichannel Chat SDK, Parallel initialization', () => {
 
             jest.spyOn(chatSDK.OCClient, 'sessionInit').mockResolvedValue(Promise.resolve());
             jest.spyOn(chatSDK.OCClient, 'createConversation').mockResolvedValue(Promise.resolve());
-            jest.spyOn(chatSDK.OCClient, 'getReconnectableChats').mockResolvedValue(Promise.resolve({
-                reconnectid: 'reconnectid'
-            }));
+            jest.spyOn(chatSDK.OCClient, 'getReconnectableChats').mockResolvedValue(Promise.resolve(
+                reconnectId ? { reconnectid: reconnectId } : {}
+            ));
             jest.spyOn(chatSDK.OCClient, 'sessionClose').mockResolvedValue(Promise.resolve());
 
+            const requestId = chatSDK.requestId;
+            expect(requestId).toBeTruthy();
+            expect(requestId).not.toBe('reconnectid');
             await chatSDK.startChat();
             await chatSDK.endChat();
 
             expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(1);
             expect(chatSDK.OCClient.sessionClose.mock.calls[0][1].isPersistentChat).toBe(true);
-            expect(chatSDK.OCClient.sessionClose.mock.calls[0][1].isReconnectChat).toBe(true);
+            expect(chatSDK.OCClient.sessionClose.mock.calls[0][1].isReconnectChat).toBe(Boolean(reconnectId));
+            expect(chatSDK.OCClient.sessionClose.mock.calls[0][0]).toBe(
+                expectedIdentifier === 'reconnectid' ? expectedIdentifier : requestId
+            );
         });
 
         it('ChatSDK.isChatReconnect should be true on Chat Reconnect', async () => {

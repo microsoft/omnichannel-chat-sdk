@@ -1061,17 +1061,30 @@ class OmnichannelChatSDK {
             try {
 
                 const sessionCloseOptionalParams: ISessionCloseOptionalParams = {};
+                let sessionCloseRequestId = this.requestId;
 
                 if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
                     const isReconnectChat = this.reconnectId !== null ? true : false;
 
                     sessionCloseOptionalParams.isPersistentChat = this.isPersistentChat;
                     sessionCloseOptionalParams.isReconnectChat = isReconnectChat;
+
+                    const customerClosePersistentChatEnabled =
+                        parseLowerCaseString(this.liveChatConfig?.LiveWSAndLiveChatEngJoin?.msdyn_enablecustomerclosepersistentchat) === "true" &&
+                        parseLowerCaseString(this.liveChatConfig?.LcwFcbConfiguration?.lcwPersistentChatCustomerEndEnabled) === "true";
+
+                    if (isReconnectChat &&
+                        customerClosePersistentChatEnabled &&
+                        typeof this.reconnectId === "string" &&
+                        this.reconnectId.length > 0) {
+                        sessionCloseRequestId = this.reconnectId;
+                    }
                 }
 
                 if (this.isChatReconnect && !this.chatSDKConfig.chatReconnect?.disable && !this.isPersistentChat) {
                     const isChatReconnect = this.reconnectId !== null ? true : false;
                     this.requestId = isChatReconnect ? (this.reconnectId as string) : this.requestId; // Chat Reconnect session to close
+                    sessionCloseRequestId = this.requestId;
                     sessionCloseOptionalParams.isReconnectChat = isChatReconnect;
                 }
 
@@ -1079,7 +1092,7 @@ class OmnichannelChatSDK {
                     sessionCloseOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
                 }
 
-                await this.OCClient.sessionClose(this.requestId, sessionCloseOptionalParams);
+                await this.OCClient.sessionClose(sessionCloseRequestId, sessionCloseOptionalParams);
 
             } catch (error) {
                 exceptionThrowers.throwConversationClosureFailure(error, this.scenarioMarker, TelemetryEvent.CloseChatSession, {
