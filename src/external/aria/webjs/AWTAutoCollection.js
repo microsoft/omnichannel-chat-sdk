@@ -358,7 +358,11 @@ var AWTAutoCollection = /** @class */ (function () {
         }
     };
     AWTAutoCollection._disableCookies = false;
-    AWTAutoCollection._areCookiesAvailable = typeof document !== UNDEFINED && typeof document.cookie !== UNDEFINED;
+    try {
+        AWTAutoCollection._areCookiesAvailable = typeof document !== UNDEFINED && document.cookie !== undefined;
+    } catch (e) {
+        AWTAutoCollection._areCookiesAvailable = false;
+    }
     return AWTAutoCollection;
 }());
 exports.default = AWTAutoCollection;
