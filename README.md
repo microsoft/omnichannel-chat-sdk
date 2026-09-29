@@ -332,7 +332,12 @@ await chatSDK.startChat(optionalParams);
 
 ### End Chat
 
-It ends the current Omnichannel conversation.
+It ends the current conversation for non-persistent workstreams.
+
+For persistent workstreams, will end the conversation only if this feature is enabled:
+
+* The "Modern" UI has been created and set to active for the channel in use (See: [Configure a chat widget | Microsoft Learn](https://learn.microsoft.com/dynamics365/customer-service/administer/add-chat-widget))
+* In channel setup, on the "Chat widget" tab, the option "Customer can end conversations" is set to On
 
 ```ts
 await chatSDK.endChat();
