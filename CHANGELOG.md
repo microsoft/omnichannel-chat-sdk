@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-10-01
+
 ### Fixed
 
 - Used the reconnect identifier when an enabled persistent-chat customer closes a reconnected conversation.
