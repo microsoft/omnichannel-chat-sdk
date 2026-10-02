@@ -1,6 +1,6 @@
 # Known issue: concurrent `startChat()` calls in versions before 1.11.6
 
-> **Fixed in Chat SDK `1.11.6`, released on August 8, 2025.** The fix ([pull request #506](https://github.com/microsoft/omnichannel-chat-sdk/pull/506)) was merged on August 5, 2025. If your application uses a Chat SDK version that is earlier than `1.11.6`, upgrade now.
+> **Fixed in Chat SDK `1.11.6`, released on August 8, 2025.** The fix ([pull request #506](https://github.com/microsoft/omnichannel-chat-sdk/pull/506)) was merged on August 5, 2025. Version `1.11.6` is now past its end-of-support date. If your application uses a Chat SDK version that is earlier than `1.11.6`, **upgrade to `1.11.8` or later** now. Version `1.11.8` is supported until February 2, 2027.
 
 ## Summary
 
@@ -8,7 +8,7 @@ In Chat SDK versions before `1.11.6`, `startChat()` has no lock. If an applicati
 
 Only one of these conversations goes to the queue and to an agent. The customer can stay on a different conversation. In that case, the customer sends messages, but no agent ever receives them.
 
-Version `1.11.6`, released on August 8, 2025, corrects this error. Upgrade to `1.11.6` or later. We recommend the latest release.
+Version `1.11.6`, released on August 8, 2025, corrects this error. Upgrade to `1.11.8` or later. Version `1.11.8` is the latest 1.x release and is supported until February 2, 2027. Versions `2.0.0` and later are also supported.
 
 ## Affected versions
 
@@ -19,7 +19,7 @@ Version `1.11.6`, released on August 8, 2025, corrects this error. Upgrade to `1
 
 The fix is in [pull request #506](https://github.com/microsoft/omnichannel-chat-sdk/pull/506) (merged on August 5, 2025) and in the [1.11.6 release notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.11.6) (August 8, 2025).
 
-Versions `1.11.0` to `1.11.4` are also past their end-of-support date. See the [Releases](../README.md#releases) section of the README.
+Version `1.11.6` and earlier versions are past their end-of-support date. See the [Releases](../README.md#releases) section of the README.
 
 ## Symptoms
 
@@ -38,9 +38,9 @@ The error occurs when two or more `startChat()` calls for the same `OmnichannelC
 ## How to correct the error
 
 1. Find the installed version of the Chat SDK. See [Determine the version of ChatSDK installed](TROUBLESHOOTING_GUIDE.md#determine-the-version-of-chatsdk-installed).
-2. If the version is earlier than `1.11.6`, upgrade the Chat SDK.
+2. If the version is earlier than `1.11.8`, upgrade the Chat SDK to `1.11.8` or later.
 
-   For the latest 1.x release:
+   For the latest 1.x release (supported until February 2, 2027):
 
    ```bash
    npm install @microsoft/omnichannel-chat-sdk@1.11.8 --save-exact
