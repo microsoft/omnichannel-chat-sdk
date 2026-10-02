@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Added a known-issue document for concurrent `startChat()` calls in versions earlier than `1.11.6`, with upgrade steps.
+
 ### Fixed
 
 - Used the reconnect identifier when an enabled persistent-chat customer closes a reconnected conversation.

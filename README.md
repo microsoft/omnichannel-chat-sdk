@@ -113,6 +113,8 @@ For a detailed tracking of the releases, please refer to the [Changelog document
 
 _**Important Note:**_ Versions below 1.11.0 are no longer supported after November 1st, 2025. Please update to recent versions to ensure you have the latest features and bug fixes.
 
+_**Known issue:**_ Versions earlier than 1.11.6 can start duplicate conversations when an application calls `startChat()` again before the previous call is complete. See [Concurrent `startChat()` calls in versions before 1.11.6](docs/KNOWN_ISSUE_CONCURRENT_STARTCHAT.md).
+
 | Version | Docs | Release Date | End of Support | Deprecated |
 | -- | -- | -- | -- | -- |
 | 2.0.0 | [Migration Guide](docs/MIGRATION_2.0.md) / [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v2.0.0) | Aug 13th 2026 | Aug 13th 2027 | |
