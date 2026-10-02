@@ -1,21 +1,23 @@
 # Known issue: concurrent `startChat()` calls in versions before 1.11.6
 
+> **Fixed in Chat SDK `1.11.6`, released on August 8, 2025.** The fix ([pull request #506](https://github.com/microsoft/omnichannel-chat-sdk/pull/506)) was merged on August 5, 2025. If your application uses a Chat SDK version that is earlier than `1.11.6`, upgrade now.
+
 ## Summary
 
 In Chat SDK versions before `1.11.6`, `startChat()` has no lock. If an application calls `startChat()` again before the previous call is complete, each call starts a separate conversation on the service.
 
 Only one of these conversations goes to the queue and to an agent. The customer can stay on a different conversation. In that case, the customer sends messages, but no agent ever receives them.
 
-Version `1.11.6` corrects this error. Upgrade to `1.11.6` or later. We recommend the latest release.
+Version `1.11.6`, released on August 8, 2025, corrects this error. Upgrade to `1.11.6` or later. We recommend the latest release.
 
 ## Affected versions
 
-| Version | Status |
-| -- | -- |
-| Earlier than `1.11.6` | Affected. Concurrent `startChat()` calls are not serialized. |
-| `1.11.6` and later, including `2.0.0` | Corrected. `startChat()` and `endChat()` run one at a time in each `OmnichannelChatSDK` instance. |
+| Version | Release date | Status |
+| -- | -- | -- |
+| Earlier than `1.11.6` | Before August 8, 2025 | Affected. Concurrent `startChat()` calls are not serialized. |
+| `1.11.6` and later, including `2.0.0` | August 8, 2025 and later (`2.0.0`: August 13, 2026) | Corrected. `startChat()` and `endChat()` run one at a time in each `OmnichannelChatSDK` instance. |
 
-The change is in [pull request #506](https://github.com/microsoft/omnichannel-chat-sdk/pull/506) and in the [1.11.6 release notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.11.6).
+The fix is in [pull request #506](https://github.com/microsoft/omnichannel-chat-sdk/pull/506) (merged on August 5, 2025) and in the [1.11.6 release notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.11.6) (August 8, 2025).
 
 Versions `1.11.0` to `1.11.4` are also past their end-of-support date. See the [Releases](../README.md#releases) section of the README.
 
