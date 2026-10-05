@@ -9,6 +9,10 @@ This guide is intended to help users to get guidance and help on troubleshooting
   - [Using command-line](#using-command-line)
   - [In console panel of Web Developer Tools](#in-console-panel-of-web-developer-tools)
 
+## Known issues
+
+- [Concurrent `startChat()` calls in versions before 1.11.6](KNOWN_ISSUE_CONCURRENT_STARTCHAT.md): chats that never get an agent, or duplicate conversations for one chat session.
+
 ## Determine if it's an Omnichannel Chat SDK concern
 
 1. Check if chat works with our out-of-the-box (OOB) chat widget.

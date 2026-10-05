@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Added a known-issue document for concurrent `startChat()` calls in versions earlier than `1.11.6`, with upgrade steps.
+- Added version `1.11.8` to the README Releases table (supported until February 2, 2027).
+
 ## [2.0.1] - 2026-10-01
 
 ### Fixed
