@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Redacted the untranslated `OriginalMessageText` metadata that real-time translation adds to messages, and added a backstop that redacts JWTs and sensitive URL query parameter values (for example `workspace`, `sig`, `token`, `code`) from all logged telemetry values.
+
 ### Added
 
 - Added a known-issue document for concurrent `startChat()` calls in versions earlier than `1.11.6`, with upgrade steps.

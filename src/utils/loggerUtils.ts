@@ -7,12 +7,28 @@ export const _basePIIKeys = [
     "senderDisplayName",
     "message",
     "content",
-    "fileName"
+    "fileName",
+    // Untranslated message text added to message metadata by real-time translation
+    "OriginalMessageText"
 ]
     .map(s => s.toLowerCase());
 
 export const _exceptionDetailPIIKeys = [..._basePIIKeys, "authorization"];
 const disallowedStrValues: string[] = [];
+
+export const redactedSecretPlaceholder = "[REDACTED]";
+const jwtPattern = /\beyJ[A-Za-z0-9_-]{2,}\.[A-Za-z0-9_-]{2,}\.[A-Za-z0-9_-]*/g;
+const sensitiveQueryParamPattern = /([?&#](?:access_token|id_token|refresh_token|token|sig|signature|code|api[-_]?key|secret|password|workspace)=)[^&#\s"'<>]+/gi;
+
+// Backstop for credentials embedded in values that are not under a known PII key (e.g. a link pasted into a message)
+export function redactSecrets(value: string): string {
+    if (!value) {
+        return value;
+    }
+    return value
+        .replace(jwtPattern, redactedSecretPlaceholder)
+        .replace(sensitiveQueryParamPattern, `$1${redactedSecretPlaceholder}`);
+}
 
 export const useTelemetry = (telemetry: typeof AriaTelemetry, ocSdkLogger: OCSDKLogger, acsClientLogger: ACSClientLogger, acsAdapterLogger: ACSAdapterLogger, callingSdkLogger: CallingSDKLogger, amsClientLogger: AMSClientLogger, ic3ClientLogger: IC3ClientLogger | null = null): void => {
     ocSdkLogger.useTelemetry(telemetry);
@@ -76,6 +92,16 @@ function containsDisallowedValues(targetValue: string) {
     return undefined;
 }
 
+// Only stringified objects/arrays are traversed; JSON primitives such as "\"text\"" or "1234" must still be masked
+function parseJsonContainer(value: string): object | undefined {
+    try {
+        const parsed = JSON.parse(value);
+        return parsed !== null && typeof parsed == "object" ? parsed : undefined;
+    } catch {
+        return undefined;
+    }
+}
+
 export function redactPII(input: unknown, redactAllNested = false, shouldClone = true, knownPIIKeys = _basePIIKeys): unknown {
     if (input === undefined || input === null) {
         return input;
@@ -87,12 +113,17 @@ export function redactPII(input: unknown, redactAllNested = false, shouldClone =
     if (typeof input == "string") {
         if (isJsonObject(input)) {
             input = JSON.parse(input);
+            if (typeof input == "string") {
+                input = redactSecrets(input);
+            }
         } else {
             const disallowedValue = containsDisallowedValues(input);
             if (disallowedValue) {
                 if (input.length > 1) {
                     input = `${disallowedValue}:${input.slice(0, 1)}**${input.length - 1} hidden**`;
                 }
+            } else {
+                input = redactSecrets(input as string);
             }
         }
     }
@@ -118,8 +149,9 @@ export function redactPII(input: unknown, redactAllNested = false, shouldClone =
                     // Any key that contains "token" is considered PII
                     if (typeof value == "string") {
                         // Even if it is a string, it could be a JSON string, so we need to check that first
-                        if (isJsonObject(value)) {
-                            cloned[key] = redactPII(JSON.parse(value), true, false, knownPIIKeys);
+                        const parsed = parseJsonContainer(value);
+                        if (parsed) {
+                            cloned[key] = redactPII(parsed, true, false, knownPIIKeys);
                         } else {
                             if (value.length > 1) {
                                 cloned[key] = value.slice(0, 1) + `**${value.length - 1} hidden**`;
@@ -134,7 +166,8 @@ export function redactPII(input: unknown, redactAllNested = false, shouldClone =
                 } else if (typeof value === "string") {
                     if (isJsonObject(value)) {
                         // Check and redact stringified objects that are not under a known PII key
-                        cloned[key] = redactPII(JSON.parse(value), redactAllNested, false, knownPIIKeys);
+                        const parsed = JSON.parse(value);
+                        cloned[key] = typeof parsed == "string" ? redactSecrets(parsed) : redactPII(parsed, redactAllNested, false, knownPIIKeys);
                     } else {
                         // if the key or value contains the disallowed values, redact the payload
                         const disallowedValue = containsDisallowedValues(value);
@@ -143,6 +176,8 @@ export function redactPII(input: unknown, redactAllNested = false, shouldClone =
                                 cloned[key] = `${key}:${disallowedValue}:`
                                 + value.slice(0, 1) + `**${value.length - 1} hidden**`;
                             }
+                        } else {
+                            cloned[key] = redactSecrets(value);
                         }
                     }
                 }

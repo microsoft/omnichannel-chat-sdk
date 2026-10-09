@@ -358,6 +358,61 @@ describe('loggers', () => {
             expect(telemetry.info).toHaveBeenCalledWith(expect.objectContaining({"ChatId": "", "ChatSDKRuntimeId": "", "Event": "", "ExceptionDetails": "{\"name\":\"RestError\",\"code\":\"REQUEST_SEND_ERROR\",\"request\":{\"url\":\"https://12345678-occhannels-acs.australia.communication.azure.com/chat/threads/19%3A123456%40thread.v2/messages?api-version=2021-09-07&startTime=2025-01-27T01%3A56%3A54.000Z\",\"headers\":{\"accept\":\"application/json\",\"x-ms-useragent\":\"acs-webchat-adapter-0.0.35-beta.30.1 azsdk-js-communication-chat/^1.3.2\",\"x-ms-client-request-id\":12344557,\"authorization\":\"B**50 hidden**\"},\"method\":\"GET\",\"timeout\":0,\"disableKeepAlive\":false,\"streamResponseStatusCodes\":{},\"withCredentials\":false,\"tracingOptions\":{\"tracingContext\":{\"_contextMap\":{}}},\"requestId\":12345678,\"allowInsecureConnection\":false,\"enableBrowserStreams\":false}}" , "OrgId": "", "OrgUrl": "", "RequestId": "", "WidgetId": ""}),"occhatsdk_acsadapterevents");
         });
 
+        it('ACSAdapterLogger.logEvent() should redact real-time translation OriginalMessageText metadata', () => {
+            const logger = new ACSAdapterLogger(omnichannelConfig);
+            telemetry.info.mockClear();
+            const fakeJwt = [{alg: "none", typ: "JWT"}, {sub: "test"}].map(part => Buffer.from(JSON.stringify(part)).toString("base64url")).join(".") + ".signature";
+            const originalText = `Kindly upload it on this secured link: https://support.microsoft.com/files?workspace=${fakeJwt}&wid=00000000-0000-0000-0000-000000000000`;
+            const tags = "public,translated,rttv2,parentID-17915521444200,destination-1033,source-1033,confidence-1";
+            const eventData = {
+                Event: 'ACS_ADAPTER_CONVERT_MESSAGE',
+                CustomProperties: {
+                    "threadId": "19:123456@thread.v2",
+                    "senderDisplayName": "Test Agent",
+                    "id": "1791552144786",
+                    "type": "Text",
+                    "message": "translated text",
+                    "metadata": {
+                        "OriginalMessageText": originalText,
+                        "tags": tags,
+                        "deliveryMode": "bridged",
+                        "isBridged": "True"
+                    },
+                    "attachments": []
+                }
+            };
+
+            logger.useTelemetry(telemetry as any);
+            logger.logEvent(LogLevel.INFO, eventData as any);
+
+            const loggedCustomProperties = telemetry.info.mock.calls[0][0].CustomProperties;
+            expect(loggedCustomProperties).not.toContain(fakeJwt);
+            expect(loggedCustomProperties).not.toContain("support.microsoft.com");
+            expect(JSON.parse(loggedCustomProperties).metadata.OriginalMessageText).toBe(`K**${originalText.length - 1} hidden**`);
+            expect(JSON.parse(loggedCustomProperties).metadata.tags).toBe(tags);
+        });
+
+        it('ACSAdapterLogger.logEvent() should redact credentials in values outside known PII keys', () => {
+            const logger = new ACSAdapterLogger(omnichannelConfig);
+            telemetry.info.mockClear();
+            const fakeJwt = [{alg: "none", typ: "JWT"}, {sub: "test"}].map(part => Buffer.from(JSON.stringify(part)).toString("base64url")).join(".") + ".signature";
+            const eventData = {
+                Event: '',
+                CustomProperties: {
+                    "metadata": {
+                        "someFutureTextField": `see https://support.microsoft.com/files?workspace=${fakeJwt}&wid=abc`
+                    }
+                }
+            };
+
+            logger.useTelemetry(telemetry as any);
+            logger.logEvent(LogLevel.INFO, eventData as any);
+
+            const loggedCustomProperties = telemetry.info.mock.calls[0][0].CustomProperties;
+            expect(loggedCustomProperties).not.toContain(fakeJwt);
+            expect(JSON.parse(loggedCustomProperties).metadata.someFutureTextField).toBe("see https://support.microsoft.com/files?workspace=[REDACTED]&wid=abc");
+        });
+
         it('ACSAdapterLogger.startScenario() should call ScenarioMarker.startScenario()', () => {
             const logger = new ACSAdapterLogger(omnichannelConfig);
 
