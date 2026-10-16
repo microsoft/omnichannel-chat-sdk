@@ -17,8 +17,11 @@ export const _exceptionDetailPIIKeys = [..._basePIIKeys, "authorization"];
 const disallowedStrValues: string[] = [];
 
 export const redactedSecretPlaceholder = "[REDACTED]";
-const jwtPattern = /\beyJ[A-Za-z0-9_-]{2,}\.[A-Za-z0-9_-]{2,}\.[A-Za-z0-9_-]*/g;
-const sensitiveQueryParamPattern = /([?&#](?:access_token|id_token|refresh_token|token|sig|signature|code|api[-_]?key|secret|password|workspace)=)[^&#\s"'<>]+/gi;
+// A JWT may follow any non-base64url character or a percent-encoded delimiter (e.g. "%3D" in a URL-encoded link).
+// Anchoring on the preceding character keeps the scan linear, since base64url runs cannot start a new match.
+const jwtPattern = /(^|[^A-Za-z0-9_-]|%[0-9A-Fa-f]{2})eyJ[A-Za-z0-9_-]{2,}\.[A-Za-z0-9_-]{2,}\.[A-Za-z0-9_-]*/g;
+// Delimiters and "=" may be raw, percent-encoded (Safe Links style "%3F", "%26", "%23", "%3D") or HTML-escaped ("&amp;" ends in ";")
+const sensitiveQueryParamPattern = /((?:[?&#;]|%3F|%26|%23)(?:access_token|id_token|refresh_token|token|sig|signature|code|api[-_]?key|secret|client_secret|password|pwd|passwd|workspace)(?:=|%3D))(?:[^%&#\s"'<>]|%(?!26|23)[0-9A-Fa-f]{2})+/gi;
 
 // Backstop for credentials embedded in values that are not under a known PII key (e.g. a link pasted into a message)
 export function redactSecrets(value: string): string {
@@ -26,7 +29,7 @@ export function redactSecrets(value: string): string {
         return value;
     }
     return value
-        .replace(jwtPattern, redactedSecretPlaceholder)
+        .replace(jwtPattern, `$1${redactedSecretPlaceholder}`)
         .replace(sensitiveQueryParamPattern, `$1${redactedSecretPlaceholder}`);
 }
 
@@ -92,7 +95,7 @@ function containsDisallowedValues(targetValue: string) {
     return undefined;
 }
 
-// Only stringified objects/arrays are traversed; JSON primitives such as "\"text\"" or "1234" must still be masked
+// Only stringified objects/arrays are traversed under PII keys; JSON primitives such as "\"text\"" or "1234" are masked like any other string
 function parseJsonContainer(value: string): object | undefined {
     try {
         const parsed = JSON.parse(value);
@@ -112,10 +115,12 @@ export function redactPII(input: unknown, redactAllNested = false, shouldClone =
     // If stringified JSON, parse it first
     if (typeof input == "string") {
         if (isJsonObject(input)) {
-            input = JSON.parse(input);
-            if (typeof input == "string") {
-                input = redactSecrets(input);
+            const parsed = JSON.parse(input);
+            if (typeof parsed == "string") {
+                // JSON-encoded string: decode again so doubly-encoded objects are still traversed. Terminates because each decode shortens the string.
+                return redactPII(parsed, redactAllNested, shouldClone, knownPIIKeys);
             }
+            input = parsed;
         } else {
             const disallowedValue = containsDisallowedValues(input);
             if (disallowedValue) {
@@ -146,9 +151,9 @@ export function redactPII(input: unknown, redactAllNested = false, shouldClone =
 
                 if (redactAllNested || knownPIIKeys.includes(keyLowerCase)) {
                     // Found a PII key, redact it. Not currently considering UUID, or number types as PII
-                    // Any key that contains "token" is considered PII
+                    // Keys are matched exactly (case-insensitive); token-like values under other keys are only caught by redactSecrets
                     if (typeof value == "string") {
-                        // Even if it is a string, it could be a JSON string, so we need to check that first
+                        // A stringified object/array is traversed; any other string (including JSON primitives) is masked
                         const parsed = parseJsonContainer(value);
                         if (parsed) {
                             cloned[key] = redactPII(parsed, true, false, knownPIIKeys);
@@ -165,9 +170,8 @@ export function redactPII(input: unknown, redactAllNested = false, shouldClone =
                     redactPII(value, redactAllNested, false, knownPIIKeys);
                 } else if (typeof value === "string") {
                     if (isJsonObject(value)) {
-                        // Check and redact stringified objects that are not under a known PII key
-                        const parsed = JSON.parse(value);
-                        cloned[key] = typeof parsed == "string" ? redactSecrets(parsed) : redactPII(parsed, redactAllNested, false, knownPIIKeys);
+                        // Check and redact stringified values that are not under a known PII key
+                        cloned[key] = redactPII(JSON.parse(value), redactAllNested, false, knownPIIKeys);
                     } else {
                         // if the key or value contains the disallowed values, redact the payload
                         const disallowedValue = containsDisallowedValues(value);
