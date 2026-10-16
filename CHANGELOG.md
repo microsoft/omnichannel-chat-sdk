@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.11.8-hotfix.redact-telemetry.1] - 2026-10-27
+
+### Security
+
+- Telemetry no longer logs the untranslated `OriginalMessageText` that real-time translation adds to message metadata (message payloads are unchanged). ACS adapter telemetry (`CustomProperties`, `Description`, `ExceptionDetails`) now also redacts JWTs and sensitive URL parameter values (for example `workspace`, `sig`, `token`, `code`, `client_secret`), including percent-encoded and HTML-escaped links. Backport of the 2.0.2 fix for 1.x consumers.
+
 ## [1.11.8] - 2026-01-29
 
 ### Security
