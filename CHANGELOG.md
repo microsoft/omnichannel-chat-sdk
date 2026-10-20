@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Attachment download failures now include a stable error code, the failing download stage, and privacy-safe HTTP and retry diagnostics while preserving the existing rejection message.
+
 ### Security
 
 - Telemetry no longer logs the untranslated `OriginalMessageText` that real-time translation adds to message metadata (message payloads are unchanged). ACS adapter telemetry (`CustomProperties`, `Description`, `ExceptionDetails`) now also redacts JWTs and sensitive URL parameter values (for example `workspace`, `sig`, `token`, `code`, `client_secret`), including percent-encoded and HTML-escaped links. Earlier versions can send these values to telemetry, so upgrade if your agents or customers use real-time translation.
