@@ -1581,6 +1581,7 @@ class OmnichannelChatSDK {
                         expiresIn: renewed.ExpiresIn !== undefined && renewed.ExpiresIn !== null ? String(renewed.ExpiresIn) : this.chatToken.expiresIn,
                         voiceVideoCallToken: renewed.VoiceVideoCallToken ?? this.chatToken.voiceVideoCallToken
                     };
+                    this.refreshAttachmentClientToken(chatId);
                 },
                 onStart: () => this.scenarioMarker.startScenario(TelemetryEvent.RenewChatToken, telemetryData),
                 onSuccess: () => this.scenarioMarker.completeScenario(TelemetryEvent.RenewChatToken, telemetryData),
@@ -1598,6 +1599,48 @@ class OmnichannelChatSDK {
             });
         } catch {
             return undefined;
+        }
+    }
+
+    /**
+     * Gives the renewed chat token to the attachment client, which keeps the token it was initialized with and uses
+     * it for every upload and download. Runs in the background and never throws: on failure, attachments keep using
+     * the previous token as they did before renewal existed.
+     */
+    private refreshAttachmentClientToken(chatId: string): void {
+        try {
+            const amsClient = this.AMSClient;
+            const chatToken = this.chatToken;
+            if (!this.isAMSClientAllowed
+                || this.AMSClientLoadCurrentState !== AMSClientLoadStates.LOADED
+                || !amsClient
+                || typeof amsClient.initialize !== "function"
+                || chatToken?.chatId !== chatId
+                || !chatToken.token) {
+                return;
+            }
+
+            const telemetryData = {
+                RequestId: this.requestId,
+                ChatId: chatId
+            };
+
+            this.scenarioMarker.startScenario(TelemetryEvent.RefreshAttachmentClientToken, telemetryData);
+            Promise.resolve()
+                .then(() => amsClient.initialize({ chatToken: chatToken as OmnichannelChatToken }))
+                .then(() => {
+                    this.scenarioMarker.completeScenario(TelemetryEvent.RefreshAttachmentClientToken, telemetryData);
+                }, (error: unknown) => {
+                    this.scenarioMarker.failScenario(TelemetryEvent.RefreshAttachmentClientToken, {
+                        ...telemetryData,
+                        ExceptionDetails: JSON.stringify({ errorObject: `${error}` })
+                    });
+                })
+                .catch(() => {
+                    // Telemetry failures must not surface
+                });
+        } catch {
+            // Attachments keep using the previous token
         }
     }
 
