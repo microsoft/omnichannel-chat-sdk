@@ -108,6 +108,7 @@ import { getLocationInfo } from "./utils/location";
 import { isCoreServicesOrgUrlDNSError } from "./utils/internalUtils";
 import loggerUtils from "./utils/loggerUtils";
 import { parseLowerCaseString } from "./utils/parsers";
+import { createChatTokenRefresher, RenewedChatToken } from "./utils/chatTokenRenewal";
 import platform from "./utils/platform";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import startPolling from "./commands/startPolling";
@@ -931,6 +932,7 @@ class OmnichannelChatSDK {
                     await this.ACSClient?.initialize({
                         token: chatAdapterConfig.token as string,
                         environmentUrl: chatAdapterConfig.environmentUrl,
+                        tokenRefresher: this.createChatTokenRefresher(chatAdapterConfig.token as string)
                     });
                 } catch (error) {
                     const telemetryData = {
@@ -1531,6 +1533,94 @@ class OmnichannelChatSDK {
         if (this.OCClient.sessionId) {
             this.sessionId = this.OCClient.sessionId;
         }
+    }
+
+    /**
+     * Creates the ACS token refresher used to renew the chat token before it expires. Returns undefined, which keeps
+     * the existing behavior, unless renewal is enabled in the chat config, not disabled in the SDK config and
+     * supported by the installed OCSDK. The refresher never throws and falls back to the current token on failure.
+     */
+    private createChatTokenRefresher(initialToken: string): (() => Promise<string>) | undefined {
+        try {
+            if (this.liveChatVersion !== LiveChatVersion.V2
+                || this.chatSDKConfig?.chatTokenRenewal?.disable === true
+                || parseLowerCaseString(this.liveChatConfig?.LcwFcbConfiguration?.lcwChatTokenRenewalEnabled) !== "true"
+                || typeof this.OCClient?.renewChatToken !== "function"
+                || !initialToken
+                || !this.chatToken?.chatId
+                || !this.requestId) {
+                return undefined;
+            }
+
+            const chatId = this.chatToken.chatId;
+            const requestId = this.requestId;
+            const telemetryData = {
+                RequestId: requestId,
+                ChatId: chatId
+            };
+
+            return createChatTokenRefresher({
+                initialToken,
+                chatId,
+                isChatActive: () => !this.isEndingChat && this.requestId === requestId && this.chatToken?.chatId === chatId,
+                renewChatToken: async () => {
+                    const renewChatTokenOptionalParams: { authenticatedUserToken?: string } = {};
+                    const authenticatedUserToken = await this.getAuthenticatedUserTokenForChatTokenRenewal();
+                    if (authenticatedUserToken) {
+                        renewChatTokenOptionalParams.authenticatedUserToken = authenticatedUserToken;
+                    }
+
+                    return this.OCClient.renewChatToken(requestId, renewChatTokenOptionalParams);
+                },
+                onRenewed: (renewed: RenewedChatToken) => {
+                    this.chatToken = {
+                        ...this.chatToken,
+                        token: renewed.Token,
+                        expiresIn: renewed.ExpiresIn !== undefined && renewed.ExpiresIn !== null ? String(renewed.ExpiresIn) : this.chatToken.expiresIn,
+                        voiceVideoCallToken: renewed.VoiceVideoCallToken ?? this.chatToken.voiceVideoCallToken
+                    };
+                },
+                onStart: () => this.scenarioMarker.startScenario(TelemetryEvent.RenewChatToken, telemetryData),
+                onSuccess: () => this.scenarioMarker.completeScenario(TelemetryEvent.RenewChatToken, telemetryData),
+                onFailure: (reason: string, error?: unknown) => {
+                    const exceptionDetails = {
+                        response: reason,
+                        errorObject: error !== undefined ? `${error}` : undefined
+                    };
+
+                    this.scenarioMarker.failScenario(TelemetryEvent.RenewChatToken, {
+                        ...telemetryData,
+                        ExceptionDetails: JSON.stringify(exceptionDetails)
+                    });
+                }
+            });
+        } catch {
+            return undefined;
+        }
+    }
+
+    /**
+     * Returns the token of the authenticated user to renew the chat token with, refreshed from the auth token
+     * provider when possible because the token used to start the chat may have expired. Returns undefined for
+     * unauthenticated chats.
+     */
+    private async getAuthenticatedUserTokenForChatTokenRenewal(): Promise<string | undefined> {
+        if (!this.authenticatedUserToken) {
+            return undefined;
+        }
+
+        if (typeof this.chatSDKConfig?.getAuthToken === "function") {
+            try {
+                const token = await this.chatSDKConfig.getAuthToken();
+                if (typeof token === "string" && token.trim().length > 0) {
+                    return token;
+                }
+            } catch {
+                // Fall back to the token the chat was authenticated with
+            }
+        }
+
+        return this.authenticatedUserToken;
     }
 
     public async getCallingToken(): Promise<string> {

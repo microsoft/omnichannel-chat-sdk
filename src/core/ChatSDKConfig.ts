@@ -26,6 +26,10 @@ interface CreateConversationConfig {
     disable: boolean;
 }
 
+interface ChatTokenRenewalConfig {
+    disable: boolean;
+}
+
 /**
  * Non-backward compatible configurations or experimentals. Subject to change any time. Internal use only.
  * It should not be used by external clients unless explicitly stated in case fallback is needed.
@@ -46,7 +50,8 @@ interface ChatSDKConfig {
     chatAdapterConfig?: ChatAdapterConfig,
     internalConfig?: InternalChatSDKConfig,
     ocUserAgent?: string[],
-    useCreateConversation?: CreateConversationConfig
+    useCreateConversation?: CreateConversationConfig,
+    chatTokenRenewal?: ChatTokenRenewalConfig
 }
 
 export {

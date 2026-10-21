@@ -37,6 +37,7 @@ enum TelemetryEvent {
     StopCall = "StopCall",
     OnCallDisconnected = "OnCallDisconnected",
     UpdateChatToken = "UpdateChatToken",
+    RenewChatToken = "RenewChatToken",
     GetChatReconnectContext = "GetChatReconnectContext",
     GetPostChatSurveyContext = "GetPostChatSurveyContext",
     GetAgentAvailability = "GetAgentAvailability",

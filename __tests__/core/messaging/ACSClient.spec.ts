@@ -20,6 +20,42 @@ describe('ACSClient', () => {
         expect(client.chatClient).toBeDefined();
     });
 
+    describe('tokenRefresher', () => {
+        const getTokenRefresher = async (config: any): Promise<() => Promise<string>> => {
+            const { AzureCommunicationTokenCredential } = jest.requireMock('@azure/communication-common');
+            (AzureCommunicationTokenCredential as jest.Mock).mockClear();
+
+            const client: any = new ACSClient();
+            await client.initialize(config);
+
+            return (AzureCommunicationTokenCredential as jest.Mock).mock.calls[0][0].tokenRefresher;
+        };
+
+        it('should return the original token when no refresher is configured', async () => {
+            const tokenRefresher = await getTokenRefresher({ token: 'token', environmentUrl: 'url' });
+
+            await expect(tokenRefresher()).resolves.toBe('token');
+        });
+
+        it('should return the token from the configured refresher', async () => {
+            const tokenRefresher = await getTokenRefresher({ token: 'token', environmentUrl: 'url', tokenRefresher: async () => 'renewed' });
+
+            await expect(tokenRefresher()).resolves.toBe('renewed');
+        });
+
+        it('should fall back to the original token when the configured refresher throws', async () => {
+            const tokenRefresher = await getTokenRefresher({ token: 'token', environmentUrl: 'url', tokenRefresher: async () => { throw new Error('failure'); } });
+
+            await expect(tokenRefresher()).resolves.toBe('token');
+        });
+
+        it('should fall back to the original token when the configured refresher returns an empty token', async () => {
+            const tokenRefresher = await getTokenRefresher({ token: 'token', environmentUrl: 'url', tokenRefresher: async () => '' });
+
+            await expect(tokenRefresher()).resolves.toBe('token');
+        });
+    });
+
     it('ACSClient.joinConversation() should return ACSConversation', async () => {
         const client: any = new ACSClient();
         const config = {
