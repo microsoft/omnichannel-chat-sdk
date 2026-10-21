@@ -2,6 +2,7 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 
+import { AMSClientLoadStates } from "../src/utils/AMSClientLoadStates";
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
 import LiveChatVersion from "../src/core/LiveChatVersion";
 import TelemetryEvent from "../src/telemetry/TelemetryEvent";
@@ -232,6 +233,78 @@ describe('Omnichannel Chat SDK, chat token renewal', () => {
             await expect(tokenRefresher()).resolves.toBe(initialToken);
 
             expect(chatSDK["chatToken"]).toEqual({ chatId: 'newChat', token: 'newChatToken' });
+        });
+    });
+
+    describe('attachment client', () => {
+        const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+        const startChatWithAttachments = async (renewChatToken: jest.Mock, initialize: jest.Mock, loadState = AMSClientLoadStates.LOADED) => {
+            const result = await startChat({ renewalEnabled: 'true', renewChatToken });
+            result.chatSDK["isAMSClientAllowed"] = true;
+            result.chatSDK["AMSClientLoadCurrentState"] = loadState;
+            result.chatSDK["AMSClient"] = { initialize };
+            return result;
+        };
+
+        it('gets the renewed token', async () => {
+            const renewedToken = createJwt(86400);
+            const initialize = jest.fn().mockResolvedValue(undefined);
+            const renewChatToken = jest.fn().mockResolvedValue({ ChatId: chatId, Token: renewedToken });
+            const { chatSDK, tokenRefresher } = await startChatWithAttachments(renewChatToken, initialize);
+
+            await expect(tokenRefresher()).resolves.toBe(renewedToken);
+            await flushPromises();
+
+            expect(initialize).toHaveBeenCalledTimes(1);
+            expect(initialize.mock.calls[0][0].chatToken).toBe(chatSDK["chatToken"]);
+            expect(initialize.mock.calls[0][0].chatToken).toEqual(expect.objectContaining({ chatId, token: renewedToken, visitorId: 'visitorId', acsEndpoint: 'acsEndpoint' }));
+            expect(chatSDK.scenarioMarker.completeScenario).toHaveBeenCalledWith(TelemetryEvent.RefreshAttachmentClientToken, { RequestId: chatSDK.requestId, ChatId: chatId });
+        });
+
+        it('is not changed when renewal fails', async () => {
+            const initialize = jest.fn();
+            const renewChatToken = jest.fn().mockRejectedValue(Object.assign(new Error('Request failed with status code 404'), { response: { status: 404 } }));
+            const { chatSDK, tokenRefresher } = await startChatWithAttachments(renewChatToken, initialize);
+
+            await expect(tokenRefresher()).resolves.toBe(initialToken);
+            await flushPromises();
+
+            expect(initialize).not.toHaveBeenCalled();
+            expect(chatSDK.scenarioMarker.startScenario).not.toHaveBeenCalledWith(TelemetryEvent.RefreshAttachmentClientToken, expect.anything());
+        });
+
+        it.each([
+            ['attachments are not allowed', (chatSDK: any) => { chatSDK["isAMSClientAllowed"] = false; }],
+            ['the attachment client is not loaded', (chatSDK: any) => { chatSDK["AMSClientLoadCurrentState"] = AMSClientLoadStates.LOADING; }],
+            ['there is no attachment client', (chatSDK: any) => { chatSDK["AMSClient"] = null; }]
+        ])('is not changed when %s', async (_, arrange) => {
+            const renewedToken = createJwt(86400);
+            const initialize = jest.fn();
+            const renewChatToken = jest.fn().mockResolvedValue({ ChatId: chatId, Token: renewedToken });
+            const { chatSDK, tokenRefresher } = await startChatWithAttachments(renewChatToken, initialize);
+            arrange(chatSDK);
+
+            await expect(tokenRefresher()).resolves.toBe(renewedToken);
+            await flushPromises();
+
+            expect(initialize).not.toHaveBeenCalled();
+        });
+
+        it.each([
+            ['rejects', jest.fn().mockRejectedValue(new Error('ams'))],
+            ['throws', jest.fn().mockImplementation(() => { throw new Error('ams'); })]
+        ])('does not affect renewal when it %s', async (_, initialize) => {
+            const renewedToken = createJwt(86400);
+            const renewChatToken = jest.fn().mockResolvedValue({ ChatId: chatId, Token: renewedToken });
+            const { chatSDK, tokenRefresher } = await startChatWithAttachments(renewChatToken, initialize);
+
+            await expect(tokenRefresher()).resolves.toBe(renewedToken);
+            await flushPromises();
+
+            expect((await chatSDK.getChatToken()).token).toBe(renewedToken);
+            expect(chatSDK.scenarioMarker.completeScenario).toHaveBeenCalledWith(TelemetryEvent.RenewChatToken, expect.anything());
+            expect(chatSDK.scenarioMarker.failScenario).toHaveBeenCalledWith(TelemetryEvent.RefreshAttachmentClientToken, expect.objectContaining({ RequestId: chatSDK.requestId, ChatId: chatId }));
         });
     });
 });
