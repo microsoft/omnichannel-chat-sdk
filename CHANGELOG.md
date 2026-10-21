@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.0.2] - 2026-10-20
+
 ### Security
 
 - Telemetry no longer logs the untranslated `OriginalMessageText` that real-time translation adds to message metadata (message payloads are unchanged). ACS adapter telemetry (`CustomProperties`, `Description`, `ExceptionDetails`) now also redacts JWTs and sensitive URL parameter values (for example `workspace`, `sig`, `token`, `code`, `client_secret`), including percent-encoded and HTML-escaped links. Earlier versions can send these values to telemetry, so upgrade if your agents or customers use real-time translation.

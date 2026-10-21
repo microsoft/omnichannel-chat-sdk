@@ -117,6 +117,7 @@ _**Known issue:**_ Versions earlier than 1.11.6 can start duplicate conversation
 
 | Version | Docs | Release Date | End of Support | Deprecated |
 | -- | -- | -- | -- | -- |
+| 2.0.2 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v2.0.2) | Oct 20th 2026 | Oct 20th 2027 | |
 | 2.0.1 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v2.0.1) | Oct 1st 2026 | Oct 1st 2027 | |
 | 2.0.0 | [Migration Guide](docs/MIGRATION_2.0.md) / [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v2.0.0) | Aug 13th 2026 | Aug 13th 2027 | |
 | 1.11.8 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.11.8) | Feb 2nd 2026 | Feb 2nd 2027 | |
