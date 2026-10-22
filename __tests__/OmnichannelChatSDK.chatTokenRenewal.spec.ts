@@ -34,7 +34,7 @@ describe('Omnichannel Chat SDK, chat token renewal', () => {
         }
     });
 
-    const startChat = async (options: { chatSDKConfig?: any, renewalEnabled?: any, renewChatToken?: any, authenticatedUserToken?: string } = {}) => {
+    const startChat = async (options: { chatSDKConfig?: any, renewalEnabled?: any, renewChatToken?: any, authenticatedUserToken?: string, reconnectId?: string } = {}) => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
             useCreateConversation: {
                 disable: true,
@@ -75,7 +75,11 @@ describe('Omnichannel Chat SDK, chat token renewal', () => {
         jest.spyOn(chatSDK.scenarioMarker, 'completeScenario');
         jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
 
-        await chatSDK.startChat();
+        if (options.reconnectId) {
+            chatSDK["isChatReconnect"] = true;
+        }
+
+        await chatSDK.startChat(options.reconnectId ? { reconnectId: options.reconnectId } : {});
 
         const tokenRefresher = (chatSDK.ACSClient.initialize as jest.Mock).mock.calls[0][0].tokenRefresher;
         return { chatSDK, tokenRefresher };
@@ -150,7 +154,17 @@ describe('Omnichannel Chat SDK, chat token renewal', () => {
             expect(chatSDK.scenarioMarker.completeScenario).toHaveBeenCalledWith(TelemetryEvent.RenewChatToken, { RequestId: chatSDK.requestId, ChatId: chatId });
         });
 
-        it('keeps the existing voice and video token when the response has none', async () => {
+        it('renews a reconnected chat by its reconnect id', async () => {
+        const renewChatToken = jest.fn().mockResolvedValue({ ChatId: chatId, Token: createJwt(86400) });
+        const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken, reconnectId: 'reconnectId', chatSDKConfig: { chatReconnect: { disable: false } } });
+
+        await tokenRefresher();
+
+        expect(renewChatToken).toHaveBeenCalledWith('reconnectId', {});
+        expect(chatSDK.scenarioMarker.completeScenario).toHaveBeenCalledWith(TelemetryEvent.RenewChatToken, { RequestId: chatSDK.requestId, ChatId: chatId });
+    });
+
+    it('keeps the existing voice and video token when the response has none', async () => {
             const renewChatToken = jest.fn().mockResolvedValue({ ChatId: chatId, Token: createJwt(86400), ExpiresIn: '86400' });
             const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken });
             chatSDK["chatToken"].voiceVideoCallToken = { Token: 'existing' };

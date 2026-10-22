@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
 
 - Added a known-issue document for concurrent `startChat()` calls in versions earlier than `1.11.6`, with upgrade steps.
 - Added version `1.11.8` to the README Releases table (supported until February 2, 2027).
-- Added automatic ACS chat token renewal for long-running Live Chat V2 conversations. Renewal only runs when the org's live chat config enables `LcwFcbConfiguration.lcwChatTokenRenewalEnabled` and the installed `@microsoft/ocsdk` exposes `renewChatToken`. If the renewal API is not deployed, returns an error, times out, or returns an invalid token, the SDK keeps the current token and the existing flow is unchanged. Set `chatSDKConfig.chatTokenRenewal.disable` to `true` to turn renewal off.
+- Added automatic ACS chat token renewal for long-running Live Chat V2 conversations. Renewal only runs when the org's live chat config enables `LcwFcbConfiguration.lcwChatTokenRenewalEnabled` and the installed `@microsoft/ocsdk` exposes `renewChatToken`. If the renewal API is not deployed, returns an error, times out, or returns an invalid token, the SDK keeps the current token and the existing flow is unchanged. Reconnected chats are renewed by their reconnect id. Set `chatSDKConfig.chatTokenRenewal.disable` to `true` to turn renewal off.
 
 ## [2.0.1] - 2026-10-01
 

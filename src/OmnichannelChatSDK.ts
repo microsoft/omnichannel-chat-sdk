@@ -1554,6 +1554,8 @@ class OmnichannelChatSDK {
 
             const chatId = this.chatToken.chatId;
             const requestId = this.requestId;
+            // A reconnected chat is found by its reconnect id, not by the new request id
+            const renewalId = this.reconnectId || requestId;
             const telemetryData = {
                 RequestId: requestId,
                 ChatId: chatId
@@ -1570,7 +1572,7 @@ class OmnichannelChatSDK {
                         renewChatTokenOptionalParams.authenticatedUserToken = authenticatedUserToken;
                     }
 
-                    return this.OCClient.renewChatToken(requestId, renewChatTokenOptionalParams);
+                    return this.OCClient.renewChatToken(renewalId, renewChatTokenOptionalParams);
                 },
                 onRenewed: (renewed: RenewedChatToken) => {
                     this.chatToken = {
