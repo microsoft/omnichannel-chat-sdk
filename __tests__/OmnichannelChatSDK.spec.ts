@@ -17,6 +17,7 @@ import IFileMetadata from "@microsoft/omnichannel-ic3core/lib/model/IFileMetadat
 import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import LiveChatVersion from "../src/core/LiveChatVersion";
 import OmnichannelErrorCodes from "../src/core/OmnichannelErrorCodes";
+import TelemetryEvent from "../src/telemetry/TelemetryEvent";
 import { SDKProvider } from "@microsoft/ocsdk";
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
 import libraries from "../src/utils/libraries";
@@ -2713,6 +2714,68 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             await chatSDK.sendMessage(message);
 
             expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
+            expect(chatSDK.conversation.sendMessage.mock.calls[0][0].metadata.clientMessageId)
+                .toEqual(expect.any(String));
+        });
+
+        it('ChatSDK.sendMessage() should reuse clientMessageId, avoid retries, and preserve the stable SDK error contract', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            await chatSDK.initialize();
+
+            const sendFailure = {
+                message: "token=secret",
+                response: {
+                    status: 503,
+                    data: { content: "private message" }
+                }
+            };
+            const sendMessage = jest.fn().mockRejectedValue(sendFailure);
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn()
+            };
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            };
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendMessage
+            }));
+            await chatSDK.startChat();
+            const failScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+            await expect(chatSDK.sendMessage({
+                content: "content",
+                metadata: {
+                    clientMessageId: "stable-client-message-id"
+                }
+            })).rejects.toMatchObject({
+                message: ChatSDKErrorName.ChatSDKSendMessageFailed,
+                httpResponseStatusCode: 503,
+                exceptionDetails: expect.objectContaining({
+                    response: ChatSDKErrorName.ChatSDKSendMessageFailed,
+                    operation: "SendMessage",
+                    failureStage: "SendMessage",
+                    httpStatus: 503,
+                    isRetryable: true
+                })
+            });
+
+            expect(sendMessage).toHaveBeenCalledTimes(1);
+            expect(sendMessage.mock.calls[0][0].metadata.clientMessageId).toBe("stable-client-message-id");
+            const failureProperties = failScenarioSpy.mock.calls
+                .find(([event]) => event === TelemetryEvent.SendMessages)?.[1] as Record<string, unknown>;
+            expect(failureProperties).toEqual(expect.objectContaining({
+                ErrorCode: "MESSAGE_SEND_FAILED",
+                FailureStage: "SendMessage",
+                HttpStatus: 503,
+                IsRetryable: true
+            }));
+            expect(JSON.stringify(failureProperties)).not.toContain("secret");
+            expect(JSON.stringify(failureProperties)).not.toContain("private message");
         });
 
         it('ChatSDK.sendTypingEvent() should call OCClient.sendTypingIndicator()', async() => {
@@ -2744,6 +2807,185 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.OCClient.sendTypingIndicator).toHaveBeenCalledTimes(1);
             expect(chatSDK.conversation.sendTyping).toHaveBeenCalledTimes(1);
         });
+
+        it('ChatSDK.sendTypingEvent() should continue to ACS and record safe telemetry when OC typing fails', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                sendTypingIndicator: jest.fn().mockRejectedValue({
+                    message: "token=secret",
+                    response: { status: 401 }
+                }),
+                createConversation: jest.fn()
+            };
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            };
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendTyping: jest.fn().mockResolvedValue(undefined)
+            }));
+            await chatSDK.startChat();
+            const singleRecordSpy = jest.spyOn(chatSDK.scenarioMarker, 'singleRecord');
+            const completeScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'completeScenario');
+
+            await expect(chatSDK.sendTypingEvent()).resolves.toBeUndefined();
+            await Promise.resolve();
+
+            expect(chatSDK.OCClient.sendTypingIndicator).toHaveBeenCalledTimes(1);
+            expect(chatSDK.conversation.sendTyping).toHaveBeenCalledTimes(1);
+            expect(singleRecordSpy).toHaveBeenCalledWith(
+                TelemetryEvent.SendOCTypingIndicatorFailure,
+                expect.objectContaining({
+                    ErrorCode: "OC_TYPING_INDICATOR_FAILED",
+                    FailureStage: "SendOCTypingIndicator",
+                    HttpStatus: 401,
+                    IsRetryable: false
+                })
+            );
+            expect(completeScenarioSpy).toHaveBeenCalledWith(
+                TelemetryEvent.SendTypingEvent,
+                expect.any(Object)
+            );
+            expect(JSON.stringify(singleRecordSpy.mock.calls[0][1])).not.toContain("secret");
+        });
+
+        it('ChatSDK.sendTypingEvent() should not wait for a pending OC typing request before sending ACS typing', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                sendTypingIndicator: jest.fn(() => new Promise(() => undefined)),
+                createConversation: jest.fn()
+            };
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            };
+            const sendTyping = jest.fn().mockResolvedValue(undefined);
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendTyping
+            }));
+            await chatSDK.startChat();
+
+            await expect(chatSDK.sendTypingEvent()).resolves.toBeUndefined();
+
+            expect(sendTyping).toHaveBeenCalledTimes(1);
+        });
+
+        it('ChatSDK.sendReadReceipt() should emit normalized telemetry and throw a stable SDK error', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn()
+            };
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            };
+            const sendReadReceipt = jest.fn().mockRejectedValue({
+                response: {
+                    status: 429,
+                    headers: { "x-ms-retry-after-ms": "250" },
+                    data: { token: "secret" }
+                }
+            });
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendReadReceipt
+            }));
+            await chatSDK.startChat();
+            const failScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+            await expect(chatSDK.sendReadReceipt("message-id")).rejects.toMatchObject({
+                message: ChatSDKErrorName.SendReadReceiptFailure,
+                httpResponseStatusCode: 429
+            });
+
+            expect(sendReadReceipt).toHaveBeenCalledTimes(1);
+            const failureProperties = failScenarioSpy.mock.calls
+                .find(([event]) => event === TelemetryEvent.SendReadReceipt)?.[1] as Record<string, unknown>;
+            expect(failureProperties).toEqual(expect.objectContaining({
+                ErrorCode: "READ_RECEIPT_FAILED",
+                FailureStage: "SendReadReceipt",
+                HttpStatus: 429,
+                IsRetryable: true,
+                RetryAfterMs: 250
+            }));
+            expect(JSON.stringify(failureProperties)).not.toContain("secret");
+        });
+
+        it.each([
+            [404, ChatSDKErrorName.InvalidConversation],
+            [400, ChatSDKErrorName.SendReadReceiptInvalidParams]
+        ])(
+            'ChatSDK.sendReadReceipt() should map HTTP %i to %s with safe diagnostics',
+            async (httpStatus, expectedErrorName) => {
+                const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+                chatSDK.getChatConfig = jest.fn();
+                chatSDK.getChatToken = jest.fn();
+                chatSDK["isAMSClientAllowed"] = true;
+                await chatSDK.initialize();
+
+                chatSDK.OCClient = {
+                    sessionInit: jest.fn(),
+                    createConversation: jest.fn()
+                };
+                chatSDK.AMSClient = {
+                    initialize: jest.fn()
+                };
+                const sendReadReceipt = jest.fn().mockRejectedValue({
+                    message: "token=secret",
+                    response: {
+                        status: httpStatus,
+                        data: { content: "private message" }
+                    }
+                });
+                jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+                jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                    sendReadReceipt
+                }));
+                await chatSDK.startChat();
+                const failScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+                await expect(chatSDK.sendReadReceipt("message-id")).rejects.toMatchObject({
+                    message: expectedErrorName,
+                    httpResponseStatusCode: httpStatus,
+                    exceptionDetails: expect.objectContaining({
+                        response: "READ_RECEIPT_FAILED",
+                        operation: "SendReadReceipt",
+                        failureStage: "SendReadReceipt",
+                        httpStatus,
+                        isRetryable: false
+                    })
+                });
+
+                expect(sendReadReceipt).toHaveBeenCalledTimes(1);
+                const failureProperties = failScenarioSpy.mock.calls
+                    .find(([event]) => event === TelemetryEvent.SendReadReceipt)?.[1] as Record<string, unknown>;
+                expect(failureProperties).toEqual(expect.objectContaining({
+                    ErrorCode: "READ_RECEIPT_FAILED",
+                    FailureStage: "SendReadReceipt",
+                    HttpStatus: httpStatus,
+                    IsRetryable: false
+                }));
+                expect(JSON.stringify(failureProperties)).not.toContain("secret");
+                expect(JSON.stringify(failureProperties)).not.toContain("private message");
+            }
+        );
 
         it('[LiveChatV1] ChatSDK.uploadFileAttachment() should call conversation.sendFileData() & conversation.sendFileMessage()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
@@ -2812,6 +3054,82 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
         });
 
+        it('ChatSDK.uploadFileAttachment() should preserve CreateObject failure behavior with normalized telemetry', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            await chatSDK.initialize();
+
+            const uploadFailure = { response: { status: 503, data: { token: "secret" } } };
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn()
+            };
+            chatSDK.AMSClient = {
+                initialize: jest.fn(),
+                createObject: jest.fn().mockRejectedValue(uploadFailure),
+                uploadDocument: jest.fn()
+            };
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendMessage: jest.fn()
+            }));
+            await chatSDK.startChat();
+            const failScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+            await expect(chatSDK.uploadFileAttachment({})).rejects.toBe(uploadFailure);
+
+            expect(failScenarioSpy).toHaveBeenCalledWith(
+                TelemetryEvent.UploadFileAttachment,
+                expect.objectContaining({
+                    ErrorCode: "FILE_UPLOAD_FAILED",
+                    FailureStage: "CreateObject",
+                    HttpStatus: 503,
+                    IsRetryable: true
+                })
+            );
+            expect(JSON.stringify(failScenarioSpy.mock.calls[0][1])).not.toContain("secret");
+        });
+
+        it('ChatSDK.uploadFileAttachment() should preserve swallowed SendMessage failures with stage telemetry', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn()
+            };
+            chatSDK.AMSClient = {
+                initialize: jest.fn(),
+                createObject: jest.fn().mockResolvedValue({ id: "id" }),
+                uploadDocument: jest.fn().mockResolvedValue({})
+            };
+            const sendMessage = jest.fn().mockRejectedValue({ response: { status: 401 } });
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendMessage
+            }));
+            await chatSDK.startChat();
+            const failScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+            await expect(chatSDK.uploadFileAttachment({})).resolves.toEqual({});
+
+            expect(sendMessage).toHaveBeenCalledTimes(1);
+            expect(failScenarioSpy).toHaveBeenCalledWith(
+                TelemetryEvent.UploadFileAttachment,
+                expect.objectContaining({
+                    ErrorCode: "FILE_UPLOAD_FAILED",
+                    FailureStage: "SendMessage",
+                    HttpStatus: 401,
+                    IsRetryable: false
+                })
+            );
+        });
+
         it('[LiveChatV1] ChatSDK.downloadFileAttachment() should call conversation.downloadFile()', async() => {
 
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
@@ -2872,6 +3190,143 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             expect(chatSDK.AMSClient.getViewStatus).toHaveBeenCalledTimes(1);
             expect(chatSDK.AMSClient.getView).toHaveBeenCalledTimes(1);
+        });
+
+        it.each([
+            ["GetViewStatus", 429],
+            ["GetView", 503]
+        ])('ChatSDK.downloadFileAttachment() should preserve diagnostics when %s fails', async (failureStage, httpStatus) => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            await chatSDK.initialize();
+
+            const downloadError = {
+                response: {
+                    status: httpStatus,
+                    headers: {
+                        "x-ms-retry-after-ms": "250"
+                    }
+                }
+            };
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn()
+            };
+            chatSDK.AMSClient = {
+                initialize: jest.fn(),
+                getViewStatus: failureStage === "GetViewStatus"
+                    ? jest.fn().mockRejectedValue(downloadError)
+                    : jest.fn().mockResolvedValue({view_location: "view_location"}),
+                getView: failureStage === "GetView"
+                    ? jest.fn().mockRejectedValue(downloadError)
+                    : jest.fn()
+            };
+
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve());
+            await chatSDK.startChat();
+            const failScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+            await expect(chatSDK.downloadFileAttachment({})).rejects.toThrow("DownloadFileAttachmentFailed");
+
+            expect(failScenarioSpy).toHaveBeenCalledWith(
+                TelemetryEvent.DownloadFileAttachment,
+                expect.objectContaining({
+                    ErrorCode: "FILE_DOWNLOAD_FAILED",
+                    FailureStage: failureStage,
+                    HttpStatus: httpStatus,
+                    IsRetryable: true,
+                    RetryAfterMs: 250
+                })
+            );
+            const telemetryProperties = failScenarioSpy.mock.calls[0][1] as Record<string, unknown>;
+            const exceptionDetails = JSON.parse(telemetryProperties.ExceptionDetails as string);
+            expect(exceptionDetails).toEqual(expect.objectContaining({
+                response: "DownloadFileAttachmentFailed",
+                failureStage,
+                httpStatus,
+                isRetryable: true,
+                retryAfterMs: 250
+            }));
+        });
+
+        it('ChatSDK.downloadFileAttachment() should sanitize AMS client load failures', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn()
+            };
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve());
+            await chatSDK.startChat();
+
+            chatSDK["AMSClientLoadCurrentState"] = "ERROR";
+            const sensitiveError = {
+                message: "token=secret",
+                response: {
+                    status: 401,
+                    headers: {authorization: "secret"},
+                    data: {contentUrl: "https://example.test/?sig=secret"}
+                }
+            };
+            const loadAmsClientSpy = jest.spyOn(chatSDK as any, "loadAmsClient").mockRejectedValue(sensitiveError);
+            const failScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+            await expect(chatSDK.downloadFileAttachment({})).rejects.toThrow("DownloadFileAttachmentFailed");
+
+            expect(loadAmsClientSpy).toHaveBeenCalledWith(false);
+            expect(failScenarioSpy).toHaveBeenCalledTimes(1);
+            const telemetryProperties = failScenarioSpy.mock.calls[0][1] as Record<string, unknown>;
+            expect(telemetryProperties).toEqual(expect.objectContaining({
+                ErrorCode: "FILE_DOWNLOAD_FAILED",
+                FailureStage: "GetAMSClient",
+                HttpStatus: 401,
+                IsRetryable: false
+            }));
+            expect(JSON.stringify(telemetryProperties)).not.toContain("secret");
+            expect(JSON.stringify(telemetryProperties)).not.toContain("contentUrl");
+        });
+
+        it('[LiveChatV1] ChatSDK.downloadFileAttachment() should identify downloadFile failures', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn()
+            };
+            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
+                downloadFile: jest.fn()
+            }));
+            await chatSDK.startChat();
+
+            jest.spyOn(chatSDK.conversation, 'downloadFile').mockRejectedValue({code: "ECONNABORTED"});
+            const failScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+            await expect(chatSDK.downloadFileAttachment({})).rejects.toThrow("DownloadFileAttachmentFailed");
+
+            expect(failScenarioSpy).toHaveBeenCalledWith(
+                TelemetryEvent.DownloadFileAttachment,
+                expect.objectContaining({
+                    ErrorCode: "FILE_DOWNLOAD_FAILED",
+                    FailureStage: "DownloadFile",
+                    IsRetryable: true
+                })
+            );
+            const telemetryProperties = failScenarioSpy.mock.calls[0][1] as Record<string, unknown>;
+            const exceptionDetails = JSON.parse(telemetryProperties.ExceptionDetails as string);
+            expect(exceptionDetails.cancellationReason).toBe("timeout");
         });
 
         it('ChatSDK.emailLiveChatTranscript() should call OCClient.emailTranscript()', async () => {
@@ -3460,7 +3915,15 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.IC3Client).toBe(null);
         });
 
-        it('ChatSDK.endChat() should end conversation', async () => {
+        it('ChatSDK.endChat() should reject if ChatSDK.initialize() is not called', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+
+            await expect(chatSDK.endChat()).rejects.toMatchObject({
+                message: 'UninitializedChatSDK'
+            });
+        });
+
+        it('ChatSDK.endChat() should be a no-op after the conversation has ended', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
@@ -3483,6 +3946,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             };
 
             const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
+            await chatSDK.endChat();
             await chatSDK.endChat();
 
             expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(1);
@@ -3605,15 +4069,20 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             chatSDK.OCClient = {};
             chatSDK.OCClient.sessionInit = jest.fn();
             chatSDK.OCClient.createConversation = jest.fn();
-            chatSDK.OCClient.sessionClose = jest.fn(() => Promise.reject());
+            chatSDK.OCClient.sessionClose = jest.fn(() => Promise.reject({
+                message: "token=secret",
+                response: { status: 503, data: { content: "private message" } }
+            }));
             chatSDK.ACSClient.initialize = jest.fn();
             chatSDK.ACSClient.joinConversation = jest.fn();
             chatSDK.AMSClient.initialize = jest.fn();
 
             await chatSDK.startChat();
             chatSDK.conversation = {
-                stopPolling: jest.fn()
+                stopPolling: jest.fn(),
+                disconnect: jest.fn()
             };
+            const failScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
 
             try {
                 await chatSDK.endChat();
@@ -3623,6 +4092,19 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             }
 
             expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(1);
+            expect(failScenarioSpy.mock.calls.filter(([event]) => event === TelemetryEvent.CloseChatSession)).toHaveLength(1);
+            expect(failScenarioSpy.mock.calls.filter(([event]) => event === TelemetryEvent.EndChat)).toHaveLength(1);
+            expect(failScenarioSpy).toHaveBeenCalledWith(
+                TelemetryEvent.CloseChatSession,
+                expect.objectContaining({
+                    ErrorCode: "END_CHAT_FAILED",
+                    FailureStage: "CloseSession",
+                    HttpStatus: 503,
+                    IsRetryable: true
+                })
+            );
+            expect(JSON.stringify(failScenarioSpy.mock.calls)).not.toContain("secret");
+            expect(JSON.stringify(failScenarioSpy.mock.calls)).not.toContain("private message");
         });
 
         it('ChatSDK.endChat() with authenticatedUserToken should pass it to OCClient.sessionClose() call\'s optional parameters', async () => {

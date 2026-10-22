@@ -11,8 +11,9 @@ import { MessagePrinterFactory, PrinterType } from "./utils/printers/MessagePrin
 import { SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
 import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
 import { createCoreServicesOrgUrl, getCoreServicesGeoName, isCoreServicesOrgUrl, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
+import { classifyOperationFailure, OperationFailureClassification } from "./utils/operationFailureClassifier";
 import { defaultLocaleId, getLocaleStringFromId } from "./utils/locale";
-import exceptionThrowers, { throwAMSLoadFailure } from "./utils/exceptionThrowers";
+import exceptionThrowers from "./utils/exceptionThrowers";
 import { getRuntimeId, isClientIdNotFoundErrorMessage, isCustomerMessage } from "./utils/utilities";
 import { loadScript, removeElementById, sleep } from "./utils/WebUtils";
 import { retrieveRegionBasedUrl, shouldUseFramedMode } from "./utils/AMSClientUtils";
@@ -132,6 +133,8 @@ class OmnichannelChatSDK {
     // Operation queue for serializing chat operations
     private chatOperationInProgress = false;
     private pendingOperations: Array<() => Promise<void>> = [];
+    private startChatPromise: Promise<void> | null = null;
+    private isChatSessionActive = false;
     private unqServicesOrgUrl: string | null = null;
     private coreServicesOrgUrl: string | null = null;
     private dynamicsLocationCode: string | null = null;
@@ -328,7 +331,7 @@ class OmnichannelChatSDK {
         return null;
     }
 
-    private async getAMSClient(): Promise<AmsClient> {
+    private async getAMSClient(trackLoadScenario = true): Promise<AmsClient> {
 
         //return null to do not break promise creation
         if (this.isAMSClientAllowed === false) {
@@ -348,7 +351,7 @@ class OmnichannelChatSDK {
         case AMSClientLoadStates.ERROR:
         case AMSClientLoadStates.NOT_LOADED:
             this.debug && console.log("Attachment handler is not loaded, loading now");
-            await this.loadAmsClient();
+            await this.loadAmsClient(trackLoadScenario);
             return this.AMSClient;
         default:
             return null;
@@ -385,8 +388,10 @@ class OmnichannelChatSDK {
         return this.isAMSClientAllowed;
     }
 
-    private async loadAmsClient(): Promise<void> {
-        this.scenarioMarker.startScenario(TelemetryEvent.InitializeMessagingClient);
+    private async loadAmsClient(trackScenario = true): Promise<void> {
+        if (trackScenario) {
+            this.scenarioMarker.startScenario(TelemetryEvent.InitializeMessagingClient);
+        }
         try {
             if (this.isAMSClientAllowed) {
                 if (this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED) {
@@ -407,9 +412,14 @@ class OmnichannelChatSDK {
                 }
             }
 
-            this.scenarioMarker.completeScenario(TelemetryEvent.InitializeMessagingClient);
+            if (trackScenario) {
+                this.scenarioMarker.completeScenario(TelemetryEvent.InitializeMessagingClient);
+            }
         } catch (e) {
             this.AMSClientLoadCurrentState = AMSClientLoadStates.ERROR;
+            if (!trackScenario) {
+                throw e;
+            }
             exceptionThrowers.throwMessagingClientCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeMessagingClient);
         }
     }
@@ -684,8 +694,24 @@ class OmnichannelChatSDK {
         return context;
     }
 
-    public async startChat(optionalParams: StartChatOptionalParams = {}): Promise<void> {
-        return this.executeWithLock(() => this.internalStartChat(optionalParams));
+    public startChat(optionalParams: StartChatOptionalParams = {}): Promise<void> {
+        if (this.startChatPromise) {
+            return this.startChatPromise;
+        }
+
+        const startChatPromise = this.executeWithLock(async () => {
+            await this.internalStartChat(optionalParams);
+            this.isChatSessionActive = true;
+        });
+        this.startChatPromise = startChatPromise;
+        const clearStartChatPromise = () => {
+            if (this.startChatPromise === startChatPromise) {
+                this.startChatPromise = null;
+            }
+        };
+        startChatPromise.then(clearStartChatPromise, clearStartChatPromise);
+
+        return startChatPromise;
     }
 
     private async internalStartChat(optionalParams: StartChatOptionalParams = {}): Promise<void> {
@@ -1029,17 +1055,44 @@ class OmnichannelChatSDK {
                 await this.OCClient.sessionClose(this.requestId, sessionCloseOptionalParams);
 
             } catch (error) {
-                exceptionThrowers.throwConversationClosureFailure(error, this.scenarioMarker, TelemetryEvent.CloseChatSession, {
-                    ...cleanupMetadata,
-                    isSessionEnded: String(!endChatOptionalParams?.isSessionEnded)
-                });
+                const failure = this.failOperationScenario(
+                    TelemetryEvent.CloseChatSession,
+                    "EndChat",
+                    "CloseSession",
+                    "END_CHAT_FAILED",
+                    error,
+                    {
+                        ...cleanupMetadata,
+                        isSessionEnded: String(!endChatOptionalParams?.isSessionEnded)
+                    }
+                );
+                throw new ChatSDKError(
+                    ChatSDKErrorName.ConversationClosureFailure,
+                    failure.httpStatus,
+                    failure.exceptionDetails
+                );
             }
             this.scenarioMarker.completeScenario(TelemetryEvent.CloseChatSession, cleanupMetadata);
         }
     }
 
     public async endChat(endChatOptionalParams: EndChatOptionalParams = {}): Promise<void> {
-        return this.executeWithLock(() => this.internalEndChat(endChatOptionalParams));
+        return this.executeWithLock(async () => {
+            if (!this.isInitialized) {
+                await this.internalEndChat(endChatOptionalParams);
+                return;
+            }
+
+            if (!this.isChatSessionActive) {
+                return;
+            }
+
+            try {
+                await this.internalEndChat(endChatOptionalParams);
+            } finally {
+                this.isChatSessionActive = false;
+            }
+        });
     }
 
     private async internalEndChat(endChatOptionalParams: EndChatOptionalParams = {}): Promise<void> {
@@ -1090,14 +1143,24 @@ class OmnichannelChatSDK {
             this.scenarioMarker.completeScenario(TelemetryEvent.EndChat, cleanupMetadata);
 
         } catch (error) {
-            const telemetryData = {
-                RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string
-            };
-            if (error instanceof ChatSDKError) {
-                exceptionThrowers.throwConversationClosureFailure(new Error(JSON.stringify(error.exceptionDetails)), this.scenarioMarker, TelemetryEvent.EndChat, telemetryData);
+            const failure = this.failOperationScenario(
+                TelemetryEvent.EndChat,
+                "EndChat",
+                "Cleanup",
+                "END_CHAT_FAILED",
+                error,
+                cleanupMetadata
+            );
+            if (error instanceof ChatSDKError &&
+                error.message === ChatSDKErrorName.ConversationClosureFailure) {
+                throw error;
             }
-            exceptionThrowers.throwConversationClosureFailure(error, this.scenarioMarker, TelemetryEvent.EndChat, telemetryData);
+
+            throw new ChatSDKError(
+                ChatSDKErrorName.ConversationClosureFailure,
+                failure.httpStatus,
+                failure.exceptionDetails
+            );
         }
     }
 
@@ -1438,10 +1501,38 @@ class OmnichannelChatSDK {
         return message;
     }
 
+    private failOperationScenario(
+        telemetryEvent: TelemetryEvent,
+        operation: string,
+        failureStage: string,
+        errorCode: string,
+        error: unknown,
+        telemetryData: Record<string, string>,
+        operationId?: string,
+        response?: string
+    ): OperationFailureClassification {
+        const failure = classifyOperationFailure(error, {
+            operation,
+            failureStage,
+            errorCode,
+            response,
+            operationId
+        });
+
+        this.scenarioMarker.failScenario(telemetryEvent, {
+            ...telemetryData,
+            ...failure.telemetryProperties
+        });
+
+        return failure;
+    }
+
     public async sendMessage(message: ChatSDKMessage): Promise<OmnichannelMessage | void> {
+        const operationId = uuidv4();
         this.scenarioMarker.startScenario(TelemetryEvent.SendMessages, {
             RequestId: this.requestId,
-            ChatId: this.chatToken.chatId as string
+            ChatId: this.chatToken.chatId as string,
+            OperationId: operationId
         });
 
         if (!this.isInitialized) {
@@ -1456,39 +1547,51 @@ class OmnichannelChatSDK {
                 content: message.content,
             }
 
+            const suppliedClientMessageId = message.metadata?.clientMessageId;
+            const clientMessageId = typeof suppliedClientMessageId === "string" && suppliedClientMessageId.trim() !== ""
+                ? suppliedClientMessageId
+                : operationId;
+
             sendMessageRequest.metadata = {
                 widgetId: this.omnichannelConfig.widgetId,
-                clientMessageId: Date.now().toString()
+                clientMessageId
             }
 
             if (message.metadata) {
                 sendMessageRequest.metadata = { ...sendMessageRequest.metadata, ...message.metadata };
             }
+            sendMessageRequest.metadata.clientMessageId = clientMessageId;
 
             try {
                 const chatMessage = await (this.conversation as ACSConversation)?.sendMessage(sendMessageRequest);
 
                 this.scenarioMarker.completeScenario(TelemetryEvent.SendMessages, {
                     RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
+                    ChatId: this.chatToken.chatId as string,
+                    OperationId: operationId
                 });
 
                 return chatMessage;
             } catch (error) {
-                const exceptionDetails: ChatSDKExceptionDetails = {
-                    response: ChatSDKErrorName.ChatSDKSendMessageFailed,
-                    errorObject: `${error}`
-                };
-                this.scenarioMarker.failScenario(TelemetryEvent.SendMessages, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: JSON.stringify(exceptionDetails)
-                });
+                const failure = this.failOperationScenario(
+                    TelemetryEvent.SendMessages,
+                    "SendMessage",
+                    "SendMessage",
+                    "MESSAGE_SEND_FAILED",
+                    error,
+                    {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken.chatId as string
+                    },
+                    operationId,
+                    ChatSDKErrorName.ChatSDKSendMessageFailed
+                );
 
-                throw new ChatSDKError(ChatSDKErrorName.ChatSDKSendMessageFailed, undefined, {
-                    response: ChatSDKErrorName.ChatSDKSendMessageFailed,
-                    errorObject: `${error}`
-                });
+                throw new ChatSDKError(
+                    ChatSDKErrorName.ChatSDKSendMessageFailed,
+                    failure.httpStatus,
+                    failure.exceptionDetails
+                );
             }
         } else {
             const messageToSend: IRawMessage = {
@@ -1519,20 +1622,29 @@ class OmnichannelChatSDK {
 
                 this.scenarioMarker.completeScenario(TelemetryEvent.SendMessages, {
                     RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
+                    ChatId: this.chatToken.chatId as string,
+                    OperationId: operationId
                 });
             } catch (error) {
-                const exceptionDetails: ChatSDKExceptionDetails = {
-                    response: ChatSDKErrorName.ChatSDKSendMessageFailed,
-                    errorObject: `${error}`
-                };
-                this.scenarioMarker.failScenario(TelemetryEvent.SendMessages, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: JSON.stringify(exceptionDetails)
-                });
+                const failure = this.failOperationScenario(
+                    TelemetryEvent.SendMessages,
+                    "SendMessage",
+                    "SendMessage",
+                    "MESSAGE_SEND_FAILED",
+                    error,
+                    {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken.chatId as string
+                    },
+                    operationId,
+                    ChatSDKErrorName.ChatSDKSendMessageFailed
+                );
 
-                throw new Error(ChatSDKErrorName.ChatSDKSendMessageFailed);
+                throw new ChatSDKError(
+                    ChatSDKErrorName.ChatSDKSendMessageFailed,
+                    failure.httpStatus,
+                    failure.exceptionDetails
+                );
             }
         }
     }
@@ -1614,11 +1726,24 @@ class OmnichannelChatSDK {
         }
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
-            try {
-                await this.OCClient.sendTypingIndicator(this.requestId, LiveChatVersion.V2, {
+            void Promise.resolve()
+                .then(() => this.OCClient.sendTypingIndicator(this.requestId, LiveChatVersion.V2, {
                     customerDisplayName: ACSParticipantDisplayName.Customer
+                }))
+                .catch((error) => {
+                    const failure = classifyOperationFailure(error, {
+                        operation: "SendTyping",
+                        failureStage: "SendOCTypingIndicator",
+                        errorCode: "OC_TYPING_INDICATOR_FAILED"
+                    });
+                    this.scenarioMarker.singleRecord(TelemetryEvent.SendOCTypingIndicatorFailure, {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken.chatId as string,
+                        ...failure.telemetryProperties
+                    });
                 });
 
+            try {
                 await (this.conversation as ACSConversation).sendTyping();
 
                 this.scenarioMarker.completeScenario(TelemetryEvent.SendTypingEvent, {
@@ -1626,13 +1751,83 @@ class OmnichannelChatSDK {
                     ChatId: this.chatToken.chatId as string
                 });
             } catch (error) {
-                this.scenarioMarker.failScenario(TelemetryEvent.SendTypingEvent, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
+                this.failOperationScenario(
+                    TelemetryEvent.SendTypingEvent,
+                    "SendTyping",
+                    "SendACSTyping",
+                    "ACS_TYPING_FAILED",
+                    error,
+                    {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken.chatId as string
+                    }
+                );
 
                 throw new Error('SendTypingFailure');
             }
+        }
+    }
+
+    public async sendReadReceipt(messageId: string): Promise<void> {
+        const operationId = uuidv4();
+        const telemetryData = {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string,
+            OperationId: operationId
+        };
+
+        this.scenarioMarker.startScenario(TelemetryEvent.SendReadReceipt, telemetryData);
+
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.SendReadReceipt);
+        }
+
+        if (!messageId) {
+            const failure = this.failOperationScenario(
+                TelemetryEvent.SendReadReceipt,
+                "SendReadReceipt",
+                "ValidateMessageId",
+                "READ_RECEIPT_INVALID_PARAMS",
+                undefined,
+                telemetryData,
+                operationId
+            );
+            throw new ChatSDKError(
+                ChatSDKErrorName.SendReadReceiptInvalidParams,
+                failure.httpStatus,
+                failure.exceptionDetails
+            );
+        }
+
+        try {
+            const sendOCReadReceipt = this.OCClient?.sendReadReceipt;
+            if (this.authenticatedUserToken && typeof sendOCReadReceipt === "function") {
+                await sendOCReadReceipt.call(this.OCClient, this.requestId, messageId, this.authenticatedUserToken);
+            } else {
+                await (this.conversation as ACSConversation).sendReadReceipt(messageId);
+            }
+            this.scenarioMarker.completeScenario(TelemetryEvent.SendReadReceipt, telemetryData);
+        } catch (error) {
+            const failure = this.failOperationScenario(
+                TelemetryEvent.SendReadReceipt,
+                "SendReadReceipt",
+                "SendReadReceipt",
+                "READ_RECEIPT_FAILED",
+                error,
+                telemetryData,
+                operationId
+            );
+            let errorName = ChatSDKErrorName.SendReadReceiptFailure;
+            if (failure.httpStatus === 404) {
+                errorName = ChatSDKErrorName.InvalidConversation;
+            } else if (failure.httpStatus === 400) {
+                errorName = ChatSDKErrorName.SendReadReceiptInvalidParams;
+            }
+            throw new ChatSDKError(
+                errorName,
+                failure.httpStatus,
+                failure.exceptionDetails
+            );
         }
     }
 
@@ -1748,10 +1943,12 @@ class OmnichannelChatSDK {
     }
 
     public async uploadFileAttachment(fileInfo: IFileInfo | File): Promise<UploadFileAttachmentResponse> {
+        const operationId = uuidv4();
 
         this.scenarioMarker.startScenario(TelemetryEvent.UploadFileAttachment, {
             RequestId: this.requestId,
-            ChatId: this.chatToken.chatId as string
+            ChatId: this.chatToken.chatId as string,
+            OperationId: operationId
         });
 
         if (!this.isInitialized) {
@@ -1759,116 +1956,139 @@ class OmnichannelChatSDK {
         }
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
-
-            if (this.isAMSClientAllowed === false) {
-                exceptionThrowers.throwFeatureDisabled(this.scenarioMarker, TelemetryEvent.UploadFileAttachment, "Enable support for attachment upload and receive in the widget configuration.");
-            }
-            const amsClient = await this.getAMSClient();
-
-            if (amsClient === null || amsClient === undefined) {
-                throwAMSLoadFailure(this.scenarioMarker, TelemetryEvent.UploadFileAttachment, "Attachment handler client is null, no action can be performed");
-            }
-
-            const createObjectResponse: any = await amsClient?.createObject(this.chatToken?.chatId as string, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
-            const documentId = createObjectResponse.id;
-            const uploadDocumentResponse: any = await amsClient?.uploadDocument(documentId, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
-
-            const fileIdsProperty = {
-                amsReferences: JSON.stringify([documentId]),
-                amsreferences: JSON.stringify([documentId])
-            };
-
-            const fileMetaProperty = {
-                amsMetadata: JSON.stringify([{
-                    contentType: fileInfo.type,
-                    fileName: fileInfo.name
-                }])
-            }
-
-            const sendMessageRequest = {
-                content: '',
-                metadata: {
-                    widgetId: this.omnichannelConfig.widgetId,
-                    clientMessageId: Date.now().toString(),
-                    ...fileIdsProperty,
-                    ...fileMetaProperty
-                }
-            };
-
-            const messageToSend: IRawMessage = {
-                content: "",
-                timestamp: new Date(),
-                contentType: MessageContentType.Text,
-                deliveryMode: DeliveryMode.Bridged,
-                messageType: MessageType.UserMessage,
-                tags: [...defaultMessageTags],
-                sender: {
-                    displayName: "Customer",
-                    id: "customer",
-                    type: PersonType.User,
-                },
-                fileMetadata: uploadDocumentResponse
-            };
-
+            let failureStage = "GetAMSClient";
             try {
+                if (this.isAMSClientAllowed === false) {
+                    throw new ChatSDKError(ChatSDKErrorName.FeatureDisabled);
+                }
+
+                const amsClient = await this.getAMSClient(false);
+                if (amsClient === null || amsClient === undefined) {
+                    throw new ChatSDKError(ChatSDKErrorName.AttachmentClientNotLoaded);
+                }
+
+                failureStage = "CreateObject";
+                const createObjectResponse: any = await amsClient.createObject(this.chatToken?.chatId as string, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
+                const documentId = createObjectResponse.id;
+
+                failureStage = "UploadDocument";
+                const uploadDocumentResponse: any = await amsClient.uploadDocument(documentId, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
+                const fileIdsProperty = {
+                    amsReferences: JSON.stringify([documentId]),
+                    amsreferences: JSON.stringify([documentId])
+                };
+                const fileMetaProperty = {
+                    amsMetadata: JSON.stringify([{
+                        contentType: fileInfo.type,
+                        fileName: fileInfo.name
+                    }])
+                };
+                const sendMessageRequest = {
+                    content: "",
+                    metadata: {
+                        widgetId: this.omnichannelConfig.widgetId,
+                        clientMessageId: operationId,
+                        ...fileIdsProperty,
+                        ...fileMetaProperty
+                    }
+                };
+                const messageToSend: IRawMessage = {
+                    content: "",
+                    timestamp: new Date(),
+                    contentType: MessageContentType.Text,
+                    deliveryMode: DeliveryMode.Bridged,
+                    messageType: MessageType.UserMessage,
+                    tags: [...defaultMessageTags],
+                    sender: {
+                        displayName: "Customer",
+                        id: "customer",
+                        type: PersonType.User,
+                    },
+                    fileMetadata: uploadDocumentResponse
+                };
+
+                failureStage = "SendMessage";
                 await (this.conversation as ACSConversation)?.sendMessage(sendMessageRequest);
 
                 this.scenarioMarker.completeScenario(TelemetryEvent.UploadFileAttachment, {
                     RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-
+                    ChatId: this.chatToken.chatId as string,
+                    OperationId: operationId
                 });
 
                 return messageToSend;
             } catch (error) {
-                console.error("OmnichannelChatSDK/uploadFileAttachment/sendMessage/error");
-                this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
+                this.failOperationScenario(
+                    TelemetryEvent.UploadFileAttachment,
+                    "UploadFileAttachment",
+                    failureStage,
+                    "FILE_UPLOAD_FAILED",
+                    error,
+                    {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken.chatId as string
+                    },
+                    operationId
+                );
+
+                if (failureStage !== "SendMessage") {
+                    throw error;
+                }
             }
 
             return {} as OmnichannelMessage;
         } else {
-            let fileMetadata: IFileMetadata;
-
-            if (platform.isReactNative() || platform.isNode()) {
-                fileMetadata = await (this.conversation as IConversation)!.sendFileData(fileInfo as IFileInfo, FileSharingProtocolType.AmsBasedFileSharing);
-            } else {
-                fileMetadata = await (this.conversation as IConversation)!.uploadFile(fileInfo as File, FileSharingProtocolType.AmsBasedFileSharing);
-            }
-
-            const messageToSend: IRawMessage = {
-                content: "",
-                timestamp: new Date(),
-                contentType: MessageContentType.Text,
-                deliveryMode: DeliveryMode.Bridged,
-                messageType: MessageType.UserMessage,
-                tags: [...defaultMessageTags],
-                sender: {
-                    displayName: "Customer",
-                    id: "customer",
-                    type: PersonType.User,
-                },
-                fileMetadata: fileMetadata
-            };
-
+            let failureStage = platform.isReactNative() || platform.isNode() ? "SendFileData" : "UploadFile";
             try {
+                let fileMetadata: IFileMetadata;
+                if (platform.isReactNative() || platform.isNode()) {
+                    fileMetadata = await (this.conversation as IConversation)!.sendFileData(fileInfo as IFileInfo, FileSharingProtocolType.AmsBasedFileSharing);
+                } else {
+                    fileMetadata = await (this.conversation as IConversation)!.uploadFile(fileInfo as File, FileSharingProtocolType.AmsBasedFileSharing);
+                }
+
+                const messageToSend: IRawMessage = {
+                    content: "",
+                    timestamp: new Date(),
+                    contentType: MessageContentType.Text,
+                    deliveryMode: DeliveryMode.Bridged,
+                    messageType: MessageType.UserMessage,
+                    tags: [...defaultMessageTags],
+                    sender: {
+                        displayName: "Customer",
+                        id: "customer",
+                        type: PersonType.User,
+                    },
+                    fileMetadata
+                };
+
+                failureStage = "SendFileMessage";
                 await this.conversation!.sendFileMessage(fileMetadata, messageToSend);
 
                 this.scenarioMarker.completeScenario(TelemetryEvent.UploadFileAttachment, {
                     RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
+                    ChatId: this.chatToken.chatId as string,
+                    OperationId: operationId
                 });
 
                 return messageToSend;
             } catch (error) {
-                console.error(`OmnichannelChatSDK/uploadFileAttachment/error: ${error}`);
+                this.failOperationScenario(
+                    TelemetryEvent.UploadFileAttachment,
+                    "UploadFileAttachment",
+                    failureStage,
+                    "FILE_UPLOAD_FAILED",
+                    error,
+                    {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken.chatId as string
+                    },
+                    operationId
+                );
 
-                this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
+                if (failureStage !== "SendFileMessage") {
+                    throw error;
+                }
             }
 
             return {} as OmnichannelMessage;
@@ -1876,10 +2096,12 @@ class OmnichannelChatSDK {
     }
 
     public async downloadFileAttachment(fileMetadata: FileMetadata | IFileMetadata): Promise<Blob> {
+        const operationId = uuidv4();
 
         this.scenarioMarker.startScenario(TelemetryEvent.DownloadFileAttachment, {
             RequestId: this.requestId,
-            ChatId: this.chatToken.chatId as string
+            ChatId: this.chatToken.chatId as string,
+            OperationId: operationId
         });
 
         if (!this.isInitialized) {
@@ -1887,34 +2109,41 @@ class OmnichannelChatSDK {
         }
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
+            let failureStage = "GetAMSClient";
             try {
                 if (this.isAMSClientAllowed === false) {
-                    this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
-                        RequestId: this.requestId,
-                        ChatId: this.chatToken.chatId as string,
-                        ExceptionDetails: "AMSClient is disabled"
-                    });
-                    exceptionThrowers.throwFeatureDisabled(this.scenarioMarker, TelemetryEvent.DownloadFileAttachment, "Enable support for attachment upload and receive in the widget configuration.");
+                    throw new Error("AMSClientDisabled");
                 }
-                const amsClient = await this.getAMSClient();
+                const amsClient = await this.getAMSClient(false);
 
                 if (amsClient === null || amsClient === undefined) {
-                    throwAMSLoadFailure(this.scenarioMarker, TelemetryEvent.DownloadFileAttachment, "Attachment handler is null, no action can be performed");
+                    throw new Error("AMSClientUnavailable");
                 }
 
+                failureStage = "GetViewStatus";
                 const response: any = await amsClient?.getViewStatus(fileMetadata);  // eslint-disable-line @typescript-eslint/no-explicit-any
                 const { view_location } = response;
+                failureStage = "GetView";
                 const viewResponse: any = await amsClient?.getView(fileMetadata, view_location);  // eslint-disable-line @typescript-eslint/no-explicit-any
                 this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string
                 });
                 return viewResponse;
-            } catch {
-                this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
+            } catch (error) {
+                this.failOperationScenario(
+                    TelemetryEvent.DownloadFileAttachment,
+                    "DownloadFileAttachment",
+                    failureStage,
+                    "FILE_DOWNLOAD_FAILED",
+                    error,
+                    {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken.chatId as string
+                    },
+                    operationId,
+                    "DownloadFileAttachmentFailed"
+                );
                 throw new Error('DownloadFileAttachmentFailed');
             }
         } else {
@@ -1926,11 +2155,19 @@ class OmnichannelChatSDK {
                 });
                 return downloadedFile;
             } catch (error) {
-                console.error(`OmnichannelChatSDK/downloadFileAttachment/error: ${error}`);
-                this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
+                this.failOperationScenario(
+                    TelemetryEvent.DownloadFileAttachment,
+                    "DownloadFileAttachment",
+                    "DownloadFile",
+                    "FILE_DOWNLOAD_FAILED",
+                    error,
+                    {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken.chatId as string
+                    },
+                    operationId,
+                    "DownloadFileAttachmentFailed"
+                );
                 throw new Error('DownloadFileAttachmentFailed');
             }
         }

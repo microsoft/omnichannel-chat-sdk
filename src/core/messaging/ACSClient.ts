@@ -18,6 +18,7 @@ import OmnichannelMessage from "./OmnichannelMessage";
 import TelemetryEvent from "../../telemetry/TelemetryEvent";
 import createOmnichannelMessage from "../../utils/createOmnichannelMessage";
 import { defaultMessageTags } from "./MessageTags";
+import { classifyOperationFailure } from "../../utils/operationFailureClassifier";
 
 enum ACSClientEvent {
     InitializeACSClient = 'InitializeACSClient',
@@ -29,6 +30,7 @@ enum ACSClientEvent {
     GetMessages = 'GetMessages',
     SendMessage = 'SendMessage',
     SendTyping = 'SendTyping',
+    SendReadReceipt = 'SendReadReceipt',
     StartPolling = 'StartPolling',
     StopPolling = 'StopPolling',
     Disconnect = 'Disconnect'
@@ -353,13 +355,14 @@ export class ACSConversation {
                 });
             }
         } catch (error) {
-            const exceptionDetails = {
-                response: 'SendMessageFailed',
-                errorObject: `${error}`
-            };
+            const failure = classifyOperationFailure(error, {
+                operation: "SendMessage",
+                failureStage: "SendMessage",
+                errorCode: "SEND_MESSAGE_FAILED"
+            });
 
             this.logger?.failScenario(ACSClientEvent.SendMessage, {
-                ExceptionDetails: JSON.stringify(exceptionDetails)
+                ...failure.telemetryProperties
             });
 
             throw error;
@@ -375,16 +378,38 @@ export class ACSConversation {
             await this.chatThreadClient?.sendTypingNotification();
             this.logger?.completeScenario(ACSClientEvent.SendTyping);
         } catch (error) {
-            const exceptionDetails = {
-                response: 'SendTypingFailed',
-                errorObject: `${error}`
-            };
+            const failure = classifyOperationFailure(error, {
+                operation: "SendTyping",
+                failureStage: "SendTyping",
+                errorCode: "SEND_TYPING_FAILED"
+            });
 
             this.logger?.failScenario(ACSClientEvent.SendTyping, {
-                ExceptionDetails: JSON.stringify(exceptionDetails)
+                ...failure.telemetryProperties
             });
 
             throw new Error('SendTypingFailed');
+        }
+    }
+
+    public async sendReadReceipt(messageId: string): Promise<void> {
+        this.logger?.startScenario(ACSClientEvent.SendReadReceipt);
+
+        try {
+            await this.chatThreadClient?.sendReadReceipt({ chatMessageId: messageId });
+            this.logger?.completeScenario(ACSClientEvent.SendReadReceipt);
+        } catch (error) {
+            const failure = classifyOperationFailure(error, {
+                operation: "SendReadReceipt",
+                failureStage: "SendReadReceipt",
+                errorCode: "SEND_READ_RECEIPT_FAILED"
+            });
+
+            this.logger?.failScenario(ACSClientEvent.SendReadReceipt, {
+                ...failure.telemetryProperties
+            });
+
+            throw error;
         }
     }
 

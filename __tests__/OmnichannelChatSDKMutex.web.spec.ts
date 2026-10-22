@@ -155,24 +155,17 @@ describe('OmnichannelChatSDK Mutex Tests', () => {
             );
         });
 
-        it('should serialize multiple startChat calls', async () => {
-            const startTime = Date.now();
-            
-            // Start multiple startChat operations
-            const promises = [
-                omnichannelChatSDK.startChat(),
-                omnichannelChatSDK.startChat(),
-                omnichannelChatSDK.startChat()
-            ];
-            
-            await Promise.all(promises);
-            
-            const endTime = Date.now();
-            const duration = endTime - startTime;
-            
-            // Should take at least 250ms due to serialization (allowing some tolerance)
-            expect(duration).toBeGreaterThan(250);
-            expect((omnichannelChatSDK as any).internalStartChat).toHaveBeenCalledTimes(3);
+        it('should coalesce concurrent startChat calls', async () => {
+            const firstStart = omnichannelChatSDK.startChat();
+            const secondStart = omnichannelChatSDK.startChat();
+            const thirdStart = omnichannelChatSDK.startChat();
+
+            expect(firstStart).toBe(secondStart);
+            expect(secondStart).toBe(thirdStart);
+
+            await Promise.all([firstStart, secondStart, thirdStart]);
+
+            expect((omnichannelChatSDK as any).internalStartChat).toHaveBeenCalledTimes(1);
         });
 
         it('should serialize mixed startChat and endChat calls', async () => {
@@ -196,18 +189,16 @@ describe('OmnichannelChatSDK Mutex Tests', () => {
                 });
             });
             
-            // Start mixed operations
-            const promises = [
-                omnichannelChatSDK.startChat(),
-                omnichannelChatSDK.endChat(),
-                omnichannelChatSDK.startChat(),
-                omnichannelChatSDK.endChat()
-            ];
-            
-            await Promise.all(promises);
-            
-            // Operations should execute in the order they were called
-            expect(executionOrder).toEqual(['startChat', 'endChat', 'startChat', 'endChat']);
+            const startPromise = omnichannelChatSDK.startChat();
+            const endPromise = omnichannelChatSDK.endChat();
+            const duplicateStartPromise = omnichannelChatSDK.startChat();
+            const duplicateEndPromise = omnichannelChatSDK.endChat();
+
+            await Promise.all([startPromise, endPromise, duplicateStartPromise, duplicateEndPromise]);
+
+            expect(executionOrder).toEqual(['startChat', 'endChat']);
+            expect((omnichannelChatSDK as any).internalStartChat).toHaveBeenCalledTimes(1);
+            expect((omnichannelChatSDK as any).internalEndChat).toHaveBeenCalledTimes(1);
         });
 
         it('should handle exceptions in operations without breaking the queue', async () => {
@@ -228,6 +219,31 @@ describe('OmnichannelChatSDK Mutex Tests', () => {
             expect((omnichannelChatSDK as any).internalStartChat).toHaveBeenCalledTimes(2);
             expect((omnichannelChatSDK as any).internalEndChat).toHaveBeenCalledTimes(1);
         });
+
+        it('should allow a new startChat call after a failed coalesced start', async () => {
+            (omnichannelChatSDK as any).internalStartChat = jest.fn()
+                .mockRejectedValueOnce(new Error('First start failed'))
+                .mockResolvedValueOnce(undefined);
+
+            const firstStart = omnichannelChatSDK.startChat();
+            const duplicateStart = omnichannelChatSDK.startChat();
+
+            expect(firstStart).toBe(duplicateStart);
+            await expect(firstStart).rejects.toThrow('First start failed');
+            await expect(duplicateStart).rejects.toThrow('First start failed');
+            await expect(omnichannelChatSDK.startChat()).resolves.toBeUndefined();
+
+            expect((omnichannelChatSDK as any).internalStartChat).toHaveBeenCalledTimes(2);
+        });
+
+        it('should safely ignore duplicate endChat calls after cleanup', async () => {
+            await omnichannelChatSDK.startChat();
+
+            await expect(omnichannelChatSDK.endChat()).resolves.toBeUndefined();
+            await expect(omnichannelChatSDK.endChat()).resolves.toBeUndefined();
+
+            expect((omnichannelChatSDK as any).internalEndChat).toHaveBeenCalledTimes(1);
+        });
     });
 
     describe('Race condition prevention', () => {
@@ -238,6 +254,7 @@ describe('OmnichannelChatSDK Mutex Tests', () => {
             // Set up initial state
             (omnichannelChatSDK as any).conversation = mockConversation;
             (omnichannelChatSDK as any).chatToken = mockChatToken;
+            (omnichannelChatSDK as any).isChatSessionActive = true;
             
             let startChatCompleted = false;
             let endChatCompleted = false;

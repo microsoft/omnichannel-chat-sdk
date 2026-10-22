@@ -60,8 +60,12 @@ export enum ChatSDKErrorName {
     UnknownAMSLoadState = "UnknownAMSLoadState",
      /** Send message failure */
     ChatSDKSendMessageFailed = "ChatSDKSendMessageFailed",
+     /** Failure in sending a read receipt */
+     SendReadReceiptFailure = "SendReadReceiptFailure",
+     /** Invalid send read receipt parameters */
+     SendReadReceiptInvalidParams = "SendReadReceiptInvalidParams",
 
-    AttachmentClientNotLoaded = "AttachmentClientNotLoaded",
+     AttachmentClientNotLoaded = "AttachmentClientNotLoaded",
 
 }
 

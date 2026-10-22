@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Improve operation failure diagnostics and preserve ACS typing when the OC typing request fails.
+
 ## [1.11.6] - 2025-08-08
 
 ### Fixed
