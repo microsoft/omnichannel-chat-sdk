@@ -11,6 +11,7 @@ import { MessagePrinterFactory, PrinterType } from "./utils/printers/MessagePrin
 import { SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
 import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
 import { createCoreServicesOrgUrl, getCoreServicesGeoName, isCoreServicesOrgUrl, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
+import { classifyNetworkError } from "./utils/errorClassifier";
 import { defaultLocaleId, getLocaleStringFromId } from "./utils/locale";
 import exceptionThrowers, { throwAMSLoadFailure } from "./utils/exceptionThrowers";
 import { getRuntimeId, isClientIdNotFoundErrorMessage, isCustomerMessage } from "./utils/utilities";
@@ -328,7 +329,7 @@ class OmnichannelChatSDK {
         return null;
     }
 
-    private async getAMSClient(): Promise<AmsClient> {
+    private async getAMSClient(trackLoadScenario = true): Promise<AmsClient> {
 
         //return null to do not break promise creation
         if (this.isAMSClientAllowed === false) {
@@ -348,7 +349,7 @@ class OmnichannelChatSDK {
         case AMSClientLoadStates.ERROR:
         case AMSClientLoadStates.NOT_LOADED:
             this.debug && console.log("Attachment handler is not loaded, loading now");
-            await this.loadAmsClient();
+            await this.loadAmsClient(trackLoadScenario);
             return this.AMSClient;
         default:
             return null;
@@ -385,8 +386,10 @@ class OmnichannelChatSDK {
         return this.isAMSClientAllowed;
     }
 
-    private async loadAmsClient(): Promise<void> {
-        this.scenarioMarker.startScenario(TelemetryEvent.InitializeMessagingClient);
+    private async loadAmsClient(trackScenario = true): Promise<void> {
+        if (trackScenario) {
+            this.scenarioMarker.startScenario(TelemetryEvent.InitializeMessagingClient);
+        }
         try {
             if (this.isAMSClientAllowed) {
                 if (this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED) {
@@ -407,9 +410,14 @@ class OmnichannelChatSDK {
                 }
             }
 
-            this.scenarioMarker.completeScenario(TelemetryEvent.InitializeMessagingClient);
+            if (trackScenario) {
+                this.scenarioMarker.completeScenario(TelemetryEvent.InitializeMessagingClient);
+            }
         } catch (e) {
             this.AMSClientLoadCurrentState = AMSClientLoadStates.ERROR;
+            if (!trackScenario) {
+                throw e;
+            }
             exceptionThrowers.throwMessagingClientCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeMessagingClient);
         }
     }
@@ -1887,34 +1895,29 @@ class OmnichannelChatSDK {
         }
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
+            let failureStage = "GetAMSClient";
             try {
                 if (this.isAMSClientAllowed === false) {
-                    this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
-                        RequestId: this.requestId,
-                        ChatId: this.chatToken.chatId as string,
-                        ExceptionDetails: "AMSClient is disabled"
-                    });
-                    exceptionThrowers.throwFeatureDisabled(this.scenarioMarker, TelemetryEvent.DownloadFileAttachment, "Enable support for attachment upload and receive in the widget configuration.");
+                    throw new Error("AMSClientDisabled");
                 }
-                const amsClient = await this.getAMSClient();
+                const amsClient = await this.getAMSClient(false);
 
                 if (amsClient === null || amsClient === undefined) {
-                    throwAMSLoadFailure(this.scenarioMarker, TelemetryEvent.DownloadFileAttachment, "Attachment handler is null, no action can be performed");
+                    throw new Error("AMSClientUnavailable");
                 }
 
+                failureStage = "GetViewStatus";
                 const response: any = await amsClient?.getViewStatus(fileMetadata);  // eslint-disable-line @typescript-eslint/no-explicit-any
                 const { view_location } = response;
+                failureStage = "GetView";
                 const viewResponse: any = await amsClient?.getView(fileMetadata, view_location);  // eslint-disable-line @typescript-eslint/no-explicit-any
                 this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string
                 });
                 return viewResponse;
-            } catch {
-                this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
+            } catch (error) {
+                this.failAttachmentDownloadScenario(error, failureStage);
                 throw new Error('DownloadFileAttachmentFailed');
             }
         } else {
@@ -1926,14 +1929,48 @@ class OmnichannelChatSDK {
                 });
                 return downloadedFile;
             } catch (error) {
-                console.error(`OmnichannelChatSDK/downloadFileAttachment/error: ${error}`);
-                this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
-                    RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-                });
+                this.failAttachmentDownloadScenario(error, "DownloadFile");
                 throw new Error('DownloadFileAttachmentFailed');
             }
         }
+    }
+
+    private failAttachmentDownloadScenario(error: unknown, failureStage: string): void {
+        const online = typeof navigator !== 'undefined' && 'onLine' in navigator ? navigator.onLine : undefined;
+        const cancellationReason = classifyNetworkError(error, online);
+        const errorResponse = (error as { response?: { status?: unknown; headers?: Record<string, unknown> } })?.response;
+        const httpStatus = typeof errorResponse?.status === "number" ? errorResponse.status : undefined;
+        const retryAfterValue = errorResponse?.headers?.["x-ms-retry-after-ms"] ?? errorResponse?.headers?.["retry-after-ms"];
+        const retryAfterMs = typeof retryAfterValue === "number"
+            ? retryAfterValue
+            : typeof retryAfterValue === "string" && retryAfterValue.trim() !== "" && Number.isFinite(Number(retryAfterValue))
+                ? Number(retryAfterValue)
+                : undefined;
+        const isRetryable = httpStatus === 408 || httpStatus === 429 || (httpStatus !== undefined && httpStatus >= 500) ||
+            ["timeout", "dns_lookup_failed", "connection_timeout", "connection_refused", "network_error_no_response", "server_error"].includes(cancellationReason);
+        const exceptionDetails: ChatSDKExceptionDetails = {
+            response: "DownloadFileAttachmentFailed",
+            message: "Attachment download failed",
+            failureStage,
+            cancellationReason,
+            online,
+            httpStatus,
+            isRetryable,
+            retryAfterMs
+        };
+
+        this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
+            RequestId: this.requestId,
+            ChatId: this.chatToken.chatId as string,
+            ErrorCode: "FILE_DOWNLOAD_FAILED",
+            FailureStage: failureStage,
+            CancellationReason: cancellationReason,
+            IsRetryable: isRetryable,
+            ...(online !== undefined ? { Online: online } : {}),
+            ...(httpStatus !== undefined ? { HttpStatus: httpStatus } : {}),
+            ...(retryAfterMs !== undefined ? { RetryAfterMs: retryAfterMs } : {}),
+            ExceptionDetails: JSON.stringify(exceptionDetails)
+        });
     }
 
     public async emailLiveChatTranscript(body: ChatTranscriptBody, optionalParams: EmailLiveChatTranscriptOptionaParams = {}): Promise<void> {

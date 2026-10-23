@@ -9,6 +9,7 @@ import { defaultLocaleId, getLocaleStringFromId } from "../src/utils/locale";
 
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
 import AriaTelemetry from "../src/telemetry/AriaTelemetry";
+import AxiosErrorCodes from "../src/core/AxiosErrorCodes";
 import ChatAdapterProtocols from "../src/core/messaging/ChatAdapterProtocols";
 import ConversationMode from '../src/core/ConversationMode';
 import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/FileSharingProtocolType";
@@ -17,6 +18,7 @@ import IFileMetadata from "@microsoft/omnichannel-ic3core/lib/model/IFileMetadat
 import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import LiveChatVersion from "../src/core/LiveChatVersion";
 import OmnichannelErrorCodes from "../src/core/OmnichannelErrorCodes";
+import TelemetryEvent from "../src/telemetry/TelemetryEvent";
 import { SDKProvider } from "@microsoft/ocsdk";
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
 import libraries from "../src/utils/libraries";
@@ -2872,6 +2874,248 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             expect(chatSDK.AMSClient.getViewStatus).toHaveBeenCalledTimes(1);
             expect(chatSDK.AMSClient.getView).toHaveBeenCalledTimes(1);
+        });
+
+        it.each([
+            ["GetViewStatus", 429],
+            ["GetView", 503]
+        ])('ChatSDK.downloadFileAttachment() should preserve diagnostics when %s fails', async (failureStage, httpStatus) => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            await chatSDK.initialize();
+
+            const downloadError = {
+                response: {
+                    status: httpStatus,
+                    headers: {
+                        "x-ms-retry-after-ms": "250"
+                    }
+                }
+            };
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn()
+            };
+            chatSDK.AMSClient = {
+                initialize: jest.fn(),
+                getViewStatus: failureStage === "GetViewStatus"
+                    ? jest.fn().mockRejectedValue(downloadError)
+                    : jest.fn().mockResolvedValue({view_location: "view_location"}),
+                getView: failureStage === "GetView"
+                    ? jest.fn().mockRejectedValue(downloadError)
+                    : jest.fn()
+            };
+
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve());
+            await chatSDK.startChat();
+            const failScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+            await expect(chatSDK.downloadFileAttachment({})).rejects.toThrow("DownloadFileAttachmentFailed");
+
+            expect(failScenarioSpy).toHaveBeenCalledWith(
+                TelemetryEvent.DownloadFileAttachment,
+                expect.objectContaining({
+                    ErrorCode: "FILE_DOWNLOAD_FAILED",
+                    FailureStage: failureStage,
+                    HttpStatus: httpStatus,
+                    IsRetryable: true,
+                    RetryAfterMs: 250
+                })
+            );
+            const telemetryProperties = failScenarioSpy.mock.calls[0][1] as Record<string, unknown>;
+            const exceptionDetails = JSON.parse(telemetryProperties.ExceptionDetails as string);
+            expect(exceptionDetails).toEqual(expect.objectContaining({
+                response: "DownloadFileAttachmentFailed",
+                failureStage,
+                httpStatus,
+                isRetryable: true,
+                retryAfterMs: 250
+            }));
+        });
+
+        it('ChatSDK.downloadFileAttachment() should emit one sanitized failure when AMS client loading fails', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn()
+            };
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve());
+            await chatSDK.startChat();
+
+            chatSDK["AMSClientLoadCurrentState"] = "ERROR";
+            const sensitiveError = {
+                message: "token=secret",
+                response: {
+                    status: 401,
+                    headers: {authorization: "secret"},
+                    data: {contentUrl: "https://example.test/?sig=secret"}
+                }
+            };
+            const loadAmsClientSpy = jest.spyOn(chatSDK as any, "loadAmsClient").mockRejectedValue(sensitiveError);
+            const failScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+            await expect(chatSDK.downloadFileAttachment({})).rejects.toThrow("DownloadFileAttachmentFailed");
+
+            expect(loadAmsClientSpy).toHaveBeenCalledWith(false);
+            expect(failScenarioSpy).toHaveBeenCalledTimes(1);
+            const telemetryProperties = failScenarioSpy.mock.calls[0][1] as Record<string, unknown>;
+            expect(telemetryProperties).toEqual(expect.objectContaining({
+                ErrorCode: "FILE_DOWNLOAD_FAILED",
+                FailureStage: "GetAMSClient",
+                HttpStatus: 401,
+                IsRetryable: false
+            }));
+            expect(JSON.stringify(telemetryProperties)).not.toContain("secret");
+            expect(JSON.stringify(telemetryProperties)).not.toContain("contentUrl");
+        });
+
+        it('ChatSDK.downloadFileAttachment() should report explicit cancellation as non-retryable', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn()
+            };
+            chatSDK.AMSClient = {
+                initialize: jest.fn(),
+                getViewStatus: jest.fn().mockRejectedValue({code: "ERR_CANCELED"}),
+                getView: jest.fn()
+            };
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve());
+            await chatSDK.startChat();
+            const failScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+            await expect(chatSDK.downloadFileAttachment({})).rejects.toThrow("DownloadFileAttachmentFailed");
+
+            expect(failScenarioSpy).toHaveBeenCalledWith(
+                TelemetryEvent.DownloadFileAttachment,
+                expect.objectContaining({
+                    CancellationReason: "request_cancelled",
+                    IsRetryable: false
+                })
+            );
+        });
+
+        it('ChatSDK.downloadFileAttachment() should report browser offline status without raw error values', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn()
+            };
+            chatSDK.AMSClient = {
+                initialize: jest.fn(),
+                getViewStatus: jest.fn().mockRejectedValue({message: "Network Error token=secret"}),
+                getView: jest.fn()
+            };
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve());
+            await chatSDK.startChat();
+            const failScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+            (global as any).navigator = {onLine: false};
+
+            try {
+                await expect(chatSDK.downloadFileAttachment({})).rejects.toThrow("DownloadFileAttachmentFailed");
+            } finally {
+                (global as any).navigator = undefined;
+            }
+
+            const telemetryProperties = failScenarioSpy.mock.calls[0][1] as Record<string, unknown>;
+            expect(telemetryProperties).toEqual(expect.objectContaining({
+                CancellationReason: "browser_offline",
+                Online: false,
+                IsRetryable: false
+            }));
+            expect(JSON.stringify(telemetryProperties)).not.toContain("secret");
+        });
+
+        it('ChatSDK.downloadFileAttachment() should report Axios network errors without a response as retryable', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn()
+            };
+            chatSDK.AMSClient = {
+                initialize: jest.fn(),
+                getViewStatus: jest.fn().mockRejectedValue({code: AxiosErrorCodes.ERR_NETWORK}),
+                getView: jest.fn()
+            };
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve());
+            await chatSDK.startChat();
+            const failScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+            await expect(chatSDK.downloadFileAttachment({})).rejects.toThrow("DownloadFileAttachmentFailed");
+
+            expect(failScenarioSpy).toHaveBeenCalledWith(
+                TelemetryEvent.DownloadFileAttachment,
+                expect.objectContaining({
+                    CancellationReason: "network_error_no_response",
+                    IsRetryable: true
+                })
+            );
+            const telemetryProperties = failScenarioSpy.mock.calls[0][1] as Record<string, unknown>;
+            const exceptionDetails = JSON.parse(telemetryProperties.ExceptionDetails as string);
+            expect(exceptionDetails).toEqual(expect.objectContaining({
+                cancellationReason: "network_error_no_response",
+                isRetryable: true
+            }));
+        });
+
+        it('[LiveChatV1] ChatSDK.downloadFileAttachment() should identify downloadFile failures', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK.liveChatVersion = LiveChatVersion.V1;
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn()
+            };
+            jest.spyOn(chatSDK.IC3Client, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.IC3Client, 'joinConversation').mockResolvedValue(Promise.resolve({
+                downloadFile: jest.fn()
+            }));
+            await chatSDK.startChat();
+
+            jest.spyOn(chatSDK.conversation, 'downloadFile').mockRejectedValue({code: "ECONNABORTED"});
+            const failScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+            await expect(chatSDK.downloadFileAttachment({})).rejects.toThrow("DownloadFileAttachmentFailed");
+
+            expect(failScenarioSpy).toHaveBeenCalledWith(
+                TelemetryEvent.DownloadFileAttachment,
+                expect.objectContaining({
+                    ErrorCode: "FILE_DOWNLOAD_FAILED",
+                    FailureStage: "DownloadFile",
+                    CancellationReason: "timeout",
+                    IsRetryable: true
+                })
+            );
         });
 
         it('ChatSDK.emailLiveChatTranscript() should call OCClient.emailTranscript()', async () => {

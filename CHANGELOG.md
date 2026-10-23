@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Attachment download failures now include a stable error code, the failing download stage, and privacy-safe HTTP and retry diagnostics while preserving the existing rejection message.
+
 ## [1.11.6] - 2025-08-08
 
 ### Fixed
