@@ -104,6 +104,7 @@ import exceptionSuppressors from "./utils/exceptionSuppressors";
 import { getLocationInfo } from "./utils/location";
 import { isCoreServicesOrgUrlDNSError } from "./utils/internalUtils";
 import loggerUtils from "./utils/loggerUtils";
+import { classifyOperationFailure } from "./utils/operationFailureClassifier";
 import { parseLowerCaseString } from "./utils/parsers";
 import platform from "./utils/platform";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
@@ -1748,10 +1749,12 @@ class OmnichannelChatSDK {
     }
 
     public async uploadFileAttachment(fileInfo: IFileInfo | File): Promise<UploadFileAttachmentResponse> {
+        const operationId = uuidv4();
 
         this.scenarioMarker.startScenario(TelemetryEvent.UploadFileAttachment, {
             RequestId: this.requestId,
-            ChatId: this.chatToken.chatId as string
+            ChatId: this.chatToken.chatId as string,
+            OperationId: operationId
         });
 
         if (!this.isInitialized) {
@@ -1763,112 +1766,141 @@ class OmnichannelChatSDK {
             if (this.isAMSClientAllowed === false) {
                 exceptionThrowers.throwFeatureDisabled(this.scenarioMarker, TelemetryEvent.UploadFileAttachment, "Enable support for attachment upload and receive in the widget configuration.");
             }
-            const amsClient = await this.getAMSClient();
-
-            if (amsClient === null || amsClient === undefined) {
-                throwAMSLoadFailure(this.scenarioMarker, TelemetryEvent.UploadFileAttachment, "Attachment handler client is null, no action can be performed");
-            }
-
-            const createObjectResponse: any = await amsClient?.createObject(this.chatToken?.chatId as string, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
-            const documentId = createObjectResponse.id;
-            const uploadDocumentResponse: any = await amsClient?.uploadDocument(documentId, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
-
-            const fileIdsProperty = {
-                amsReferences: JSON.stringify([documentId]),
-                amsreferences: JSON.stringify([documentId])
-            };
-
-            const fileMetaProperty = {
-                amsMetadata: JSON.stringify([{
-                    contentType: fileInfo.type,
-                    fileName: fileInfo.name
-                }])
-            }
-
-            const sendMessageRequest = {
-                content: '',
-                metadata: {
-                    widgetId: this.omnichannelConfig.widgetId,
-                    clientMessageId: Date.now().toString(),
-                    ...fileIdsProperty,
-                    ...fileMetaProperty
-                }
-            };
-
-            const messageToSend: IRawMessage = {
-                content: "",
-                timestamp: new Date(),
-                contentType: MessageContentType.Text,
-                deliveryMode: DeliveryMode.Bridged,
-                messageType: MessageType.UserMessage,
-                tags: [...defaultMessageTags],
-                sender: {
-                    displayName: "Customer",
-                    id: "customer",
-                    type: PersonType.User,
-                },
-                fileMetadata: uploadDocumentResponse
-            };
-
+            let failureStage = "GetAMSClient";
             try {
+                const amsClient = await this.getAMSClient();
+                if (amsClient === null || amsClient === undefined) {
+                    const message = "Attachment handler client is null, no action can be performed";
+                    console.error(message);
+                    throw new ChatSDKError(
+                        ChatSDKErrorName.AttachmentClientNotLoaded,
+                        undefined,
+                        {
+                            response: ChatSDKErrorName.AttachmentClientNotLoaded,
+                            message
+                        }
+                    );
+                }
+
+                failureStage = "CreateObject";
+                const createObjectResponse: any = await amsClient.createObject(this.chatToken?.chatId as string, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
+                const documentId = createObjectResponse.id;
+
+                failureStage = "UploadDocument";
+                const uploadDocumentResponse: any = await amsClient.uploadDocument(documentId, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
+                const fileIdsProperty = {
+                    amsReferences: JSON.stringify([documentId]),
+                    amsreferences: JSON.stringify([documentId])
+                };
+                const fileMetaProperty = {
+                    amsMetadata: JSON.stringify([{
+                        contentType: fileInfo.type,
+                        fileName: fileInfo.name
+                    }])
+                };
+                const sendMessageRequest = {
+                    content: "",
+                    metadata: {
+                        widgetId: this.omnichannelConfig.widgetId,
+                        clientMessageId: Date.now().toString(),
+                        ...fileIdsProperty,
+                        ...fileMetaProperty
+                    }
+                };
+                const messageToSend: IRawMessage = {
+                    content: "",
+                    timestamp: new Date(),
+                    contentType: MessageContentType.Text,
+                    deliveryMode: DeliveryMode.Bridged,
+                    messageType: MessageType.UserMessage,
+                    tags: [...defaultMessageTags],
+                    sender: {
+                        displayName: "Customer",
+                        id: "customer",
+                        type: PersonType.User,
+                    },
+                    fileMetadata: uploadDocumentResponse
+                };
+
+                failureStage = "SendMessage";
                 await (this.conversation as ACSConversation)?.sendMessage(sendMessageRequest);
 
                 this.scenarioMarker.completeScenario(TelemetryEvent.UploadFileAttachment, {
                     RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
-
+                    ChatId: this.chatToken.chatId as string,
+                    OperationId: operationId
                 });
 
                 return messageToSend;
             } catch (error) {
-                console.error("OmnichannelChatSDK/uploadFileAttachment/sendMessage/error");
+                const failure = classifyOperationFailure(error, {
+                    operation: "UploadFileAttachment",
+                    failureStage,
+                    errorCode: "FILE_UPLOAD_FAILED",
+                    operationId
+                });
                 this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
                     RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
+                    ChatId: this.chatToken.chatId as string,
+                    ...failure.telemetryProperties
                 });
+
+                if (failureStage !== "SendMessage") {
+                    throw error;
+                }
             }
 
             return {} as OmnichannelMessage;
         } else {
-            let fileMetadata: IFileMetadata;
-
-            if (platform.isReactNative() || platform.isNode()) {
-                fileMetadata = await (this.conversation as IConversation)!.sendFileData(fileInfo as IFileInfo, FileSharingProtocolType.AmsBasedFileSharing);
-            } else {
-                fileMetadata = await (this.conversation as IConversation)!.uploadFile(fileInfo as File, FileSharingProtocolType.AmsBasedFileSharing);
-            }
-
-            const messageToSend: IRawMessage = {
-                content: "",
-                timestamp: new Date(),
-                contentType: MessageContentType.Text,
-                deliveryMode: DeliveryMode.Bridged,
-                messageType: MessageType.UserMessage,
-                tags: [...defaultMessageTags],
-                sender: {
-                    displayName: "Customer",
-                    id: "customer",
-                    type: PersonType.User,
-                },
-                fileMetadata: fileMetadata
-            };
-
+            let failureStage = platform.isReactNative() || platform.isNode() ? "SendFileData" : "UploadFile";
             try {
+                let fileMetadata: IFileMetadata;
+                if (platform.isReactNative() || platform.isNode()) {
+                    fileMetadata = await (this.conversation as IConversation)!.sendFileData(fileInfo as IFileInfo, FileSharingProtocolType.AmsBasedFileSharing);
+                } else {
+                    fileMetadata = await (this.conversation as IConversation)!.uploadFile(fileInfo as File, FileSharingProtocolType.AmsBasedFileSharing);
+                }
+                const messageToSend: IRawMessage = {
+                    content: "",
+                    timestamp: new Date(),
+                    contentType: MessageContentType.Text,
+                    deliveryMode: DeliveryMode.Bridged,
+                    messageType: MessageType.UserMessage,
+                    tags: [...defaultMessageTags],
+                    sender: {
+                        displayName: "Customer",
+                        id: "customer",
+                        type: PersonType.User,
+                    },
+                    fileMetadata
+                };
+
+                failureStage = "SendFileMessage";
                 await this.conversation!.sendFileMessage(fileMetadata, messageToSend);
 
                 this.scenarioMarker.completeScenario(TelemetryEvent.UploadFileAttachment, {
                     RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
+                    ChatId: this.chatToken.chatId as string,
+                    OperationId: operationId
                 });
 
                 return messageToSend;
             } catch (error) {
-                console.error(`OmnichannelChatSDK/uploadFileAttachment/error: ${error}`);
-
+                const failure = classifyOperationFailure(error, {
+                    operation: "UploadFileAttachment",
+                    failureStage,
+                    errorCode: "FILE_UPLOAD_FAILED",
+                    operationId
+                });
                 this.scenarioMarker.failScenario(TelemetryEvent.UploadFileAttachment, {
                     RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
+                    ChatId: this.chatToken.chatId as string,
+                    ...failure.telemetryProperties
                 });
+
+                if (failureStage !== "SendFileMessage") {
+                    throw error;
+                }
             }
 
             return {} as OmnichannelMessage;

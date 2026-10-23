@@ -18,6 +18,7 @@ import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import LiveChatVersion from "../src/core/LiveChatVersion";
 import OmnichannelErrorCodes from "../src/core/OmnichannelErrorCodes";
 import { SDKProvider } from "@microsoft/ocsdk";
+import TelemetryEvent from "../src/telemetry/TelemetryEvent";
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
 import libraries from "../src/utils/libraries";
 
@@ -2810,6 +2811,143 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.AMSClient.createObject).toHaveBeenCalledTimes(1);
             expect(chatSDK.AMSClient.uploadDocument).toHaveBeenCalledTimes(1);
             expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
+        });
+
+        it('ChatSDK.uploadFileAttachment() should preserve AMS initialization failures with stage telemetry', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            const initializationFailure = { code: "ETIMEDOUT", message: "request timeout" };
+            jest.spyOn(chatSDK as any, 'getAMSClient').mockRejectedValue(initializationFailure);
+            const failScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+            await expect(chatSDK.uploadFileAttachment({})).rejects.toBe(initializationFailure);
+
+            expect(failScenarioSpy).toHaveBeenCalledWith(
+                TelemetryEvent.UploadFileAttachment,
+                expect.objectContaining({
+                    ErrorCode: "FILE_UPLOAD_FAILED",
+                    FailureStage: "GetAMSClient",
+                    CancellationReason: "timeout",
+                    IsRetryable: true
+                })
+            );
+        });
+
+        it('ChatSDK.uploadFileAttachment() should classify create failures without logging raw response data', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            const createFailure = {
+                message: "failed for secret-file.txt at https://example.test/upload?token=secret",
+                response: {
+                    status: 503,
+                    headers: { "Retry-After": "2" },
+                    data: { content: "private file content" }
+                }
+            };
+            chatSDK.AMSClient = {
+                initialize: jest.fn(),
+                createObject: jest.fn().mockRejectedValue(createFailure),
+                uploadDocument: jest.fn()
+            };
+            const failScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+            await expect(chatSDK.uploadFileAttachment({
+                name: "secret-file.txt",
+                type: "text/plain"
+            })).rejects.toBe(createFailure);
+
+            const failureProperties = failScenarioSpy.mock.calls
+                .find(([event]) => event === TelemetryEvent.UploadFileAttachment)?.[1] as Record<string, unknown>;
+            expect(failureProperties).toEqual(expect.objectContaining({
+                ErrorCode: "FILE_UPLOAD_FAILED",
+                FailureStage: "CreateObject",
+                HttpStatus: 503,
+                IsRetryable: true,
+                RetryAfterMs: 2000
+            }));
+            const serializedProperties = JSON.stringify(failureProperties);
+            expect(serializedProperties).not.toContain("secret-file.txt");
+            expect(serializedProperties).not.toContain("private file content");
+            expect(serializedProperties).not.toContain("example.test");
+            expect(serializedProperties).not.toContain("token=secret");
+        });
+
+        it('ChatSDK.uploadFileAttachment() should preserve upload cancellation failures with stage telemetry', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            const uploadFailure = { name: "AbortError" };
+            chatSDK.AMSClient = {
+                initialize: jest.fn(),
+                createObject: jest.fn().mockResolvedValue({ id: "id" }),
+                uploadDocument: jest.fn().mockRejectedValue(uploadFailure)
+            };
+            const failScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+            await expect(chatSDK.uploadFileAttachment({})).rejects.toBe(uploadFailure);
+
+            expect(failScenarioSpy).toHaveBeenCalledWith(
+                TelemetryEvent.UploadFileAttachment,
+                expect.objectContaining({
+                    ErrorCode: "FILE_UPLOAD_FAILED",
+                    FailureStage: "UploadDocument",
+                    CancellationReason: "cancelled",
+                    IsRetryable: false
+                })
+            );
+        });
+
+        it('ChatSDK.uploadFileAttachment() should preserve swallowed send failures with stage telemetry', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn()
+            };
+            chatSDK.AMSClient = {
+                initialize: jest.fn(),
+                createObject: jest.fn().mockResolvedValue({ id: "id" }),
+                uploadDocument: jest.fn().mockResolvedValue({})
+            };
+            const sendMessage = jest.fn().mockRejectedValue({ response: { status: 401 } });
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendMessage
+            }));
+            await chatSDK.startChat();
+            const failScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+            await expect(chatSDK.uploadFileAttachment({})).resolves.toEqual({});
+
+            expect(sendMessage).toHaveBeenCalledTimes(1);
+            expect(failScenarioSpy).toHaveBeenCalledWith(
+                TelemetryEvent.UploadFileAttachment,
+                expect.objectContaining({
+                    ErrorCode: "FILE_UPLOAD_FAILED",
+                    FailureStage: "SendMessage",
+                    HttpStatus: 401,
+                    IsRetryable: false
+                })
+            );
         });
 
         it('[LiveChatV1] ChatSDK.downloadFileAttachment() should call conversation.downloadFile()', async() => {
