@@ -18,6 +18,7 @@ import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import LiveChatVersion from "../src/core/LiveChatVersion";
 import OmnichannelErrorCodes from "../src/core/OmnichannelErrorCodes";
 import { SDKProvider } from "@microsoft/ocsdk";
+import TelemetryEvent from "../src/telemetry/TelemetryEvent";
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
 import libraries from "../src/utils/libraries";
 
@@ -2725,7 +2726,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             chatSDK.OCClient = {
                 sessionInit: jest.fn(),
-                sendTypingIndicator: jest.fn(),
+                sendTypingIndicator: jest.fn().mockResolvedValue(undefined),
                 createConversation: jest.fn()
             }
 
@@ -2743,6 +2744,171 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             expect(chatSDK.OCClient.sendTypingIndicator).toHaveBeenCalledTimes(1);
             expect(chatSDK.conversation.sendTyping).toHaveBeenCalledTimes(1);
+        });
+
+        it('ChatSDK.sendTypingEvent() should continue to ACS and record safe telemetry when OC typing fails', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                sendTypingIndicator: jest.fn().mockRejectedValue({
+                    message: "token=secret",
+                    response: {
+                        status: 401,
+                        data: "private response"
+                    }
+                }),
+                createConversation: jest.fn()
+            };
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            };
+
+            const sendTyping = jest.fn().mockResolvedValue(undefined);
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendTyping
+            }));
+
+            await chatSDK.startChat();
+            const singleRecordSpy = jest.spyOn(chatSDK.scenarioMarker, 'singleRecord');
+
+            await expect(chatSDK.sendTypingEvent()).resolves.toBeUndefined();
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(sendTyping).toHaveBeenCalledTimes(1);
+            expect(singleRecordSpy).toHaveBeenCalledWith(
+                TelemetryEvent.SendOCTypingIndicatorFailure,
+                expect.objectContaining({
+                    RequestId: expect.any(String),
+                    ErrorCode: "OC_TYPING_INDICATOR_FAILED",
+                    FailureStage: "SendOCTypingIndicator",
+                    HttpStatus: 401,
+                    IsRetryable: false
+                })
+            );
+            expect(JSON.stringify(singleRecordSpy.mock.calls[0][1])).not.toContain("secret");
+            expect(JSON.stringify(singleRecordSpy.mock.calls[0][1])).not.toContain("private response");
+        });
+
+        it('ChatSDK.sendTypingEvent() should continue to ACS when OC typing throws synchronously', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                sendTypingIndicator: jest.fn(() => {
+                    throw Object.assign(new Error("secret"), {
+                        status: 503
+                    });
+                }),
+                createConversation: jest.fn()
+            };
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            };
+
+            const sendTyping = jest.fn().mockResolvedValue(undefined);
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendTyping
+            }));
+
+            await chatSDK.startChat();
+            const singleRecordSpy = jest.spyOn(chatSDK.scenarioMarker, 'singleRecord');
+
+            await expect(chatSDK.sendTypingEvent()).resolves.toBeUndefined();
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(sendTyping).toHaveBeenCalledTimes(1);
+            expect(singleRecordSpy).toHaveBeenCalledWith(
+                TelemetryEvent.SendOCTypingIndicatorFailure,
+                expect.objectContaining({
+                    HttpStatus: 503,
+                    IsRetryable: true
+                })
+            );
+            expect(JSON.stringify(singleRecordSpy.mock.calls[0][1])).not.toContain("secret");
+        });
+
+        it('ChatSDK.sendTypingEvent() should not wait for OC typing before sending ACS typing', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                sendTypingIndicator: jest.fn(() => new Promise(() => undefined)),
+                createConversation: jest.fn()
+            };
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            };
+
+            const sendTyping = jest.fn().mockResolvedValue(undefined);
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendTyping
+            }));
+
+            await chatSDK.startChat();
+
+            await expect(chatSDK.sendTypingEvent()).resolves.toBeUndefined();
+            expect(sendTyping).toHaveBeenCalledTimes(1);
+        });
+
+        it('ChatSDK.sendTypingEvent() should preserve the public failure contract when ACS typing fails', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                sendTypingIndicator: jest.fn().mockResolvedValue(undefined),
+                createConversation: jest.fn()
+            };
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            };
+
+            const sendTyping = jest.fn().mockRejectedValue(new Error("ACS unavailable"));
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendTyping
+            }));
+
+            await chatSDK.startChat();
+            const failScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+            await expect(chatSDK.sendTypingEvent()).rejects.toThrow("SendTypingFailure");
+            expect(sendTyping).toHaveBeenCalledTimes(1);
+            expect(failScenarioSpy).toHaveBeenCalledWith(
+                TelemetryEvent.SendTypingEvent,
+                expect.objectContaining({
+                    RequestId: expect.any(String)
+                })
+            );
         });
 
         it('[LiveChatV1] ChatSDK.uploadFileAttachment() should call conversation.sendFileData() & conversation.sendFileMessage()', async () => {

@@ -1614,11 +1614,36 @@ class OmnichannelChatSDK {
         }
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
-            try {
-                await this.OCClient.sendTypingIndicator(this.requestId, LiveChatVersion.V2, {
+            void Promise.resolve()
+                .then(() => this.OCClient.sendTypingIndicator(this.requestId, LiveChatVersion.V2, {
                     customerDisplayName: ACSParticipantDisplayName.Customer
+                }))
+                .catch((error: unknown) => {
+                    const typingError = error as {
+                        status?: unknown;
+                        response?: {
+                            status?: unknown;
+                        };
+                    };
+                    const httpStatus = typeof typingError?.status === "number"
+                        ? typingError.status
+                        : typingError?.response?.status;
+                    const isRetryable = typeof httpStatus === "number"
+                        && (httpStatus === 408 || httpStatus === 429 || (httpStatus >= 500 && httpStatus <= 599));
+
+                    this.scenarioMarker.singleRecord(TelemetryEvent.SendOCTypingIndicatorFailure, {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken.chatId as string,
+                        ErrorCode: "OC_TYPING_INDICATOR_FAILED",
+                        FailureStage: "SendOCTypingIndicator",
+                        ...(typeof httpStatus === "number" && {
+                            HttpStatus: httpStatus,
+                            IsRetryable: isRetryable
+                        })
+                    });
                 });
 
+            try {
                 await (this.conversation as ACSConversation).sendTyping();
 
                 this.scenarioMarker.completeScenario(TelemetryEvent.SendTypingEvent, {

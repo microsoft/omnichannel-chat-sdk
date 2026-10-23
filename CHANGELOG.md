@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Keep ACS typing notifications working when the OC typing-indicator request fails.
+
 ## [1.11.6] - 2025-08-08
 
 ### Fixed
