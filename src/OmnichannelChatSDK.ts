@@ -12,6 +12,7 @@ import { SDKProvider as OCSDKProvider, uuidv4 } from "@microsoft/ocsdk";
 import { createACSAdapter, createDirectLine, createIC3Adapter } from "./utils/chatAdapterCreators";
 import { createCoreServicesOrgUrl, getCoreServicesGeoName, isCoreServicesOrgUrl, unqOrgUrlPattern } from "./utils/CoreServicesUtils";
 import { defaultLocaleId, getLocaleStringFromId } from "./utils/locale";
+import { classifyEndChatFailure } from "./utils/endChatFailureClassifier";
 import exceptionThrowers, { throwAMSLoadFailure } from "./utils/exceptionThrowers";
 import { getRuntimeId, isClientIdNotFoundErrorMessage, isCustomerMessage } from "./utils/utilities";
 import { loadScript, removeElementById, sleep } from "./utils/WebUtils";
@@ -1031,7 +1032,8 @@ class OmnichannelChatSDK {
             } catch (error) {
                 exceptionThrowers.throwConversationClosureFailure(error, this.scenarioMarker, TelemetryEvent.CloseChatSession, {
                     ...cleanupMetadata,
-                    isSessionEnded: String(!endChatOptionalParams?.isSessionEnded)
+                    isSessionEnded: String(!endChatOptionalParams?.isSessionEnded),
+                    ...classifyEndChatFailure(error, "CloseSession")
                 });
             }
             this.scenarioMarker.completeScenario(TelemetryEvent.CloseChatSession, cleanupMetadata);
@@ -1092,7 +1094,8 @@ class OmnichannelChatSDK {
         } catch (error) {
             const telemetryData = {
                 RequestId: this.requestId,
-                ChatId: this.chatToken.chatId as string
+                ChatId: this.chatToken.chatId as string,
+                ...classifyEndChatFailure(error, error instanceof ChatSDKError ? "CloseSession" : "Cleanup")
             };
             if (error instanceof ChatSDKError) {
                 exceptionThrowers.throwConversationClosureFailure(new Error(JSON.stringify(error.exceptionDetails)), this.scenarioMarker, TelemetryEvent.EndChat, telemetryData);

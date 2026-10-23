@@ -18,6 +18,7 @@ import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import LiveChatVersion from "../src/core/LiveChatVersion";
 import OmnichannelErrorCodes from "../src/core/OmnichannelErrorCodes";
 import { SDKProvider } from "@microsoft/ocsdk";
+import TelemetryEvent from "../src/telemetry/TelemetryEvent";
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
 import libraries from "../src/utils/libraries";
 
@@ -3594,7 +3595,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.IC3Client).toBe(undefined);
         });
 
-        it('ChatSDK.endChat() should fail if OCClient.sessionClose() fails', async () => {
+        it('ChatSDK.endChat() should add privacy-safe diagnostics without changing the failure contract', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
             chatSDK.getChatToken = jest.fn();
@@ -3605,24 +3606,90 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             chatSDK.OCClient = {};
             chatSDK.OCClient.sessionInit = jest.fn();
             chatSDK.OCClient.createConversation = jest.fn();
-            chatSDK.OCClient.sessionClose = jest.fn(() => Promise.reject());
+            const sessionCloseError = {
+                isAxiosError: true,
+                message: "token=secret",
+                response: {
+                    status: 429,
+                    headers: { "retry-after": "3" },
+                    data: { content: "private message" }
+                }
+            };
+            chatSDK.OCClient.sessionClose = jest.fn(() => Promise.reject(sessionCloseError));
             chatSDK.ACSClient.initialize = jest.fn();
             chatSDK.ACSClient.joinConversation = jest.fn();
             chatSDK.AMSClient.initialize = jest.fn();
 
             await chatSDK.startChat();
             chatSDK.conversation = {
+                disconnect: jest.fn(),
                 stopPolling: jest.fn()
             };
+            const conversationDisconnectFn = jest.spyOn(chatSDK.conversation, 'disconnect');
+            const failScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
 
             try {
                 await chatSDK.endChat();
                 fail("Exception was expected");
             } catch (error : any ) {
+                expect(error).toBeInstanceOf(ChatSDKError);
                 expect(error.message).toBe('ConversationClosureFailure');
+                expect(error.httpResponseStatusCode).toBeUndefined();
+                expect(error.exceptionDetails).toEqual({
+                    response: 'ConversationClosureFailure',
+                    errorObject: `Error: ${JSON.stringify({
+                        response: 'ConversationClosureFailure',
+                        errorObject: JSON.stringify({
+                            status: 429,
+                            headers: { "retry-after": "3" },
+                            data: { content: "private message" },
+                            message: "token=secret"
+                        })
+                    })}`
+                });
             }
 
             expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(1);
+            expect(conversationDisconnectFn).toHaveBeenCalledTimes(1);
+            expect(chatSDK.conversation).toBe(null);
+            expect(chatSDK.chatToken).toMatchObject({});
+            expect(chatSDK.IC3Client).toBe(undefined);
+
+            const closeChatFailure = failScenarioSpy.mock.calls.find(
+                ([event]) => event === TelemetryEvent.CloseChatSession
+            )?.[1] as Record<string, string> | undefined;
+            const endChatFailure = failScenarioSpy.mock.calls.find(
+                ([event]) => event === TelemetryEvent.EndChat
+            )?.[1] as Record<string, string> | undefined;
+
+            expect(closeChatFailure).toEqual(expect.objectContaining({
+                Operation: "EndChat",
+                ErrorCode: "END_CHAT_FAILED",
+                FailureStage: "CloseSession",
+                HttpStatus: "429",
+                IsRetryable: "true",
+                RetryAfterMs: "3000"
+            }));
+            expect(endChatFailure).toEqual(expect.objectContaining({
+                Operation: "EndChat",
+                ErrorCode: "END_CHAT_FAILED",
+                FailureStage: "CloseSession",
+                HttpStatus: "429",
+                IsRetryable: "true"
+            }));
+
+            const diagnosticFields = [closeChatFailure, endChatFailure].map((failure) => ({
+                Operation: failure?.Operation,
+                ErrorCode: failure?.ErrorCode,
+                FailureStage: failure?.FailureStage,
+                HttpStatus: failure?.HttpStatus,
+                IsRetryable: failure?.IsRetryable,
+                RetryAfterMs: failure?.RetryAfterMs,
+                FailureReason: failure?.FailureReason,
+                Online: failure?.Online
+            }));
+            expect(JSON.stringify(diagnosticFields)).not.toContain("secret");
+            expect(JSON.stringify(diagnosticFields)).not.toContain("private message");
         });
 
         it('ChatSDK.endChat() with authenticatedUserToken should pass it to OCClient.sessionClose() call\'s optional parameters', async () => {

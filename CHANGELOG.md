@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Add privacy-safe end-chat failure telemetry.
+
 ## [1.11.6] - 2025-08-08
 
 ### Fixed
