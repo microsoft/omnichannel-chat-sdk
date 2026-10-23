@@ -18,6 +18,7 @@ import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import LiveChatVersion from "../src/core/LiveChatVersion";
 import OmnichannelErrorCodes from "../src/core/OmnichannelErrorCodes";
 import { SDKProvider } from "@microsoft/ocsdk";
+import TelemetryEvent from "../src/telemetry/TelemetryEvent";
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
 import libraries from "../src/utils/libraries";
 
@@ -2713,6 +2714,217 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             await chatSDK.sendMessage(message);
 
             expect(chatSDK.conversation.sendMessage).toHaveBeenCalledTimes(1);
+        });
+
+        it('ChatSDK.sendMessage() should reuse one stable clientMessageId for the invocation', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn()
+            };
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            };
+
+            const sendMessage = jest.fn().mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendMessage
+            }));
+
+            await chatSDK.startChat();
+
+            let clientMessageIdReads = 0;
+            const metadata = {
+                get clientMessageId() {
+                    clientMessageIdReads++;
+                    return clientMessageIdReads === 1 ? "stable-client-message-id" : "changed-client-message-id";
+                }
+            };
+
+            await chatSDK.sendMessage({
+                content: "content",
+                metadata
+            });
+
+            expect(sendMessage).toHaveBeenCalledTimes(1);
+            expect(sendMessage.mock.calls[0][0].metadata.clientMessageId).toBe("stable-client-message-id");
+        });
+
+        it('ChatSDK.sendMessage() should generate a distinct stable clientMessageId for each invocation', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn()
+            };
+
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            };
+
+            const sendMessage = jest.fn().mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendMessage
+            }));
+
+            await chatSDK.startChat();
+
+            const dateNowSpy = jest.spyOn(Date, "now").mockReturnValue(123456789);
+            try {
+                await chatSDK.sendMessage({ content: "first" });
+                await chatSDK.sendMessage({ content: "second" });
+            } finally {
+                dateNowSpy.mockRestore();
+            }
+
+            const firstClientMessageId = sendMessage.mock.calls[0][0].metadata.clientMessageId;
+            const secondClientMessageId = sendMessage.mock.calls[1][0].metadata.clientMessageId;
+            expect(firstClientMessageId).toEqual(expect.any(String));
+            expect(secondClientMessageId).toEqual(expect.any(String));
+            expect(firstClientMessageId).not.toBe(secondClientMessageId);
+        });
+
+        it('ChatSDK.sendMessage() should make one attempt and preserve the public exception shape with safe diagnostics', async() => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+
+            await chatSDK.initialize();
+
+            const sendFailure = {
+                message: "token=secret",
+                response: {
+                    status: 503,
+                    headers: {
+                        "Retry-After": "2"
+                    },
+                    data: {
+                        content: "private message"
+                    }
+                }
+            };
+            const sendMessage = jest.fn().mockRejectedValue(sendFailure);
+            chatSDK.OCClient = {
+                sessionInit: jest.fn(),
+                createConversation: jest.fn()
+            };
+            chatSDK.AMSClient = {
+                initialize: jest.fn()
+            };
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                sendMessage
+            }));
+
+            await chatSDK.startChat();
+            const failScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+            await expect(chatSDK.sendMessage({
+                content: "content",
+                metadata: {
+                    clientMessageId: "stable-client-message-id"
+                }
+            })).rejects.toMatchObject({
+                message: ChatSDKErrorName.ChatSDKSendMessageFailed,
+                httpResponseStatusCode: 503,
+                exceptionDetails: expect.objectContaining({
+                    response: ChatSDKErrorName.ChatSDKSendMessageFailed,
+                    operation: "SendMessage",
+                    failureStage: "SendMessage",
+                    httpStatus: 503,
+                    isRetryable: true,
+                    retryAfterMs: 2000
+                })
+            });
+
+            expect(sendMessage).toHaveBeenCalledTimes(1);
+            expect(sendMessage.mock.calls[0][0].metadata.clientMessageId).toBe("stable-client-message-id");
+            const failureProperties = failScenarioSpy.mock.calls
+                .find(([event]) => event === TelemetryEvent.SendMessages)?.[1] as Record<string, unknown>;
+            expect(failureProperties).toEqual(expect.objectContaining({
+                ErrorCode: "MESSAGE_SEND_FAILED",
+                FailureStage: "SendMessage",
+                HttpStatus: 503,
+                IsRetryable: true,
+                RetryAfterMs: 2000
+            }));
+            expect(JSON.stringify(failureProperties)).not.toContain("secret");
+            expect(JSON.stringify(failureProperties)).not.toContain("private message");
+        });
+
+        it.each([
+            ["unauthorized", { response: { status: 401 } }, undefined, false],
+            ["cancelled", { name: "AbortError" }, "cancelled", false],
+            ["offline", { message: "Failed to fetch" }, "offline", false],
+            ["timeout", { code: "ETIMEDOUT" }, "timeout", false],
+            ["timeout with a server status", { code: "ETIMEDOUT", response: { status: 503 } }, "timeout", false],
+            ["network failure without a response", { message: "Network request failed" }, "network_error_no_response", false],
+            ["request timeout response", { response: { status: 408 } }, undefined, false]
+        ])('ChatSDK.sendMessage() should safely classify %s failures', async (
+            _scenario,
+            sendFailure,
+            cancellationReason,
+            isRetryable
+        ) => {
+            if (_scenario === "offline") {
+                Object.defineProperty(global, "navigator", {
+                    configurable: true,
+                    value: { onLine: false }
+                });
+            }
+
+            try {
+                const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+                chatSDK.getChatConfig = jest.fn();
+                chatSDK.getChatToken = jest.fn();
+                chatSDK["isAMSClientAllowed"] = true;
+
+                await chatSDK.initialize();
+
+                const sendMessage = jest.fn().mockRejectedValue(sendFailure);
+                chatSDK.OCClient = {
+                    sessionInit: jest.fn(),
+                    createConversation: jest.fn()
+                };
+                chatSDK.AMSClient = {
+                    initialize: jest.fn()
+                };
+                jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+                jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                    sendMessage
+                }));
+
+                await chatSDK.startChat();
+
+                const sendPromise = chatSDK.sendMessage({ content: "content" });
+                await expect(sendPromise).rejects.toMatchObject({
+                    message: ChatSDKErrorName.ChatSDKSendMessageFailed,
+                    exceptionDetails: expect.objectContaining({
+                        cancellationReason,
+                        isRetryable
+                    })
+                });
+                expect(sendMessage).toHaveBeenCalledTimes(1);
+            } finally {
+                if (_scenario === "offline") {
+                    delete (global as any).navigator;
+                }
+            }
         });
 
         it('ChatSDK.sendTypingEvent() should call OCClient.sendTypingIndicator()', async() => {

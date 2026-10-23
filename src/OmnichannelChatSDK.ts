@@ -16,6 +16,7 @@ import exceptionThrowers, { throwAMSLoadFailure } from "./utils/exceptionThrower
 import { getRuntimeId, isClientIdNotFoundErrorMessage, isCustomerMessage } from "./utils/utilities";
 import { loadScript, removeElementById, sleep } from "./utils/WebUtils";
 import { retrieveRegionBasedUrl, shouldUseFramedMode } from "./utils/AMSClientUtils";
+import { classifySendMessageFailure } from "./utils/sendMessageFailureClassifier";
 import validateSDKConfig, { defaultChatSDKConfig } from "./validators/SDKConfigValidators";
 
 import ACSParticipantDisplayName from "./core/messaging/ACSParticipantDisplayName";
@@ -1456,14 +1457,21 @@ class OmnichannelChatSDK {
                 content: message.content,
             }
 
+            const suppliedClientMessageId = message.metadata?.clientMessageId;
+            const clientMessageId = typeof suppliedClientMessageId === "string" &&
+                suppliedClientMessageId.trim() !== ""
+                ? suppliedClientMessageId
+                : uuidv4();
+
             sendMessageRequest.metadata = {
                 widgetId: this.omnichannelConfig.widgetId,
-                clientMessageId: Date.now().toString()
+                clientMessageId
             }
 
             if (message.metadata) {
                 sendMessageRequest.metadata = { ...sendMessageRequest.metadata, ...message.metadata };
             }
+            sendMessageRequest.metadata.clientMessageId = clientMessageId;
 
             try {
                 const chatMessage = await (this.conversation as ACSConversation)?.sendMessage(sendMessageRequest);
@@ -1475,20 +1483,18 @@ class OmnichannelChatSDK {
 
                 return chatMessage;
             } catch (error) {
-                const exceptionDetails: ChatSDKExceptionDetails = {
-                    response: ChatSDKErrorName.ChatSDKSendMessageFailed,
-                    errorObject: `${error}`
-                };
+                const failure = classifySendMessageFailure(error);
                 this.scenarioMarker.failScenario(TelemetryEvent.SendMessages, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string,
-                    ExceptionDetails: JSON.stringify(exceptionDetails)
+                    ...failure.telemetryProperties
                 });
 
-                throw new ChatSDKError(ChatSDKErrorName.ChatSDKSendMessageFailed, undefined, {
-                    response: ChatSDKErrorName.ChatSDKSendMessageFailed,
-                    errorObject: `${error}`
-                });
+                throw new ChatSDKError(
+                    ChatSDKErrorName.ChatSDKSendMessageFailed,
+                    failure.httpStatus,
+                    failure.exceptionDetails
+                );
             }
         } else {
             const messageToSend: IRawMessage = {

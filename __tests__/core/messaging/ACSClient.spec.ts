@@ -354,8 +354,6 @@ describe('ACSClient', () => {
                 done: jest.fn()
             })),
         }));
-        chatThreadClient.sendMessage = jest.fn(() => sendMessageResponse);
-
         client.chatClient = {};
         client.chatClient.getChatThreadClient = jest.fn(() => chatThreadClient);
         client.chatClient.startRealtimeNotifications = jest.fn();
@@ -365,13 +363,14 @@ describe('ACSClient', () => {
             threadId: 'threadId',
             pollingInterval: 1000,
         });
+        conversation.sendChatThreadClient.sendMessage = jest.fn(() => sendMessageResponse);
 
         const content = 'message';
         const chatMessage = await conversation.sendMessage({
             content
         });
 
-        expect(chatThreadClient.sendMessage).toHaveBeenCalledTimes(1);
+        expect(conversation.sendChatThreadClient.sendMessage).toHaveBeenCalledTimes(1);
         expect(chatMessage).toBeDefined();
         expect(chatMessage.id).toBe(sendMessageResponse.id);
         expect(chatMessage.content).toBe(content);
@@ -383,7 +382,12 @@ describe('ACSClient', () => {
     });
 
     it('ACSClient.sendMessage() failure should throw an error', async () => {
-        const client: any = new ACSClient();
+        const logger: any = {
+            startScenario: jest.fn(),
+            completeScenario: jest.fn(),
+            failScenario: jest.fn()
+        };
+        const client: any = new ACSClient(logger);
         const config = {
             token: 'token',
             environmentUrl: 'url'
@@ -404,8 +408,6 @@ describe('ACSClient', () => {
                 done: jest.fn()
             })),
         }));
-        chatThreadClient.sendMessage = jest.fn(() => Promise.reject(new Error('SendMessageFailed')));
-
         client.chatClient = {};
         client.chatClient.getChatThreadClient = jest.fn(() => chatThreadClient);
         client.chatClient.startRealtimeNotifications = jest.fn();
@@ -415,14 +417,34 @@ describe('ACSClient', () => {
             threadId: 'threadId',
             pollingInterval: 1000,
         });
+        conversation.sendChatThreadClient.sendMessage = jest.fn(() => Promise.reject({
+            message: 'token=secret',
+            response: {
+                status: 503,
+                data: {
+                    content: 'private message'
+                }
+            }
+        }));
 
         try {
             await conversation.sendMessage({
                 content: 'message',
             });
         } catch (error : any ) {
-            expect(error.message).toBe('SendMessageFailed');
+            expect(error.message).toBe('token=secret');
         }
+
+        const failureProperties = logger.failScenario.mock.calls
+            .find(([event]: [string]) => event === 'SendMessage')?.[1];
+        expect(failureProperties).toEqual(expect.objectContaining({
+            ErrorCode: 'MESSAGE_SEND_FAILED',
+            FailureStage: 'SendMessage',
+            HttpStatus: 503,
+            IsRetryable: true
+        }));
+        expect(JSON.stringify(failureProperties)).not.toContain('secret');
+        expect(JSON.stringify(failureProperties)).not.toContain('private message');
     });
 
     it('ACSClient.conversation.sendTyping() should call ChatThreadClient.sendTypingNotification()', async () => {

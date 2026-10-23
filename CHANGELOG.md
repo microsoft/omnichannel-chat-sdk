@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Preserve stable message IDs and add privacy-safe send failure diagnostics without automatic retries.
+
 ## [1.11.6] - 2025-08-08
 
 ### Fixed

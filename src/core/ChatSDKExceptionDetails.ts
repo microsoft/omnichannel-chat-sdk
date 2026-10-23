@@ -9,6 +9,14 @@ interface ChatSDKExceptionDetails {
     response: string;
     message?: string;
     errorObject?: string;
+    operation?: string;
+    errorCode?: string;
+    cancellationReason?: string;
+    online?: boolean;
+    failureStage?: string;
+    httpStatus?: number;
+    isRetryable?: boolean;
+    retryAfterMs?: number;
 }
 
 export default ChatSDKExceptionDetails;

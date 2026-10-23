@@ -1,5 +1,5 @@
 import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
-import { ChatClient, ChatMessage, ChatParticipant, ChatThreadClient } from "@azure/communication-chat";
+import { ChatClient, ChatMessage, ChatParticipant, ChatThreadClient, ChatThreadClientOptions } from "@azure/communication-chat";
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
 import { MessagePrinterFactory, PrinterType } from "../../utils/printers/MessagePrinterFactory";
 
@@ -16,6 +16,7 @@ import LiveChatVersion from "../LiveChatVersion";
 import { MessageSource } from "../../telemetry/MessageSource";
 import OmnichannelMessage from "./OmnichannelMessage";
 import TelemetryEvent from "../../telemetry/TelemetryEvent";
+import { classifySendMessageFailure } from "../../utils/sendMessageFailureClassifier";
 import createOmnichannelMessage from "../../utils/createOmnichannelMessage";
 import { defaultMessageTags } from "./MessageTags";
 
@@ -45,21 +46,44 @@ export interface ParticipantMapping {
 function* nextDelay() {
     yield* [1000, 1000, 2000, 3000, 5000, 8000, 10000];
 }
+
+export const createNoRetryChatThreadClient = (
+    endpoint: string,
+    threadId: string,
+    tokenCredential: AzureCommunicationTokenCredential,
+    options: ChatThreadClientOptions = {}
+): ChatThreadClient => {
+    return new ChatThreadClient(endpoint, threadId, tokenCredential, {
+        ...options,
+        retryOptions: {
+            ...options.retryOptions,
+            maxRetries: 0
+        }
+    });
+};
+
 export class ACSConversation {
     private logger: ACSClientLogger | null = null;
     private tokenCredential: AzureCommunicationTokenCredential;
     private chatClient: ChatClient;
     private chatThreadClient?: ChatThreadClient;
+    private sendChatThreadClient?: ChatThreadClient;
     private sessionInfo?: ACSSessionInfo;
     private participantsMapping?: ParticipantMapping;
     private eventListeners: EventListenersMapping;
     private keepPolling = false;
     private pollingTimer: NodeJS.Timeout | number | null = null;
 
-    constructor(tokenCredential: AzureCommunicationTokenCredential, chatClient: ChatClient, logger: ACSClientLogger | null = null) {
+    constructor(
+        tokenCredential: AzureCommunicationTokenCredential,
+        chatClient: ChatClient,
+        logger: ACSClientLogger | null = null,
+        sendChatThreadClient?: ChatThreadClient
+    ) {
         this.logger = logger;
         this.tokenCredential = tokenCredential;
         this.chatClient = chatClient;
+        this.sendChatThreadClient = sendChatThreadClient;
         this.eventListeners = {};
     }
 
@@ -333,7 +357,8 @@ export class ACSConversation {
         }
 
         try {
-            const response = await this.chatThreadClient?.sendMessage(sendMessageRequest, sendMessageOptions);
+            const response = await (this.sendChatThreadClient ?? this.chatThreadClient)
+                ?.sendMessage(sendMessageRequest, sendMessageOptions);
             this.logger?.completeScenario(ACSClientEvent.SendMessage);
 
             if (response?.id) {
@@ -353,14 +378,8 @@ export class ACSConversation {
                 });
             }
         } catch (error) {
-            const exceptionDetails = {
-                response: 'SendMessageFailed',
-                errorObject: `${error}`
-            };
-
-            this.logger?.failScenario(ACSClientEvent.SendMessage, {
-                ExceptionDetails: JSON.stringify(exceptionDetails)
-            });
+            const failure = classifySendMessageFailure(error);
+            this.logger?.failScenario(ACSClientEvent.SendMessage, failure.telemetryProperties);
 
             throw error;
         }
@@ -452,6 +471,7 @@ class ACSClient {
     private logger: ACSClientLogger | null = null;
     private tokenCredential: AzureCommunicationTokenCredential | null = null;
     private chatClient: ChatClient | null = null;
+    private environmentUrl: string | null = null;
 
     public constructor(logger: ACSClientLogger | null = null) {
         this.logger = logger;
@@ -490,6 +510,7 @@ class ACSClient {
 
         try {
             this.chatClient = new ChatClient(acsClientConfig.environmentUrl, this.tokenCredential);
+            this.environmentUrl = acsClientConfig.environmentUrl;
         } catch (error) {
             const exceptionDetails = {
                 response: 'CreateChatClientFailure',
@@ -507,7 +528,17 @@ class ACSClient {
     }
 
     public async joinConversation(sessionInfo: ACSSessionInfo): Promise<ACSConversation> {
-        const conversation = new ACSConversation(this.tokenCredential as AzureCommunicationTokenCredential, this.chatClient as ChatClient, this.logger);
+        const sendChatThreadClient = createNoRetryChatThreadClient(
+            this.environmentUrl as string,
+            sessionInfo.threadId as string,
+            this.tokenCredential as AzureCommunicationTokenCredential
+        );
+        const conversation = new ACSConversation(
+            this.tokenCredential as AzureCommunicationTokenCredential,
+            this.chatClient as ChatClient,
+            this.logger,
+            sendChatThreadClient
+        );
         await conversation.initialize(sessionInfo);
         return conversation;
     }
