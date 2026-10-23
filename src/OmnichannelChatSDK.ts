@@ -106,6 +106,7 @@ import { isCoreServicesOrgUrlDNSError } from "./utils/internalUtils";
 import loggerUtils from "./utils/loggerUtils";
 import { parseLowerCaseString } from "./utils/parsers";
 import platform from "./utils/platform";
+import { classifyReadReceiptFailure } from "./utils/readReceiptFailureClassifier";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import setOcUserAgent from "./utils/setOcUserAgent";
 import startPolling from "./commands/startPolling";
@@ -1633,6 +1634,88 @@ class OmnichannelChatSDK {
 
                 throw new Error('SendTypingFailure');
             }
+        }
+    }
+
+    /**
+     * Sends a read receipt through MRT for authenticated chats when supported,
+     * otherwise sends it directly through ACS.
+     */
+    public async sendReadReceipt(messageId: string): Promise<void> {
+        const operationId = uuidv4();
+        const telemetryData = {
+            RequestId: this.requestId,
+            ChatId: this.chatToken?.chatId as string || "",
+            OperationId: operationId
+        };
+
+        this.scenarioMarker.startScenario(TelemetryEvent.SendReadReceipt, telemetryData);
+
+        if (!this.isInitialized) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.SendReadReceipt);
+        }
+
+        if (!messageId) {
+            const failure = classifyReadReceiptFailure(undefined, {
+                failureStage: "ValidateMessageId",
+                errorCode: "READ_RECEIPT_INVALID_PARAMS",
+                operationId
+            });
+            this.scenarioMarker.failScenario(TelemetryEvent.SendReadReceipt, {
+                ...telemetryData,
+                ...failure.telemetryProperties
+            });
+            throw new ChatSDKError(
+                ChatSDKErrorName.SendReadReceiptInvalidParams,
+                failure.httpStatus,
+                failure.exceptionDetails
+            );
+        }
+
+        const sendOCReadReceipt = this.OCClient?.sendReadReceipt;
+        const useAuthenticatedRoute =
+            Boolean(this.authenticatedUserToken) && typeof sendOCReadReceipt === "function";
+
+        if (!useAuthenticatedRoute && !this.conversation) {
+            exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.SendReadReceipt);
+        }
+
+        try {
+            if (useAuthenticatedRoute) {
+                await sendOCReadReceipt.call(
+                    this.OCClient,
+                    this.requestId,
+                    messageId,
+                    this.authenticatedUserToken
+                );
+            } else {
+                await (this.conversation as ACSConversation).sendReadReceipt(messageId);
+            }
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.SendReadReceipt, telemetryData);
+        } catch (error) {
+            const failure = classifyReadReceiptFailure(error, {
+                failureStage: "SendReadReceipt",
+                errorCode: "READ_RECEIPT_FAILED",
+                operationId
+            });
+            this.scenarioMarker.failScenario(TelemetryEvent.SendReadReceipt, {
+                ...telemetryData,
+                ...failure.telemetryProperties
+            });
+
+            let errorName = ChatSDKErrorName.SendReadReceiptFailure;
+            if (failure.httpStatus === 404) {
+                errorName = ChatSDKErrorName.InvalidConversation;
+            } else if (failure.httpStatus === 400) {
+                errorName = ChatSDKErrorName.SendReadReceiptInvalidParams;
+            }
+
+            throw new ChatSDKError(
+                errorName,
+                failure.httpStatus,
+                failure.exceptionDetails
+            );
         }
     }
 

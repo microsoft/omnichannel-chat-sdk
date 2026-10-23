@@ -18,6 +18,7 @@ enum TelemetryEvent {
     GetMessages = "GetMessages",
     SendMessages = "SendMessages",
     SendTypingEvent = "SendTypingEvent",
+    SendReadReceipt = "SendReadReceipt",
     OnAgentEndSession = "OnAgentEndSession",
     OnNewMessage = "OnNewMessage",
     OnTypingEvent = "OnTypingEvent",

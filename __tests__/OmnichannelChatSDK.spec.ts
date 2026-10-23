@@ -18,6 +18,7 @@ import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import LiveChatVersion from "../src/core/LiveChatVersion";
 import OmnichannelErrorCodes from "../src/core/OmnichannelErrorCodes";
 import { SDKProvider } from "@microsoft/ocsdk";
+import TelemetryEvent from "../src/telemetry/TelemetryEvent";
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
 import libraries from "../src/utils/libraries";
 
@@ -2743,6 +2744,129 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             expect(chatSDK.OCClient.sendTypingIndicator).toHaveBeenCalledTimes(1);
             expect(chatSDK.conversation.sendTyping).toHaveBeenCalledTimes(1);
+        });
+
+        describe('sendReadReceipt', () => {
+            const createChatSDK = async (
+                sendReadReceipt: jest.Mock,
+                sendOCReadReceipt?: jest.Mock
+            ) => {
+                const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+                chatSDK.getChatConfig = jest.fn();
+                chatSDK.getChatToken = jest.fn();
+                chatSDK["isAMSClientAllowed"] = true;
+
+                await chatSDK.initialize();
+
+                chatSDK.OCClient = {
+                    sessionInit: jest.fn(),
+                    createConversation: jest.fn(),
+                    ...(sendOCReadReceipt ? { sendReadReceipt: sendOCReadReceipt } : {})
+                };
+                chatSDK.AMSClient = {
+                    initialize: jest.fn()
+                };
+
+                jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(Promise.resolve());
+                jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue(Promise.resolve({
+                    sendReadReceipt
+                }));
+
+                await chatSDK.startChat();
+                return chatSDK;
+            };
+
+            it('ChatSDK.sendReadReceipt() should use the authenticated OC path when available', async () => {
+                const sendReadReceipt = jest.fn();
+                const sendOCReadReceipt = jest.fn().mockResolvedValue(undefined);
+                const chatSDK = await createChatSDK(sendReadReceipt, sendOCReadReceipt);
+                chatSDK.authenticatedUserToken = 'validToken';
+                chatSDK.requestId = 'test-request-id';
+
+                await chatSDK.sendReadReceipt('message-id');
+
+                expect(sendOCReadReceipt).toHaveBeenCalledWith('test-request-id', 'message-id', 'validToken');
+                expect(sendReadReceipt).not.toHaveBeenCalled();
+            });
+
+            it.each([
+                ['unauthenticated chat', null],
+                ['authenticated chat without OC support', 'validToken']
+            ])(
+                'ChatSDK.sendReadReceipt() should use the ACS path for %s',
+                async (_scenario, authenticatedUserToken) => {
+                    const sendReadReceipt = jest.fn().mockResolvedValue(undefined);
+                    const chatSDK = await createChatSDK(sendReadReceipt);
+                    chatSDK.authenticatedUserToken = authenticatedUserToken;
+
+                    await chatSDK.sendReadReceipt('message-id');
+
+                    expect(sendReadReceipt).toHaveBeenCalledWith('message-id');
+                }
+            );
+
+            it('ChatSDK.sendReadReceipt() should reject an empty message id', async () => {
+                const sendReadReceipt = jest.fn();
+                const chatSDK = await createChatSDK(sendReadReceipt);
+
+                await expect(chatSDK.sendReadReceipt('')).rejects.toMatchObject({
+                    message: ChatSDKErrorName.SendReadReceiptInvalidParams
+                });
+                expect(sendReadReceipt).not.toHaveBeenCalled();
+            });
+
+            it.each([
+                [404, ChatSDKErrorName.InvalidConversation],
+                [400, ChatSDKErrorName.SendReadReceiptInvalidParams],
+                [429, ChatSDKErrorName.SendReadReceiptFailure]
+            ])(
+                'ChatSDK.sendReadReceipt() should map HTTP %i to %s with privacy-safe diagnostics',
+                async (httpStatus, expectedErrorName) => {
+                    const sendReadReceipt = jest.fn().mockRejectedValue({
+                        message: 'token=secret',
+                        response: {
+                            status: httpStatus,
+                            headers: { 'x-ms-retry-after-ms': '250' },
+                            data: { content: 'private message' }
+                        }
+                    });
+                    const chatSDK = await createChatSDK(sendReadReceipt);
+                    const failScenarioSpy = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+                    await expect(chatSDK.sendReadReceipt('message-id')).rejects.toMatchObject({
+                        message: expectedErrorName,
+                        httpResponseStatusCode: httpStatus,
+                        exceptionDetails: expect.objectContaining({
+                            response: 'READ_RECEIPT_FAILED',
+                            operation: 'SendReadReceipt',
+                            failureStage: 'SendReadReceipt',
+                            httpStatus,
+                            isRetryable: httpStatus === 429,
+                            retryAfterMs: 250
+                        })
+                    });
+
+                    const failureProperties = failScenarioSpy.mock.calls
+                        .find(([event]) => event === TelemetryEvent.SendReadReceipt)?.[1] as Record<string, unknown>;
+                    expect(failureProperties).toEqual(expect.objectContaining({
+                        ErrorCode: 'READ_RECEIPT_FAILED',
+                        FailureStage: 'SendReadReceipt',
+                        HttpStatus: httpStatus,
+                        IsRetryable: httpStatus === 429,
+                        RetryAfterMs: 250
+                    }));
+                    expect(JSON.stringify(failureProperties)).not.toContain('secret');
+                    expect(JSON.stringify(failureProperties)).not.toContain('private message');
+                }
+            );
+
+            it('ChatSDK.sendReadReceipt() should throw when the SDK is not initialized', async () => {
+                const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+
+                await expect(chatSDK.sendReadReceipt('message-id')).rejects.toMatchObject({
+                    message: ChatSDKErrorName.UninitializedChatSDK
+                });
+            });
         });
 
         it('[LiveChatV1] ChatSDK.uploadFileAttachment() should call conversation.sendFileData() & conversation.sendFileMessage()', async () => {

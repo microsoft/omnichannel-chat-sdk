@@ -16,8 +16,10 @@ import LiveChatVersion from "../LiveChatVersion";
 import { MessageSource } from "../../telemetry/MessageSource";
 import OmnichannelMessage from "./OmnichannelMessage";
 import TelemetryEvent from "../../telemetry/TelemetryEvent";
+import { classifyReadReceiptFailure } from "../../utils/readReceiptFailureClassifier";
 import createOmnichannelMessage from "../../utils/createOmnichannelMessage";
 import { defaultMessageTags } from "./MessageTags";
+import { uuidv4 } from "@microsoft/ocsdk";
 
 enum ACSClientEvent {
     InitializeACSClient = 'InitializeACSClient',
@@ -29,6 +31,7 @@ enum ACSClientEvent {
     GetMessages = 'GetMessages',
     SendMessage = 'SendMessage',
     SendTyping = 'SendTyping',
+    SendReadReceipt = 'SendReadReceipt',
     StartPolling = 'StartPolling',
     StopPolling = 'StopPolling',
     Disconnect = 'Disconnect'
@@ -385,6 +388,29 @@ export class ACSConversation {
             });
 
             throw new Error('SendTypingFailed');
+        }
+    }
+
+    public async sendReadReceipt(messageId: string): Promise<void> {
+        const operationId = uuidv4();
+        this.logger?.startScenario(ACSClientEvent.SendReadReceipt, {
+            OperationId: operationId
+        });
+
+        try {
+            await this.chatThreadClient?.sendReadReceipt({ chatMessageId: messageId });
+            this.logger?.completeScenario(ACSClientEvent.SendReadReceipt, {
+                OperationId: operationId
+            });
+        } catch (error) {
+            const failure = classifyReadReceiptFailure(error, {
+                failureStage: "SendReadReceipt",
+                errorCode: "SEND_READ_RECEIPT_FAILED",
+                operationId
+            });
+
+            this.logger?.failScenario(ACSClientEvent.SendReadReceipt, failure.telemetryProperties);
+            throw error;
         }
     }
 
