@@ -335,7 +335,7 @@ class OmnichannelChatSDK {
         return null;
     }
 
-    private async getAMSClient(): Promise<AmsClient> {
+    private async getAMSClient(initializeOnLoad = false): Promise<AmsClient> {
 
         //return null to do not break promise creation
         if (this.isAMSClientAllowed === false) {
@@ -355,7 +355,7 @@ class OmnichannelChatSDK {
         case AMSClientLoadStates.ERROR:
         case AMSClientLoadStates.NOT_LOADED:
             this.debug && console.log("Attachment handler is not loaded, loading now");
-            await this.loadAmsClient();
+            await this.loadAmsClient({ initialize: initializeOnLoad });
             return this.AMSClient;
         default:
             return null;
@@ -392,23 +392,28 @@ class OmnichannelChatSDK {
         return this.isAMSClientAllowed;
     }
 
-    private async loadAmsClient(): Promise<void> {
+    private async loadAmsClient({ initialize = false, background = false } = {}): Promise<void> {
         this.scenarioMarker.startScenario(TelemetryEvent.InitializeMessagingClient);
         try {
             if (this.isAMSClientAllowed) {
-                if (this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED) {
+                if (this.AMSClientLoadCurrentState === AMSClientLoadStates.NOT_LOADED ||
+                    this.AMSClientLoadCurrentState === AMSClientLoadStates.ERROR) {
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADING;
                     this.debug && console.time("ams_creation");
                     const disableAMSWhitelistedUrls = this.chatSDKConfig?.internalConfig?.disableAMSWhitelistedUrls !== false;
                     const disableAMSRegionBasedUrl = this.chatSDKConfig?.internalConfig?.disableAMSRegionBasedUrl === true;
                     const framedMode = shouldUseFramedMode(disableAMSWhitelistedUrls);
-                    this.AMSClient = await createAMSClient({
+                    const amsClient = await createAMSClient({
                         framedMode,
                         multiClient: true,
                         debug: (this.detailedDebugEnabled ? this.debugAMS : this.debug),
                         logger: this.amsClientLogger as PluggableLogger,
                         baseUrl: framedMode && !disableAMSRegionBasedUrl ? retrieveRegionBasedUrl(this.widgetSnippetBaseUrl) : ''
                     });
+                    if (initialize) {
+                        await amsClient.initialize({ chatToken: this.chatToken as OmnichannelChatToken });
+                    }
+                    this.AMSClient = amsClient;
                     this.debug && console.timeEnd("ams_creation");
                     this.AMSClientLoadCurrentState = AMSClientLoadStates.LOADED;
                 }
@@ -417,7 +422,11 @@ class OmnichannelChatSDK {
             this.scenarioMarker.completeScenario(TelemetryEvent.InitializeMessagingClient);
         } catch (e) {
             this.AMSClientLoadCurrentState = AMSClientLoadStates.ERROR;
-            exceptionThrowers.throwMessagingClientCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeMessagingClient);
+            if (background) {
+                exceptionSuppressors.suppressChatSDKError(ChatSDKErrorName.MessagingClientCreationFailure, e, this.scenarioMarker, TelemetryEvent.InitializeMessagingClient);
+            } else {
+                exceptionThrowers.throwMessagingClientCreationFailure(e, this.scenarioMarker, TelemetryEvent.InitializeMessagingClient);
+            }
         }
     }
 
@@ -433,7 +442,7 @@ class OmnichannelChatSDK {
             this.useCoreServicesOrgUrlIfNotSet();
             await Promise.all([this.loadInitComponents(), this.loadChatConfig(optionalParams)]);
             // this will load ams in the background, without holding the load
-            this.loadAmsClient();
+            this.loadAmsClient({ background: true });
             this.isInitialized = true;
             this.scenarioMarker.completeScenario(TelemetryEvent.InitializeChatSDKParallel);
         } catch (error) {
@@ -2121,7 +2130,7 @@ class OmnichannelChatSDK {
             if (this.isAMSClientAllowed === false) {
                 exceptionThrowers.throwFeatureDisabled(this.scenarioMarker, TelemetryEvent.UploadFileAttachment, "Enable support for attachment upload and receive in the widget configuration.");
             }
-            const amsClient = await this.getAMSClient();
+            const amsClient = await this.getAMSClient(true);
 
             if (amsClient === null || amsClient === undefined) {
                 throwAMSLoadFailure(this.scenarioMarker, TelemetryEvent.UploadFileAttachment, "Attachment handler client is null, no action can be performed");
@@ -2255,7 +2264,7 @@ class OmnichannelChatSDK {
                     });
                     exceptionThrowers.throwFeatureDisabled(this.scenarioMarker, TelemetryEvent.DownloadFileAttachment, "Enable support for attachment upload and receive in the widget configuration.");
                 }
-                const amsClient = await this.getAMSClient();
+                const amsClient = await this.getAMSClient(true);
 
                 if (amsClient === null || amsClient === undefined) {
                     throwAMSLoadFailure(this.scenarioMarker, TelemetryEvent.DownloadFileAttachment, "Attachment handler is null, no action can be performed");
