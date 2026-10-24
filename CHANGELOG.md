@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Handled background attachment-client initialization failures and restored initialized clients on subsequent attachment retries.
+
 ## [2.0.2] - 2026-10-20
 
 ### Security
