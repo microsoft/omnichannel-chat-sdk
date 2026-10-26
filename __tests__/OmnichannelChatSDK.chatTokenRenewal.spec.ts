@@ -53,7 +53,7 @@ describe('Omnichannel Chat SDK, chat token renewal', () => {
             }
         };
 
-        if (options.renewChatToken) {
+        if ('renewChatToken' in options) {
             chatSDK.OCClient.renewChatToken = options.renewChatToken;
         }
 
@@ -100,7 +100,7 @@ describe('Omnichannel Chat SDK, chat token renewal', () => {
         });
 
         it('when the installed OCSDK does not support renewing the chat token', async () => {
-            const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true' });
+            const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken: undefined });
 
             expect(chatSDK.OCClient.renewChatToken).toBeUndefined();
             expect(tokenRefresher).toBeUndefined();
