@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import ACSClient from "../../../src/core/messaging/ACSClient";
+import { ChatTokenUnauthorizedRecoveryCredential, chatTokenUnauthorizedRecoveryPolicyName } from "../../../src/utils/chatTokenUnauthorizedRecovery";
 
 jest.mock('@azure/communication-common');
 jest.mock('@azure/communication-chat');
@@ -53,6 +54,42 @@ describe('ACSClient', () => {
             const tokenRefresher = await getTokenRefresher({ token: 'token', environmentUrl: 'url', tokenRefresher: async () => '' });
 
             await expect(tokenRefresher()).resolves.toBe('token');
+        });
+
+        it('should give a renewed token to the 401 recovery', async () => {
+            const unauthorizedRecovery = { selectToken: jest.fn(), observeToken: jest.fn(), recover: jest.fn() };
+            const tokenRefresher = await getTokenRefresher({ token: 'token', environmentUrl: 'url', tokenRefresher: async () => 'renewed', unauthorizedRecovery });
+
+            await tokenRefresher();
+
+            expect(unauthorizedRecovery.observeToken).toHaveBeenCalledWith('renewed');
+        });
+    });
+
+    describe('401 recovery', () => {
+        const createChatClient = async (config: any) => {
+            const { ChatClient } = jest.requireMock('@azure/communication-chat');
+            (ChatClient as jest.Mock).mockClear();
+
+            const client: any = new ACSClient();
+            await client.initialize(config);
+
+            return { client, args: (ChatClient as jest.Mock).mock.calls[0] };
+        };
+
+        it('should create ChatClient without changes when recovery is not configured', async () => {
+            const { client, args } = await createChatClient({ token: 'token', environmentUrl: 'url' });
+
+            expect(args).toEqual(['url', client.tokenCredential]);
+        });
+
+        it('should create ChatClient with the recovery credential and policy when recovery is configured', async () => {
+            const unauthorizedRecovery = { selectToken: jest.fn(), observeToken: jest.fn(), recover: jest.fn() };
+            const { args } = await createChatClient({ token: 'token', environmentUrl: 'url', unauthorizedRecovery });
+
+            expect(args[0]).toBe('url');
+            expect(args[1]).toBeInstanceOf(ChatTokenUnauthorizedRecoveryCredential);
+            expect(args[2].additionalPolicies).toEqual([expect.objectContaining({ position: 'perRetry', policy: expect.objectContaining({ name: chatTokenUnauthorizedRecoveryPolicyName }) })]);
         });
     });
 

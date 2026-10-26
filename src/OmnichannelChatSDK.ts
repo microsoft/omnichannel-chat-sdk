@@ -108,6 +108,7 @@ import { getLocationInfo } from "./utils/location";
 import { isCoreServicesOrgUrlDNSError } from "./utils/internalUtils";
 import loggerUtils from "./utils/loggerUtils";
 import { parseLowerCaseString } from "./utils/parsers";
+import { ChatTokenUnauthorizedRecovery, createAttachmentClientWithUnauthorizedRecovery, createChatTokenUnauthorizedRecovery, UnauthorizedRecoverySource } from "./utils/chatTokenUnauthorizedRecovery";
 import { authenticatedNonRetriableStatusCodes, createChatTokenRefresher, defaultNonRetriableStatusCodes, RenewedChatToken } from "./utils/chatTokenRenewal";
 import platform from "./utils/platform";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
@@ -141,6 +142,7 @@ class OmnichannelChatSDK {
     private coreServicesOrgUrl: string | null = null;
     private dynamicsLocationCode: string | null = null;
     private chatToken: IChatToken;
+    private chatTokenUnauthorizedRecovery: ChatTokenUnauthorizedRecovery | null = null;
     private liveChatConfig: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private widgetSnippetBaseUrl = '';
     private liveChatVersion: number;
@@ -929,10 +931,13 @@ class OmnichannelChatSDK {
                 // };
 
                 try {
+                    const tokenRefresher = this.createChatTokenRefresher(chatAdapterConfig.token as string);
+                    this.chatTokenUnauthorizedRecovery = this.createChatTokenUnauthorizedRecovery(chatAdapterConfig.token as string, tokenRefresher);
                     await this.ACSClient?.initialize({
                         token: chatAdapterConfig.token as string,
                         environmentUrl: chatAdapterConfig.environmentUrl,
-                        tokenRefresher: this.createChatTokenRefresher(chatAdapterConfig.token as string)
+                        tokenRefresher,
+                        unauthorizedRecovery: this.chatTokenUnauthorizedRecovery ?? undefined
                     });
                 } catch (error) {
                     const telemetryData = {
@@ -1186,6 +1191,7 @@ class OmnichannelChatSDK {
             this.conversation = null;
             this.requestId = uuidv4();
             this.chatToken = {};
+            this.chatTokenUnauthorizedRecovery = null;
             this.reconnectId = null;
 
             if (this.IC3Client) {
@@ -1642,6 +1648,72 @@ class OmnichannelChatSDK {
                 });
         } catch {
             // Attachments keep using the previous token
+        }
+    }
+
+    /**
+     * Creates the recovery for chat and attachment requests that fail with 401 while the chat token has not
+     * expired. Returns null, which keeps the existing behavior, unless chat token renewal is enabled and recovery is
+     * not disabled in the SDK config.
+     */
+    private createChatTokenUnauthorizedRecovery(initialToken: string, tokenRefresher: (() => Promise<string>) | undefined): ChatTokenUnauthorizedRecovery | null {
+        try {
+            if (!tokenRefresher
+                || this.chatSDKConfig?.chatTokenRenewal?.disableUnauthorizedRecovery === true
+                || !initialToken) {
+                return null;
+            }
+
+            const telemetryData = {
+                RequestId: this.requestId,
+                ChatId: this.chatToken?.chatId as string
+            };
+
+            return createChatTokenUnauthorizedRecovery({
+                initialToken,
+                refreshToken: tokenRefresher,
+                onStart: () => this.scenarioMarker.startScenario(TelemetryEvent.ChatTokenUnauthorizedRecovery, telemetryData),
+                onSuccess: (_source: UnauthorizedRecoverySource, usedExistingToken: boolean) => {
+                    if (!usedExistingToken) {
+                        this.scenarioMarker.completeScenario(TelemetryEvent.ChatTokenUnauthorizedRecovery, telemetryData);
+                    }
+                },
+                onFailure: (source: UnauthorizedRecoverySource, reason: string) => {
+                    this.scenarioMarker.failScenario(TelemetryEvent.ChatTokenUnauthorizedRecovery, {
+                        ...telemetryData,
+                        ExceptionDetails: JSON.stringify({ response: reason, source })
+                    });
+                }
+            });
+        } catch {
+            return null;
+        }
+    }
+
+    /**
+     * Returns the attachment client wrapped to retry an upload or download that fails with 401 once with a renewed
+     * token, or the client itself when recovery is not enabled for the current chat.
+     */
+    private getAttachmentClientWithUnauthorizedRecovery<T extends object>(amsClient: T): T {
+        try {
+            const recovery = this.chatTokenUnauthorizedRecovery;
+            const chatId = this.chatToken?.chatId;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if (!recovery || !chatId || !amsClient || typeof (amsClient as any).initialize !== "function") {
+                return amsClient;
+            }
+
+            return createAttachmentClientWithUnauthorizedRecovery(amsClient, recovery, async (token: string) => {
+                if (this.chatTokenUnauthorizedRecovery !== recovery || this.chatToken?.chatId !== chatId) {
+                    return false;
+                }
+
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                await (amsClient as any).initialize({ chatToken: { ...this.chatToken, token } as OmnichannelChatToken });
+                return true;
+            });
+        } catch {
+            return amsClient;
         }
     }
 
@@ -2263,9 +2335,10 @@ class OmnichannelChatSDK {
                 throwAMSLoadFailure(this.scenarioMarker, TelemetryEvent.UploadFileAttachment, "Attachment handler client is null, no action can be performed");
             }
 
-            const createObjectResponse: any = await amsClient?.createObject(this.chatToken?.chatId as string, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
+            const attachmentClient = amsClient ? this.getAttachmentClientWithUnauthorizedRecovery(amsClient) : amsClient;
+            const createObjectResponse: any = await attachmentClient?.createObject(this.chatToken?.chatId as string, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
             const documentId = createObjectResponse.id;
-            const uploadDocumentResponse: any = await amsClient?.uploadDocument(documentId, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
+            const uploadDocumentResponse: any = await attachmentClient?.uploadDocument(documentId, fileInfo as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
 
             const fileIdsProperty = {
                 amsReferences: JSON.stringify([documentId]),
@@ -2397,9 +2470,10 @@ class OmnichannelChatSDK {
                     throwAMSLoadFailure(this.scenarioMarker, TelemetryEvent.DownloadFileAttachment, "Attachment handler is null, no action can be performed");
                 }
 
-                const response: any = await amsClient?.getViewStatus(fileMetadata);  // eslint-disable-line @typescript-eslint/no-explicit-any
+                const attachmentClient = amsClient ? this.getAttachmentClientWithUnauthorizedRecovery(amsClient) : amsClient;
+                const response: any = await attachmentClient?.getViewStatus(fileMetadata);  // eslint-disable-line @typescript-eslint/no-explicit-any
                 const { view_location } = response;
-                const viewResponse: any = await amsClient?.getView(fileMetadata, view_location);  // eslint-disable-line @typescript-eslint/no-explicit-any
+                const viewResponse: any = await attachmentClient?.getView(fileMetadata, view_location);  // eslint-disable-line @typescript-eslint/no-explicit-any
                 this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment, {
                     RequestId: this.requestId,
                     ChatId: this.chatToken.chatId as string
@@ -2589,7 +2663,7 @@ class OmnichannelChatSDK {
                 fileScan: optionalParams.ACSAdapter?.fileScan
             };
 
-            const fileManager = new AMSFileManager(this.AMSClient as FramedClient, this.acsAdapterLogger, options);
+            const fileManager = new AMSFileManager(this.getAttachmentClientWithUnauthorizedRecovery(this.AMSClient as FramedClient), this.acsAdapterLogger, options);
             return createACSAdapter(optionalParams, this.chatSDKConfig, this.liveChatVersion, ChatAdapterProtocols.ACS, this.telemetry as typeof AriaTelemetry, this.scenarioMarker, this.omnichannelConfig, this.chatToken, fileManager, this.ACSClient?.getChatClient() as ChatClient, this.acsAdapterLogger as ACSAdapterLogger);
 
         } else if (protocol === ChatAdapterProtocols.IC3 || this.liveChatVersion === LiveChatVersion.V1) {

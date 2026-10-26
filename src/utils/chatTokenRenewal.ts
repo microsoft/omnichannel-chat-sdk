@@ -57,29 +57,37 @@ const decodeBase64Url = (value: string): string | null => {
 };
 
 /**
- * Returns true when the token is a JWT whose exp claim is far enough in the future to be accepted by ACS.
+ * Returns the expiry of a JWT chat token in milliseconds since epoch, or undefined when it cannot be read.
  */
-export const isChatTokenUsable = (token: unknown, nowInMs: number = Date.now()): boolean => {
+export const getChatTokenExpiresOnInMs = (token: unknown): number | undefined => {
     try {
         if (typeof token !== "string" || token.trim().length === 0) {
-            return false;
+            return undefined;
         }
 
         const parts = token.split(".");
         if (parts.length !== 3) {
-            return false;
+            return undefined;
         }
 
         const payload = decodeBase64Url(parts[1]);
         if (!payload) {
-            return false;
+            return undefined;
         }
 
         const { exp } = JSON.parse(payload);
-        return typeof exp === "number" && exp * 1000 > nowInMs + minimumTokenLifetimeInMs;
+        return typeof exp === "number" ? exp * 1000 : undefined;
     } catch {
-        return false;
+        return undefined;
     }
+};
+
+/**
+ * Returns true when the token is a JWT whose exp claim is far enough in the future to be accepted by ACS.
+ */
+export const isChatTokenUsable = (token: unknown, nowInMs: number = Date.now()): boolean => {
+    const expiresOnInMs = getChatTokenExpiresOnInMs(token);
+    return expiresOnInMs !== undefined && expiresOnInMs > nowInMs + minimumTokenLifetimeInMs;
 };
 
 const getStatusCode = (error: unknown): number | undefined => {
