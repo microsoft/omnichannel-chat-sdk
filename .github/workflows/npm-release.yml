@@ -1,0 +1,121 @@
+# 1.x maintenance release workflow (release/1.11.x only).
+# Publishes v1.* tags with npm dist-tag `v1-latest` so npm `latest` and the
+# GitHub "Latest" release stay on 2.x. Do not merge this file into main.
+name: npm Release
+
+on:
+  push:
+    tags:
+      - 'v1.*'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    if: github.repository == 'microsoft/omnichannel-chat-sdk'
+    runs-on: ubuntu-latest
+    outputs:
+      release-tarball: ${{ steps.pack-release.outputs.filename }}
+    steps:
+      - name: Checking out for ${{ github.ref }}
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          registry-url: https://registry.npmjs.org
+
+      - name: Read package.json
+        id: read-package-json
+        run: |
+          echo "name=$(jq -r '.name' package.json)" >> "$GITHUB_OUTPUT"
+          echo "version=$(jq -r '.version' package.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Validate release tag
+        run: |
+          VERSION="${{ steps.read-package-json.outputs.version }}"
+          if [[ "${GITHUB_REF_NAME}" != "v${VERSION}" ]]; then
+            echo "::error::Release tag ${GITHUB_REF_NAME} does not match package version ${VERSION}."
+            exit 1
+          fi
+          if [[ "${VERSION}" == *-* || "${VERSION}" != 1.* ]]; then
+            echo "::error::This workflow publishes stable 1.x versions only."
+            exit 1
+          fi
+
+      - name: Ensure version is not already published
+        run: |
+          if npm view "${{ steps.read-package-json.outputs.name }}@${{ steps.read-package-json.outputs.version }}" version 2>/dev/null | grep -q .; then
+            echo "::error::${{ steps.read-package-json.outputs.version }} is already published."
+            exit 1
+          fi
+
+      - name: Install packages
+        run: npm ci
+
+      - name: Validate version consistency
+        run: node scripts/validate-version.js
+
+      - name: Build
+        run: npm run build:tsc
+
+      - name: Pack release tarball
+        id: pack-release
+        run: echo "filename=$(npm pack --json | jq -r '.[0].filename')" >> "$GITHUB_OUTPUT"
+
+      - name: Upload release tarball
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: npm-tarball
+          path: ${{ steps.pack-release.outputs.filename }}
+          if-no-files-found: error
+
+      - name: Publish release tarball
+        run: npx npm@11.12.1 publish "${{ steps.pack-release.outputs.filename }}" --provenance --tag v1-latest --access public
+
+  github-release:
+    if: needs.publish.result == 'success' && github.repository == 'microsoft/omnichannel-chat-sdk'
+    needs: publish
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checking out for ${{ github.ref }}
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Download release tarball
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: npm-tarball
+
+      - name: Extract CHANGELOG section for ${{ github.ref_name }}
+        id: changelog
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v ver="$VERSION" '
+            $0 ~ "^## \\[" ver "\\]" {flag=1; next}
+            flag && /^## \[/ {flag=0}
+            flag {print}
+          ' CHANGELOG.md > RELEASE_NOTES.md
+          if ! grep -q '[^[:space:]]' RELEASE_NOTES.md; then
+            echo "::warning::No CHANGELOG entry found for version $VERSION; falling back to auto-generated notes."
+            echo "fallback=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "fallback=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          make_latest: false
+          body_path: ${{ steps.changelog.outputs.fallback == 'false' && 'RELEASE_NOTES.md' || '' }}
+          generate_release_notes: ${{ steps.changelog.outputs.fallback == 'true' }}
+          files: ${{ needs.publish.outputs.release-tarball }}
+          fail_on_unmatched_files: true

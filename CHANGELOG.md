@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.11.9] - 2026-10-27
+
+### Security
+
+- Telemetry no longer logs the untranslated `OriginalMessageText` that real-time translation adds to message metadata (message payloads are unchanged). ACS adapter telemetry (`CustomProperties`, `Description`, `ExceptionDetails`) now also redacts JWTs and sensitive URL parameter values (for example `workspace`, `sig`, `token`, `code`, `client_secret`), including percent-encoded and HTML-escaped links. Backport of the 2.0.2 fix for 1.x consumers.
+
+### Changed
+
+- 1.x releases are published from the `release/1.11.x` branch by `npm-release.yml` with npm dist-tag `v1-latest`. npm `latest` and the GitHub "Latest" release stay on 2.x. Install with `npm install @microsoft/omnichannel-chat-sdk@1.11.9` or `@v1-latest`.
+
 ## [1.11.8] - 2026-01-29
 
 ### Security
