@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Added automatic ACS chat token renewal for long-running Live Chat V2 conversations. Renewal only runs when the org's live chat config enables `LcwFcbConfiguration.lcwChatTokenRenewalEnabled` and the installed `@microsoft/ocsdk` exposes `renewChatToken`. If the renewal API is not deployed, returns an error, times out, or returns an invalid token, the SDK keeps the current token and the existing flow is unchanged. Reconnected chats are renewed by their reconnect id. Authenticated chats retry renewal after an authentication failure (HTTP 400, 401 or 403) once the retry cooldown passes, and renew only when `getAuthToken` returns a valid token at renewal time. Set `chatSDKConfig.chatTokenRenewal.disable` to `true` to turn renewal off.
+- After a chat token renewal, the attachment client now uses the renewed token, so file uploads and downloads keep working after the original token expires. If updating the attachment client fails, attachments keep using the previous token.
+
+### Changed
+
+- Updated `@microsoft/ocsdk` to `0.6.0-main.316a2fa`, which adds `renewChatToken` for ACS chat token renewal. This version also includes two earlier `@microsoft/ocsdk` changes: `getChatConfig` now retries HTTP 429 responses by default with jittered backoff, and default headers are copied per request, so headers such as `Oc-Sessionid` or `AuthenticatedUserToken` set by an earlier call are no longer re-sent on later calls.
+
 ## [2.0.2] - 2026-10-20
 
 ### Security

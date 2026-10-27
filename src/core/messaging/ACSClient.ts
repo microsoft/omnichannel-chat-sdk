@@ -717,8 +717,14 @@ class ACSClient {
 
         const tokenRefresher = async () => {
             if (acsClientConfig.tokenRefresher) {
-                const token = await acsClientConfig.tokenRefresher();
-                return token;
+                try {
+                    const token = await acsClientConfig.tokenRefresher();
+                    if (token) {
+                        return token;
+                    }
+                } catch {
+                    // Fall back to the original token, which is the behavior without a refresher
+                }
             }
 
             return acsClientConfig.token;
