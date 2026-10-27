@@ -108,7 +108,7 @@ import { getLocationInfo } from "./utils/location";
 import { isCoreServicesOrgUrlDNSError } from "./utils/internalUtils";
 import loggerUtils from "./utils/loggerUtils";
 import { parseLowerCaseString } from "./utils/parsers";
-import { createChatTokenRefresher, RenewedChatToken } from "./utils/chatTokenRenewal";
+import { authenticatedNonRetriableStatusCodes, createChatTokenRefresher, defaultNonRetriableStatusCodes, RenewedChatToken } from "./utils/chatTokenRenewal";
 import platform from "./utils/platform";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import startPolling from "./commands/startPolling";
@@ -1574,6 +1574,7 @@ class OmnichannelChatSDK {
 
                     return this.OCClient.renewChatToken(renewalId, renewChatTokenOptionalParams);
                 },
+                isNonRetriableStatus: (statusCode: number) => (this.authenticatedUserToken ? authenticatedNonRetriableStatusCodes : defaultNonRetriableStatusCodes).includes(statusCode),
                 onRenewed: (renewed: RenewedChatToken) => {
                     this.chatToken = {
                         ...this.chatToken,

@@ -199,6 +199,58 @@ describe('Omnichannel Chat SDK, chat token renewal', () => {
             expect(renewChatToken).toHaveBeenCalledWith(chatSDK.requestId, { authenticatedUserToken: 'startToken' });
         });
 
+        describe('after an HTTP error', () => {
+            const httpError = (status: number) => Object.assign(new Error(`Request failed with status code ${status}`), { response: { status } });
+            const cooldownInMs = 60 * 1000;
+            let currentTime: number;
+
+            beforeEach(() => {
+                currentTime = Date.now();
+                jest.spyOn(Date, 'now').mockImplementation(() => currentTime);
+            });
+
+            afterEach(() => {
+                jest.restoreAllMocks();
+            });
+
+            it.each([400, 401, 403])('retries an authenticated renewal after HTTP %d once the cooldown passes', async (status) => {
+                const renewedToken = createJwt(86400);
+                const renewChatToken = jest.fn()
+                    .mockRejectedValueOnce(httpError(status))
+                    .mockResolvedValueOnce({ ChatId: chatId, Token: renewedToken, ExpiresIn: '86400' });
+                const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken, authenticatedUserToken: 'startToken' });
+
+                await expect(tokenRefresher()).resolves.toBe(initialToken);
+                currentTime += cooldownInMs;
+                await expect(tokenRefresher()).resolves.toBe(renewedToken);
+
+                expect(renewChatToken).toHaveBeenCalledTimes(2);
+                expect((await chatSDK.getChatToken()).token).toBe(renewedToken);
+            });
+
+            it.each([404, 405])('stops renewing an authenticated chat after HTTP %d', async (status) => {
+                const renewChatToken = jest.fn().mockRejectedValue(httpError(status));
+                const { tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken, authenticatedUserToken: 'startToken' });
+
+                await expect(tokenRefresher()).resolves.toBe(initialToken);
+                currentTime += cooldownInMs;
+                await expect(tokenRefresher()).resolves.toBe(initialToken);
+
+                expect(renewChatToken).toHaveBeenCalledTimes(1);
+            });
+
+            it.each([400, 401, 403, 404, 405])('stops renewing an anonymous chat after HTTP %d', async (status) => {
+                const renewChatToken = jest.fn().mockRejectedValue(httpError(status));
+                const { tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken });
+
+                await expect(tokenRefresher()).resolves.toBe(initialToken);
+                currentTime += cooldownInMs;
+                await expect(tokenRefresher()).resolves.toBe(initialToken);
+
+                expect(renewChatToken).toHaveBeenCalledTimes(1);
+            });
+        });
+
         it.each([
             ['the API is not deployed', Object.assign(new Error('Request failed with status code 404'), { response: { status: 404 } })],
             ['the API fails', Object.assign(new Error('Request failed with status code 500'), { response: { status: 500 } })],

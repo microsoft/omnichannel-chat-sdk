@@ -25,6 +25,8 @@ export interface ChatTokenRefresherParams {
     onStart?: () => void;
     onSuccess?: () => void;
     onFailure?: (reason: string, error?: unknown) => void;
+    /** Returns true when an HTTP status means renewal cannot succeed for this chat. Checked on each failure. */
+    isNonRetriableStatus?: (statusCode: number) => boolean;
     retryCooldownInMs?: number;
     timeoutInMs?: number;
     now?: () => number;
@@ -35,7 +37,10 @@ export const defaultChatTokenRenewalTimeoutInMs = 60 * 1000;
 const minimumTokenLifetimeInMs = 60 * 1000;
 
 // The API is not deployed, renewal is disabled for the org, or the chat cannot be renewed. Retrying will not help.
-const nonRetriableStatusCodes = [400, 401, 403, 404, 405];
+export const defaultNonRetriableStatusCodes = [400, 401, 403, 404, 405];
+
+// On the authenticated route, 400/401/403 come from customer token validation and can succeed once the host has a fresh token.
+export const authenticatedNonRetriableStatusCodes = [404, 405];
 
 const decodeBase64Url = (value: string): string | null => {
     const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
@@ -87,6 +92,7 @@ export const createChatTokenRefresher = (params: ChatTokenRefresherParams): (() 
     const retryCooldownInMs = params.retryCooldownInMs ?? defaultChatTokenRenewalRetryCooldownInMs;
     const timeoutInMs = params.timeoutInMs ?? defaultChatTokenRenewalTimeoutInMs;
     const now = params.now ?? (() => Date.now());
+    const isNonRetriableStatus = params.isNonRetriableStatus ?? ((statusCode: number) => defaultNonRetriableStatusCodes.includes(statusCode));
 
     let latestToken = params.initialToken;
     let isDisabled = false;
@@ -129,7 +135,7 @@ export const createChatTokenRefresher = (params: ChatTokenRefresherParams): (() 
             }
         } catch (error) {
             const statusCode = getStatusCode(error);
-            const isNonRetriable = statusCode !== undefined && nonRetriableStatusCodes.includes(statusCode);
+            const isNonRetriable = statusCode !== undefined && isNonRetriableStatus(statusCode);
             return fail(statusCode !== undefined ? `HttpStatus${statusCode}` : "RequestFailed", error, isNonRetriable);
         }
 

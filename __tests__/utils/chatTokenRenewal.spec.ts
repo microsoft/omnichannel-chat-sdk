@@ -36,7 +36,7 @@ describe("chatTokenRenewal", () => {
         let currentTime: number;
         let isChatActive: boolean;
 
-        const setup = (renewChatToken: () => Promise<RenewedChatToken>, onRenewed: (renewed: RenewedChatToken) => void = jest.fn()) => {
+        const setup = (renewChatToken: () => Promise<RenewedChatToken>, onRenewed: (renewed: RenewedChatToken) => void = jest.fn(), isNonRetriableStatus?: (statusCode: number) => boolean) => {
             const params = {
                 initialToken,
                 chatId,
@@ -46,6 +46,7 @@ describe("chatTokenRenewal", () => {
                 onStart: jest.fn(),
                 onSuccess: jest.fn(),
                 onFailure: jest.fn(),
+                isNonRetriableStatus,
                 retryCooldownInMs: 60000,
                 timeoutInMs: 1000,
                 now: () => currentTime
@@ -97,6 +98,32 @@ describe("chatTokenRenewal", () => {
             currentTime += 1;
             await expect(refresher()).resolves.toBe(initialToken);
             expect(params.renewChatToken).toHaveBeenCalledTimes(2);
+        });
+
+        it("retries after the cooldown when isNonRetriableStatus returns false", async () => {
+            const renewChatToken = jest.fn<Promise<RenewedChatToken>, []>()
+                .mockRejectedValueOnce(httpError(401))
+                .mockResolvedValueOnce({ ChatId: chatId, Token: renewedToken, ExpiresIn: "86400" });
+            const isNonRetriableStatus = jest.fn(() => false);
+            const { params, refresher } = setup(renewChatToken, jest.fn(), isNonRetriableStatus);
+
+            await expect(refresher()).resolves.toBe(initialToken);
+            expect(isNonRetriableStatus).toHaveBeenCalledWith(401);
+            currentTime += 60000;
+            await expect(refresher()).resolves.toBe(renewedToken);
+
+            expect(params.renewChatToken).toHaveBeenCalledTimes(2);
+            expect(params.onFailure).toHaveBeenCalledWith("HttpStatus401", expect.any(Error));
+        });
+
+        it("stops renewing when isNonRetriableStatus returns true", async () => {
+            const { params, refresher } = setup(async () => { throw httpError(500); }, jest.fn(), () => true);
+
+            await expect(refresher()).resolves.toBe(initialToken);
+            currentTime += 24 * 60 * 60 * 1000;
+            await expect(refresher()).resolves.toBe(initialToken);
+
+            expect(params.renewChatToken).toHaveBeenCalledTimes(1);
         });
 
         it("returns the current token when the API does not respond in time", async () => {
