@@ -1,5 +1,6 @@
 const { build } = require('esbuild');
 const { polyfillNode } = require("esbuild-plugin-polyfill-node");
+const fs = require('fs');
 const path = require('path');
 
 const AzureCommunicationChatPolyfills = () => {
@@ -12,8 +13,10 @@ const AzureCommunicationChatPolyfills = () => {
                     const defaultPath = require.resolve('@azure/communication-chat');
                     const basePath = path.dirname(path.dirname(defaultPath))
                     const esmPath = path.join(basePath, 'dist-esm', 'src','index.js');
+                    // Newer versions ship the browser build under dist/browser instead of dist-esm
+                    const browserPath = path.join(basePath, 'browser', 'index.js');
                     return {
-                        path: esmPath.toString()
+                        path: fs.existsSync(esmPath) ? esmPath : browserPath
                     }
                 }
             })
