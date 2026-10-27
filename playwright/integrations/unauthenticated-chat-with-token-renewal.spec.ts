@@ -135,10 +135,12 @@ const exerciseChat = (page: Page, label: string, attachmentsAllowed: boolean) =>
     return failures;
 }, { label, attachmentsAllowed });
 
-const renewalOutcomes = (page: Page) => page.evaluate(() =>
+const scenarioOutcomes = (page: Page, eventName: string) => page.evaluate((eventName) =>
     ((window as any).scenarioEvents as { method: string; event: string }[])
-        .filter(e => e.event === 'RenewChatToken' && e.method !== 'startScenario')
-        .map(e => e.method));
+        .filter(e => e.event === eventName && e.method !== 'startScenario')
+        .map(e => e.method), eventName);
+
+const renewalOutcomes = (page: Page) => scenarioOutcomes(page, 'RenewChatToken');
 
 const waitForRenewal = async (page: Page) => {
     await expect.poll(async () => (await renewalOutcomes(page)).length, { timeout: 30 * 1000 }).toBeGreaterThan(0);
@@ -202,6 +204,51 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTokenRenewal', () =>
         expect(acsCallsAfterExpiry.length).toBeGreaterThan(0);
         expect(acsCallsAfterExpiry.every(call => !call.auth.endsWith(started.token))).toBe(true);
 
+        await endChat(page);
+    });
+
+    test('ChatSDK should recover from a 401 on an unexpired chat token and keep chat operations working', async ({ page }) => {
+        const network = trackNetwork(page);
+        await page.goto(testPage);
+        const started = await startChat(page);
+        test.skip(network.renewalEnabled !== true, 'Chat token renewal is not enabled for this widget');
+
+        expect(await exerciseChat(page, 'before 401', started.attachmentsAllowed)).toEqual([]);
+        expect(network.renewCalls).toBe(0);
+
+        // Simulates ACS rejecting the still-valid token (for example, after revocation) on the next message send.
+        const sendAuthHeaders: string[] = [];
+        let injected = false;
+        await page.route(/chat\/threads\/[^/]+\/messages/, async (route) => {
+            const request = route.request();
+            if (request.method() !== 'POST') {
+                return route.continue();
+            }
+            const auth = (await request.allHeaders())['authorization'] ?? '';
+            sendAuthHeaders.push(auth);
+            if (!injected && auth.endsWith(started.token)) {
+                injected = true;
+                return route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: { code: 'Unauthorized', message: 'Injected by test' } }) });
+            }
+            return route.continue();
+        });
+
+        const afterUnauthorizedFailures = await exerciseChat(page, 'after 401', started.attachmentsAllowed);
+        await expect.poll(async () => (await scenarioOutcomes(page, 'ChatTokenUnauthorizedRecovery')).length, { timeout: 30 * 1000 }).toBeGreaterThan(0);
+        const recoveryOutcomes = await scenarioOutcomes(page, 'ChatTokenUnauthorizedRecovery');
+        const renewedToken = await currentToken(page);
+
+        expect(injected).toBe(true);
+        expect(afterUnauthorizedFailures).toEqual([]);
+        expect(recoveryOutcomes).toEqual(['completeScenario']);
+        expect(await renewalOutcomes(page)).toEqual(['completeScenario']);
+        expect(network.renewCalls).toBe(1);
+        expect(renewedToken).not.toBe(started.token);
+        expect(sendAuthHeaders[0].endsWith(started.token)).toBe(true);
+        expect(sendAuthHeaders.slice(1).length).toBeGreaterThan(0);
+        expect(sendAuthHeaders.slice(1).every(auth => auth.endsWith(renewedToken))).toBe(true);
+
+        await page.unroute(/chat\/threads\/[^/]+\/messages/);
         await endChat(page);
     });
 });
