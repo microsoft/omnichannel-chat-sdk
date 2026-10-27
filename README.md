@@ -111,6 +111,7 @@ _**Important Note:**_ Versions below 1.11.0 will not be supported after November
 
 | Version | Docs | Release Date | End of Support | Deprecated |
 | -- | -- | -- | -- | -- |
+| 1.11.9 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.11.9) | Oct 27th 2026 | Oct 27th 2027 | |
 | 1.11.4 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.11.4) | Jul 17th 2025 | Jul 17th 2026 | |
 | 1.11.3 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.11.3) | Jul 14th 2025 | Jul 14th 2026 | |
 | 1.11.2 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v1.11.2) | Jun 24th 2025 | Jun 24th 2026 | |
