@@ -1,10 +1,10 @@
 /**
- * Recovers ACS chat and attachment requests that fail with 401 Unauthorized while the chat token has not expired,
- * for example after the token was revoked.
+ * Recovers ACS chat requests that fail with 401 Unauthorized while the chat token has not expired, for example after
+ * the token was revoked.
  *
  * Recovery is fail-safe. It never throws, retries a failed request at most once, renews the token at most once per
- * interval for a chat, and gives the original 401 back to the caller when no different usable token is available,
- * which is exactly the behavior without recovery.
+ * interval for a chat, stops renewing after ACS rejects several renewed tokens in a row, and gives the original 401
+ * back to the caller when no different usable token is available, which is exactly the behavior without recovery.
  */
 
 import { ChatClientOptions } from "@azure/communication-chat";
@@ -12,8 +12,14 @@ import { CommunicationTokenCredential } from "@azure/communication-common";
 import { getChatTokenExpiresOnInMs, isChatTokenUsable } from "./chatTokenRenewal";
 
 export enum UnauthorizedRecoverySource {
-    ChatRequest = "ChatRequest",
-    Attachment = "Attachment"
+    ChatRequest = "ChatRequest"
+}
+
+export enum UnauthorizedRecoveryFailureReason {
+    /** Renewal did not return a different usable token. */
+    NoNewToken = "NoNewToken",
+    /** ACS returned 401 for the renewed token too. */
+    RenewedTokenRejected = "RenewedTokenRejected"
 }
 
 export interface ChatTokenUnauthorizedRecoveryParams {
@@ -21,9 +27,12 @@ export interface ChatTokenUnauthorizedRecoveryParams {
     /** Renews the chat token. Must never throw and returns the current token when renewal is not possible. */
     refreshToken: () => Promise<string>;
     onStart?: (source: UnauthorizedRecoverySource) => void;
+    /** Called when ACS accepts a renewed token, or when an existing newer token is used without renewing. */
     onSuccess?: (source: UnauthorizedRecoverySource, usedExistingToken: boolean) => void;
-    onFailure?: (source: UnauthorizedRecoverySource, reason: string) => void;
+    onFailure?: (source: UnauthorizedRecoverySource, reason: UnauthorizedRecoveryFailureReason) => void;
     minRenewalIntervalInMs?: number;
+    /** Renewals in a row whose token ACS also rejected, after which recovery stops renewing for the chat. */
+    maxRejectedRenewals?: number;
     now?: () => number;
 }
 
@@ -34,17 +43,24 @@ export interface ChatTokenUnauthorizedRecovery {
     observeToken: (token: string) => void;
     /** Returns a different usable token to retry with after a 401, or undefined when none is available. */
     recover: (failedToken: string | undefined, source: UnauthorizedRecoverySource) => Promise<string | undefined>;
+    /** Reports whether ACS accepted a request sent with the given token. */
+    reportTokenResult: (token: string, accepted: boolean) => void;
 }
 
 export const defaultUnauthorizedRecoveryMinRenewalIntervalInMs = 60 * 1000;
+export const defaultUnauthorizedRecoveryMaxRejectedRenewals = 3;
 
 export const createChatTokenUnauthorizedRecovery = (params: ChatTokenUnauthorizedRecoveryParams): ChatTokenUnauthorizedRecovery => {
     const minRenewalIntervalInMs = params.minRenewalIntervalInMs ?? defaultUnauthorizedRecoveryMinRenewalIntervalInMs;
+    const maxRejectedRenewals = params.maxRejectedRenewals ?? defaultUnauthorizedRecoveryMaxRejectedRenewals;
     const now = params.now ?? (() => Date.now());
 
     let latestToken = params.initialToken;
     let lastRenewalTime: number | null = null;
     let activeRenewal: Promise<string | undefined> | null = null;
+    let rejectedRenewals = 0;
+    // Renewed token whose first ACS response has not been reported yet
+    let unverifiedRenewal: { token: string; source: UnauthorizedRecoverySource } | null = null;
 
     const safeInvoke = (callback: () => void) => {
         try {
@@ -98,13 +114,33 @@ export const createChatTokenUnauthorizedRecovery = (params: ChatTokenUnauthorize
         }
 
         if (!token || token === failedToken || !isChatTokenUsable(token, now())) {
-            safeInvoke(() => params.onFailure?.(source, "NoNewToken"));
+            safeInvoke(() => params.onFailure?.(source, UnauthorizedRecoveryFailureReason.NoNewToken));
             return undefined;
         }
 
         observeToken(token);
-        safeInvoke(() => params.onSuccess?.(source, false));
+        unverifiedRenewal = { token, source };
         return token;
+    };
+
+    const reportTokenResult = (token: string, accepted: boolean): void => {
+        try {
+            if (!unverifiedRenewal || unverifiedRenewal.token !== token) {
+                return;
+            }
+
+            const { source } = unverifiedRenewal;
+            unverifiedRenewal = null;
+            if (accepted) {
+                rejectedRenewals = 0;
+                safeInvoke(() => params.onSuccess?.(source, false));
+            } else {
+                rejectedRenewals++;
+                safeInvoke(() => params.onFailure?.(source, UnauthorizedRecoveryFailureReason.RenewedTokenRejected));
+            }
+        } catch {
+            // Reporting must never break the request
+        }
     };
 
     const recover = async (failedToken: string | undefined, source: UnauthorizedRecoverySource): Promise<string | undefined> => {
@@ -118,7 +154,8 @@ export const createChatTokenUnauthorizedRecovery = (params: ChatTokenUnauthorize
                 return await activeRenewal;
             }
 
-            if (lastRenewalTime !== null && now() - lastRenewalTime < minRenewalIntervalInMs) {
+            if (rejectedRenewals >= maxRejectedRenewals
+                || (lastRenewalTime !== null && now() - lastRenewalTime < minRenewalIntervalInMs)) {
                 return undefined;
             }
 
@@ -136,7 +173,7 @@ export const createChatTokenUnauthorizedRecovery = (params: ChatTokenUnauthorize
         }
     };
 
-    return { selectToken, observeToken, recover };
+    return { selectToken, observeToken, recover, reportTokenResult };
 };
 
 type ChatAdditionalPolicy = NonNullable<ChatClientOptions["additionalPolicies"]>[number];
@@ -177,6 +214,10 @@ export const createChatTokenUnauthorizedRecoveryPolicy = (recovery: ChatTokenUna
             }
 
             const response = await next(request);
+            if (sentToken) {
+                recovery.reportTokenResult(sentToken, response.status !== 401);
+            }
+
             if (response.status !== 401 || !sentToken || !isReplayableBody(request)) {
                 return response;
             }
@@ -187,7 +228,9 @@ export const createChatTokenUnauthorizedRecoveryPolicy = (recovery: ChatTokenUna
             }
 
             request.headers.set(authorizationHeaderName, `${bearerPrefix}${token}`);
-            return next(request);
+            const retryResponse = await next(request);
+            recovery.reportTokenResult(token, retryResponse.status !== 401);
+            return retryResponse;
         }
     };
 
@@ -218,88 +261,3 @@ export class ChatTokenUnauthorizedRecoveryCredential implements CommunicationTok
         this.credential.dispose();
     }
 }
-
-const getStatusCode = (error: unknown): number | undefined => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const candidate = error as any;
-    const statuses = [candidate?.status, candidate?.statusCode, candidate?.response?.status, candidate?.originalError?.status];
-    return statuses.find((status) => typeof status === "number");
-};
-
-// The attachment client reports HTTP failures as "AMS<Operation>Failed: <status> <statusText>"
-const attachmentUnauthorizedMessagePattern = /^AMS\w*Failed: 401\b/;
-
-export const isUnauthorizedError = (error: unknown): boolean => {
-    try {
-        if (getStatusCode(error) === 401) {
-            return true;
-        }
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const message = (error as any)?.message;
-        return typeof message === "string" && attachmentUnauthorizedMessagePattern.test(message);
-    } catch {
-        return false;
-    }
-};
-
-// Attachment client methods that call the attachment service, with the position of their optional chat token
-const attachmentOperations: Record<string, number> = {
-    createObject: 2,
-    uploadDocument: 2,
-    getViewStatus: 1,
-    getView: 2
-};
-
-/**
- * Wraps the attachment client so an upload or download that fails with 401 is retried once after the client is
- * given a different usable token. Calls that pass their own token, and failures without a 401 status, are not
- * retried.
- *
- * @param updateClientToken Gives the token to the attachment client and resolves to false when it could not.
- */
-export const createAttachmentClientWithUnauthorizedRecovery = <T extends object>(
-    attachmentClient: T,
-    recovery: ChatTokenUnauthorizedRecovery,
-    updateClientToken: (token: string) => Promise<boolean>
-): T => {
-    try {
-        return new Proxy(attachmentClient, {
-            get: (target, property, receiver) => {
-                const value = Reflect.get(target, property, receiver);
-                if (typeof property !== "string" || !(property in attachmentOperations) || typeof value !== "function") {
-                    return value;
-                }
-
-                const tokenArgumentIndex = attachmentOperations[property];
-                return async (...args: unknown[]) => {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const usedToken: string | undefined = (target as any)?.chatToken?.token;
-                    try {
-                        return await value.apply(target, args);
-                    } catch (error) {
-                        if (args[tokenArgumentIndex] || !isUnauthorizedError(error)) {
-                            throw error;
-                        }
-
-                        const token = await recovery.recover(usedToken, UnauthorizedRecoverySource.Attachment);
-                        let isUpdated = false;
-                        try {
-                            isUpdated = !!token && await updateClientToken(token);
-                        } catch {
-                            isUpdated = false;
-                        }
-
-                        if (!isUpdated) {
-                            throw error;
-                        }
-
-                        return value.apply(target, args);
-                    }
-                };
-            }
-        });
-    } catch {
-        return attachmentClient;
-    }
-};

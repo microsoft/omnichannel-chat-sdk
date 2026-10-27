@@ -400,7 +400,27 @@ describe('Omnichannel Chat SDK, chat token renewal', () => {
             expect(renewChatToken).toHaveBeenCalledTimes(1);
             expect((await chatSDK.getChatToken()).token).toBe(renewedToken);
             expect(chatSDK.scenarioMarker.startScenario).toHaveBeenCalledWith(TelemetryEvent.ChatTokenUnauthorizedRecovery, { RequestId: chatSDK.requestId, ChatId: chatId });
+            expect(chatSDK.scenarioMarker.completeScenario).not.toHaveBeenCalledWith(TelemetryEvent.ChatTokenUnauthorizedRecovery, expect.anything());
+
+            recovery.reportTokenResult(renewedToken, true);
             expect(chatSDK.scenarioMarker.completeScenario).toHaveBeenCalledWith(TelemetryEvent.ChatTokenUnauthorizedRecovery, { RequestId: chatSDK.requestId, ChatId: chatId });
+        });
+
+        it('reports a failure when ACS rejects the renewed token', async () => {
+            const renewedToken = createJwt(86400);
+            const renewChatToken = jest.fn().mockResolvedValue({ ChatId: chatId, Token: renewedToken });
+            const { chatSDK } = await startChat({ renewalEnabled: 'true', renewChatToken });
+            const recovery = getUnauthorizedRecovery(chatSDK);
+
+            await recovery.recover(initialToken, 'ChatRequest');
+            recovery.reportTokenResult(renewedToken, false);
+
+            expect(chatSDK.scenarioMarker.failScenario).toHaveBeenCalledWith(TelemetryEvent.ChatTokenUnauthorizedRecovery, {
+                RequestId: chatSDK.requestId,
+                ChatId: chatId,
+                ExceptionDetails: JSON.stringify({ response: 'RenewedTokenRejected', source: 'ChatRequest' })
+            });
+            expect(chatSDK.scenarioMarker.completeScenario).not.toHaveBeenCalledWith(TelemetryEvent.ChatTokenUnauthorizedRecovery, expect.anything());
         });
 
         it('reports a failure when no new token is available', async () => {
@@ -413,51 +433,6 @@ describe('Omnichannel Chat SDK, chat token renewal', () => {
                 RequestId: chatSDK.requestId,
                 ChatId: chatId,
                 ExceptionDetails: JSON.stringify({ response: 'NoNewToken', source: 'ChatRequest' })
-            });
-        });
-
-        describe('attachment client', () => {
-            const unauthorized = () => new Error('AMSUploadDocumentFailed: 401 Unauthorized');
-
-            const createAttachmentClient = (uploadDocument: jest.Mock) => {
-                const client: any = { chatToken: { token: initialToken }, uploadDocument };
-                client.initialize = jest.fn(async ({ chatToken }: any) => { client.chatToken = chatToken; });
-                return client;
-            };
-
-            it('retries an upload that failed with 401 once with a renewed token', async () => {
-                const renewedToken = createJwt(86400);
-                const renewChatToken = jest.fn().mockResolvedValue({ ChatId: chatId, Token: renewedToken });
-                const { chatSDK } = await startChat({ renewalEnabled: 'true', renewChatToken });
-                const uploadDocument = jest.fn().mockRejectedValueOnce(unauthorized()).mockResolvedValueOnce('uploaded');
-                const client = createAttachmentClient(uploadDocument);
-
-                await expect(chatSDK["getAttachmentClientWithUnauthorizedRecovery"](client).uploadDocument('id', {})).resolves.toBe('uploaded');
-
-                expect(uploadDocument).toHaveBeenCalledTimes(2);
-                expect(client.initialize).toHaveBeenCalledWith({ chatToken: expect.objectContaining({ chatId, token: renewedToken, visitorId: 'visitorId' }) });
-            });
-
-            it('does not give a token to the client after the chat changed', async () => {
-                const renewChatToken = jest.fn().mockResolvedValue({ ChatId: chatId, Token: createJwt(86400) });
-                const { chatSDK } = await startChat({ renewalEnabled: 'true', renewChatToken });
-                const error = unauthorized();
-                const uploadDocument = jest.fn().mockRejectedValue(error);
-                const client = createAttachmentClient(uploadDocument);
-                const wrapped = chatSDK["getAttachmentClientWithUnauthorizedRecovery"](client);
-                chatSDK["chatTokenUnauthorizedRecovery"] = null;
-
-                await expect(wrapped.uploadDocument('id', {})).rejects.toBe(error);
-
-                expect(client.initialize).not.toHaveBeenCalled();
-                expect(uploadDocument).toHaveBeenCalledTimes(1);
-            });
-
-            it('is the client itself when recovery is not enabled', async () => {
-                const { chatSDK } = await startChat({ renewalEnabled: 'false' });
-                const client = createAttachmentClient(jest.fn());
-
-                expect(chatSDK["getAttachmentClientWithUnauthorizedRecovery"](client)).toBe(client);
             });
         });
     });

@@ -28,7 +28,7 @@ interface CreateConversationConfig {
 
 interface ChatTokenRenewalConfig {
     disable: boolean;
-    /** Turns off retrying chat and attachment requests that fail with 401 while the token has not expired. */
+    /** Turns off retrying chat requests that fail with 401 while the token has not expired. */
     disableUnauthorizedRecovery?: boolean;
 }
 

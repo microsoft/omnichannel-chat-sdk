@@ -3,10 +3,8 @@ import {
     ChatTokenUnauthorizedRecovery,
     ChatTokenUnauthorizedRecoveryCredential,
     chatTokenUnauthorizedRecoveryPolicyName,
-    createAttachmentClientWithUnauthorizedRecovery,
     createChatTokenUnauthorizedRecovery,
     createChatTokenUnauthorizedRecoveryPolicy,
-    isUnauthorizedError,
     UnauthorizedRecoverySource
 } from "../../src/utils/chatTokenUnauthorizedRecovery";
 
@@ -61,17 +59,96 @@ describe("chatTokenUnauthorizedRecovery", () => {
             await expect(recovery.recover(initialToken, UnauthorizedRecoverySource.ChatRequest)).resolves.toBe(renewedToken);
             expect(params.refreshToken).toHaveBeenCalledTimes(1);
             expect(params.onStart).toHaveBeenCalledWith(UnauthorizedRecoverySource.ChatRequest);
-            expect(params.onSuccess).toHaveBeenCalledWith(UnauthorizedRecoverySource.ChatRequest, false);
+            expect(params.onSuccess).not.toHaveBeenCalled();
             expect(recovery.selectToken(initialToken)).toBe(renewedToken);
+        });
+
+        it("reports success only when ACS accepts the renewed token", async () => {
+            const { params, recovery } = setup(async () => renewedToken);
+
+            await recovery.recover(initialToken, UnauthorizedRecoverySource.ChatRequest);
+            recovery.reportTokenResult(initialToken, true);
+            expect(params.onSuccess).not.toHaveBeenCalled();
+
+            recovery.reportTokenResult(renewedToken, true);
+            recovery.reportTokenResult(renewedToken, true);
+            expect(params.onSuccess).toHaveBeenCalledTimes(1);
+            expect(params.onSuccess).toHaveBeenCalledWith(UnauthorizedRecoverySource.ChatRequest, false);
+            expect(params.onFailure).not.toHaveBeenCalled();
+        });
+
+        it("reports a failure when ACS rejects the renewed token", async () => {
+            const { params, recovery } = setup(async () => renewedToken);
+
+            await recovery.recover(initialToken, UnauthorizedRecoverySource.ChatRequest);
+            recovery.reportTokenResult(renewedToken, false);
+
+            expect(params.onFailure).toHaveBeenCalledWith(UnauthorizedRecoverySource.ChatRequest, "RenewedTokenRejected");
+            expect(params.onSuccess).not.toHaveBeenCalled();
+        });
+
+        it("stops renewing after ACS rejects 3 renewed tokens in a row", async () => {
+            let renewals = 0;
+            const { params, recovery } = setup(async () => createJwt(86400 + ++renewals, `${renewals}`));
+            const policy = createChatTokenUnauthorizedRecoveryPolicy(recovery).policy;
+            const next = jest.fn(async () => ({ status: 401 }));
+
+            for (let i = 0; i < 5; i++) {
+                currentTime += 61000;
+                const response = await policy.sendRequest(createRequest(recovery.selectToken(initialToken), "{}") as any, next as any);
+                expect(response.status).toBe(401);
+            }
+
+            expect(params.refreshToken).toHaveBeenCalledTimes(3);
+            expect(params.onFailure).toHaveBeenCalledTimes(3);
+            expect(params.onFailure).toHaveBeenCalledWith(UnauthorizedRecoverySource.ChatRequest, "RenewedTokenRejected");
+            expect(params.onSuccess).not.toHaveBeenCalledWith(expect.anything(), false);
+        });
+
+        it("resets the rejected renewal count when ACS accepts a renewed token", async () => {
+            let renewals = 0;
+            const { params, recovery } = setup(async () => createJwt(86400 + ++renewals, `${renewals}`));
+            const rejectNextRenewal = async () => {
+                currentTime += 61000;
+                const token = recovery.selectToken(initialToken);
+                const renewed = await recovery.recover(token, UnauthorizedRecoverySource.ChatRequest);
+                recovery.reportTokenResult(renewed as string, false);
+            };
+
+            await rejectNextRenewal();
+            await rejectNextRenewal();
+            currentTime += 61000;
+            const accepted = await recovery.recover(recovery.selectToken(initialToken), UnauthorizedRecoverySource.ChatRequest);
+            recovery.reportTokenResult(accepted as string, true);
+            await rejectNextRenewal();
+            await rejectNextRenewal();
+            await rejectNextRenewal();
+            currentTime += 61000;
+
+            await expect(recovery.recover(recovery.selectToken(initialToken), UnauthorizedRecoverySource.ChatRequest)).resolves.toBeUndefined();
+            expect(params.refreshToken).toHaveBeenCalledTimes(6);
+            expect(params.onSuccess).toHaveBeenCalledTimes(1);
+        });
+
+        it("settles a renewed token on its next request when the retry did not complete", async () => {
+            const { params, recovery } = setup(async () => renewedToken);
+            const policy = createChatTokenUnauthorizedRecoveryPolicy(recovery).policy;
+            const failingNext = jest.fn().mockResolvedValueOnce({ status: 401 }).mockRejectedValueOnce(new Error("network"));
+
+            await expect(policy.sendRequest(createRequest(initialToken, "{}") as any, failingNext as any)).rejects.toThrow("network");
+            expect(params.onSuccess).not.toHaveBeenCalled();
+
+            await policy.sendRequest(createRequest(initialToken, "{}") as any, jest.fn(async () => ({ status: 200 })) as any);
+            expect(params.onSuccess).toHaveBeenCalledWith(UnauthorizedRecoverySource.ChatRequest, false);
         });
 
         it("reuses a newer token without renewing again", async () => {
             const { params, recovery } = setup(async () => renewedToken);
             recovery.observeToken(renewedToken);
 
-            await expect(recovery.recover(initialToken, UnauthorizedRecoverySource.Attachment)).resolves.toBe(renewedToken);
+            await expect(recovery.recover(initialToken, UnauthorizedRecoverySource.ChatRequest)).resolves.toBe(renewedToken);
             expect(params.refreshToken).not.toHaveBeenCalled();
-            expect(params.onSuccess).toHaveBeenCalledWith(UnauthorizedRecoverySource.Attachment, true);
+            expect(params.onSuccess).toHaveBeenCalledWith(UnauthorizedRecoverySource.ChatRequest, true);
         });
 
         it("renews once for concurrent 401s", async () => {
@@ -143,6 +220,7 @@ describe("chatTokenUnauthorizedRecovery", () => {
             selectToken: jest.fn((token: string) => token),
             observeToken: jest.fn(),
             recover: jest.fn(async () => renewedToken),
+            reportTokenResult: jest.fn(),
             ...overrides
         });
 
@@ -173,6 +251,8 @@ describe("chatTokenUnauthorizedRecovery", () => {
             const response = await createChatTokenUnauthorizedRecoveryPolicy(recovery).policy.sendRequest(request as any, next as any);
 
             expect(recovery.recover).toHaveBeenCalledWith(initialToken, UnauthorizedRecoverySource.ChatRequest);
+            expect(recovery.reportTokenResult).toHaveBeenNthCalledWith(1, initialToken, false);
+            expect(recovery.reportTokenResult).toHaveBeenNthCalledWith(2, renewedToken, false);
             expect(next).toHaveBeenCalledTimes(2);
             expect(request.headers.get("Authorization")).toBe(`Bearer ${renewedToken}`);
             expect(response.status).toBe(401);
@@ -217,106 +297,6 @@ describe("chatTokenUnauthorizedRecovery", () => {
 
             credential.dispose();
             expect(inner.dispose).toHaveBeenCalled();
-        });
-    });
-
-    describe("isUnauthorizedError", () => {
-        it.each([
-            [{ status: 401 }],
-            [{ statusCode: 401 }],
-            [{ response: { status: 401 } }],
-            [{ originalError: { status: 401 } }],
-            [new Error("AMSCreateObjectFailed: 401 Unauthorized")],
-            [new Error("AMSGetViewFailed: 401")]
-        ])("returns true for %p", (error) => {
-            expect(isUnauthorizedError(error)).toBe(true);
-        });
-
-        it.each([
-            [undefined],
-            [null],
-            [{ status: 403 }],
-            [new Error("AMSCreateObjectFailed: 4010 Unknown")],
-            [new Error("Request failed: 401")],
-            ["401"]
-        ])("returns false for %p", (error) => {
-            expect(isUnauthorizedError(error)).toBe(false);
-        });
-    });
-
-    describe("createAttachmentClientWithUnauthorizedRecovery", () => {
-        const unauthorized = () => new Error("AMSUploadDocumentFailed: 401 Unauthorized");
-
-        const setupClient = (uploadDocument: jest.Mock) => {
-            const client = {
-                chatToken: { token: initialToken },
-                uploadDocument,
-                other: jest.fn(() => "other")
-            };
-            const recovery: ChatTokenUnauthorizedRecovery = {
-                selectToken: jest.fn((token: string) => token),
-                observeToken: jest.fn(),
-                recover: jest.fn(async () => renewedToken)
-            };
-            const updateClientToken = jest.fn(async (token: string) => {
-                client.chatToken = { token };
-                return true;
-            });
-
-            return { client, recovery, updateClientToken, wrapped: createAttachmentClientWithUnauthorizedRecovery(client, recovery, updateClientToken) };
-        };
-
-        it("retries once with a renewed token after a 401", async () => {
-            const uploadDocument = jest.fn().mockRejectedValueOnce(unauthorized()).mockResolvedValueOnce("uploaded");
-            const { recovery, updateClientToken, wrapped } = setupClient(uploadDocument);
-
-            await expect(wrapped.uploadDocument("id", {})).resolves.toBe("uploaded");
-            expect(recovery.recover).toHaveBeenCalledWith(initialToken, UnauthorizedRecoverySource.Attachment);
-            expect(updateClientToken).toHaveBeenCalledWith(renewedToken);
-            expect(uploadDocument).toHaveBeenCalledTimes(2);
-        });
-
-        it("returns the second failure without retrying again", async () => {
-            const uploadDocument = jest.fn().mockRejectedValue(unauthorized());
-            const { wrapped } = setupClient(uploadDocument);
-
-            await expect(wrapped.uploadDocument("id", {})).rejects.toThrow("401");
-            expect(uploadDocument).toHaveBeenCalledTimes(2);
-        });
-
-        it.each([
-            ["the error is not a 401", new Error("AMSUploadDocumentFailed: 500 Internal Server Error"), undefined],
-            ["the iframe client rejects without an error", undefined, undefined],
-            ["the call passes its own token", unauthorized(), { token: initialToken }]
-        ])("does not retry when %s", async (_, error, token) => {
-            const uploadDocument = jest.fn().mockRejectedValue(error);
-            const { recovery, wrapped } = setupClient(uploadDocument);
-
-            await expect(wrapped.uploadDocument("id", {}, token)).rejects.toBe(error);
-            expect(recovery.recover).not.toHaveBeenCalled();
-            expect(uploadDocument).toHaveBeenCalledTimes(1);
-        });
-
-        it.each([
-            ["no token is available", async () => undefined, async (): Promise<boolean> => true],
-            ["the client token cannot be updated", async () => renewedToken, async () => false],
-            ["updating the client token fails", async () => renewedToken, async () => { throw new Error("init"); }]
-        ])("returns the original error when %s", async (_, recover, update) => {
-            const error = unauthorized();
-            const uploadDocument = jest.fn().mockRejectedValue(error);
-            const client = { chatToken: { token: initialToken }, uploadDocument };
-            const recovery: ChatTokenUnauthorizedRecovery = { selectToken: (token) => token, observeToken: jest.fn(), recover: jest.fn(recover as () => Promise<string | undefined>) };
-            const wrapped = createAttachmentClientWithUnauthorizedRecovery(client, recovery, jest.fn(update as () => Promise<boolean>));
-
-            await expect(wrapped.uploadDocument("id", {})).rejects.toBe(error);
-            expect(uploadDocument).toHaveBeenCalledTimes(1);
-        });
-
-        it("leaves other members unchanged", () => {
-            const { client, wrapped } = setupClient(jest.fn());
-
-            expect(wrapped.other()).toBe("other");
-            expect(wrapped.chatToken).toBe(client.chatToken);
         });
     });
 });
