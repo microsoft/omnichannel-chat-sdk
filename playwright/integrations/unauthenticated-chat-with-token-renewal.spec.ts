@@ -84,6 +84,22 @@ const startChat = (page: Page) => page.evaluate(async (omnichannelConfig) => {
     }
     await chatSDK.initialize();
     await chatSDK.startChat();
+    // Customer messages are filtered out of onNewMessage, so listen on the ACS client to see real-time (WebSocket) delivery.
+    (window as any).realtimeMessages = [];
+    const conversationClient = chatSDK.conversation.chatClient;
+    conversationClient.on('chatMessageReceived', (event: any) => {
+        (window as any).realtimeMessages.push({ id: event.id, content: event.message });
+    });
+    // Real-time notifications are only delivered once registration completes, so wait for our own typing event to echo back.
+    let realtimeReady = false;
+    conversationClient.on('typingIndicatorReceived', () => { realtimeReady = true; });
+    for (let i = 0; i < 15 && !realtimeReady; i++) {
+        await chatSDK.sendTypingEvent();
+        await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+    if (!realtimeReady) {
+        throw new Error('Real-time notifications did not start');
+    }
     const token = chatSDK.chatToken.token as string;
     const expInMs = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).exp * 1000;
     return { token, expInMs, attachmentsAllowed: !!chatSDK.isAMSClientAllowed };
@@ -104,9 +120,21 @@ const exerciseChat = (page: Page, label: string, attachmentsAllowed: boolean) =>
     const fileText = `token renewal attachment ${label} ${Math.random()}`;
     let fileMetadata: any;
 
+    const waitForRealtime = async (match: (m: { id: string; content: string }) => boolean) => {
+        for (let i = 0; i < 40; i++) {
+            if (((window as any).realtimeMessages as { id: string; content: string }[]).some(match)) {
+                return;
+            }
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        throw new Error('not received over the real-time connection');
+    };
+
     await run('sendTypingEvent', () => chatSDK.sendTypingEvent());
     await run('sendMessage', () => chatSDK.sendMessage({ content }));
+    await run('receiveMessageRealtime', () => waitForRealtime(m => m.content === content));
     if (attachmentsAllowed) {
+        const seenBeforeUpload = new Set(((window as any).realtimeMessages as { id: string }[]).map(m => m.id));
         await run('uploadFileAttachment', async () => {
             const message = await chatSDK.uploadFileAttachment(new File([fileText], 'renewal.txt', { type: 'text/plain' }));
             fileMetadata = message?.fileMetadata;
@@ -114,6 +142,7 @@ const exerciseChat = (page: Page, label: string, attachmentsAllowed: boolean) =>
                 throw new Error('attachment was not sent');
             }
         });
+        await run('receiveAttachmentRealtime', () => waitForRealtime(m => !seenBeforeUpload.has(m.id)));
         await run('downloadFileAttachment', async () => {
             const blob = await chatSDK.downloadFileAttachment(fileMetadata);
             if (await blob.text() !== fileText) {
@@ -169,12 +198,14 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTokenRenewal', () =>
 
         // Past the ACS credential's 10-minute proactive refresh point while the original token is still valid.
         await page.evaluate((target) => (window as any).advanceClockTo(target), started.expInMs - 9.5 * 60 * 1000);
+        const duringRenewalFailures = await exerciseChat(page, 'during renewal', started.attachmentsAllowed);
         const outcomes = await waitForRenewal(page);
         const afterRenewalFailures = await exerciseChat(page, 'after renewal', started.attachmentsAllowed);
 
         expect(outcomes).not.toContain('failScenario');
         expect(await currentToken(page)).not.toBe(started.token);
         expect(network.renewCalls).toBe(1);
+        expect(duringRenewalFailures).toEqual([]);
         expect(afterRenewalFailures).toEqual([]);
 
         await endChat(page);
@@ -193,14 +224,16 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTokenRenewal', () =>
         await page.waitForTimeout(110 * 1000);
         await page.evaluate((target) => (window as any).advanceClockTo(target), started.expInMs + 30 * 1000);
         const expiredAt = Date.now();
-        const afterExpiryFailures = await exerciseChat(page, 'after expiry', started.attachmentsAllowed);
+        const afterExpiryFailures = await exerciseChat(page, 'during renewal after expiry', started.attachmentsAllowed);
         const outcomes = await waitForRenewal(page);
+        const afterRenewalFailures = await exerciseChat(page, 'after renewal', started.attachmentsAllowed);
         const acsCallsAfterExpiry = network.acsAuthHeaders.filter(call => call.at >= expiredAt);
 
         expect(outcomes).not.toContain('failScenario');
         expect(await currentToken(page)).not.toBe(started.token);
         expect(network.renewCalls).toBe(1);
         expect(afterExpiryFailures).toEqual([]);
+        expect(afterRenewalFailures).toEqual([]);
         expect(acsCallsAfterExpiry.length).toBeGreaterThan(0);
         expect(acsCallsAfterExpiry.every(call => !call.auth.endsWith(started.token))).toBe(true);
 
@@ -233,13 +266,15 @@ test.describe('@UnauthenticatedChat @UnauthenticatedChatWithTokenRenewal', () =>
             return route.continue();
         });
 
-        const afterUnauthorizedFailures = await exerciseChat(page, 'after 401', started.attachmentsAllowed);
+        const afterUnauthorizedFailures = await exerciseChat(page, 'during 401 recovery', started.attachmentsAllowed);
         await expect.poll(async () => (await scenarioOutcomes(page, 'ChatTokenUnauthorizedRecovery')).length, { timeout: 30 * 1000 }).toBeGreaterThan(0);
+        const afterRecoveryFailures = await exerciseChat(page, 'after 401 recovery', started.attachmentsAllowed);
         const recoveryOutcomes = await scenarioOutcomes(page, 'ChatTokenUnauthorizedRecovery');
         const renewedToken = await currentToken(page);
 
         expect(injected).toBe(true);
         expect(afterUnauthorizedFailures).toEqual([]);
+        expect(afterRecoveryFailures).toEqual([]);
         expect(recoveryOutcomes).toEqual(['completeScenario']);
         expect(await renewalOutcomes(page)).toEqual(['completeScenario']);
         expect(network.renewCalls).toBe(1);
