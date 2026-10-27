@@ -75,3 +75,11 @@ npm run test:integrations -- -g "@UnauthenticatedChat"
 ```sh
 npm run test:integrations -- -g "@AuthenticatedChat"
 ```
+
+### Run Chat Token Renewal Scenarios
+
+Requires a widget with chat token renewal enabled, configured under `UnauthenticatedChatWithTokenRenewal` in `test.config.yml`. The tests shift the page clock so the chat token looks about to expire or expired, then check that chat operations keep working with the renewed token. Each test takes about 2 minutes.
+
+```sh
+PLAYWRIGHT_SLOW_MO=0 npm run test:integrations -- -g "@UnauthenticatedChatWithTokenRenewal"
+```
