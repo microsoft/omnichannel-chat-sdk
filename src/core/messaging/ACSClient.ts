@@ -1,6 +1,7 @@
 import { AzureCommunicationTokenCredential, CommunicationUserIdentifier } from "@azure/communication-common";
 import { ChatClient, ChatMessage, ChatParticipant, ChatThreadClient } from "@azure/communication-chat";
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent, ParticipantsRemovedEvent, StreamingChatMessageChunkReceivedEvent, StreamingChatMessageStartEvent, TypingIndicatorReceivedEvent } from '@azure/communication-signaling';
+import { ChatTokenUnauthorizedRecoveryCredential, createChatTokenUnauthorizedRecoveryPolicy } from "../../utils/chatTokenUnauthorizedRecovery";
 import { MessagePrinterFactory, PrinterType } from "../../utils/printers/MessagePrinterFactory";
 
 import ACSChatMessageType from "./ACSChatMessageType";
@@ -720,6 +721,7 @@ class ACSClient {
                 try {
                     const token = await acsClientConfig.tokenRefresher();
                     if (token) {
+                        acsClientConfig.unauthorizedRecovery?.observeToken(token);
                         return token;
                     }
                 } catch {
@@ -750,7 +752,12 @@ class ACSClient {
         }
 
         try {
-            this.chatClient = new ChatClient(acsClientConfig.environmentUrl, this.tokenCredential);
+            const recovery = acsClientConfig.unauthorizedRecovery;
+            this.chatClient = recovery
+                ? new ChatClient(acsClientConfig.environmentUrl, new ChatTokenUnauthorizedRecoveryCredential(this.tokenCredential, recovery), {
+                    additionalPolicies: [createChatTokenUnauthorizedRecoveryPolicy(recovery)]
+                })
+                : new ChatClient(acsClientConfig.environmentUrl, this.tokenCredential);
         } catch (error) {
             const exceptionDetails = {
                 response: 'CreateChatClientFailure',

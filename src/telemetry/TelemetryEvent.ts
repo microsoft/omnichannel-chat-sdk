@@ -39,6 +39,7 @@ enum TelemetryEvent {
     UpdateChatToken = "UpdateChatToken",
     RenewChatToken = "RenewChatToken",
     RefreshAttachmentClientToken = "RefreshAttachmentClientToken",
+    ChatTokenUnauthorizedRecovery = "ChatTokenUnauthorizedRecovery",
     GetChatReconnectContext = "GetChatReconnectContext",
     GetPostChatSurveyContext = "GetPostChatSurveyContext",
     GetAgentAvailability = "GetAgentAvailability",

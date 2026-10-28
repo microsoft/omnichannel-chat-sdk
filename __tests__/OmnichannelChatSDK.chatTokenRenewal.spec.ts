@@ -373,4 +373,67 @@ describe('Omnichannel Chat SDK, chat token renewal', () => {
             expect(chatSDK.scenarioMarker.failScenario).toHaveBeenCalledWith(TelemetryEvent.RefreshAttachmentClientToken, expect.objectContaining({ RequestId: chatSDK.requestId, ChatId: chatId }));
         });
     });
+
+    describe('recovery from 401 with an unexpired token', () => {
+        const getUnauthorizedRecovery = (chatSDK: any) => (chatSDK.ACSClient.initialize as jest.Mock).mock.calls[0][0].unauthorizedRecovery;
+
+        it.each([
+            ['renewal is not enabled', { renewalEnabled: 'false', renewChatToken: jest.fn() }],
+            ['the installed OCSDK does not support renewing the chat token', { renewalEnabled: 'true', renewChatToken: undefined }],
+            ['renewal is disabled in the SDK config', { renewalEnabled: 'true', renewChatToken: jest.fn(), chatSDKConfig: { chatTokenRenewal: { disable: true } } }],
+            ['recovery is disabled in the SDK config', { renewalEnabled: 'true', renewChatToken: jest.fn(), chatSDKConfig: { chatTokenRenewal: { disableUnauthorizedRecovery: true } } }]
+        ])('is not enabled when %s', async (_, options) => {
+            const { chatSDK } = await startChat(options);
+
+            expect(getUnauthorizedRecovery(chatSDK)).toBeUndefined();
+            expect(chatSDK["chatTokenUnauthorizedRecovery"]).toBeNull();
+        });
+
+        it('renews the token of the current chat after a 401', async () => {
+            const renewedToken = createJwt(86400);
+            const renewChatToken = jest.fn().mockResolvedValue({ ChatId: chatId, Token: renewedToken });
+            const { chatSDK } = await startChat({ renewalEnabled: 'true', renewChatToken });
+            const recovery = getUnauthorizedRecovery(chatSDK);
+
+            await expect(recovery.recover(initialToken, 'ChatRequest')).resolves.toBe(renewedToken);
+
+            expect(renewChatToken).toHaveBeenCalledTimes(1);
+            expect((await chatSDK.getChatToken()).token).toBe(renewedToken);
+            expect(chatSDK.scenarioMarker.startScenario).toHaveBeenCalledWith(TelemetryEvent.ChatTokenUnauthorizedRecovery, { RequestId: chatSDK.requestId, ChatId: chatId });
+            expect(chatSDK.scenarioMarker.completeScenario).not.toHaveBeenCalledWith(TelemetryEvent.ChatTokenUnauthorizedRecovery, expect.anything());
+
+            recovery.reportTokenResult(renewedToken, true);
+            expect(chatSDK.scenarioMarker.completeScenario).toHaveBeenCalledWith(TelemetryEvent.ChatTokenUnauthorizedRecovery, { RequestId: chatSDK.requestId, ChatId: chatId });
+        });
+
+        it('reports a failure when ACS rejects the renewed token', async () => {
+            const renewedToken = createJwt(86400);
+            const renewChatToken = jest.fn().mockResolvedValue({ ChatId: chatId, Token: renewedToken });
+            const { chatSDK } = await startChat({ renewalEnabled: 'true', renewChatToken });
+            const recovery = getUnauthorizedRecovery(chatSDK);
+
+            await recovery.recover(initialToken, 'ChatRequest');
+            recovery.reportTokenResult(renewedToken, false);
+
+            expect(chatSDK.scenarioMarker.failScenario).toHaveBeenCalledWith(TelemetryEvent.ChatTokenUnauthorizedRecovery, {
+                RequestId: chatSDK.requestId,
+                ChatId: chatId,
+                ExceptionDetails: JSON.stringify({ response: 'RenewedTokenRejected', source: 'ChatRequest' })
+            });
+            expect(chatSDK.scenarioMarker.completeScenario).not.toHaveBeenCalledWith(TelemetryEvent.ChatTokenUnauthorizedRecovery, expect.anything());
+        });
+
+        it('reports a failure when no new token is available', async () => {
+            const renewChatToken = jest.fn().mockRejectedValue(Object.assign(new Error('Request failed with status code 500'), { response: { status: 500 } }));
+            const { chatSDK } = await startChat({ renewalEnabled: 'true', renewChatToken });
+
+            await expect(getUnauthorizedRecovery(chatSDK).recover(initialToken, 'ChatRequest')).resolves.toBeUndefined();
+
+            expect(chatSDK.scenarioMarker.failScenario).toHaveBeenCalledWith(TelemetryEvent.ChatTokenUnauthorizedRecovery, {
+                RequestId: chatSDK.requestId,
+                ChatId: chatId,
+                ExceptionDetails: JSON.stringify({ response: 'NoNewToken', source: 'ChatRequest' })
+            });
+        });
+    });
 });
