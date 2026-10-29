@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Retain renewed ACS chat tokens when their expiry is unchanged.
+- Retain renewed ACS chat tokens regardless of their expiry relative to the previous token.
 
 ### Added
 
