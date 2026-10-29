@@ -37,7 +37,7 @@ export interface ChatTokenUnauthorizedRecoveryParams {
 }
 
 export interface ChatTokenUnauthorizedRecovery {
-    /** Returns the token to send: the given token, or the newest usable token known, whichever expires later. */
+    /** Returns the token to send, preferring the known usable token when expiries are equal. */
     selectToken: (token: string) => string;
     /** Records a token obtained outside recovery, such as a proactive renewal. */
     observeToken: (token: string) => void;
@@ -92,7 +92,7 @@ export const createChatTokenUnauthorizedRecovery = (params: ChatTokenUnauthorize
 
     const selectToken = (token: string): string => {
         try {
-            if (latestToken && latestToken !== token && isChatTokenUsable(latestToken, now()) && isNewer(latestToken, token)) {
+            if (latestToken && latestToken !== token && isChatTokenUsable(latestToken, now()) && !isNewer(token, latestToken)) {
                 return latestToken;
             }
         } catch {
@@ -118,7 +118,10 @@ export const createChatTokenUnauthorizedRecovery = (params: ChatTokenUnauthorize
             return undefined;
         }
 
-        observeToken(token);
+        // A renewal response wins expiry ties; passive observations must not.
+        if (!isNewer(latestToken, token)) {
+            latestToken = token;
+        }
         unverifiedRenewal = { token, source };
         return token;
     };

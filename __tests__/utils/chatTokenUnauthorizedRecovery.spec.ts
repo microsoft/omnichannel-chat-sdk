@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { createHttpHeaders, createPipelineRequest, SendRequest } from "@azure/core-rest-pipeline";
 import {
     ChatTokenUnauthorizedRecovery,
     ChatTokenUnauthorizedRecoveryCredential,
@@ -61,6 +62,56 @@ describe("chatTokenUnauthorizedRecovery", () => {
             expect(params.onStart).toHaveBeenCalledWith(UnauthorizedRecoverySource.ChatRequest);
             expect(params.onSuccess).not.toHaveBeenCalled();
             expect(recovery.selectToken(initialToken)).toBe(renewedToken);
+        });
+
+        it("retains a renewed token with equal expiry despite stale observations", async () => {
+            const replacement = createJwt(3600, "renewed");
+            const { recovery } = setup(async () => replacement);
+
+            await recovery.recover(initialToken, UnauthorizedRecoverySource.ChatRequest);
+            recovery.reportTokenResult(replacement, true);
+            recovery.observeToken(initialToken);
+
+            expect(recovery.selectToken(initialToken)).toBe(replacement);
+        });
+
+        it("does not promote passive observations with equal expiry", () => {
+            const { recovery } = setup(async () => renewedToken);
+
+            recovery.observeToken(createJwt(3600, "unconfirmed"));
+
+            expect(recovery.selectToken(initialToken)).toBe(initialToken);
+        });
+
+        it("keeps a later-expiry observation when an older renewal finishes", async () => {
+            let finishRenewal!: (token: string) => void;
+            const { recovery } = setup(() => new Promise<string>(resolve => { finishRenewal = resolve; }));
+            const pending = recovery.recover(initialToken, UnauthorizedRecoverySource.ChatRequest);
+            recovery.observeToken(renewedToken);
+            finishRenewal(createJwt(3600, "delayed"));
+            await pending;
+
+            expect(recovery.selectToken(initialToken)).toBe(renewedToken);
+        });
+
+        it("retains successive equal-expiry renewals over the original credential", async () => {
+            let renewals = 0;
+            const { params, recovery } = setup(async () => createJwt(3600, `renewed-${++renewals}`));
+            let current = initialToken;
+
+            for (let i = 0; i < 3; i++) {
+                const replacement = await recovery.recover(current, UnauthorizedRecoverySource.ChatRequest);
+                if (!replacement) {
+                    throw new Error("Expected a renewed token.");
+                }
+                recovery.reportTokenResult(replacement, true);
+                recovery.observeToken(initialToken);
+                expect(recovery.selectToken(initialToken)).toBe(replacement);
+                current = replacement;
+                currentTime += 60000;
+            }
+
+            expect(params.refreshToken).toHaveBeenCalledTimes(3);
         });
 
         it("reports success only when ACS accepts the renewed token", async () => {
@@ -224,6 +275,34 @@ describe("chatTokenUnauthorizedRecovery", () => {
             ...overrides
         });
 
+        it.each([false, true])("keeps equal-expiry recovery on subsequent sends with stale observations: %s", async observeStale => {
+            const replacement = createJwt(3600, "renewed");
+            const { params, recovery } = setup(async () => replacement);
+            const policy = createChatTokenUnauthorizedRecoveryPolicy(recovery).policy;
+            const statuses: number[] = [];
+            const next: SendRequest = async request => {
+                const status = request.headers.get("Authorization") === `Bearer ${replacement}` ? 201 : 401;
+                statuses.push(status);
+                return { request, status, headers: createHttpHeaders() };
+            };
+            const send = () => policy.sendRequest(createPipelineRequest({
+                url: "https://example.invalid/chat/messages",
+                method: "POST",
+                headers: createHttpHeaders({ Authorization: `Bearer ${initialToken}` }),
+                body: "{}"
+            }), next);
+
+            const recovered = await send();
+            if (observeStale) {
+                recovery.observeToken(initialToken);
+            }
+            const following = await send();
+
+            expect(statuses).toEqual([401, 201, 201]);
+            expect([recovered.status, following.status]).toEqual([201, 201]);
+            expect(params.refreshToken).toHaveBeenCalledTimes(1);
+        });
+
         it("runs on every attempt", () => {
             const { policy, position } = createChatTokenUnauthorizedRecoveryPolicy(createRecovery());
 
@@ -285,6 +364,24 @@ describe("chatTokenUnauthorizedRecovery", () => {
     });
 
     describe("ChatTokenUnauthorizedRecoveryCredential", () => {
+        it("returns an equal-expiry recovered token instead of a stale inner credential", async () => {
+            const replacement = createJwt(3600, "renewed");
+            const expiresOnTimestamp = nowInMs + 3600 * 1000;
+            const inner = {
+                getToken: jest.fn(async () => ({ token: initialToken, expiresOnTimestamp })),
+                dispose: jest.fn()
+            };
+            const { recovery } = setup(async () => replacement);
+            const credential = new ChatTokenUnauthorizedRecoveryCredential(inner, recovery);
+            await recovery.recover(initialToken, UnauthorizedRecoverySource.ChatRequest);
+            recovery.reportTokenResult(replacement, true);
+            recovery.observeToken(initialToken);
+
+            await expect(credential.getToken()).resolves.toEqual({ token: replacement, expiresOnTimestamp });
+            credential.dispose();
+            expect(inner.dispose).toHaveBeenCalledTimes(1);
+        });
+
         it("returns the newest token with its expiry", async () => {
             const inner = { getToken: jest.fn(async () => ({ token: initialToken, expiresOnTimestamp: 1 })), dispose: jest.fn() };
             const recovery = createChatTokenUnauthorizedRecovery({ initialToken, refreshToken: async () => renewedToken, now: () => currentTime });
