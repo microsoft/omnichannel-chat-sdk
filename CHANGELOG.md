@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Release builds validate version metadata as data, use lockfile-only installation, and isolate OIDC permission to tarball publishing.
+
 - Updated `@microsoft/ocsdk` to `0.6.0-main.316a2fa`, which adds `renewChatToken` for ACS chat token renewal. This version also includes two earlier `@microsoft/ocsdk` changes: `getChatConfig` now retries HTTP 429 responses by default with jittered backoff, and default headers are copied per request, so headers such as `Oc-Sessionid` or `AuthenticatedUserToken` set by an earlier call are no longer re-sent on later calls.
 
 ## [2.0.2] - 2026-10-20
