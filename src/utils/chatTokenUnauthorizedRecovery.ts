@@ -27,7 +27,7 @@ export interface ChatTokenUnauthorizedRecoveryParams {
     /** Renews the chat token. Must never throw and returns the current token when renewal is not possible. */
     refreshToken: () => Promise<string>;
     onStart?: (source: UnauthorizedRecoverySource) => void;
-    /** Called when ACS accepts a renewed token, or when an existing newer token is used without renewing. */
+    /** Called when ACS accepts a renewed token, or when the latest known token is used without renewing. */
     onSuccess?: (source: UnauthorizedRecoverySource, usedExistingToken: boolean) => void;
     onFailure?: (source: UnauthorizedRecoverySource, reason: UnauthorizedRecoveryFailureReason) => void;
     minRenewalIntervalInMs?: number;
@@ -37,9 +37,9 @@ export interface ChatTokenUnauthorizedRecoveryParams {
 }
 
 export interface ChatTokenUnauthorizedRecovery {
-    /** Returns the token to send: the given token, or the newest usable token known, whichever expires later. */
+    /** Returns the latest usable backend-issued token, falling back to the given token when none is usable. */
     selectToken: (token: string) => string;
-    /** Records a token obtained outside recovery, such as a proactive renewal. */
+    /** Records a backend refresher result, such as a proactive renewal, not a cached credential read. */
     observeToken: (token: string) => void;
     /** Returns a different usable token to retry with after a 401, or undefined when none is available. */
     recover: (failedToken: string | undefined, source: UnauthorizedRecoverySource) => Promise<string | undefined>;
@@ -70,19 +70,9 @@ export const createChatTokenUnauthorizedRecovery = (params: ChatTokenUnauthorize
         }
     };
 
-    const isNewer = (candidate: string, current: string): boolean => {
-        const candidateExpiresOn = getChatTokenExpiresOnInMs(candidate);
-        if (candidateExpiresOn === undefined) {
-            return false;
-        }
-
-        const currentExpiresOn = getChatTokenExpiresOnInMs(current);
-        return currentExpiresOn === undefined || candidateExpiresOn > currentExpiresOn;
-    };
-
     const observeToken = (token: string): void => {
         try {
-            if (token && token !== latestToken && isChatTokenUsable(token, now()) && isNewer(token, latestToken)) {
+            if (token && token !== latestToken && isChatTokenUsable(token, now())) {
                 latestToken = token;
             }
         } catch {
@@ -92,7 +82,7 @@ export const createChatTokenUnauthorizedRecovery = (params: ChatTokenUnauthorize
 
     const selectToken = (token: string): string => {
         try {
-            if (latestToken && latestToken !== token && isChatTokenUsable(latestToken, now()) && isNewer(latestToken, token)) {
+            if (latestToken && latestToken !== token && isChatTokenUsable(latestToken, now())) {
                 return latestToken;
             }
         } catch {
@@ -118,7 +108,7 @@ export const createChatTokenUnauthorizedRecovery = (params: ChatTokenUnauthorize
             return undefined;
         }
 
-        observeToken(token);
+        latestToken = token;
         unverifiedRenewal = { token, source };
         return token;
     };
@@ -197,8 +187,8 @@ const isReplayableBody = (request: ChatPipelineRequest): boolean => {
 };
 
 /**
- * Pipeline policy for ACS chat requests. Runs after the authentication policy on every attempt, sends the newest
- * usable token, and resends a request that failed with 401 once with a different usable token.
+ * Pipeline policy for ACS chat requests. Runs after the authentication policy on every attempt, sends the latest
+ * usable backend-issued token, and resends a request that failed with 401 once with a different usable token.
  */
 export const createChatTokenUnauthorizedRecoveryPolicy = (recovery: ChatTokenUnauthorizedRecovery): ChatAdditionalPolicy => {
     const policy: ChatPipelinePolicy = {
@@ -238,8 +228,8 @@ export const createChatTokenUnauthorizedRecoveryPolicy = (recovery: ChatTokenUna
 };
 
 /**
- * Credential that gives the newest usable token to ACS, including the real-time notification client, which reads
- * the token from the credential instead of the request pipeline.
+ * Credential that gives the latest usable backend-issued token to ACS, including the real-time notification client,
+ * which reads the token from the credential instead of the request pipeline.
  */
 export class ChatTokenUnauthorizedRecoveryCredential implements CommunicationTokenCredential {
     private credential: CommunicationTokenCredential;

@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { createHttpHeaders, createPipelineRequest, SendRequest } from "@azure/core-rest-pipeline";
 import {
     ChatTokenUnauthorizedRecovery,
     ChatTokenUnauthorizedRecoveryCredential,
@@ -61,6 +62,56 @@ describe("chatTokenUnauthorizedRecovery", () => {
             expect(params.onStart).toHaveBeenCalledWith(UnauthorizedRecoverySource.ChatRequest);
             expect(params.onSuccess).not.toHaveBeenCalled();
             expect(recovery.selectToken(initialToken)).toBe(renewedToken);
+        });
+
+        it.each([600, 3600, 7200])("retains a backend renewal with %s seconds lifetime despite stale credential reads", async expiresInSeconds => {
+            const replacement = createJwt(expiresInSeconds, "renewed");
+            const { recovery } = setup(async () => replacement);
+
+            await recovery.recover(initialToken, UnauthorizedRecoverySource.ChatRequest);
+            recovery.reportTokenResult(replacement, true);
+            expect(recovery.selectToken(initialToken)).toBe(replacement);
+        });
+
+        it.each([600, 3600, 7200])("records a backend refresher result with %s seconds lifetime", expiresInSeconds => {
+            const { recovery } = setup(async () => renewedToken);
+            const observed = createJwt(expiresInSeconds, "proactive");
+
+            recovery.observeToken(observed);
+
+            expect(recovery.selectToken(initialToken)).toBe(observed);
+        });
+
+        it("uses the backend renewal response even when an observed token expires later", async () => {
+            let finishRenewal!: (token: string) => void;
+            const { recovery } = setup(() => new Promise<string>(resolve => { finishRenewal = resolve; }));
+            const pending = recovery.recover(initialToken, UnauthorizedRecoverySource.ChatRequest);
+            recovery.observeToken(renewedToken);
+            const replacement = createJwt(600, "delayed");
+            finishRenewal(replacement);
+            await expect(pending).resolves.toBe(replacement);
+
+            expect(recovery.selectToken(initialToken)).toBe(replacement);
+            expect(recovery.selectToken(renewedToken)).toBe(replacement);
+        });
+
+        it.each([600, 3600, 7200])("retains successive backend renewals with %s seconds lifetime over the original credential", async expiresInSeconds => {
+            let renewals = 0;
+            const { params, recovery } = setup(async () => createJwt(expiresInSeconds, `renewed-${++renewals}`));
+            let current = initialToken;
+
+            for (let i = 0; i < 3; i++) {
+                const replacement = await recovery.recover(current, UnauthorizedRecoverySource.ChatRequest);
+                if (!replacement) {
+                    throw new Error("Expected a renewed token.");
+                }
+                recovery.reportTokenResult(replacement, true);
+                expect(recovery.selectToken(initialToken)).toBe(replacement);
+                current = replacement;
+                currentTime += 60000;
+            }
+
+            expect(params.refreshToken).toHaveBeenCalledTimes(3);
         });
 
         it("reports success only when ACS accepts the renewed token", async () => {
@@ -202,16 +253,18 @@ describe("chatTokenUnauthorizedRecovery", () => {
             await expect(recovery.recover(initialToken, UnauthorizedRecoverySource.ChatRequest)).resolves.toBe(renewedToken);
         });
 
-        it("only keeps observed tokens that expire later", () => {
+        it("keeps usable backend refresher results and ignores invalid or expired results", () => {
             const { recovery } = setup(async () => renewedToken);
+            const observed = createJwt(600, "proactive");
 
-            recovery.observeToken(createJwt(600));
+            recovery.observeToken(observed);
             recovery.observeToken("abc");
-            expect(recovery.selectToken(initialToken)).toBe(initialToken);
+            recovery.observeToken(createJwt(-10));
+            expect(recovery.selectToken(initialToken)).toBe(observed);
 
             recovery.observeToken(renewedToken);
             expect(recovery.selectToken(initialToken)).toBe(renewedToken);
-            expect(recovery.selectToken(createJwt(90000))).not.toBe(renewedToken);
+            expect(recovery.selectToken(createJwt(90000))).toBe(renewedToken);
         });
     });
 
@@ -222,6 +275,32 @@ describe("chatTokenUnauthorizedRecovery", () => {
             recover: jest.fn(async () => renewedToken),
             reportTokenResult: jest.fn(),
             ...overrides
+        });
+
+        it.each([600, 3600, 7200])("keeps a backend renewal with %s seconds lifetime on subsequent sends", async expiresInSeconds => {
+            const replacement = createJwt(expiresInSeconds, "renewed");
+            const { params, recovery } = setup(async () => replacement);
+            const policy = createChatTokenUnauthorizedRecoveryPolicy(recovery).policy;
+            const statuses: number[] = [];
+            const next: SendRequest = async request => {
+                const status = request.headers.get("Authorization") === `Bearer ${replacement}` ? 201 : 401;
+                statuses.push(status);
+                return { request, status, headers: createHttpHeaders() };
+            };
+            const send = () => policy.sendRequest(createPipelineRequest({
+                url: "https://example.invalid/chat/messages",
+                method: "POST",
+                headers: createHttpHeaders({ Authorization: `Bearer ${initialToken}` }),
+                body: "{}"
+            }), next);
+
+            const recovered = await send();
+            expect(recovery.selectToken(initialToken)).toBe(replacement);
+            const following = await send();
+
+            expect(statuses).toEqual([401, 201, 201]);
+            expect([recovered.status, following.status]).toEqual([201, 201]);
+            expect(params.refreshToken).toHaveBeenCalledTimes(1);
         });
 
         it("runs on every attempt", () => {
@@ -285,6 +364,22 @@ describe("chatTokenUnauthorizedRecovery", () => {
     });
 
     describe("ChatTokenUnauthorizedRecoveryCredential", () => {
+        it.each([600, 3600, 7200])("returns a backend renewal with %s seconds lifetime instead of a stale inner credential", async expiresInSeconds => {
+            const replacement = createJwt(expiresInSeconds, "renewed");
+            const expiresOnTimestamp = nowInMs + expiresInSeconds * 1000;
+            const inner = {
+                getToken: jest.fn(async () => ({ token: initialToken, expiresOnTimestamp: nowInMs + 3600 * 1000 })),
+                dispose: jest.fn()
+            };
+            const { recovery } = setup(async () => replacement);
+            const credential = new ChatTokenUnauthorizedRecoveryCredential(inner, recovery);
+            await recovery.recover(initialToken, UnauthorizedRecoverySource.ChatRequest);
+            recovery.reportTokenResult(replacement, true);
+            await expect(credential.getToken()).resolves.toEqual({ token: replacement, expiresOnTimestamp });
+            credential.dispose();
+            expect(inner.dispose).toHaveBeenCalledTimes(1);
+        });
+
         it("returns the newest token with its expiry", async () => {
             const inner = { getToken: jest.fn(async () => ({ token: initialToken, expiresOnTimestamp: 1 })), dispose: jest.fn() };
             const recovery = createChatTokenUnauthorizedRecovery({ initialToken, refreshToken: async () => renewedToken, now: () => currentTime });
