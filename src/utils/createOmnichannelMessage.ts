@@ -1,10 +1,11 @@
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent } from '@azure/communication-signaling';
-import OmnichannelMessage, { IFileMetadata, IPerson, MessageType, PersonType } from "../core/messaging/OmnichannelMessage";
+import OmnichannelMessage, { IFileMetadata, IPerson, MessageType, PersonType, Role } from "../core/messaging/OmnichannelMessage";
 
 import { ChatMessage } from "@azure/communication-chat";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
 import LiveChatVersion from '../core/LiveChatVersion';
-import { getMessageRole } from './utilities';
+import { getMessageRole, isCustomerMessage } from './utilities';
+import { isMessageEdited, retainMessageVersion } from './messageUpdates';
 
 interface CreateOmnichannelMessageOptionalParams {
     liveChatVersion: LiveChatVersion;
@@ -123,7 +124,10 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
             };
         }
 
-        omnichannelMessage.role = getMessageRole(omnichannelMessage);
+        omnichannelMessage.role = isMessageEdited(message) && isCustomerMessage(omnichannelMessage)
+            ? Role.User
+            : getMessageRole(omnichannelMessage);
+        retainMessageVersion(omnichannelMessage, message);
     } else {
         const { clientmessageid } = message as IRawMessage;
         omnichannelMessage.id = clientmessageid as string;

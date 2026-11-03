@@ -14,6 +14,7 @@ import { defaultLocaleId, getLocaleStringFromId } from "./utils/locale";
 import exceptionThrowers, { throwAMSLoadFailure } from "./utils/exceptionThrowers";
 import { classifyNetworkError } from "./utils/errorClassifier";
 import { getRuntimeId, isClientIdNotFoundErrorMessage, isCustomerMessage } from "./utils/utilities";
+import { getMessageVersion, isMessageEdited, MessageUpdateTracker } from "./utils/messageUpdates";
 import { loadScript, removeElementById, sleep } from "./utils/WebUtils";
 import { retrieveRegionBasedUrl, shouldUseFramedMode } from "./utils/AMSClientUtils";
 import validateSDKConfig, { defaultChatSDKConfig } from "./validators/SDKConfigValidators";
@@ -1711,6 +1712,20 @@ class OmnichannelChatSDK {
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
             const postedMessages = new Set();
+            const customerMessageUpdates = new MessageUpdateTracker();
+            const getNewCustomerVersion = (message: { id: string }): string | undefined => {
+                const version = getMessageVersion(message);
+                if (version === undefined) {
+                    this.scenarioMarker.singleRecord(TelemetryEvent.OnNewMessage, {
+                        RequestId: this.requestId,
+                        ChatId: this.chatToken.chatId as string,
+                        ExceptionDetails: "InvalidCustomerMessageVersion"
+                    });
+                    console.warn("[OmnichannelChatSDK][onNewMessage] Invalid customer message version");
+                    return undefined;
+                }
+                return customerMessageUpdates.shouldDeliver(message.id, version) ? version : undefined;
+            };
 
             if (optionalParams?.rehydrate) {
                 this.debug && console.log('[OmnichannelChatSDK][onNewMessage] rehydrate');
@@ -1720,9 +1735,17 @@ class OmnichannelChatSDK {
                     if (postedMessages.has(id)) {
                         continue;
                     }
+                    const customerMessage = isCustomerMessage(message);
+                    const customerVersion = customerMessage ? getNewCustomerVersion(message) : undefined;
+                    if (customerMessage && customerVersion === undefined) {
+                        continue;
+                    }
 
                     postedMessages.add(id);
                     onNewMessageCallback(message);
+                    if (customerVersion !== undefined) {
+                        customerMessageUpdates.markDelivered(id, customerVersion);
+                    }
                 }
             }
 
@@ -1743,7 +1766,7 @@ class OmnichannelChatSDK {
                     const { id } = event;
                     const isChatMessageEditedEvent = Object.keys(event).includes("editedOn");
 
-                    console.log("[OmnichannelChatSDK][onNewMessage] New message received", event);
+                    console.log("[OmnichannelChatSDK][onNewMessage] New message received");
                     console.log("[OmnichannelChatSDK][onNewMessage] isChatMessageEditedEvent=>", isChatMessageEditedEvent);
 
                     // Guard message transformation: createOmnichannelMessage() can throw
@@ -1772,9 +1795,21 @@ class OmnichannelChatSDK {
                         return;
                     }
 
+                    const customerMessage = isCustomerMessage(omnichannelMessage);
+                    if (customerMessage && !isMessageEdited(event)) {
+                        return;
+                    }
+                    const customerVersion = customerMessage ? getNewCustomerVersion(event) : undefined;
+                    if (customerMessage && customerVersion === undefined) {
+                        return;
+                    }
+
                     // send callback for new messages or edited existent messages
-                    if (!postedMessages.has(id) || isChatMessageEditedEvent) {
+                    if (customerMessage || !postedMessages.has(id) || isChatMessageEditedEvent) {
                         onNewMessageCallback(omnichannelMessage);
+                        if (customerVersion !== undefined) {
+                            customerMessageUpdates.markDelivered(id, customerVersion);
+                        }
                         console.log("[OmnichannelChatSDK][onNewMessage] Message posted");
                         postedMessages.add(id);
                     }

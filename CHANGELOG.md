@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Forwarded same-ID customer message edits, including masking and ordinary corrections, through ACS realtime and polling callbacks while filtering original customer echoes and duplicate or older edit versions.
+
 ## [2.0.2] - 2026-10-20
 
 ### Security

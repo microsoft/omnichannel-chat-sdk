@@ -396,6 +396,27 @@ return <ReactWebChat
 
 ## Using Custom Chat Control
 
+### Customer Message Updates (Unreleased)
+
+For ACS conversations, `onNewMessage` also delivers edits to customer-authored messages, including masking
+and ordinary corrections. An update retains the original message ID and customer sender, with `role: "user"`.
+Original, unedited customer messages and their send/realtime/polling echoes remain filtered.
+
+Replace the existing message with the same ID; do not append another bubble, send the update back to the
+service, or treat a customer update as a new incoming message. Notification and unread-count handlers must
+exclude customer updates and distinguish edits to existing incoming messages from genuinely new arrivals.
+Consumers that currently count every callback as an incoming message must be updated before adopting this fix.
+
+Realtime and polling share customer edit-version deduplication. Initial/reconnect polling can recover an
+edited snapshot without replaying unedited customer history. Explicit `rehydrate: true` still delivers
+historical messages by design, but subsequent duplicate or older customer versions do not replace that baseline.
+Ordering uses the ACS version internally, not the content or a masking-specific metadata flag; no version field
+is added to the public message payload. Malformed edit timestamps/versions are reported rather than delivered.
+
+Before release, coordinate notification/unread handling with the first-party widgets and other consumers.
+Validate real Conversation Control masking with encryption both enabled and disabled, including same-ID bubble
+replacement and absence of additional incoming notifications, unread increments, or echo loops.
+
 ### Render Adaptive Cards
 
 ```js
