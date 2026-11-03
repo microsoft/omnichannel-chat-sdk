@@ -408,10 +408,13 @@ describe('createVoiceVideoCalling', () => {
             expect(params.OCClient.makeSecondaryChannelEventRequest).toHaveBeenCalledWith('requestId', expect.objectContaining({ SecondaryChannelEventType: 'end' }));
             expect(callback).toHaveBeenCalledTimes(1);
 
+            // The call usually ends with the chat, so close() can clear callId before the request settles.
+            proxy.close();
             rejectEndEvent(new Error('Request failed with status code 401'));
             await new Promise((resolve) => setTimeout(resolve, 0));
 
             expect(scenarioMarker.failScenario).toHaveBeenCalledTimes(1);
+            expect(scenarioMarker.failScenario).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ CallId: 'callId' }));
             expect(scenarioMarker.completeScenario).not.toHaveBeenCalled();
             consoleError.mockRestore();
         });

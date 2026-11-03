@@ -353,22 +353,24 @@ export class VoiceVideoCallingProxy {
                 SecondaryChannelEventType: SecondaryChannelEvents.End
             }
 
+            const callId = this.callId || '';
             this.scenarioMarker?.startScenario(TelemetryEvent.OnCallDisconnected, {
-                CallId: this.callId || ''
+                CallId: callId
             });
 
             try {
                 // Not awaited so the consumer callback is not delayed. A rejection (for example 401 after endChat) is still handled.
+                // callId is captured now because close() can clear this.callId before the request settles.
                 Promise.resolve(this.callingParams?.OCClient.makeSecondaryChannelEventRequest(this.callingParams?.chatToken.requestId, body))
                     .then(() => {
                         this.debug && console.debug(`[VoiceVideoCallingProxy][onCallDisconnected][makeSecondaryChannelEventRequest]`);
                         this.scenarioMarker?.completeScenario(TelemetryEvent.OnCallDisconnected, {
-                            CallId: this.callId || ''
+                            CallId: callId
                         });
                     })
-                    .catch((e) => this.failCallDisconnectedEndEvent(e));
+                    .catch((e) => this.failCallDisconnectedEndEvent(e, callId));
             } catch (e) {
-                this.failCallDisconnectedEndEvent(e);
+                this.failCallDisconnectedEndEvent(e, callId);
             }
 
             this.clearRemoteVideoElementChildren();
@@ -376,14 +378,14 @@ export class VoiceVideoCallingProxy {
         });
     }
 
-    private failCallDisconnectedEndEvent(e: unknown): void {
+    private failCallDisconnectedEndEvent(e: unknown, callId: string): void {
         console.error(`[VoiceVideoCallingProxy][onCallDisconnected][makeSecondaryChannelEventRequest] Failure ${e}`);
 
         const exceptionDetails = {
             response: 'OCClientMakeSecondaryChannelEventRequestFailed'
         }
         this.scenarioMarker?.failScenario(TelemetryEvent.OnCallDisconnected, {
-            CallId: this.callId || '',
+            CallId: callId,
             ExceptionDetails: JSON.stringify(exceptionDetails)
         });
     }

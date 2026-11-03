@@ -165,11 +165,27 @@ describe('Post-endChat transcript session key', () => {
         expect(chatSDK.OCClient.sessionId).toBe('session-B');
         // The new chat must not inherit chat A's key.
         expect(lastRequestMatching('/conversation').headers['oc-sessionid']).toBeUndefined();
-        await chatSDK.endChat();
 
+        // Chat A's key must not be applied while chat B is active.
+        await chatSDK.getLiveChatTranscript({ liveChatContext: chatAContext });
+        expect(lastRequestMatching('getchattranscripts/chat-a/').headers['oc-sessionid']).not.toBe('session-A');
+
+        await chatSDK.endChat();
         await chatSDK.getLiveChatTranscript({ liveChatContext: chatAContext });
 
         expect(lastRequestMatching('getchattranscripts/chat-a/').headers['oc-sessionid']).toBeUndefined();
+    });
+
+    it('keeps the ended chat session key when endChat is called again with no active chat', async () => {
+        const chatSDK = await createStartedChatSDK();
+        const liveChatContext = contextWithoutSessionId(chatSDK);
+
+        await chatSDK.endChat();
+        // Headless apps can call endChat from both onAgentEndSession and a close button.
+        await chatSDK.endChat();
+        await chatSDK.getLiveChatTranscript({ liveChatContext });
+
+        expect(lastRequestMatching('getchattranscripts/chat-a/').headers['oc-sessionid']).toBe('session-A');
     });
 
     it('restores OCClient.sessionId after a post-endChat transcript call, including when MRT rejects it', async () => {

@@ -1192,7 +1192,10 @@ class OmnichannelChatSDK {
             // This ensures resources are released even if closeChat or survey waiting throws
             const endedChatId = this.chatToken.chatId as string | undefined;
             const endedSessionId = this.OCClient.sessionId || this.sessionId;
-            this.endedChatSessionKey = endedChatId && endedSessionId ? { chatId: endedChatId, sessionId: endedSessionId } : null;
+            // Keep the previous chat's key when this call had no chat to end (for example a second endChat).
+            if (endedChatId && endedSessionId) {
+                this.endedChatSessionKey = { chatId: endedChatId, sessionId: endedSessionId };
+            }
 
             this.conversation?.disconnect();
             this.conversation = null;
