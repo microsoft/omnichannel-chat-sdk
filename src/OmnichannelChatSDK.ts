@@ -163,6 +163,8 @@ class OmnichannelChatSDK {
     private isPersistentChat = false;
     private isChatReconnect = false;
     private reconnectId: null | string = null;
+    // Session key of the most recently ended chat. MRT validates it on transcript calls made after endChat.
+    private endedChatSessionKey: { chatId: string; sessionId: string } | null = null;
     private refreshTokenTimer: NodeJS.Timeout | string | number | null = null;
     private AMSClientLoadCurrentState: AMSClientLoadStates = AMSClientLoadStates.NOT_LOADED;
     private isMaskingDisabled = false;
@@ -706,6 +708,7 @@ class OmnichannelChatSDK {
 
     private async internalStartChat(optionalParams: StartChatOptionalParams = {}): Promise<void> {
         this.isEndingChat = false;
+        this.endedChatSessionKey = null;
 
         this.scenarioMarker.startScenario(TelemetryEvent.StartChat, {
             RequestId: this.requestId
@@ -1187,6 +1190,13 @@ class OmnichannelChatSDK {
         } finally {
             // Cleanup always runs, regardless of success or failure
             // This ensures resources are released even if closeChat or survey waiting throws
+            const endedChatId = this.chatToken.chatId as string | undefined;
+            const endedSessionId = this.OCClient.sessionId || this.sessionId;
+            // Keep the previous chat's key when this call had no chat to end (for example a second endChat).
+            if (endedChatId && endedSessionId) {
+                this.endedChatSessionKey = { chatId: endedChatId, sessionId: endedSessionId };
+            }
+
             this.conversation?.disconnect();
             this.conversation = null;
             this.requestId = uuidv4();
@@ -2483,7 +2493,6 @@ class OmnichannelChatSDK {
         let requestId = this.requestId;
         let chatToken = this.chatToken;
         let chatId = chatToken.chatId as string;
-        let sessionId = this.sessionId;
 
         if (optionalParams.liveChatContext) {
             requestId = optionalParams.liveChatContext.requestId;
@@ -2491,10 +2500,7 @@ class OmnichannelChatSDK {
             chatId = chatToken.chatId as string;
         }
 
-        if (optionalParams.liveChatContext?.sessionId) {
-            sessionId = optionalParams.liveChatContext.sessionId;
-            this.OCClient.sessionId = sessionId;
-        }
+        const requestSessionKey = optionalParams.liveChatContext?.sessionId || this.getEndedChatSessionKey(chatId);
 
         this.scenarioMarker.startScenario(TelemetryEvent.EmailLiveChatTranscript, {
             RequestId: requestId,
@@ -2517,15 +2523,11 @@ class OmnichannelChatSDK {
                 CustomerLocale: body.locale || getLocaleStringFromId(this.localeId)
             };
 
-            await this.OCClient.emailTranscript(
+            await this.withRequestSessionKey<void>(requestSessionKey, () => this.OCClient.emailTranscript(
                 requestId,
                 chatToken.token,
                 emailRequestBody,
-                emailTranscriptOptionalParams);
-
-            if (this.sessionId) {
-                this.OCClient.sessionId = this.sessionId;
-            }
+                emailTranscriptOptionalParams));
 
             this.scenarioMarker.completeScenario(TelemetryEvent.EmailLiveChatTranscript, {
                 RequestId: requestId,
@@ -2547,7 +2549,6 @@ class OmnichannelChatSDK {
         let requestId = this.requestId;
         let chatToken = this.chatToken;
         let chatId = chatToken.chatId as string;
-        let sessionId = this.sessionId;
 
         if (optionalParams.liveChatContext) {
             if (this.isPersistentChat && !this.chatSDKConfig.persistentChat?.disable) {
@@ -2558,11 +2559,6 @@ class OmnichannelChatSDK {
                 chatToken = optionalParams.liveChatContext.chatToken;
             }
             chatId = chatToken.chatId as string;
-        }
-
-        if (optionalParams.liveChatContext?.sessionId) {
-            sessionId = optionalParams.liveChatContext.sessionId;
-            this.OCClient.sessionId = sessionId;
         }
 
         if (!chatId) {
@@ -2581,21 +2577,19 @@ class OmnichannelChatSDK {
             exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.GetLiveChatTranscript);
         }
 
+        const requestSessionKey = optionalParams.liveChatContext?.sessionId || this.getEndedChatSessionKey(chatId);
+
         try {
             if (this.authenticatedUserToken) {
                 getChatTranscriptOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
             }
 
             // by definition, OCSDK returns a string (JSON)
-            const transcriptResponse = await this.OCClient.getChatTranscripts(
+            const transcriptResponse = await this.withRequestSessionKey<GetLiveChatTranscriptResponse>(requestSessionKey, () => this.OCClient.getChatTranscripts(
                 requestId,
                 chatToken.chatId,
                 chatToken.token,
-                getChatTranscriptOptionalParams);
-
-            if (this.sessionId) {
-                this.OCClient.sessionId = this.sessionId;
-            }
+                getChatTranscriptOptionalParams));
 
             this.scenarioMarker.completeScenario(TelemetryEvent.GetLiveChatTranscript, {
                 RequestId: requestId,
@@ -2611,6 +2605,31 @@ class OmnichannelChatSDK {
             };
 
             exceptionThrowers.throwLiveChatTranscriptRetrievalFailure(error, this.scenarioMarker, TelemetryEvent.GetLiveChatTranscript, telemetryData);
+        }
+    }
+
+    /**
+     * Returns the ended chat's session key when the call targets that chat, or null.
+     */
+    private getEndedChatSessionKey(chatId: string | undefined): string | null {
+        return chatId && this.endedChatSessionKey?.chatId === chatId ? this.endedChatSessionKey.sessionId : null;
+    }
+
+    /**
+     * Sends the session key on one OCSDK request without leaving it on the shared client. OCSDK copies the
+     * key into the request headers before its first await, so the previous key is restored before the HTTP wait.
+     */
+    private withRequestSessionKey<T>(sessionKey: string | null | undefined, request: () => Promise<T>): Promise<T> {
+        if (!sessionKey) {
+            return request();
+        }
+
+        const previousSessionKey = this.OCClient.sessionId;
+        this.OCClient.sessionId = sessionKey;
+        try {
+            return request();
+        } finally {
+            this.OCClient.sessionId = previousSessionKey;
         }
     }
 
