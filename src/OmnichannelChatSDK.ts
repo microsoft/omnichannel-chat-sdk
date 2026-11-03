@@ -163,6 +163,8 @@ class OmnichannelChatSDK {
     private isPersistentChat = false;
     private isChatReconnect = false;
     private reconnectId: null | string = null;
+    // Session key of the most recently ended chat. MRT validates it on transcript calls made after endChat.
+    private endedChatSessionKey: { chatId: string; sessionId: string } | null = null;
     private refreshTokenTimer: NodeJS.Timeout | string | number | null = null;
     private AMSClientLoadCurrentState: AMSClientLoadStates = AMSClientLoadStates.NOT_LOADED;
     private isMaskingDisabled = false;
@@ -706,6 +708,7 @@ class OmnichannelChatSDK {
 
     private async internalStartChat(optionalParams: StartChatOptionalParams = {}): Promise<void> {
         this.isEndingChat = false;
+        this.endedChatSessionKey = null;
 
         this.scenarioMarker.startScenario(TelemetryEvent.StartChat, {
             RequestId: this.requestId
@@ -1187,6 +1190,10 @@ class OmnichannelChatSDK {
         } finally {
             // Cleanup always runs, regardless of success or failure
             // This ensures resources are released even if closeChat or survey waiting throws
+            const endedChatId = this.chatToken.chatId as string | undefined;
+            const endedSessionId = this.OCClient.sessionId || this.sessionId;
+            this.endedChatSessionKey = endedChatId && endedSessionId ? { chatId: endedChatId, sessionId: endedSessionId } : null;
+
             this.conversation?.disconnect();
             this.conversation = null;
             this.requestId = uuidv4();
@@ -2505,6 +2512,8 @@ class OmnichannelChatSDK {
             exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.EmailLiveChatTranscript);
         }
 
+        const endedChatSessionKey = optionalParams.liveChatContext?.sessionId ? null : this.applyEndedChatSessionKey(chatId);
+
         try {
             if (this.authenticatedUserToken) {
                 emailTranscriptOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
@@ -2538,6 +2547,8 @@ class OmnichannelChatSDK {
                 RequestId: requestId,
                 ChatId: chatId
             });
+        } finally {
+            this.restoreAfterEndedChatSessionKey(endedChatSessionKey);
         }
     }
 
@@ -2581,6 +2592,8 @@ class OmnichannelChatSDK {
             exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.GetLiveChatTranscript);
         }
 
+        const endedChatSessionKey = optionalParams.liveChatContext?.sessionId ? null : this.applyEndedChatSessionKey(chatId);
+
         try {
             if (this.authenticatedUserToken) {
                 getChatTranscriptOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
@@ -2611,6 +2624,27 @@ class OmnichannelChatSDK {
             };
 
             exceptionThrowers.throwLiveChatTranscriptRetrievalFailure(error, this.scenarioMarker, TelemetryEvent.GetLiveChatTranscript, telemetryData);
+        } finally {
+            this.restoreAfterEndedChatSessionKey(endedChatSessionKey);
+        }
+    }
+
+    /**
+     * Sends the ended chat's session key on a transcript call for that chat. Returns the key it set, or null.
+     */
+    private applyEndedChatSessionKey(chatId: string | undefined): string | null {
+        if (!chatId || this.endedChatSessionKey?.chatId !== chatId) {
+            return null;
+        }
+
+        this.OCClient.sessionId = this.endedChatSessionKey.sessionId;
+        return this.endedChatSessionKey.sessionId;
+    }
+
+    private restoreAfterEndedChatSessionKey(appliedSessionKey: string | null): void {
+        // A chat started during the call owns OCClient.sessionId; leave its key in place.
+        if (appliedSessionKey && this.OCClient.sessionId === appliedSessionKey) {
+            this.OCClient.sessionId = this.sessionId;
         }
     }
 

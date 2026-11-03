@@ -358,25 +358,33 @@ export class VoiceVideoCallingProxy {
             });
 
             try {
-                this.callingParams?.OCClient.makeSecondaryChannelEventRequest(this.callingParams?.chatToken.requestId, body);
-                this.debug && console.debug(`[VoiceVideoCallingProxy][onCallDisconnected][makeSecondaryChannelEventRequest]`);
-                this.scenarioMarker?.completeScenario(TelemetryEvent.OnCallDisconnected, {
-                    CallId: this.callId || ''
-                });
+                // Not awaited so the consumer callback is not delayed. A rejection (for example 401 after endChat) is still handled.
+                Promise.resolve(this.callingParams?.OCClient.makeSecondaryChannelEventRequest(this.callingParams?.chatToken.requestId, body))
+                    .then(() => {
+                        this.debug && console.debug(`[VoiceVideoCallingProxy][onCallDisconnected][makeSecondaryChannelEventRequest]`);
+                        this.scenarioMarker?.completeScenario(TelemetryEvent.OnCallDisconnected, {
+                            CallId: this.callId || ''
+                        });
+                    })
+                    .catch((e) => this.failCallDisconnectedEndEvent(e));
             } catch (e) {
-                console.error(`[VoiceVideoCallingProxy][onCallDisconnected][makeSecondaryChannelEventRequest] Failure ${e}`);
-
-                const exceptionDetails = {
-                    response: 'OCClientMakeSecondaryChannelEventRequestFailed'
-                }
-                this.scenarioMarker?.failScenario(TelemetryEvent.OnCallDisconnected, {
-                    CallId: this.callId || '',
-                    ExceptionDetails: JSON.stringify(exceptionDetails)
-                });
+                this.failCallDisconnectedEndEvent(e);
             }
 
             this.clearRemoteVideoElementChildren();
             callback(params);
+        });
+    }
+
+    private failCallDisconnectedEndEvent(e: unknown): void {
+        console.error(`[VoiceVideoCallingProxy][onCallDisconnected][makeSecondaryChannelEventRequest] Failure ${e}`);
+
+        const exceptionDetails = {
+            response: 'OCClientMakeSecondaryChannelEventRequestFailed'
+        }
+        this.scenarioMarker?.failScenario(TelemetryEvent.OnCallDisconnected, {
+            CallId: this.callId || '',
+            ExceptionDetails: JSON.stringify(exceptionDetails)
         });
     }
 

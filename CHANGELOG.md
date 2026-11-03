@@ -14,6 +14,11 @@ All notable changes to this project will be documented in this file.
 
 - Updated `@microsoft/ocsdk` to `0.6.0-main.316a2fa`, which adds `renewChatToken` for ACS chat token renewal. This version also includes two earlier `@microsoft/ocsdk` changes: `getChatConfig` now retries HTTP 429 responses by default with jittered backoff, and default headers are copied per request, so headers such as `Oc-Sessionid` or `AuthenticatedUserToken` set by an earlier call are no longer re-sent on later calls.
 
+### Fixed
+
+- `getLiveChatTranscript` and `emailLiveChatTranscript` after `endChat` now send the ended chat's session key (`Oc-Sessionid`) when `liveChatContext` has no `sessionId`. Since `@microsoft/ocsdk` `0.6.0-main.316a2fa`, these calls sent no key, and the service returned `401 Unauthorized` when session key validation is on. The key is sent only for the ended chat's `chatId` and is cleared when the next chat starts.
+- The voice and video call-ended event sent after a call disconnects no longer causes an unhandled promise rejection when the request fails (for example, `401` after `endChat`). The failure is logged and reported in telemetry.
+
 ## [2.0.2] - 2026-10-20
 
 ### Security

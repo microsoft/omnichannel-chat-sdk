@@ -374,5 +374,46 @@ describe('createVoiceVideoCalling', () => {
             proxy.onCallDisconnected(() => {});
             expect(proxy.addEventListener).toHaveBeenCalledTimes(1);
         });
+
+        it('VoiceVideoCallingProxy.onCallDisconnected() should handle a rejected End event request without delaying the callback', async () => {
+            // After endChat, MRT rejects the End event with 401. The rejection must be handled, not left unhandled.
+            const proxy: any = await createVoiceVideoCalling();
+            let rejectEndEvent: (reason: unknown) => void = () => {};
+            const endEventRequest = new Promise((_resolve, reject) => { rejectEndEvent = reject; });
+            const params = {
+                logger: {
+                    logInfo: () => {}
+                },
+                chatToken: {chatId: 'chatId', requestId: 'requestId'},
+                OCClient: {
+                    makeSecondaryChannelEventRequest: jest.fn(() => endEventRequest)
+                },
+                selfVideoHTMLElementId: 'selfVideoHTMLElementId',
+                remoteVideoHTMLElementId: 'remoteVideoHTMLElementId'
+            };
+
+            await proxy.initialize(params);
+            const scenarioMarker = { startScenario: jest.fn(), completeScenario: jest.fn(), failScenario: jest.fn() };
+            proxy.useScenarioMarker(scenarioMarker);
+            proxy.callId = 'callId';
+
+            let disconnectedHandler: Function = () => {};
+            proxy.proxyInstance.registerEvent = jest.fn((_eventName: string, handler: Function) => { disconnectedHandler = handler; });
+            const callback = jest.fn();
+            const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+            proxy.onCallDisconnected(callback);
+            await disconnectedHandler({ callId: 'callId' });
+
+            expect(params.OCClient.makeSecondaryChannelEventRequest).toHaveBeenCalledWith('requestId', expect.objectContaining({ SecondaryChannelEventType: 'end' }));
+            expect(callback).toHaveBeenCalledTimes(1);
+
+            rejectEndEvent(new Error('Request failed with status code 401'));
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            expect(scenarioMarker.failScenario).toHaveBeenCalledTimes(1);
+            expect(scenarioMarker.completeScenario).not.toHaveBeenCalled();
+            consoleError.mockRestore();
+        });
     });
 });
