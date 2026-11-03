@@ -21,17 +21,26 @@ describe('Post-endChat transcript session key', () => {
     let requests: RecordedRequest[] = [];
     let conversationCount = 0;
     let transcriptStatus = 200;
+    let holdTranscriptResponses = false;
+    let heldResponses: Array<() => void> = [];
     const originalAdapter = axios.defaults.adapter;
 
     beforeEach(() => {
         requests = [];
         conversationCount = 0;
         transcriptStatus = 200;
+        holdTranscriptResponses = false;
+        heldResponses = [];
         axios.defaults.adapter = (async (config: any) => {
             const headers: Record<string, string> = {};
             const rawHeaders = config.headers?.toJSON ? config.headers.toJSON() : config.headers;
             Object.keys(rawHeaders || {}).forEach((key) => { headers[key.toLowerCase()] = rawHeaders[key]; });
             requests.push({ method: (config.method || '').toUpperCase(), url: config.url, headers });
+
+            const isTranscriptCall = config.url.includes('getchattranscripts') || config.url.includes('createemailrequest');
+            if (holdTranscriptResponses && isTranscriptCall) {
+                await new Promise<void>((resolve) => heldResponses.push(resolve));
+            }
 
             let data: any = {};
             let status = 200;
@@ -41,9 +50,9 @@ describe('Post-endChat transcript session key', () => {
                 const suffix = conversationCount === 1 ? 'A' : 'B';
                 data = { ChatId: `chat-${suffix}`, Token: `token-${suffix}`, RegionGtms: '{}' };
                 responseHeaders['oc-sessionid'] = `session-${suffix}`;
-            } else if (config.url.includes('getchattranscripts')) {
+            } else if (isTranscriptCall) {
                 status = transcriptStatus;
-                data = '{"Messages":[]}';
+                data = config.url.includes('getchattranscripts') ? '{"Messages":[]}' : {};
             }
 
             const response = { data, status, statusText: status === 200 ? 'OK' : 'Error', headers: responseHeaders, config, request: {} };
@@ -187,5 +196,75 @@ describe('Post-endChat transcript session key', () => {
         await chatSDK.getLiveChatTranscript({ liveChatContext });
 
         expect(lastRequestMatching('getchattranscripts').headers['oc-sessionid']).toBe('session-explicit');
+        // The explicit key applies to that request only.
+        expect(chatSDK.OCClient.sessionId).toBeNull();
+    });
+
+    const waitForRequests = async (fragment: string, count: number): Promise<void> => {
+        for (let attempt = 0; attempt < 100 && requestsMatching(fragment).length < count; attempt++) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+        }
+        expect(requestsMatching(fragment).length).toBeGreaterThanOrEqual(count);
+    };
+
+    const releaseHeldResponses = (): void => {
+        heldResponses.splice(0).forEach((release) => release());
+    };
+
+    // Transcript and email calls don't hold the start/end lock, so other requests can run while one waits
+    // for MRT. The key a transcript call needs must not reach those requests.
+    it.each([
+        { outcome: 'succeeds', status: 200 },
+        { outcome: 'fails', status: 401 },
+    ])('keeps the ended chat key off other requests while its transcript call waits and $outcome', async ({ status }) => {
+        const chatSDK = await createStartedChatSDK();
+        const chatAContext = contextWithoutSessionId(chatSDK);
+        const otherChatContext = { ...chatAContext, chatToken: { chatId: 'other-chat', token: 'other-token' } };
+        await chatSDK.endChat();
+
+        holdTranscriptResponses = true;
+        transcriptStatus = status;
+        const chatATranscript = chatSDK.getLiveChatTranscript({ liveChatContext: chatAContext }).catch((error: unknown) => error);
+        await waitForRequests('getchattranscripts/chat-a/', 1);
+        expect(chatSDK.OCClient.sessionId).toBeNull();
+
+        const otherTranscript = chatSDK.getLiveChatTranscript({ liveChatContext: otherChatContext }).catch((error: unknown) => error);
+        const chatAEmail = chatSDK.emailLiveChatTranscript({ emailAddress: 'a@b.test', attachmentMessage: 'msg' }, { liveChatContext: chatAContext });
+        await waitForRequests('getchattranscripts/other-chat/', 1);
+        await waitForRequests('createemailrequest', 1);
+
+        await chatSDK.startChat();
+
+        releaseHeldResponses();
+        await Promise.all([chatATranscript, otherTranscript, chatAEmail]);
+
+        expect(lastRequestMatching('getchattranscripts/chat-a/').headers['oc-sessionid']).toBe('session-A');
+        expect(lastRequestMatching('createemailrequest').headers['oc-sessionid']).toBe('session-A');
+        expect(lastRequestMatching('getchattranscripts/other-chat/').headers['oc-sessionid']).toBeUndefined();
+        expect(lastRequestMatching('/conversation').headers['oc-sessionid']).toBeUndefined();
+        expect(chatSDK.OCClient.sessionId).toBe('session-B');
+        expect(chatSDK.sessionId).toBe('session-B');
+    });
+
+    it('keeps an explicit context key off a chat that starts while the transcript call waits', async () => {
+        const chatSDK = await createStartedChatSDK();
+        const liveChatContext = { ...contextWithoutSessionId(chatSDK), sessionId: 'session-explicit' };
+        await chatSDK.endChat();
+
+        holdTranscriptResponses = true;
+        const transcript = chatSDK.getLiveChatTranscript({ liveChatContext });
+        const email = chatSDK.emailLiveChatTranscript({ emailAddress: 'a@b.test', attachmentMessage: 'msg' }, { liveChatContext });
+        await waitForRequests('getchattranscripts', 1);
+        await waitForRequests('createemailrequest', 1);
+        expect(chatSDK.OCClient.sessionId).toBeNull();
+
+        await chatSDK.startChat();
+        releaseHeldResponses();
+        await Promise.all([transcript, email]);
+
+        expect(lastRequestMatching('getchattranscripts').headers['oc-sessionid']).toBe('session-explicit');
+        expect(lastRequestMatching('createemailrequest').headers['oc-sessionid']).toBe('session-explicit');
+        expect(lastRequestMatching('/conversation').headers['oc-sessionid']).toBeUndefined();
+        expect(chatSDK.OCClient.sessionId).toBe('session-B');
     });
 });
