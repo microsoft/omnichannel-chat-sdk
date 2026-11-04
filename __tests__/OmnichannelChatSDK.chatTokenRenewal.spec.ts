@@ -302,6 +302,104 @@ describe('Omnichannel Chat SDK, chat token renewal', () => {
         });
     });
 
+    describe('renewal subscriptions', () => {
+        it('notifies without a payload after updating the current context and preserves session fields', async () => {
+            const renewedToken = createJwt(86400);
+            const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken: jest.fn().mockResolvedValue({ ChatId: chatId, Token: renewedToken }) });
+            const before = await chatSDK.getCurrentLiveChatContext();
+            let context: any;
+            const listener = jest.fn(async () => { context = await chatSDK.getCurrentLiveChatContext(); });
+            chatSDK.onChatTokenRenewed(listener);
+
+            await expect(tokenRefresher()).resolves.toBe(renewedToken);
+
+            expect(listener).toHaveBeenCalledWith();
+            expect(context).toEqual({ ...before, chatToken: { ...before.chatToken, token: renewedToken } });
+        });
+
+        it('returns an idempotent unsubscribe and keeps other subscribers registered', async () => {
+            const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken: jest.fn().mockResolvedValue({ ChatId: chatId, Token: createJwt(86400) }) });
+            const removed = jest.fn();
+            const remaining = jest.fn();
+            const unsubscribe = chatSDK.onChatTokenRenewed(removed);
+            chatSDK.onChatTokenRenewed(remaining);
+            unsubscribe();
+            unsubscribe();
+            await tokenRefresher();
+            expect(removed).not.toHaveBeenCalled();
+            expect(remaining).toHaveBeenCalledTimes(1);
+        });
+
+        it('keeps duplicate registrations independent and isolates telemetry failures', async () => {
+            const renewedToken = createJwt(86400);
+            const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken: jest.fn().mockResolvedValue({ ChatId: chatId, Token: renewedToken }) });
+            const listener = jest.fn();
+            const unsubscribe = chatSDK.onChatTokenRenewed(listener);
+            chatSDK.onChatTokenRenewed(listener);
+            unsubscribe();
+            chatSDK.onChatTokenRenewed(() => { throw new Error('private-listener-error'); });
+            chatSDK.onChatTokenRenewed(async () => { throw new Error('private-listener-error'); });
+            chatSDK.scenarioMarker.failScenario.mockImplementation(() => { throw new Error('telemetry'); });
+
+            await expect(tokenRefresher()).resolves.toBe(renewedToken);
+            await new Promise(resolve => setTimeout(resolve, 0));
+            expect(listener).toHaveBeenCalledTimes(1);
+            expect((await chatSDK.getChatToken()).token).toBe(renewedToken);
+            expect(chatSDK.scenarioMarker.completeScenario).toHaveBeenCalledWith(TelemetryEvent.RenewChatToken, expect.anything());
+        });
+
+        it('isolates throwing and rejecting subscribers and logs only sanitized categories separately', async () => {
+            const renewedToken = createJwt(86400);
+            const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken: jest.fn().mockResolvedValue({ ChatId: chatId, Token: renewedToken }) });
+            const secret = 'subscriber-private-error';
+            const remaining = jest.fn();
+            chatSDK.onChatTokenRenewed(() => { throw new Error(secret); });
+            chatSDK.onChatTokenRenewed(async () => { throw new Error(secret); });
+            chatSDK.onChatTokenRenewed(remaining);
+
+            await expect(tokenRefresher()).resolves.toBe(renewedToken);
+            await new Promise(resolve => setTimeout(resolve, 0));
+
+            expect(remaining).toHaveBeenCalledTimes(1);
+            expect((await chatSDK.getCurrentLiveChatContext()).chatToken.token).toBe(renewedToken);
+            expect(chatSDK.scenarioMarker.completeScenario).toHaveBeenCalledWith(TelemetryEvent.RenewChatToken, expect.anything());
+            expect(chatSDK.scenarioMarker.failScenario).toHaveBeenCalledWith('ChatTokenRenewedListener', expect.objectContaining({ ExceptionDetails: JSON.stringify({ response: 'ListenerThrew' }) }));
+            expect(chatSDK.scenarioMarker.failScenario).toHaveBeenCalledWith('ChatTokenRenewedListener', expect.objectContaining({ ExceptionDetails: JSON.stringify({ response: 'ListenerRejected' }) }));
+            expect(JSON.stringify(chatSDK.scenarioMarker.failScenario.mock.calls)).not.toContain(secret);
+            expect(JSON.stringify(chatSDK.scenarioMarker.failScenario.mock.calls)).not.toContain(renewedToken);
+            expect(chatSDK.scenarioMarker.failScenario).not.toHaveBeenCalledWith(TelemetryEvent.RenewChatToken, expect.anything());
+        });
+
+        it.each(['ending', 'ended', 'replaced'])('suppresses an in-flight completion when the chat is %s', async state => {
+            let complete: (value: any) => void = () => undefined;
+            const pending = new Promise(resolve => { complete = resolve; });
+            const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken: jest.fn().mockReturnValue(pending) });
+            const listener = jest.fn();
+            chatSDK.onChatTokenRenewed(listener);
+            const renewal = tokenRefresher();
+            await Promise.resolve();
+            if (state === 'ending') {
+                chatSDK['isEndingChat'] = true;
+            } else {
+                chatSDK.requestId = 'replacement-request';
+                chatSDK['chatToken'] = state === 'ended' ? {} : { chatId: 'replacement-chat', token: 'replacement-token' };
+            }
+            const expected = { ...chatSDK['chatToken'] };
+            complete({ ChatId: chatId, Token: createJwt(86400) });
+            await expect(renewal).resolves.toBe(initialToken);
+            expect(chatSDK['chatToken']).toEqual(expected);
+            expect(listener).not.toHaveBeenCalled();
+        });
+
+        it('does not notify after a failed or unusable renewal', async () => {
+            const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken: jest.fn().mockResolvedValue({ ChatId: chatId, Token: 'invalid' }) });
+            const listener = jest.fn();
+            chatSDK.onChatTokenRenewed(listener);
+            await expect(tokenRefresher()).resolves.toBe(initialToken);
+            expect(listener).not.toHaveBeenCalled();
+        });
+    });
+
     describe('attachment client', () => {
         const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0));
 

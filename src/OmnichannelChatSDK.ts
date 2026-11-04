@@ -143,6 +143,7 @@ class OmnichannelChatSDK {
     private dynamicsLocationCode: string | null = null;
     private chatToken: IChatToken;
     private chatTokenUnauthorizedRecovery: ChatTokenUnauthorizedRecovery | null = null;
+    private chatTokenRenewedListeners: Set<() => void> = new Set();
     private liveChatConfig: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private widgetSnippetBaseUrl = '';
     private liveChatVersion: number;
@@ -1311,6 +1312,17 @@ class OmnichannelChatSDK {
         await this.waitForMessageTags(['system', 'endconversationalsurvey']);
     }
 
+    /**
+     * Subscribes to usable chat token renewals after the current SDK context has been updated.
+     * No token or other payload is passed. Read getCurrentLiveChatContext() to persist the updated context.
+     * Returns an idempotent unsubscribe function. Listener failures never affect renewal.
+     */
+    public onChatTokenRenewed(listener: () => void): () => void {
+        const subscription = () => listener();
+        this.chatTokenRenewedListeners.add(subscription);
+        return () => { this.chatTokenRenewedListeners.delete(subscription); };
+    }
+
     public async getCurrentLiveChatContext(): Promise<GetCurrentLiveChatContextResponse> {
         const chatToken = await this.getChatToken();
         const { requestId } = this;
@@ -1599,6 +1611,7 @@ class OmnichannelChatSDK {
                         voiceVideoCallToken: renewed.VoiceVideoCallToken ?? this.chatToken.voiceVideoCallToken
                     };
                     this.refreshAttachmentClientToken(chatId);
+                    this.notifyChatTokenRenewed(requestId, chatId);
                 },
                 onStart: () => this.scenarioMarker.startScenario(TelemetryEvent.RenewChatToken, telemetryData),
                 onSuccess: () => this.scenarioMarker.completeScenario(TelemetryEvent.RenewChatToken, telemetryData),
@@ -1617,6 +1630,33 @@ class OmnichannelChatSDK {
         } catch {
             return undefined;
         }
+    }
+
+    private notifyChatTokenRenewed(requestId: string, chatId: string): void {
+        const reportFailure = (response: "ListenerThrew" | "ListenerRejected"): void => {
+            try {
+                const telemetryData = { RequestId: requestId, ChatId: chatId };
+                this.scenarioMarker.startScenario(TelemetryEvent.ChatTokenRenewedListener, telemetryData);
+                this.scenarioMarker.failScenario(TelemetryEvent.ChatTokenRenewedListener, {
+                    ...telemetryData,
+                    ExceptionDetails: JSON.stringify({ response })
+                });
+            } catch {
+                // Subscriber telemetry must not affect renewal or become an unhandled rejection.
+            }
+        };
+
+        Array.from(this.chatTokenRenewedListeners).forEach(listener => {
+            if (this.isEndingChat || this.requestId !== requestId || this.chatToken?.chatId !== chatId
+                || !this.chatTokenRenewedListeners.has(listener)) {
+                return;
+            }
+            try {
+                Promise.resolve(listener()).catch(() => reportFailure("ListenerRejected"));
+            } catch {
+                reportFailure("ListenerThrew");
+            }
+        });
     }
 
     /**

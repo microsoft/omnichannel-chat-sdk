@@ -26,6 +26,7 @@ Please make sure you have a chat widget configured before using this package or 
   - [Get Pre-Chat Survey](#get-pre-chat-survey)
   - [Get Live Chat Config](#get-live-chat-config)
   - [Get Current Live Chat Context](#get-current-live-chat-context)
+  - [On Chat Token Renewed](#on-chat-token-renewed)
   - [Get Data Masking Rules](#get-data-masking-rules)
   - [Get Chat Reconnect Context](#get-chat-reconnect-context)
   - [Get Conversation Details](#get-conversation-details)
@@ -380,6 +381,39 @@ It gets the current live chat context information to be used to reconnect to the
 ```ts
 const liveChatContext = await chatSDK.getCurrentLiveChatContext();
 ```
+
+### On Chat Token Renewed
+
+`onChatTokenRenewed(listener: () => void): () => void` subscribes to usable chat token renewals.
+The listener receives **no arguments**: tokens and credentials are never included in the notification.
+Read `getCurrentLiveChatContext()` inside the listener and pass the result to your application's existing
+context persistence writer. The SDK does not read or write browser storage. Existing conversation identifiers,
+session keys, and application-controlled storage TTLs must be preserved by that writer.
+
+```ts
+const unsubscribe = chatSDK.onChatTokenRenewed(async () => {
+    const context = await chatSDK.getCurrentLiveChatContext();
+    await persistLiveChatContext(context); // Your existing context writer, with its existing TTL.
+});
+
+// Call during your application's subscription cleanup.
+unsubscribe();
+```
+
+Listeners run after the SDK's current context has been updated. Each subscription returns its own idempotent
+unsubscribe function. Synchronous exceptions and asynchronous rejections are isolated from renewal and other
+listeners; only sanitized `ListenerThrew` / `ListenerRejected` categories are logged under
+`ChatTokenRenewedListener`, separately from `RenewChatToken` success. Completions from ended or replaced chats
+do not update the current context or notify listeners.
+
+Renewal remains opt-in through `LcwFcbConfiguration.lcwChatTokenRenewalEnabled` and requires an OCSDK with
+`renewChatToken`. Set `chatSDKConfig.chatTokenRenewal.disable` to disable renewal, or
+`chatSDKConfig.chatTokenRenewal.disableUnauthorizedRecovery` to disable only ACS 401 recovery.
+When enabled, REST and real-time signaling configuration requests share the same session-scoped recovery
+coordinator: one replay per request, concurrent renewal deduplication, a one-minute cooldown, and a stop after
+three renewed tokens are rejected. Failed real-time starts are stopped through Azure's public notification API
+so a subsequent start does not incorrectly succeed without establishing notifications. No automatic startup
+retry loop is added. With recovery disabled, the Azure constructor and startup behavior are unchanged.
 
 ### Get Data Masking Rules
 

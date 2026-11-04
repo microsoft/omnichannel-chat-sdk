@@ -66,7 +66,7 @@ export class ACSConversation {
     private finalizedMessageIds: Set<string> = new Set();
     private streamingMessageCallback: ((message: OmnichannelStreamingMessage) => void) | null = null;
 
-    constructor(tokenCredential: AzureCommunicationTokenCredential, chatClient: ChatClient, logger: ACSClientLogger | null = null) {
+    constructor(tokenCredential: AzureCommunicationTokenCredential, chatClient: ChatClient, logger: ACSClientLogger | null = null, private resetFailedRealtimeStart = false) {
         this.logger = logger;
         this.tokenCredential = tokenCredential;
         this.chatClient = chatClient;
@@ -108,6 +108,14 @@ export class ACSConversation {
         try {
             await this.chatClient.startRealtimeNotifications();
         } catch (error) {
+            if (this.resetFailedRealtimeStart) {
+                try {
+                    // Azure marks notifications started before awaiting signaling configuration.
+                    await this.chatClient.stopRealtimeNotifications();
+                } catch {
+                    // Preserve the original startup failure if cleanup also fails.
+                }
+            }
             const exceptionDetails = {
                 response: 'StartRealtimeNotificationsFailed',
                 errorObject: `${error}`
@@ -708,6 +716,7 @@ class ACSClient {
     private logger: ACSClientLogger | null = null;
     private tokenCredential: AzureCommunicationTokenCredential | null = null;
     private chatClient: ChatClient | null = null;
+    private resetFailedRealtimeStart = false;
 
     public constructor(logger: ACSClientLogger | null = null) {
         this.logger = logger;
@@ -753,10 +762,16 @@ class ACSClient {
 
         try {
             const recovery = acsClientConfig.unauthorizedRecovery;
+            this.resetFailedRealtimeStart = !!recovery;
+            const additionalPolicies = recovery ? [createChatTokenUnauthorizedRecoveryPolicy(recovery)] : undefined;
+            const recoveryOptions = recovery ? {
+                additionalPolicies,
+                signalingClientOptions: {
+                    additionalPolicies
+                }
+            } : undefined;
             this.chatClient = recovery
-                ? new ChatClient(acsClientConfig.environmentUrl, new ChatTokenUnauthorizedRecoveryCredential(this.tokenCredential, recovery), {
-                    additionalPolicies: [createChatTokenUnauthorizedRecoveryPolicy(recovery)]
-                })
+                ? new ChatClient(acsClientConfig.environmentUrl, new ChatTokenUnauthorizedRecoveryCredential(this.tokenCredential, recovery), recoveryOptions)
                 : new ChatClient(acsClientConfig.environmentUrl, this.tokenCredential);
         } catch (error) {
             const exceptionDetails = {
@@ -775,7 +790,7 @@ class ACSClient {
     }
 
     public async joinConversation(sessionInfo: ACSSessionInfo): Promise<ACSConversation> {
-        const conversation = new ACSConversation(this.tokenCredential as AzureCommunicationTokenCredential, this.chatClient as ChatClient, this.logger);
+        const conversation = new ACSConversation(this.tokenCredential as AzureCommunicationTokenCredential, this.chatClient as ChatClient, this.logger, this.resetFailedRealtimeStart);
         await conversation.initialize(sessionInfo);
         return conversation;
     }
