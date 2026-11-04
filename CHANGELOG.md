@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 
 - `getLiveChatTranscript` and `emailLiveChatTranscript` after `endChat` now send the ended chat's session key (`Oc-Sessionid`) when `liveChatContext` has no `sessionId`. Since `@microsoft/ocsdk` `0.6.0-main.316a2fa`, these calls sent no key, and the service returned `401 Unauthorized` when session key validation is on. The key is sent only for the ended chat's `chatId`, only on that request (it is not left on the shared client while the request waits), and is cleared when the next chat starts. A `sessionId` passed in `liveChatContext` also applies to that request only.
 - The voice and video call-ended event sent after a call disconnects no longer causes an unhandled promise rejection when the request fails (for example, `401` after `endChat`). The failure is logged and reported in telemetry.
+- When an authenticated persistent chat is restored with `startChat({ liveChatContext })` (for example, after a page reload), the SDK now restores the chat's session key from `liveChatContext.sessionId`. Before, this path restored the chat token and request ID but not the key, so `getLiveChatTranscript` and `emailLiveChatTranscript` sent no `Oc-Sessionid` and the service returned `401 Unauthorized` when session key validation is on. `getCurrentLiveChatContext` now also returns the key again, so it survives a second reload.
 
 ## [2.0.2] - 2026-10-20
 

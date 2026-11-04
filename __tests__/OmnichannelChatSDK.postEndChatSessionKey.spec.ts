@@ -283,4 +283,79 @@ describe('Post-endChat transcript session key', () => {
         expect(lastRequestMatching('/conversation').headers['oc-sessionid']).toBeUndefined();
         expect(chatSDK.OCClient.sessionId).toBe('session-B');
     });
+
+    // After a page reload, an authenticated persistent chat restores its stored liveChatContext.
+    // getReconnectableChats returns a reconnectId, so the general restore is skipped and only the authenticated
+    // branch runs. Without the stored key, the transcript call had no Oc-Sessionid and MRT returned 401.
+    describe('authenticated persistent chat restored after a page reload', () => {
+        // Persistent chat starts a token refresh interval that would keep Jest running.
+        beforeEach(() => {
+            jest.spyOn(global, 'setInterval').mockImplementation((() => 0) as any);
+        });
+
+        afterEach(() => {
+            jest.restoreAllMocks();
+        });
+
+        const createRestoredPersistentChatSDK = async (storedContext: any) => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+                getAuthToken: async () => 'authenticatedUserToken',
+                persistentChat: { disable: false, tokenUpdateTime: 21600000 },
+            });
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.authSettings = {};
+            chatSDK["isAMSClientAllowed"] = true;
+            await chatSDK.initialize();
+            chatSDK.isPersistentChat = true;
+
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+            chatSDK.OCClient.getReconnectableChats = jest.fn().mockResolvedValue({ reconnectid: 'reconnect-1' });
+            chatSDK.OCClient.validateAuthChatRecord = jest.fn().mockResolvedValue({});
+
+            await chatSDK.startChat({ liveChatContext: storedContext });
+            return chatSDK;
+        };
+
+        const storedContext = {
+            chatToken: { chatId: 'chat-A', token: 'token-A', regionGTMS: {} },
+            requestId: 'request-A',
+            sessionId: 'session-A',
+        };
+
+        it('restores the stored session key and sends it on the transcript call', async () => {
+            const chatSDK = await createRestoredPersistentChatSDK(storedContext);
+            expect(chatSDK.reconnectId).toBe('reconnect-1');
+            expect(chatSDK.sessionId).toBe('session-A');
+            expect(chatSDK.OCClient.sessionId).toBe('session-A');
+
+            await chatSDK.getLiveChatTranscript();
+
+            const transcriptRequest = lastRequestMatching('getchattranscripts');
+            expect(transcriptRequest.url).toContain('/livechatconnector/v2/auth/getchattranscripts/chat-A/');
+            expect(transcriptRequest.headers['oc-sessionid']).toBe('session-A');
+            // The restored key is part of the context the host persists for the next reload.
+            expect((await chatSDK.getCurrentLiveChatContext()).sessionId).toBe('session-A');
+        });
+
+        it('keeps the restored key for a transcript call after endChat', async () => {
+            const chatSDK = await createRestoredPersistentChatSDK(storedContext);
+            const liveChatContext = contextWithoutSessionId(chatSDK);
+
+            await chatSDK.endChat();
+            await chatSDK.getLiveChatTranscript({ liveChatContext });
+
+            expect(lastRequestMatching('getchattranscripts').headers['oc-sessionid']).toBe('session-A');
+        });
+
+        it('restores no key when the stored context has none', async () => {
+            const contextWithoutKey = { chatToken: storedContext.chatToken, requestId: storedContext.requestId };
+            const chatSDK = await createRestoredPersistentChatSDK(contextWithoutKey);
+
+            expect(chatSDK.sessionId).toBeNull();
+            await chatSDK.getLiveChatTranscript();
+            expect(lastRequestMatching('getchattranscripts').headers['oc-sessionid']).toBeUndefined();
+        });
+    });
 });

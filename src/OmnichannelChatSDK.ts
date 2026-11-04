@@ -818,6 +818,12 @@ class OmnichannelChatSDK {
                 if (optionalParams.liveChatContext && Object.keys(optionalParams.liveChatContext).length > 0) {
                     this.chatToken = optionalParams.liveChatContext.chatToken || {};
                     this.requestId = optionalParams.liveChatContext.requestId || uuidv4();
+                    // A persistent chat restore has a reconnectId, so the restore above skipped the key. Without it,
+                    // calls the service validates against the chat's session key (transcripts) return 401.
+                    this.sessionId = optionalParams.liveChatContext.sessionId || null;
+                    if (this.sessionId) {
+                        this.OCClient.sessionId = this.sessionId;
+                    }
 
                     try {
                         await this.OCClient.validateAuthChatRecord(this.requestId, {
