@@ -357,5 +357,31 @@ describe('Post-endChat transcript session key', () => {
             await chatSDK.getLiveChatTranscript();
             expect(lastRequestMatching('getchattranscripts').headers['oc-sessionid']).toBeUndefined();
         });
+
+        // A stored context the signed-in user doesn't own (for example, saved for another user) must not
+        // leave its key on the shared client for the next chat.
+        it('sends no stored key on the next startChat after the chat record is rejected', async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
+                getAuthToken: async () => 'authenticatedUserToken',
+                persistentChat: { disable: false, tokenUpdateTime: 21600000 },
+            });
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.authSettings = {};
+            chatSDK["isAMSClientAllowed"] = true;
+            await chatSDK.initialize();
+            chatSDK.isPersistentChat = true;
+            chatSDK.ACSClient.initialize = jest.fn();
+            chatSDK.ACSClient.joinConversation = jest.fn();
+            chatSDK.AMSClient.initialize = jest.fn();
+            chatSDK.OCClient.getReconnectableChats = jest.fn().mockResolvedValue({ reconnectid: 'reconnect-1' });
+            chatSDK.OCClient.validateAuthChatRecord = jest.fn().mockRejectedValue(new Error('not this user\'s chat'));
+
+            await expect(chatSDK.startChat({ liveChatContext: storedContext })).rejects.toBeDefined();
+            expect(chatSDK.sessionId).not.toBe('session-A');
+            expect(chatSDK.OCClient.sessionId).not.toBe('session-A');
+
+            await chatSDK.startChat();
+            expect(lastRequestMatching('/conversation').headers['oc-sessionid']).toBeUndefined();
+        });
     });
 });
