@@ -23,10 +23,9 @@ All notable changes to this project will be documented in this file.
 
 ### Upgrade guidance
 
-Applications that persist live chat context for page refresh or reconnect should register
-`onChatTokenRenewed` before `startChat()` and persist the result of `getCurrentLiveChatContext()` when notified.
-The SDK does not update application-owned storage. Applications that do not persist chat context require no
-new subscription. See the [token renewal integration guidance](README.md#on-chat-token-renewed).
+Applications that persist live chat context should subscribe to `onChatTokenRenewed` before `startChat()`
+and save `getCurrentLiveChatContext()` when notified. Token renewal works without a subscription.
+See the [token renewal example](README.md#on-chat-token-renewed).
 
 ## [2.0.2] - 2026-10-20
 

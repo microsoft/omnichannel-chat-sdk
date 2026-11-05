@@ -26,7 +26,6 @@ Please make sure you have a chat widget configured before using this package or 
   - [Get Pre-Chat Survey](#get-pre-chat-survey)
   - [Get Live Chat Config](#get-live-chat-config)
   - [Get Current Live Chat Context](#get-current-live-chat-context)
-  - [On Chat Token Renewed](#on-chat-token-renewed)
   - [Get Data Masking Rules](#get-data-masking-rules)
   - [Get Chat Reconnect Context](#get-chat-reconnect-context)
   - [Get Conversation Details](#get-conversation-details)
@@ -36,6 +35,7 @@ Please make sure you have a chat widget configured before using this package or 
   - [Send Messages](#send-messages)
   - [On New Message](#on-new-message)
   - [On Streaming Message](#on-streaming-message)
+  - [On Chat Token Renewed](#on-chat-token-renewed)
   - [On Typing Event](#on-typing-event)
   - [On Agent End Session](#on-agent-end-session)
   - [Send Typing Event](#send-typing-event)
@@ -382,67 +382,6 @@ It gets the current live chat context information to be used to reconnect to the
 const liveChatContext = await chatSDK.getCurrentLiveChatContext();
 ```
 
-### On Chat Token Renewed
-
-`onChatTokenRenewed(listener: () => void): () => void` registers a listener that runs after the SDK updates
-the active chat context with a renewed token. The listener receives **no arguments**; tokens and credentials
-are not included in the notification. The method returns a function that removes the listener.
-
-#### Upgrade guidance for SDK-only integrations
-
-This subscription API and its returned unsubscribe function are new. Subscribing observes token renewal;
-it does not initiate renewal. Existing `startChat()` and `endChat()` usage remains unchanged.
-
-- **Applications that do not persist chat context:** No new subscription is required for automatic token renewal.
-- **Applications that persist context for refresh or reconnect:** Register a listener, read
-  `getCurrentLiveChatContext()` when notified, and save the result through the application's existing
-  persistence mechanism. Upgrading the SDK alone does not update previously saved context.
-
-The SDK does not read or write browser storage. The application's persistence mechanism must preserve
-conversation identifiers, session keys, and its existing storage expiration policy.
-
-#### Registration and lifecycle
-
-Register once per SDK instance **before calling `startChat()`**, including when restoring saved context.
-Renewal can occur during startup, and earlier notifications are not replayed.
-
-```ts
-const unsubscribe = chatSDK.onChatTokenRenewed(async () => {
-    const context = await chatSDK.getCurrentLiveChatContext();
-    await persistLiveChatContext(context); // Your existing context writer, with its existing TTL.
-});
-
-await chatSDK.startChat();
-```
-
-The subscription remains registered across `endChat()` and subsequent `startChat()` calls on the same SDK
-instance. It observes renewals for the current active chat. Late renewal responses from an ended or replaced
-chat cannot overwrite the active chat's token or notify listeners.
-
-Call the returned function when tearing down the host integration or before replacing the subscription.
-It removes only the listener; it does not end the chat or disable token renewal. Do not call it after each
-renewal or solely because `endChat()` was called.
-
-```ts
-// During host teardown, or before registering a replacement listener:
-unsubscribe();
-```
-
-Each subscription has its own idempotent unsubscribe function. Listener exceptions and asynchronous
-rejections do not interrupt token renewal or other listeners. Only sanitized `ListenerThrew` /
-`ListenerRejected` categories are logged under `ChatTokenRenewedListener`, separately from `RenewChatToken`
-success.
-
-#### Recovery behavior
-
-Renewal requires an OCSDK with `renewChatToken`. Set `chatSDKConfig.chatTokenRenewal.disable` to disable renewal, or
-`chatSDKConfig.chatTokenRenewal.disableUnauthorizedRecovery` to disable only ACS 401 recovery.
-When enabled, REST and real-time signaling configuration requests share the same session-scoped recovery
-coordinator: one replay per request, concurrent renewal deduplication, a one-minute cooldown, and a stop after
-three renewed tokens are rejected. Failed real-time starts are stopped through Azure's public notification API
-so a subsequent start does not incorrectly succeed without establishing notifications. No automatic startup
-retry loop is added. With recovery disabled, the Azure constructor and startup behavior are unchanged.
-
 ### Get Data Masking Rules
 
 It gets the active data masking rules from Live Chat Config.
@@ -577,6 +516,26 @@ await chatSDK.onStreamingMessage((message) => {
 `streamingMessageType` can be `start`, `informative`, `streaming`, or `final`. A final message also reaches existing `onNewMessage` handlers.
 
 Calling this method before `startChat()` throws `UninitializedConversation`. If the conversation does not use ACS, this method throws `UnsupportedLiveChatVersion`.
+
+### On Chat Token Renewed
+
+Subscribes to notifications after the SDK renews the chat token and updates the current live chat context.
+If your application caches this context for page refresh or reconnect, save the updated context in the callback
+so subsequent restores use the renewed credentials.
+
+Register before `startChat()` to capture renewals during startup, including when restoring a saved chat.
+
+```ts
+const unsubscribe = chatSDK.onChatTokenRenewed(async () => {
+    const liveChatContext = await chatSDK.getCurrentLiveChatContext();
+    cache.saveChatContext(liveChatContext); // Custom logic to save chat context to cache
+});
+
+await chatSDK.startChat();
+```
+
+The listener remains registered across chats on the same SDK instance; call `unsubscribe()` during cleanup.
+Token renewal works without a subscription.
 
 ### On Typing Event
 
