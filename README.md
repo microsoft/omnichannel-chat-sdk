@@ -35,6 +35,7 @@ Please make sure you have a chat widget configured before using this package or 
   - [Send Messages](#send-messages)
   - [On New Message](#on-new-message)
   - [On Streaming Message](#on-streaming-message)
+  - [On Chat Token Renewed](#on-chat-token-renewed)
   - [On Typing Event](#on-typing-event)
   - [On Agent End Session](#on-agent-end-session)
   - [Send Typing Event](#send-typing-event)
@@ -515,6 +516,26 @@ await chatSDK.onStreamingMessage((message) => {
 `streamingMessageType` can be `start`, `informative`, `streaming`, or `final`. A final message also reaches existing `onNewMessage` handlers.
 
 Calling this method before `startChat()` throws `UninitializedConversation`. If the conversation does not use ACS, this method throws `UnsupportedLiveChatVersion`.
+
+### On Chat Token Renewed
+
+Subscribes to notifications after the SDK renews the chat token and updates the current live chat context.
+If your application caches this context for page refresh or reconnect, save the updated context in the callback
+so subsequent restores use the renewed credentials.
+
+Register before `startChat()` to capture renewals during startup, including when restoring a saved chat.
+
+```ts
+const unsubscribe = chatSDK.onChatTokenRenewed(async () => {
+    const liveChatContext = await chatSDK.getCurrentLiveChatContext();
+    cache.saveChatContext(liveChatContext); // Custom logic to save chat context to cache
+});
+
+await chatSDK.startChat();
+```
+
+The listener remains registered across chats on the same SDK instance; call `unsubscribe()` during cleanup.
+Token renewal works without a subscription.
 
 ### On Typing Event
 
