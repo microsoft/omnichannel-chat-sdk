@@ -766,6 +766,8 @@ class ACSClient {
             const additionalPolicies = recovery ? [createChatTokenUnauthorizedRecoveryPolicy(recovery)] : undefined;
             const recoveryOptions = recovery ? {
                 additionalPolicies,
+                // Internal option in @azure/communication-chat 1.6.0-beta.7, not public ChatClientOptions.
+                // Keep its forwarding covered by the real ChatClient browser-build test when updating the pin.
                 signalingClientOptions: {
                     additionalPolicies
                 }

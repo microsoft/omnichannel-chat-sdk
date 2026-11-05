@@ -3,6 +3,9 @@
 
 import ACSClient from "../../../src/core/messaging/ACSClient";
 import { ChatTokenUnauthorizedRecoveryCredential, chatTokenUnauthorizedRecoveryPolicyName, createChatTokenUnauthorizedRecovery } from "../../../src/utils/chatTokenUnauthorizedRecovery";
+import { execFile } from "child_process";
+import { join } from "path";
+import { promisify } from "util";
 
 jest.mock('@azure/communication-common');
 jest.mock('@azure/communication-chat');
@@ -177,6 +180,19 @@ describe('ACSClient', () => {
                 expect(refreshToken).not.toHaveBeenCalled();
             }
         });
+
+        it('forwards the installed signaling recovery policy through the real ChatClient browser build', async () => {
+            const unauthorizedRecovery = createChatTokenUnauthorizedRecovery({ initialToken: createJwt(3600), refreshToken: jest.fn() });
+            const { args } = await createChatClient({ token: createJwt(3600), environmentUrl: 'https://example.invalid', unauthorizedRecovery });
+            const { stdout } = await promisify(execFile)(process.execPath, [
+                '--conditions=browser',
+                join(__dirname, 'fixtures', 'chatClientBrowser.mjs'),
+                JSON.stringify(args[2]),
+                chatTokenUnauthorizedRecoveryPolicyName
+            ], { encoding: 'utf8', timeout: 10000 });
+
+            expect(JSON.parse(stdout)).toEqual({ browserBuild: true, signalingPolicyReached: true });
+        }, 15000);
 
         it.each([false, true])('resets a failed realtime start through the supported stop API even if cleanup rejects: %s', async cleanupRejects => {
             const unauthorizedRecovery = createChatTokenUnauthorizedRecovery({ initialToken: createJwt(3600), refreshToken: jest.fn() });

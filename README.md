@@ -390,13 +390,18 @@ Read `getCurrentLiveChatContext()` inside the listener and pass the result to yo
 context persistence writer. The SDK does not read or write browser storage. Existing conversation identifiers,
 session keys, and application-controlled storage TTLs must be preserved by that writer.
 
+Subscriptions belong to the SDK instance and survive `endChat()` / `startChat()`; ending a chat does not
+unsubscribe them. Subscribe once per SDK instance **before** `startChat()`, including saved-context restoration,
+to observe renewals during startup. Past notifications are not replayed. Unsubscribe on host teardown or before
+replacing a per-chat subscription to avoid duplicate callbacks.
+
 ```ts
 const unsubscribe = chatSDK.onChatTokenRenewed(async () => {
     const context = await chatSDK.getCurrentLiveChatContext();
     await persistLiveChatContext(context); // Your existing context writer, with its existing TTL.
 });
 
-// Call during your application's subscription cleanup.
+// Call on host teardown or before replacing a per-chat subscription.
 unsubscribe();
 ```
 

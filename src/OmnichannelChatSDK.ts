@@ -1316,6 +1316,9 @@ class OmnichannelChatSDK {
      * Subscribes to usable chat token renewals after the current SDK context has been updated.
      * No token or other payload is passed. Read getCurrentLiveChatContext() to persist the updated context.
      * Returns an idempotent unsubscribe function. Listener failures never affect renewal.
+     * Subscriptions belong to this SDK instance and survive endChat()/startChat().
+     * Subscribe before startChat() to observe restoration renewals; past notifications are not replayed.
+     * Unsubscribe on host teardown or before replacing a per-chat subscription.
      */
     public onChatTokenRenewed(listener: () => void): () => void {
         const subscription = () => listener();
