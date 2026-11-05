@@ -17,14 +17,25 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Applied the shared ACS 401 recovery policy to both REST requests and real-time signaling configuration. Failed real-time starts reset Azure's notification startup state through its public stop API before a subsequent attempt. Existing startup behavior is preserved when recovery is disabled.
+- Applied the shared ACS 401 recovery policy to real-time signaling configuration as well as REST requests. When recovery is enabled, restoring saved chat context can now renew a credential rejected during signaling setup, before any message is sent. Concurrent REST and signaling failures share the same renewal coordinator rather than starting separate renewals.
+- Failed real-time starts now reset Azure's notification startup state through its public stop API, so a later start attempts to establish notifications instead of incorrectly appearing to succeed. Cleanup preserves the original startup error, and no automatic startup retry loop is added. Existing startup behavior is preserved when recovery is disabled.
 - `getLiveChatTranscript` and `emailLiveChatTranscript` after `endChat` now send the ended chat's session key (`Oc-Sessionid`) when `liveChatContext` has no `sessionId`. Since `@microsoft/ocsdk` `0.6.0-main.316a2fa`, these calls sent no key, and the service returned `401 Unauthorized` when session key validation is on. The key is sent only for the ended chat's `chatId`, only on that request (it is not left on the shared client while the request waits), and is cleared when the next chat starts. A `sessionId` passed in `liveChatContext` also applies to that request only.
 - The voice and video call-ended event sent after a call disconnects no longer causes an unhandled promise rejection when the request fails (for example, `401` after `endChat`). The failure is logged and reported in telemetry.
 
 ### Upgrade guidance
 
-Applications that persist live chat context should subscribe to `onChatTokenRenewed` before `startChat()`
-and save `getCurrentLiveChatContext()` when notified. Token renewal works without a subscription.
+Existing `startChat()` and `endChat()` usage remains unchanged. Applications that do not persist live chat
+context need no new subscription for automatic token renewal.
+
+Applications that cache live chat context for page refresh or reconnect should subscribe to
+`onChatTokenRenewed` before `startChat()`, including when restoring saved context, to capture renewals during
+startup. In the callback, read `getCurrentLiveChatContext()` and save the complete result through the existing
+cache writer, preserving the application's storage expiration policy. The SDK updates its in-memory context,
+not application-owned storage; upgrading alone does not update previously saved context.
+
+Register once per SDK instance. The listener remains registered across `endChat()` and subsequent
+`startChat()` calls on that instance. Call the returned unsubscribe function during host teardown or before
+replacing the listener; this removes only the listener and does not disable renewal.
 See the [token renewal example](README.md#on-chat-token-renewed).
 
 ## [2.0.2] - 2026-10-20
