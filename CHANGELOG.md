@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- ACS `onNewMessage` now delivers customer-message edits without an opt-in. All ACS message edits, including agent edits and edited polling/history snapshots, carry the existing `resourceType: "MessageUpdate"` marker. Custom consumers must use this marker to update existing messages without generating new-message notifications, sounds, or unread increments.
+
 ### Fixed
 
 - Forwarded same-ID customer message edits, including masking and ordinary corrections, through ACS realtime and polling callbacks while filtering original customer echoes and duplicate or older edit versions.

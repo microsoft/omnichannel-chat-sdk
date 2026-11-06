@@ -2,6 +2,7 @@ import { AzureCommunicationTokenCredential } from "@azure/communication-common";
 import { ChatClient, ChatMessage, ChatThreadClient } from "@azure/communication-chat";
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent } from "@azure/communication-signaling";
 import { ACSConversation } from "../../../src/core/messaging/ACSClient";
+import ACSRegisterOnNewMessageOptionalParams from "../../../src/core/messaging/ACSRegisterOnNewMessageOptionalParams";
 import { ACSClientLogger } from "../../../src/utils/loggers";
 import LiveChatVersion from "../../../src/core/LiveChatVersion";
 import createOmnichannelMessage from "../../../src/utils/createOmnichannelMessage";
@@ -69,6 +70,43 @@ describe("ACSConversation customer edits", () => {
     afterEach(() => {
         jest.useRealTimers();
         jest.restoreAllMocks();
+    });
+
+    const registrationOptions: (ACSRegisterOnNewMessageOptionalParams | undefined)[] = [
+        undefined,
+        { disablePolling: false }
+    ];
+    it.each(registrationOptions)("delivers customer realtime and polling edits without opt-in: %p", async (options) => {
+        const { conversation, messages } = await createConversation();
+        const callback = jest.fn();
+        messages.mockResolvedValue([snapshot(original()), snapshot(edited())]);
+
+        await conversation.registerOnNewMessage(callback, options);
+        conversation["eventListeners"].chatMessageReceived[0](original());
+        conversation["eventListeners"].chatMessageEdited[0](edited());
+        await jest.advanceTimersByTimeAsync(1000);
+
+        expect(callback).toHaveBeenCalledTimes(1);
+        conversation["eventListeners"].chatMessageEdited[0](edited("Latest", "1720000000002"));
+        expect(callback).toHaveBeenCalledTimes(2);
+        await conversation.disconnect();
+    });
+
+    it("deduplicates customer edits independently for each subscription", async () => {
+        const { conversation } = await createConversation();
+        const firstCallback = jest.fn();
+        const secondCallback = jest.fn();
+        await conversation.registerOnNewMessage(firstCallback, { disablePolling: true });
+        await conversation.registerOnNewMessage(secondCallback, { disablePolling: true });
+
+        for (const listener of conversation["eventListeners"].chatMessageEdited) {
+            listener(edited());
+            listener(edited());
+        }
+
+        expect(firstCallback).toHaveBeenCalledTimes(1);
+        expect(secondCallback).toHaveBeenCalledTimes(1);
+        await conversation.disconnect();
     });
 
     it.each([{}, { editedOn: undefined }, { editedOn: null }])(
@@ -174,7 +212,7 @@ describe("ACSConversation customer edits", () => {
         const callback = jest.fn();
         messages.mockResolvedValue([snapshot({ ...original(), id: "unedited-history" }), snapshot(edited())]);
 
-        await conversation.registerOnNewMessage(callback);
+        await conversation.registerOnNewMessage(callback, { disablePolling: false });
         conversation["eventListeners"].chatMessageEdited[0](edited());
         await jest.advanceTimersByTimeAsync(1000);
 
@@ -188,7 +226,7 @@ describe("ACSConversation customer edits", () => {
         const callback = jest.fn();
         let finishPoll!: (messages: ChatMessage[]) => void;
         messages.mockReturnValueOnce(new Promise<ChatMessage[]>((resolve) => { finishPoll = resolve; }));
-        const registration = conversation.registerOnNewMessage(callback);
+        const registration = conversation.registerOnNewMessage(callback, { disablePolling: false });
         await jest.advanceTimersByTimeAsync(0);
         const edit = conversation["eventListeners"].chatMessageEdited?.[0];
         expect(edit).toBeDefined();
@@ -216,7 +254,7 @@ describe("ACSConversation customer edits", () => {
             snapshot({ ...original(), id: "unedited-history" }),
             snapshot(edited("Edited while offline", "1720000000002"))
         ]);
-        await reconnected.conversation.registerOnNewMessage(callback);
+        await reconnected.conversation.registerOnNewMessage(callback, { disablePolling: false });
         await jest.advanceTimersByTimeAsync(1000);
 
         expect(callback).toHaveBeenCalledTimes(1);
@@ -229,7 +267,7 @@ describe("ACSConversation customer edits", () => {
     it("delivers missed polling edits after realtime and ignores unchanged or older polling snapshots", async () => {
         const { conversation, messages } = await createConversation();
         const callback = jest.fn();
-        await conversation.registerOnNewMessage(callback);
+        await conversation.registerOnNewMessage(callback, { disablePolling: false });
         const edit = conversation["eventListeners"].chatMessageEdited[0];
         edit(edited());
 
@@ -249,7 +287,7 @@ describe("ACSConversation customer edits", () => {
     it("does not overwrite a realtime edit with an older in-flight polling response", async () => {
         const { conversation, messages } = await createConversation();
         const callback = jest.fn();
-        await conversation.registerOnNewMessage(callback);
+        await conversation.registerOnNewMessage(callback, { disablePolling: false });
         let finishPoll!: (messages: ChatMessage[]) => void;
         messages.mockReturnValueOnce(new Promise<ChatMessage[]>((resolve) => { finishPoll = resolve; }));
         await jest.advanceTimersByTimeAsync(1000);
@@ -269,7 +307,7 @@ describe("ACSConversation customer edits", () => {
         const callback = jest.fn().mockImplementationOnce(() => { throw new Error("Synthetic callback failure"); });
         messages.mockImplementation(async () => [snapshot(edited())]);
 
-        await conversation.registerOnNewMessage(callback);
+        await conversation.registerOnNewMessage(callback, { disablePolling: false });
         await jest.advanceTimersByTimeAsync(1000);
         await jest.advanceTimersByTimeAsync(1000);
 
@@ -339,7 +377,7 @@ describe("ACSConversation customer edits", () => {
     it("does not dispatch or reschedule an in-flight poll after disconnect", async () => {
         const { conversation, messages } = await createConversation();
         const callback = jest.fn();
-        await conversation.registerOnNewMessage(callback);
+        await conversation.registerOnNewMessage(callback, { disablePolling: false });
         let finishPoll!: (messages: ChatMessage[]) => void;
         messages.mockReturnValueOnce(new Promise<ChatMessage[]>((resolve) => { finishPoll = resolve; }));
         await jest.advanceTimersByTimeAsync(1000);
@@ -357,7 +395,7 @@ describe("ACSConversation customer edits", () => {
         const callback = jest.fn();
         let finishPoll!: (messages: ChatMessage[]) => void;
         messages.mockReturnValueOnce(new Promise<ChatMessage[]>((resolve) => { finishPoll = resolve; }));
-        const registration = conversation.registerOnNewMessage(callback);
+        const registration = conversation.registerOnNewMessage(callback, { disablePolling: false });
         await jest.advanceTimersByTimeAsync(0);
 
         await conversation.disconnect();

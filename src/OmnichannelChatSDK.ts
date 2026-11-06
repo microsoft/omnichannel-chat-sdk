@@ -84,7 +84,7 @@ import MessageType from "@microsoft/omnichannel-ic3core/lib/model/MessageType";
 import OmnichannelChatToken from "@microsoft/omnichannel-amsclient/lib/OmnichannelChatToken";
 import OmnichannelConfig from "./core/OmnichannelConfig";
 import OmnichannelErrorCodes from "./core/OmnichannelErrorCodes";
-import OmnichannelMessage from "./core/messaging/OmnichannelMessage";
+import OmnichannelMessage, { Role } from "./core/messaging/OmnichannelMessage";
 import OmnichannelStreamingMessage from "./core/messaging/OmnichannelStreamingMessage";
 import OnNewMessageOptionalParams from "./core/messaging/OnNewMessageOptionalParams";
 import OnStreamingMessageOptionalParams from "./core/messaging/OnStreamingMessageOptionalParams";
@@ -1736,9 +1736,9 @@ class OmnichannelChatSDK {
                         continue;
                     }
                     const customerMessage = isCustomerMessage(message);
-                    const customerVersion = customerMessage ? getNewCustomerVersion(message) : undefined;
-                    if (customerMessage && customerVersion === undefined) {
-                        continue;
+                    const customerVersion = customerMessage ? getMessageVersion(message) : undefined;
+                    if (customerMessage) {
+                        message.role = Role.User;
                     }
 
                     postedMessages.add(id);
@@ -1802,6 +1802,9 @@ class OmnichannelChatSDK {
                     const customerVersion = customerMessage ? getNewCustomerVersion(event) : undefined;
                     if (customerMessage && customerVersion === undefined) {
                         return;
+                    }
+                    if (customerMessage) {
+                        omnichannelMessage.role = Role.User;
                     }
 
                     // send callback for new messages or edited existent messages

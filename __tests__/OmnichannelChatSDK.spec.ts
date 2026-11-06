@@ -19,6 +19,7 @@ import IMessage from "@microsoft/omnichannel-ic3core/lib/model/IMessage";
 import LiveChatVersion from "../src/core/LiveChatVersion";
 import OmnichannelErrorCodes from "../src/core/OmnichannelErrorCodes";
 import OmnichannelMessage from "../src/core/messaging/OmnichannelMessage";
+import OnNewMessageOptionalParams from "../src/core/messaging/OnNewMessageOptionalParams";
 import { SDKProvider } from "@microsoft/ocsdk";
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
 import libraries from "../src/utils/libraries";
@@ -3924,7 +3925,8 @@ describe('Omnichannel Chat SDK, Sequential', () => {
 
             const subscribe = async (
                 callback: jest.Mock,
-                history?: OmnichannelMessage[]
+                history?: OmnichannelMessage[],
+                optionalParams: OnNewMessageOptionalParams = {}
             ): Promise<(event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => void> => {
                 const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
                 chatSDK.getChatConfig = jest.fn();
@@ -3942,12 +3944,97 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 if (history) {
                     jest.spyOn(chatSDK, "getMessages").mockResolvedValue(history);
                 }
-                await chatSDK.onNewMessage(callback, { rehydrate: history !== undefined, disablePolling: true });
+                await chatSDK.onNewMessage(callback, {
+                    rehydrate: history !== undefined,
+                    disablePolling: true,
+                    ...optionalParams
+                });
+                expect(chatSDK.conversation.registerOnNewMessage.mock.calls[0][1])
+                    .toEqual({ disablePolling: true });
                 return dispatch;
             };
 
             afterEach(() => {
                 jest.restoreAllMocks();
+            });
+
+            it("delivers customer edits without an opt-in", async () => {
+                const callback = jest.fn();
+                const dispatch = await subscribe(callback);
+
+                dispatch(editEvent());
+                dispatch(editEvent("9007199254740994"));
+
+                expect(callback).toHaveBeenCalledTimes(2);
+                expect(callback.mock.calls[0][0].resourceType).toBe("MessageUpdate");
+            });
+
+            it("preserves explicit customer rehydration and subsequent edits", async () => {
+                const callback = jest.fn();
+                const customerHistory = createOmnichannelMessage(editEvent(), { liveChatVersion: LiveChatVersion.V2 });
+                const unversionedHistory = { ...customerHistory, id: "original-customer-message" };
+                const dispatch = await subscribe(callback, [unversionedHistory, customerHistory]);
+
+                expect(callback.mock.calls.map(([message]) => message.id))
+                    .toEqual(["customer-message", "original-customer-message"]);
+                dispatch(editEvent("9007199254740994"));
+                expect(callback).toHaveBeenCalledTimes(3);
+            });
+
+            it("normalizes customer roles in callbacks without changing shared history conversion", async () => {
+                const callback = jest.fn();
+                const history = createOmnichannelMessage({ ...editEvent(), metadata: {} }, { liveChatVersion: LiveChatVersion.V2 });
+                expect(history.role).toBe("bot");
+
+                await subscribe(callback, [history]);
+
+                expect(callback).toHaveBeenCalledTimes(1);
+                expect(callback.mock.calls[0][0].role).toBe("user");
+            });
+
+            it("preserves explicitly requested unversioned customer history", async () => {
+                const callback = jest.fn();
+                const history = { ...createOmnichannelMessage(editEvent(), { liveChatVersion: LiveChatVersion.V2 }) };
+
+                await subscribe(callback, [history]);
+
+                expect(callback).toHaveBeenCalledTimes(1);
+                expect(callback.mock.calls[0][0]).toBe(history);
+            });
+
+            it("suppresses original customer echoes while delivering edits", async () => {
+                const callback = jest.fn();
+                const dispatch = await subscribe(callback);
+                const original = editEvent();
+                Reflect.deleteProperty(original, "editedOn");
+
+                dispatch(original);
+                dispatch(editEvent());
+                dispatch(original);
+
+                expect(callback).toHaveBeenCalledTimes(1);
+            });
+
+            it("preserves agent arrivals and identifies their edits", async () => {
+                const callback = jest.fn();
+                const dispatch = await subscribe(callback);
+                const agent = {
+                    ...editEvent(),
+                    id: "agent-message",
+                    sender: { kind: "communicationUser" as const, communicationUserId: "agent" },
+                    senderDisplayName: "Agent",
+                    metadata: { tags: "public" }
+                };
+                Reflect.deleteProperty(agent, "editedOn");
+
+                dispatch(agent);
+                dispatch(agent);
+                dispatch({ ...agent, editedOn: new Date(1720000000002) });
+
+                expect(callback).toHaveBeenCalledTimes(2);
+                expect(callback.mock.calls.map(([message]) => message.role)).toEqual(["agent", "agent"]);
+                expect(callback.mock.calls[0][0]).not.toHaveProperty("resourceType");
+                expect(callback.mock.calls[1][0].resourceType).toBe("MessageUpdate");
             });
 
             const metadataCases: Record<string, string>[] = [{}, { tags: "ChannelId-lcw,FromCustomer" }];
@@ -3985,7 +4072,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 expect(callback).toHaveBeenCalledTimes(2);
             });
 
-            it("preserves opt-in history delivery and its exact version barrier through rehydration", async () => {
+            it("preserves history delivery and its exact version barrier through rehydration", async () => {
                 const callback = jest.fn();
                 const baseline = createOmnichannelMessage(editEvent("9007199254740992"), { liveChatVersion: LiveChatVersion.V2 });
                 const dispatch = await subscribe(callback, [baseline]);

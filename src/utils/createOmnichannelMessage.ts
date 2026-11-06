@@ -1,10 +1,10 @@
 import { ChatMessageEditedEvent, ChatMessageReceivedEvent } from '@azure/communication-signaling';
-import OmnichannelMessage, { IFileMetadata, IPerson, MessageType, PersonType, Role } from "../core/messaging/OmnichannelMessage";
+import OmnichannelMessage, { IFileMetadata, IPerson, MessageType, PersonType, ResourceType } from "../core/messaging/OmnichannelMessage";
 
 import { ChatMessage } from "@azure/communication-chat";
 import IRawMessage from "@microsoft/omnichannel-ic3core/lib/model/IRawMessage";
 import LiveChatVersion from '../core/LiveChatVersion';
-import { getMessageRole, isCustomerMessage } from './utilities';
+import { getMessageRole } from './utilities';
 import { isMessageEdited, retainMessageVersion } from './messageUpdates';
 
 interface CreateOmnichannelMessageOptionalParams {
@@ -50,6 +50,9 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
         omnichannelMessage.properties.tags = metadata && metadata.tags ? metadata.tags : [];
         omnichannelMessage.tags = metadata && metadata.tags ? metadata.tags.replace(/\"/g, "").split(",").filter((tag: string) => tag.length > 0) : []; // eslint-disable-line no-useless-escape
         omnichannelMessage.timestamp = editedOn ?? createdOn;
+        if (isMessageEdited(message)) {
+            omnichannelMessage.resourceType = ResourceType.MessageUpdate;
+        }
         omnichannelMessage.messageType = MessageType.UserMessage; // Backward compatibility
         // `sender` can be null/undefined for system messages or certain ACS
         // event types. Use optional chaining so message transformation does not
@@ -124,9 +127,7 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
             };
         }
 
-        omnichannelMessage.role = isMessageEdited(message) && isCustomerMessage(omnichannelMessage)
-            ? Role.User
-            : getMessageRole(omnichannelMessage);
+        omnichannelMessage.role = getMessageRole(omnichannelMessage);
         retainMessageVersion(omnichannelMessage, message);
     } else {
         const { clientmessageid } = message as IRawMessage;
