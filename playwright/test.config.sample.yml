@@ -13,6 +13,7 @@ UnauthenticatedChatOutsideOfOperatingHours:
 UnauthenticatedChatWithChatReconnect:
 UnauthenticatedChatWithMasking:
 UnauthenticatedChatWithNoEscalationToVoiceAndVideo:
+UnauthenticatedChatWithTokenRenewal:
 AuthenticatedChat:
   orgId: ''
   orgUrl: ''

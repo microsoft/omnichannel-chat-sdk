@@ -26,6 +26,12 @@ interface CreateConversationConfig {
     disable: boolean;
 }
 
+interface ChatTokenRenewalConfig {
+    disable: boolean;
+    /** Turns off retrying chat requests that fail with 401 while the token has not expired. */
+    disableUnauthorizedRecovery?: boolean;
+}
+
 /**
  * Non-backward compatible configurations or experimentals. Subject to change any time. Internal use only.
  * It should not be used by external clients unless explicitly stated in case fallback is needed.
@@ -46,7 +52,8 @@ interface ChatSDKConfig {
     chatAdapterConfig?: ChatAdapterConfig,
     internalConfig?: InternalChatSDKConfig,
     ocUserAgent?: string[],
-    useCreateConversation?: CreateConversationConfig
+    useCreateConversation?: CreateConversationConfig,
+    chatTokenRenewal?: ChatTokenRenewalConfig
 }
 
 export {
