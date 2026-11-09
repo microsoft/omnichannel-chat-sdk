@@ -240,6 +240,175 @@ describe("ACSConversation customer edits", () => {
         await conversation.disconnect();
     });
 
+    it.each([false, true])("resumes polling after a pause with an in-flight poll=%s", async (inFlight) => {
+        const { conversation, messages } = await createConversation();
+        const callback = jest.fn();
+        await conversation.registerOnNewMessage(callback, { disablePolling: false });
+        let finishPoll!: (messages: ChatMessage[]) => void;
+        if (inFlight) {
+            messages.mockReturnValueOnce(new Promise<ChatMessage[]>((resolve) => { finishPoll = resolve; }));
+            await jest.advanceTimersByTimeAsync(1000);
+        }
+
+        await conversation.stopPolling();
+        if (inFlight) {
+            finishPoll([snapshot(edited())]);
+        }
+        await jest.advanceTimersByTimeAsync(1000);
+        const callsWhilePaused = messages.mock.calls.length;
+        await jest.advanceTimersByTimeAsync(10000);
+        expect(messages).toHaveBeenCalledTimes(callsWhilePaused);
+        expect(callback).not.toHaveBeenCalled();
+
+        const missedMessage = snapshot({
+            ...original(), id: "agent-after-resume",
+            sender: { kind: "communicationUser", communicationUserId: "agent" },
+            senderDisplayName: "Agent", metadata: { tags: "public" }
+        });
+        messages.mockResolvedValue([missedMessage]);
+        await conversation.startPolling();
+        await jest.advanceTimersByTimeAsync(35000);
+
+        expect(messages.mock.calls.length).toBeGreaterThan(callsWhilePaused);
+        expect(callback).toHaveBeenCalledTimes(1);
+        expect(callback).toHaveBeenCalledWith(missedMessage);
+        await conversation.disconnect();
+        expect(jest.getTimerCount()).toBe(0);
+    });
+
+    it.each([false, true])("delivers initial history before realtime with overlapping history=%s", async (overlap) => {
+        const { conversation, messages } = await createConversation();
+        const callback = jest.fn();
+        const agent: ChatMessageReceivedEvent = {
+            ...original(),
+            sender: { kind: "communicationUser", communicationUserId: "agent" },
+            senderDisplayName: "Agent", metadata: { tags: "public" }
+        };
+        const liveMessage = { ...agent, id: "agent-3", createdOn: new Date(1720000000003) };
+        let finishPoll!: (messages: ChatMessage[]) => void;
+        messages.mockReturnValueOnce(new Promise<ChatMessage[]>((resolve) => { finishPoll = resolve; }));
+        const registration = conversation.registerOnNewMessage(callback, { disablePolling: false });
+        await jest.advanceTimersByTimeAsync(0);
+
+        conversation["eventListeners"].chatMessageReceived[0](liveMessage);
+        const history = [
+            snapshot({ ...agent, id: "agent-2", createdOn: new Date(1720000000002) }),
+            snapshot({ ...agent, id: "agent-1", createdOn: new Date(1720000000001) })
+        ];
+        if (overlap) {
+            history.unshift(snapshot(liveMessage));
+        }
+        finishPoll(history);
+        await registration;
+
+        expect(callback.mock.calls.map(([message]) => message.id)).toEqual(["agent-1", "agent-2", "agent-3"]);
+        await conversation.disconnect();
+    });
+
+    it.each([
+        ["Customer", "1720000000001"],
+        ["Customer", "1720000000002"],
+        ["Customer", "1720000000003"],
+        ["Agent", "1720000000001"],
+        ["Agent", "1720000000002"],
+        ["Agent", "1720000000003"]
+    ])("reconciles buffered %s edits against initial snapshot version %s", async (senderDisplayName, version) => {
+        const { conversation, messages } = await createConversation();
+        const callback = jest.fn();
+        const event: ChatMessageEditedEvent = {
+            ...edited("Buffered edit", "1720000000002"),
+            senderDisplayName,
+            sender: { kind: "communicationUser", communicationUserId: senderDisplayName.toLowerCase() }
+        };
+        let finishPoll!: (messages: ChatMessage[]) => void;
+        messages.mockReturnValueOnce(new Promise<ChatMessage[]>((resolve) => { finishPoll = resolve; }));
+        const registration = conversation.registerOnNewMessage(callback, { disablePolling: false });
+        await jest.advanceTimersByTimeAsync(0);
+
+        conversation["eventListeners"].chatMessageEdited[0](event);
+        expect(callback).not.toHaveBeenCalled();
+        finishPoll([snapshot({ ...event, version, message: "Initial snapshot" })]);
+        await registration;
+
+        const olderSnapshot = version === "1720000000001";
+        const deliveries = callback.mock.calls.map(([message]) => message.message ?? message.content.message);
+        const expected = olderSnapshot ? ["Buffered edit"] : ["Initial snapshot"];
+        if (olderSnapshot && senderDisplayName === "Agent") {
+            expected.unshift("Initial snapshot");
+        }
+        expect(deliveries).toEqual(expected);
+        await conversation.disconnect();
+    });
+
+    it("delivers only the latest buffered customer edit after initial history", async () => {
+        const { conversation, messages } = await createConversation();
+        const callback = jest.fn();
+        let finishPoll!: (messages: ChatMessage[]) => void;
+        messages.mockReturnValueOnce(new Promise<ChatMessage[]>((resolve) => { finishPoll = resolve; }));
+        const registration = conversation.registerOnNewMessage(callback, { disablePolling: false });
+        await jest.advanceTimersByTimeAsync(0);
+        const edit = conversation["eventListeners"].chatMessageEdited[0];
+
+        edit(edited("Intermediate", "1720000000002"));
+        edit(edited("Latest", "1720000000003"));
+        edit(edited("Older", "1720000000002"));
+        finishPoll([snapshot(edited())]);
+        await registration;
+
+        expect(callback).toHaveBeenCalledTimes(1);
+        expect(callback.mock.calls[0][0].message).toBe("Latest");
+        await conversation.disconnect();
+    });
+
+    it("continues draining buffered messages after a callback fails and retries on polling", async () => {
+        const { conversation, messages, logger } = await createConversation();
+        const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+        const callback = jest.fn().mockImplementationOnce(() => { throw new Error("Synthetic private content"); });
+        const first: ChatMessageReceivedEvent = {
+            ...original(), id: "agent-1",
+            sender: { kind: "communicationUser", communicationUserId: "agent" },
+            senderDisplayName: "Agent", metadata: { tags: "public" }
+        };
+        let finishPoll!: (messages: ChatMessage[]) => void;
+        messages.mockReturnValueOnce(new Promise<ChatMessage[]>((resolve) => { finishPoll = resolve; }));
+        const registration = conversation.registerOnNewMessage(callback, { disablePolling: false });
+        await jest.advanceTimersByTimeAsync(0);
+        const receive = conversation["eventListeners"].chatMessageReceived[0];
+
+        receive(first);
+        receive({ ...first, id: "agent-2" });
+        finishPoll([]);
+        await registration;
+
+        expect(callback.mock.calls.map(([message]) => message.id)).toEqual(["agent-1", "agent-2"]);
+        expect(logger.failScenario).toHaveBeenCalledWith("MessageProcessingError", {
+            ExceptionDetails: "BufferedMessageProcessingFailure"
+        });
+        expect(warn).toHaveBeenCalledTimes(1);
+        expect(JSON.stringify(jest.mocked(logger.failScenario).mock.calls)).not.toContain("Synthetic private content");
+        messages.mockResolvedValue([snapshot(first)]);
+        await jest.advanceTimersByTimeAsync(1000);
+        expect(callback.mock.calls.map(([message]) => message.id)).toEqual(["agent-1", "agent-2", "agent-1"]);
+        await conversation.disconnect();
+    });
+
+    it("drains buffered realtime messages when the initial history fetch fails", async () => {
+        const { conversation, messages } = await createConversation();
+        const callback = jest.fn();
+        let failPoll!: (reason: Error) => void;
+        messages.mockReturnValueOnce(new Promise<ChatMessage[]>((_, reject) => { failPoll = reject; }));
+        const registration = conversation.registerOnNewMessage(callback, { disablePolling: false });
+        await jest.advanceTimersByTimeAsync(0);
+
+        conversation["eventListeners"].chatMessageEdited[0](edited());
+        failPoll(new Error("Synthetic polling failure"));
+        await registration;
+
+        expect(callback).toHaveBeenCalledTimes(1);
+        expect(callback).toHaveBeenCalledWith(edited());
+        await conversation.disconnect();
+    });
+
     it("recovers an offline edit in a new conversation without invoking disconnected listeners", async () => {
         const first = await createConversation();
         const callback = jest.fn();
@@ -398,6 +567,7 @@ describe("ACSConversation customer edits", () => {
         const registration = conversation.registerOnNewMessage(callback, { disablePolling: false });
         await jest.advanceTimersByTimeAsync(0);
 
+        conversation["eventListeners"].chatMessageEdited[0](edited());
         await conversation.disconnect();
         finishPoll([snapshot(edited())]);
         await registration;

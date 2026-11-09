@@ -22,7 +22,7 @@ import TelemetryEvent from "../../telemetry/TelemetryEvent";
 import createOmnichannelMessage from "../../utils/createOmnichannelMessage";
 import createOmnichannelStreamingMessage from "../../utils/createOmnichannelStreamingMessage";
 import { defaultMessageTags } from "./MessageTags";
-import { getMessageVersion, isMessageEdited, MessageUpdateTracker } from "../../utils/messageUpdates";
+import { getMessageVersion, isMessageEdited, isNewerMessageVersion, MessageUpdateTracker } from "../../utils/messageUpdates";
 
 enum ACSClientEvent {
     InitializeACSClient = 'InitializeACSClient',
@@ -212,6 +212,12 @@ export class ACSConversation {
         this.logger?.startScenario(ACSClientEvent.RegisterOnNewMessage);
         const postedMessageIds = new Set();
         const customerMessageUpdates = new MessageUpdateTracker();
+        let initialPollPending = optionalParams.disablePolling === false;
+        const pendingRealtimeMessages: {
+            event: ChatMessageReceivedEvent | ChatMessageEditedEvent;
+            isEditEvent: boolean;
+        }[] = [];
+        const initialPollMessageVersions = new Map<string, string>();
         const getNewCustomerVersion = (message: ChatMessage | ChatMessageReceivedEvent | ChatMessageEditedEvent): string | undefined => {
             const version = getMessageVersion(message);
             if (!isMessageEdited(message) || version === undefined) {
@@ -232,8 +238,11 @@ export class ACSConversation {
                     try {
                         const messages = await this.getMessages({ skipConversion: true });
                         for (const message of messages.reverse()) {
-                            if (!this.keepPolling || this.disconnected) {
+                            if (this.disconnected) {
                                 return;
+                            }
+                            if (!this.keepPolling) {
+                                break;
                             }
                             try {
                                 const { id, sender, senderDisplayName, editedOn, createdOn } = message as ChatMessage;
@@ -262,6 +271,12 @@ export class ACSConversation {
                                         customerMessageUpdates.markDelivered(id, customerVersion);
                                     }
                                     postedMessageIds.add(id);
+                                    if (initialPollPending) {
+                                        const version = getMessageVersion(message);
+                                        if (version !== undefined) {
+                                            initialPollMessageVersions.set(id, version);
+                                        }
+                                    }
                                 }
                             } catch (error) {
                                 // Surface message-processing failures instead of
@@ -294,7 +309,7 @@ export class ACSConversation {
                     }
                 }
 
-                if (!this.keepPolling || this.disconnected) {
+                if (this.disconnected) {
                     return;
                 }
                 const defaultInterval = optionalParams.pollingInterval || 10000;
@@ -328,6 +343,12 @@ export class ACSConversation {
                     if (customerVersion === undefined) {
                         return;
                     }
+                }
+
+                if (initialPollPending) {
+                    // Observe customer versions above before buffering so stale history cannot win.
+                    pendingRealtimeMessages.push({ event, isEditEvent });
+                    return;
                 }
 
                 // Route streaming finals that arrive on chatMessageReceived to the streaming callback.
@@ -396,6 +417,28 @@ export class ACSConversation {
                 const delayGenerator = nextDelay();
                 await pollForMessages(delayGenerator);
             }
+            initialPollPending = false;
+            for (const { event, isEditEvent } of pendingRealtimeMessages) {
+                if (this.disconnected) {
+                    break;
+                }
+                const polledVersion = initialPollMessageVersions.get(event.id);
+                const eventVersion = getMessageVersion(event);
+                if (isEditEvent && polledVersion !== undefined && eventVersion !== undefined
+                    && !isNewerMessageVersion(eventVersion, polledVersion)) {
+                    continue;
+                }
+                try {
+                    listener(event, isEditEvent);
+                } catch {
+                    this.logger?.failScenario(ACSClientEvent.MessageProcessingError, {
+                        ExceptionDetails: "BufferedMessageProcessingFailure"
+                    });
+                    console.warn("[ACSClient][registerOnNewMessage] Error processing a buffered message");
+                }
+            }
+            pendingRealtimeMessages.length = 0;
+            initialPollMessageVersions.clear();
             this.logger?.completeScenario(ACSClientEvent.RegisterOnNewMessage);
         } catch (error) {
             const exceptionDetails = {

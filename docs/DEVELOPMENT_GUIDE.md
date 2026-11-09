@@ -398,6 +398,8 @@ return <ReactWebChat
 
 ### Customer Message Updates (Unreleased)
 
+This change targets the **2.1.0 minor release**.
+
 For ACS conversations, `onNewMessage` delivers genuine customer-message edits without an opt-in.
 All ACS message edits carry the existing `resourceType: "MessageUpdate"` marker, including agent edits
 and edited polling/history snapshots. Agent-message and agent-edit callback delivery is otherwise unchanged.
@@ -405,7 +407,7 @@ and edited polling/history snapshots. Agent-message and agent-edit callback deli
 ```js
 await chatSDK.onNewMessage((message) => {
     if (message.resourceType === "MessageUpdate") {
-        updateExistingBubble(message);
+        upsertBubbleById(message);
         return;
     }
 
@@ -413,20 +415,24 @@ await chatSDK.onNewMessage((message) => {
 });
 ```
 
-`updateExistingBubble` and `handleIncomingMessage` are application-provided handlers. Customer
+`upsertBubbleById` and `handleIncomingMessage` are application-provided handlers. Customer
 updates include masking and ordinary corrections. An update retains the original message ID and customer
 sender, with `role: "user"`. Original, unedited customer messages and their send/realtime/polling echoes
 remain filtered.
 
-Replace the existing message with the same ID; do not append another bubble, send the update back to the
-service, or treat a customer update as a new incoming message. Notification and unread-count handlers must
-exclude every edit, including agent edits, using `resourceType`, rather than treating an edit as a new
-arrival. This also handles first-seen edited messages after reconnect. Consumers that currently count
-every callback as an incoming message must update their notification handling before upgrading the SDK.
+Replace the existing message with the same ID. If no bubble with that ID exists, insert it in timestamp
+order: an edit can be the first copy seen after a page load or reconnect, or in `rehydrate: true` and
+`getMessages()` history. Do not append a second bubble, send the update back to the service, or treat a
+customer update as a new incoming message. Notification and unread-count handlers must exclude every
+edit, including first-seen edits and agent edits, using `resourceType`. Consumers that currently count
+every callback as an incoming message must update their notification handling before upgrading the SDK;
+a minor version bump alone does not prevent automatic uptake through compatible version ranges.
 
 Realtime and polling share customer edit-version deduplication. Initial/reconnect polling can recover an
-edited snapshot without replaying unedited customer history. Explicit
-`rehydrate: true` remains a separate request to deliver historical messages.
+edited snapshot without replaying unedited customer history. Realtime callbacks received during the
+initial poll are buffered until history is delivered, then deduplicated against that history.
+Pausing polling does not stop realtime delivery; `startPolling()` resumes the paused polling loop.
+Explicit `rehydrate: true` remains a separate request to deliver historical messages.
 Registrations use available customer-history versions to suppress subsequent duplicate or older edits;
 historical messages without a retained version are still delivered when explicitly requested.
 Ordering uses the ACS version internally, not the content or a masking-specific metadata flag; no version field

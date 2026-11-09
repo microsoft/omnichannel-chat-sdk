@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+The next release target is **2.1.0** (minor).
+
 ### Added
 
 - Added `onChatTokenRenewed(listener)` to notify host applications after the active chat context is updated with a renewed token. Notifications contain no tokens or credentials, and the method returns an unsubscribe function. Listener failures do not interrupt renewal; ended or replaced sessions do not notify listeners.
@@ -13,12 +15,13 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- ACS `onNewMessage` now delivers customer-message edits without an opt-in. All ACS message edits, including agent edits and edited polling/history snapshots, carry the existing `resourceType: "MessageUpdate"` marker. Custom consumers must use this marker to update existing messages without generating new-message notifications, sounds, or unread increments.
+- ACS `onNewMessage` now delivers customer-message edits without an opt-in. All ACS message edits, including agent edits and edited polling/history snapshots, carry the existing `resourceType: "MessageUpdate"` marker. Custom consumers must upsert by message ID, inserting a first-seen edited message in timestamp order when necessary, without generating new-message notifications, sounds, or unread increments.
 - Updated `@microsoft/ocsdk` to `0.6.0-main.316a2fa`, which adds `renewChatToken` for ACS chat token renewal. This version also includes two earlier `@microsoft/ocsdk` changes: `getChatConfig` now retries HTTP 429 responses by default with jittered backoff, and default headers are copied per request, so headers such as `Oc-Sessionid` or `AuthenticatedUserToken` set by an earlier call are no longer re-sent on later calls.
 
 ### Fixed
 
 - Forwarded same-ID customer message edits, including masking and ordinary corrections, through ACS realtime and polling callbacks while filtering original customer echoes and duplicate or older edit versions.
+- Preserved polling pause/resume and initial history-before-realtime callback ordering while listening for edits during the first poll. Disconnect still stops polling and discards buffered callbacks.
 - Applied the shared ACS 401 recovery policy to real-time signaling configuration as well as REST requests. When recovery is enabled, restoring saved chat context can now renew a credential rejected during signaling setup, before any message is sent. Concurrent REST and signaling failures share the same renewal coordinator rather than starting separate renewals.
 - Failed real-time starts now reset Azure's notification startup state through its public stop API, so a later start attempts to establish notifications instead of incorrectly appearing to succeed. Cleanup preserves the original startup error, and no automatic startup retry loop is added. Existing startup behavior is preserved when recovery is disabled.
 - `getLiveChatTranscript` and `emailLiveChatTranscript` after `endChat` now send the ended chat's session key (`Oc-Sessionid`) when `liveChatContext` has no `sessionId`. Since `@microsoft/ocsdk` `0.6.0-main.316a2fa`, these calls sent no key, and the service returned `401 Unauthorized` when session key validation is on. The key is sent only for the ended chat's `chatId`, only on that request (it is not left on the shared client while the request waits), and is cleared when the next chat starts. A `sessionId` passed in `liveChatContext` also applies to that request only.
