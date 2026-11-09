@@ -22,6 +22,7 @@ import TelemetryEvent from "../../telemetry/TelemetryEvent";
 import createOmnichannelMessage from "../../utils/createOmnichannelMessage";
 import createOmnichannelStreamingMessage from "../../utils/createOmnichannelStreamingMessage";
 import { defaultMessageTags } from "./MessageTags";
+import { getMessageVersion, isMessageEdited, isNewerMessageVersion, MessageUpdateTracker } from "../../utils/messageUpdates";
 
 enum ACSClientEvent {
     InitializeACSClient = 'InitializeACSClient',
@@ -61,6 +62,7 @@ export class ACSConversation {
     private participantsMapping?: ParticipantMapping;
     private eventListeners: EventListenersMapping;
     private keepPolling = false;
+    private disconnected = false;
     private pollingTimer: NodeJS.Timeout | number | null = null;
     private streamSequenceCounters: Map<string, number> = new Map();
     private finalizedMessageIds: Set<string> = new Set();
@@ -89,6 +91,7 @@ export class ACSConversation {
         this.logger?.startScenario(ACSClientEvent.InitializeACSConversation);
 
         this.sessionInfo = sessionInfo;
+        this.disconnected = false;
 
         try {
             this.chatThreadClient = await this.chatClient?.getChatThreadClient(sessionInfo.threadId as string);
@@ -208,6 +211,25 @@ export class ACSConversation {
     public async registerOnNewMessage(onNewMessageCallback: CallableFunction, optionalParams: ACSRegisterOnNewMessageOptionalParams = { disablePolling: false }): Promise<void> {
         this.logger?.startScenario(ACSClientEvent.RegisterOnNewMessage);
         const postedMessageIds = new Set();
+        const customerMessageUpdates = new MessageUpdateTracker();
+        let initialPollPending = optionalParams.disablePolling === false;
+        const pendingRealtimeMessages: {
+            event: ChatMessageReceivedEvent | ChatMessageEditedEvent;
+            isEditEvent: boolean;
+        }[] = [];
+        const initialPollMessageVersions = new Map<string, string>();
+        const getNewCustomerVersion = (message: ChatMessage | ChatMessageReceivedEvent | ChatMessageEditedEvent): string | undefined => {
+            const version = getMessageVersion(message);
+            if (!isMessageEdited(message) || version === undefined) {
+                this.logger?.failScenario(ACSClientEvent.MessageProcessingError, {
+                    ExceptionDetails: "InvalidCustomerMessageEdit"
+                });
+                console.warn("[ACSClient][registerOnNewMessage] Invalid customer message edit");
+                return undefined;
+            }
+
+            return customerMessageUpdates.shouldDeliver(message.id, version) ? version : undefined;
+        };
 
         try {
             // Initial polls with exponential backoff then poll every 10 seconds by default
@@ -216,19 +238,45 @@ export class ACSConversation {
                     try {
                         const messages = await this.getMessages({ skipConversion: true });
                         for (const message of messages.reverse()) {
+                            if (this.disconnected) {
+                                return;
+                            }
+                            if (!this.keepPolling) {
+                                break;
+                            }
                             try {
-                                const { id, senderDisplayName } = message as ChatMessage;
-                                const customerMessageCondition = senderDisplayName === ACSParticipantDisplayName.Customer;
-                                // Filter out customer messages
+                                const { id, sender, senderDisplayName, editedOn, createdOn } = message as ChatMessage;
+                                const senderId = (sender as CommunicationUserIdentifier | undefined)?.communicationUserId;
+                                const customerMessageCondition = senderDisplayName === ACSParticipantDisplayName.Customer
+                                    || (this.sessionInfo?.id !== undefined && senderId === this.sessionInfo.id);
+                                let customerVersion: string | undefined;
                                 if (customerMessageCondition) {
-                                    continue;
+                                    if (editedOn == null) {
+                                        continue;
+                                    }
+                                    customerVersion = getNewCustomerVersion(message as ChatMessage);
+                                    if (customerVersion === undefined) {
+                                        continue;
+                                    }
                                 }
 
                                 // Filter out duplicate messages
-                                if (!postedMessageIds.has(id)) {
-                                    this.logger?.recordIndividualEvent(TelemetryEvent.MessageReceived, MessageSource.Polling, MessagePrinterFactory.printifyMessage(message, PrinterType.Polling));
+                                if (customerMessageCondition || !postedMessageIds.has(id)) {
+                                    const printableMessage = customerMessageCondition
+                                        ? { id, bot: false, card: false, content: "", created: createdOn }
+                                        : MessagePrinterFactory.printifyMessage(message, PrinterType.Polling);
+                                    this.logger?.recordIndividualEvent(TelemetryEvent.MessageReceived, MessageSource.Polling, printableMessage);
                                     onNewMessageCallback(message);
+                                    if (customerVersion !== undefined) {
+                                        customerMessageUpdates.markDelivered(id, customerVersion);
+                                    }
                                     postedMessageIds.add(id);
+                                    if (initialPollPending) {
+                                        const version = getMessageVersion(message);
+                                        if (version !== undefined) {
+                                            initialPollMessageVersions.set(id, version);
+                                        }
+                                    }
                                 }
                             } catch (error) {
                                 // Surface message-processing failures instead of
@@ -261,6 +309,9 @@ export class ACSConversation {
                     }
                 }
 
+                if (this.disconnected) {
+                    return;
+                }
                 const defaultInterval = optionalParams.pollingInterval || 10000;
                 const delay = delayGenerator.next();
                 this.pollingTimer = setTimeout(() => {
@@ -269,19 +320,34 @@ export class ACSConversation {
             };
 
             await this.startPolling();
-            if (optionalParams.disablePolling === false) {
-                const delayGenerator = nextDelay();
-                await pollForMessages(delayGenerator);
+            if (this.disconnected) {
+                this.logger?.completeScenario(ACSClientEvent.RegisterOnNewMessage);
+                return;
             }
 
-            const listener = (event: ChatMessageReceivedEvent | ChatMessageEditedEvent) => {
+            const listener = (event: ChatMessageReceivedEvent | ChatMessageEditedEvent, isEditEvent = false) => {
+                if (this.disconnected) {
+                    return;
+                }
                 const { id, sender } = event;
 
-                const customerMessageCondition = ((sender as CommunicationUserIdentifier).communicationUserId === (this.sessionInfo?.id as string));
+                const customerMessageCondition = ((sender as CommunicationUserIdentifier | undefined)?.communicationUserId === (this.sessionInfo?.id as string));
                 const isChatMessageEditedEvent = Object.keys(event).includes("editedOn");
 
-                // Filter out customer messages
+                let customerVersion: string | undefined;
                 if (customerMessageCondition) {
+                    if (!isEditEvent || event.threadId !== this.sessionInfo?.threadId) {
+                        return;
+                    }
+                    customerVersion = getNewCustomerVersion(event);
+                    if (customerVersion === undefined) {
+                        return;
+                    }
+                }
+
+                if (initialPollPending) {
+                    // Observe customer versions above before buffering so stale history cannot win.
+                    pendingRealtimeMessages.push({ event, isEditEvent });
                     return;
                 }
 
@@ -326,19 +392,53 @@ export class ACSConversation {
                 }
 
                 // Filter out duplicate messages
-                if (postedMessageIds.has(id) && !isChatMessageEditedEvent) {
+                if (!customerMessageCondition && postedMessageIds.has(id) && !isChatMessageEditedEvent) {
                     return;
                 }
                 // Always deliver to onNewMessage for backward compatibility
                 onNewMessageCallback(event);
+                if (customerVersion !== undefined) {
+                    customerMessageUpdates.markDelivered(id, customerVersion);
+                }
                 postedMessageIds.add(id);
-                this.logger?.recordIndividualEvent(TelemetryEvent.MessageReceived, MessageSource.WebSocket, MessagePrinterFactory.printifyMessage(event, PrinterType.WebSocket));
+                const printableMessage = customerMessageCondition
+                    ? { id, bot: false, card: false, content: "", created: event.createdOn }
+                    : MessagePrinterFactory.printifyMessage(event, PrinterType.WebSocket);
+                this.logger?.recordIndividualEvent(TelemetryEvent.MessageReceived, MessageSource.WebSocket, printableMessage);
             }
 
+            const editListener = (event: ChatMessageEditedEvent): void => listener(event, true);
             this.chatClient?.on("chatMessageReceived", listener);
-            this.chatClient?.on("chatMessageEdited", listener);
+            this.chatClient?.on("chatMessageEdited", editListener);
             this.trackListener("chatMessageReceived", listener);
-            this.trackListener("chatMessageEdited", listener);
+            this.trackListener("chatMessageEdited", editListener);
+            // Subscribe before the first poll so edits racing with history retrieval are not lost.
+            if (optionalParams.disablePolling === false) {
+                const delayGenerator = nextDelay();
+                await pollForMessages(delayGenerator);
+            }
+            initialPollPending = false;
+            for (const { event, isEditEvent } of pendingRealtimeMessages) {
+                if (this.disconnected) {
+                    break;
+                }
+                const polledVersion = initialPollMessageVersions.get(event.id);
+                const eventVersion = getMessageVersion(event);
+                if (isEditEvent && polledVersion !== undefined && eventVersion !== undefined
+                    && !isNewerMessageVersion(eventVersion, polledVersion)) {
+                    continue;
+                }
+                try {
+                    listener(event, isEditEvent);
+                } catch {
+                    this.logger?.failScenario(ACSClientEvent.MessageProcessingError, {
+                        ExceptionDetails: "BufferedMessageProcessingFailure"
+                    });
+                    console.warn("[ACSClient][registerOnNewMessage] Error processing a buffered message");
+                }
+            }
+            pendingRealtimeMessages.length = 0;
+            initialPollMessageVersions.clear();
             this.logger?.completeScenario(ACSClientEvent.RegisterOnNewMessage);
         } catch (error) {
             const exceptionDetails = {
@@ -643,6 +743,7 @@ export class ACSConversation {
 
     public async disconnect(): Promise<void> {
         this.logger?.startScenario(ACSClientEvent.Disconnect);
+        this.disconnected = true;
 
         try {
             for (const [event, listeners] of Object.entries(this.eventListeners)) {
@@ -650,6 +751,7 @@ export class ACSConversation {
                     this.chatClient.off(event as any, listener as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
                 });
             }
+            this.eventListeners = {};
 
             await this.stopPolling();
             if (this.pollingTimer) {
