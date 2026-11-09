@@ -4,6 +4,8 @@
 
 This package uses **GitHub Actions OIDC trusted publishing** — no npm tokens or secrets are needed. The `npm-release.yml` workflow handles everything.
 
+The read-only build job validates release metadata, installs with `npm ci --ignore-scripts`, and explicitly builds and packs the package. A separate job receives OIDC permission and publishes that tarball without installing project dependencies or running package lifecycle scripts. Automatic publishing and npm dist-tags are unchanged.
+
 ### Dev Versions (Automatic)
 
 Every push to `main` automatically publishes a dev version to npm:
@@ -11,7 +13,7 @@ Every push to `main` automatically publishes a dev version to npm:
 ```
 2.0.0-main.abc1234
        ^^^^^^^^^^^^
-       branch + short commit SHA (via version-from-git)
+       branch + short commit SHA (prepared locally)
 ```
 
 - **npm dist-tag**: `latest`
@@ -129,7 +131,7 @@ For urgent fixes that need to ship against an older release (not `main`), use a 
    git push upstream hotfix/<name>
    ```
 
-5. The `npm-release.yml` workflow triggers on `hotfix/**` branches. On hotfix branches, `version-from-git` is **skipped** — the version in `package.json` is used as-is.
+5. The `npm-release.yml` workflow triggers on `hotfix/**` branches. On hotfix branches, main prerelease version preparation is **skipped** — the version in `package.json` is used as-is.
 
 6. **Verify the publish**:
    ```bash
