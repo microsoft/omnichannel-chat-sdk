@@ -537,6 +537,17 @@ await chatSDK.startChat();
 The listener remains registered across chats on the same SDK instance; call `unsubscribe()` during cleanup.
 Token renewal works without a subscription.
 
+Renewal waits longer after each failure in a row (60 seconds after the first, then doubling with jitter, up to 10 minutes) and stops for the chat after 8 failures in a row, after 3 HTTP 400/401/403 responses in a row for an authenticated chat, or after a status that cannot succeed. When renewal stops, the chat keeps its current token until it expires. To know when this happens, subscribe with `onChatTokenRenewalStopped`:
+
+```ts
+const unsubscribe = chatSDK.onChatTokenRenewalStopped(({ reason }) => {
+    // reason is "NonRetriableStatus", "AuthRejected" or "MaxFailures". No token is passed.
+    // Custom logic, for example plan to start a new chat before the current token expires
+});
+```
+
+Set `chatSDKConfig.chatTokenRenewal.maxConsecutiveFailures`, `maxRetryCooldownInMs` or `maxConsecutiveAuthFailures` to change these limits.
+
 ### On Typing Event
 
 It subscribes to an agent typing event.

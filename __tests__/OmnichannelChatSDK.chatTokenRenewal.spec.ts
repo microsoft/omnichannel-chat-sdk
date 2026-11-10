@@ -534,4 +534,119 @@ describe('Omnichannel Chat SDK, chat token renewal', () => {
             });
         });
     });
+
+    describe('when renewal stops', () => {
+        const httpError = (status: number) => Object.assign(new Error(`Request failed with status code ${status}`), { response: { status } });
+        const maxCooldownInMs = 10 * 60 * 1000;
+        let currentTime: number;
+
+        beforeEach(() => {
+            currentTime = Date.now();
+            jest.spyOn(Date, 'now').mockImplementation(() => currentTime);
+        });
+
+        afterEach(() => {
+            jest.restoreAllMocks();
+        });
+
+        it('notifies subscribers once with only the reason and records telemetry without the token', async () => {
+            const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken: jest.fn().mockRejectedValue(httpError(404)) });
+            jest.spyOn(chatSDK.scenarioMarker, 'singleRecord');
+            const listener = jest.fn();
+            chatSDK.onChatTokenRenewalStopped(listener);
+
+            await expect(tokenRefresher()).resolves.toBe(initialToken);
+            currentTime += 24 * 60 * 60 * 1000;
+            await expect(tokenRefresher()).resolves.toBe(initialToken);
+
+            expect(listener).toHaveBeenCalledTimes(1);
+            expect(listener).toHaveBeenCalledWith({ reason: 'NonRetriableStatus' });
+            expect(chatSDK.scenarioMarker.singleRecord).toHaveBeenCalledWith('ChatTokenRenewalStopped', {
+                RequestId: chatSDK.requestId,
+                ChatId: chatId,
+                CustomProperties: JSON.stringify({ reason: 'NonRetriableStatus', failures: 1, lastFailure: 'HttpStatus404' })
+            });
+            expect(JSON.stringify(chatSDK.scenarioMarker.singleRecord.mock.calls)).not.toContain(initialToken);
+        });
+
+        it('stops an authenticated chat after 3 rejected renewals, and 401 recovery then gets no new token', async () => {
+            const renewChatToken = jest.fn().mockRejectedValue(httpError(401));
+            const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken, authenticatedUserToken: 'startToken' });
+            const listener = jest.fn();
+            chatSDK.onChatTokenRenewalStopped(listener);
+
+            for (let i = 0; i < 5; i++) {
+                await expect(tokenRefresher()).resolves.toBe(initialToken);
+                currentTime += maxCooldownInMs;
+            }
+            const recovery = (chatSDK.ACSClient.initialize as jest.Mock).mock.calls[0][0].unauthorizedRecovery;
+            await expect(recovery.recover(initialToken, 'ChatRequest')).resolves.toBeUndefined();
+
+            expect(renewChatToken).toHaveBeenCalledTimes(3);
+            expect(listener).toHaveBeenCalledWith({ reason: 'AuthRejected' });
+            expect(chatSDK.scenarioMarker.failScenario).toHaveBeenCalledWith(TelemetryEvent.ChatTokenUnauthorizedRecovery, expect.objectContaining({
+                ExceptionDetails: JSON.stringify({ response: 'NoNewToken', source: 'ChatRequest' })
+            }));
+        });
+
+        it('applies the limits from the SDK config', async () => {
+            const renewChatToken = jest.fn().mockRejectedValue(httpError(500));
+            const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken, chatSDKConfig: { chatTokenRenewal: { maxConsecutiveFailures: 3, maxRetryCooldownInMs: 90000 } } });
+            const listener = jest.fn();
+            chatSDK.onChatTokenRenewalStopped(listener);
+
+            await tokenRefresher();
+            currentTime += 60000;
+            await tokenRefresher();
+            currentTime += 90000;
+            await tokenRefresher();
+            currentTime += maxCooldownInMs;
+            await tokenRefresher();
+
+            expect(renewChatToken).toHaveBeenCalledTimes(3);
+            expect(listener).toHaveBeenCalledWith({ reason: 'MaxFailures' });
+        });
+
+        it.each(['ending', 'ended', 'replaced'])('does not notify when the chat is %s', async state => {
+            let fail: (error: unknown) => void = () => undefined;
+            const pending = new Promise((_, reject) => { fail = reject; });
+            const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken: jest.fn().mockReturnValue(pending) });
+            const listener = jest.fn();
+            chatSDK.onChatTokenRenewalStopped(listener);
+            const renewal = tokenRefresher();
+            await Promise.resolve();
+            if (state === 'ending') {
+                chatSDK['isEndingChat'] = true;
+            } else {
+                chatSDK.requestId = 'replacement-request';
+                chatSDK['chatToken'] = state === 'ended' ? {} : { chatId: 'replacement-chat', token: 'replacement-token' };
+            }
+            fail(httpError(404));
+            await expect(renewal).resolves.toBe(initialToken);
+
+            expect(listener).not.toHaveBeenCalled();
+        });
+
+        it('isolates throwing and rejecting subscribers and honors unsubscribe', async () => {
+            const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken: jest.fn().mockRejectedValue(httpError(404)) });
+            const secret = 'subscriber-private-error';
+            const removed = jest.fn();
+            const remaining = jest.fn();
+            const unsubscribe = chatSDK.onChatTokenRenewalStopped(removed);
+            chatSDK.onChatTokenRenewalStopped(() => { throw new Error(secret); });
+            chatSDK.onChatTokenRenewalStopped(async () => { throw new Error(secret); });
+            chatSDK.onChatTokenRenewalStopped(remaining);
+            unsubscribe();
+            unsubscribe();
+
+            await expect(tokenRefresher()).resolves.toBe(initialToken);
+            await new Promise(resolve => setTimeout(resolve, 0));
+
+            expect(removed).not.toHaveBeenCalled();
+            expect(remaining).toHaveBeenCalledTimes(1);
+            expect(chatSDK.scenarioMarker.failScenario).toHaveBeenCalledWith('ChatTokenRenewalStoppedListener', expect.objectContaining({ ExceptionDetails: JSON.stringify({ response: 'ListenerThrew' }) }));
+            expect(chatSDK.scenarioMarker.failScenario).toHaveBeenCalledWith('ChatTokenRenewalStoppedListener', expect.objectContaining({ ExceptionDetails: JSON.stringify({ response: 'ListenerRejected' }) }));
+            expect(JSON.stringify(chatSDK.scenarioMarker.failScenario.mock.calls)).not.toContain(secret);
+        });
+    });
 });

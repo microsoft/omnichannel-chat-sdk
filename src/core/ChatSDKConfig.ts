@@ -30,6 +30,12 @@ interface ChatTokenRenewalConfig {
     disable: boolean;
     /** Turns off retrying chat requests that fail with 401 while the token has not expired. */
     disableUnauthorizedRecovery?: boolean;
+    /** Renewal stops after this many failures in a row. Default 8. */
+    maxConsecutiveFailures?: number;
+    /** Longest wait between renewal attempts after failures, in milliseconds. Default 600000 (10 minutes). */
+    maxRetryCooldownInMs?: number;
+    /** Renewal of an authenticated chat stops after this many HTTP 400/401/403 responses in a row. Default 3. */
+    maxConsecutiveAuthFailures?: number;
 }
 
 /**

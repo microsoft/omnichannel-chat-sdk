@@ -110,7 +110,7 @@ import { isCoreServicesOrgUrlDNSError } from "./utils/internalUtils";
 import loggerUtils from "./utils/loggerUtils";
 import { parseLowerCaseString } from "./utils/parsers";
 import { ChatTokenUnauthorizedRecovery, createChatTokenUnauthorizedRecovery, UnauthorizedRecoveryFailureReason, UnauthorizedRecoverySource } from "./utils/chatTokenUnauthorizedRecovery";
-import { authenticatedNonRetriableStatusCodes, createChatTokenRefresher, defaultNonRetriableStatusCodes, RenewedChatToken } from "./utils/chatTokenRenewal";
+import { authenticatedNonRetriableStatusCodes, ChatTokenRenewalStoppedDetails, createChatTokenRefresher, defaultNonRetriableStatusCodes, RenewedChatToken } from "./utils/chatTokenRenewal";
 import platform from "./utils/platform";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import startPolling from "./commands/startPolling";
@@ -145,6 +145,7 @@ class OmnichannelChatSDK {
     private chatToken: IChatToken;
     private chatTokenUnauthorizedRecovery: ChatTokenUnauthorizedRecovery | null = null;
     private chatTokenRenewedListeners: Set<() => void> = new Set();
+    private chatTokenRenewalStoppedListeners: Set<(details: { reason: string }) => void> = new Set();
     private liveChatConfig: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private widgetSnippetBaseUrl = '';
     private liveChatVersion: number;
@@ -1335,6 +1336,21 @@ class OmnichannelChatSDK {
         return () => { this.chatTokenRenewedListeners.delete(subscription); };
     }
 
+    /**
+     * Subscribes to the end of chat token renewal for the current chat. Renewal stops when the renew API returns a
+     * status that cannot succeed (reason "NonRetriableStatus"), after repeated HTTP 400/401/403 for an authenticated
+     * chat ("AuthRejected"), or after repeated failures of any kind ("MaxFailures"). The chat keeps its current token,
+     * so it ends when that token expires unless the host starts a new chat or reconnects.
+     * Called at most once per chat, and never for an ended or replaced chat. No token is passed.
+     * Returns an idempotent unsubscribe function. Listener failures never affect the chat.
+     * Subscriptions belong to this SDK instance and survive endChat()/startChat().
+     */
+    public onChatTokenRenewalStopped(listener: (details: { reason: string }) => void): () => void {
+        const subscription = (details: { reason: string }) => listener(details);
+        this.chatTokenRenewalStoppedListeners.add(subscription);
+        return () => { this.chatTokenRenewalStoppedListeners.delete(subscription); };
+    }
+
     public async getCurrentLiveChatContext(): Promise<GetCurrentLiveChatContextResponse> {
         const chatToken = await this.getChatToken();
         const { requestId } = this;
@@ -1615,6 +1631,9 @@ class OmnichannelChatSDK {
                     return this.OCClient.renewChatToken(renewalId, renewChatTokenOptionalParams);
                 },
                 isNonRetriableStatus: (statusCode: number) => (this.authenticatedUserToken ? authenticatedNonRetriableStatusCodes : defaultNonRetriableStatusCodes).includes(statusCode),
+                maxConsecutiveFailures: this.chatSDKConfig?.chatTokenRenewal?.maxConsecutiveFailures,
+                maxRetryCooldownInMs: this.chatSDKConfig?.chatTokenRenewal?.maxRetryCooldownInMs,
+                maxConsecutiveAuthFailures: this.chatSDKConfig?.chatTokenRenewal?.maxConsecutiveAuthFailures,
                 onRenewed: (renewed: RenewedChatToken) => {
                     this.chatToken = {
                         ...this.chatToken,
@@ -1637,11 +1656,54 @@ class OmnichannelChatSDK {
                         ...telemetryData,
                         ExceptionDetails: JSON.stringify(exceptionDetails)
                     });
+                },
+                onStopped: (details: ChatTokenRenewalStoppedDetails) => {
+                    try {
+                        this.scenarioMarker.singleRecord(TelemetryEvent.ChatTokenRenewalStopped, {
+                            ...telemetryData,
+                            CustomProperties: JSON.stringify({
+                                reason: details.reason,
+                                failures: details.failures,
+                                lastFailure: details.lastFailure
+                            })
+                        });
+                    } catch {
+                        // Telemetry failures must not stop the notification
+                    }
+
+                    this.notifyChatTokenRenewalStopped(requestId, chatId, details.reason);
                 }
             });
         } catch {
             return undefined;
         }
+    }
+
+    private notifyChatTokenRenewalStopped(requestId: string, chatId: string, reason: string): void {
+        const reportFailure = (response: "ListenerThrew" | "ListenerRejected"): void => {
+            try {
+                const telemetryData = { RequestId: requestId, ChatId: chatId };
+                this.scenarioMarker.startScenario(TelemetryEvent.ChatTokenRenewalStoppedListener, telemetryData);
+                this.scenarioMarker.failScenario(TelemetryEvent.ChatTokenRenewalStoppedListener, {
+                    ...telemetryData,
+                    ExceptionDetails: JSON.stringify({ response })
+                });
+            } catch {
+                // Subscriber telemetry must not affect the chat or become an unhandled rejection.
+            }
+        };
+
+        Array.from(this.chatTokenRenewalStoppedListeners).forEach(listener => {
+            if (this.isEndingChat || this.requestId !== requestId || this.chatToken?.chatId !== chatId
+                || !this.chatTokenRenewalStoppedListeners.has(listener)) {
+                return;
+            }
+            try {
+                Promise.resolve(listener({ reason })).catch(() => reportFailure("ListenerRejected"));
+            } catch {
+                reportFailure("ListenerThrew");
+            }
+        });
     }
 
     private notifyChatTokenRenewed(requestId: string, chatId: string): void {
