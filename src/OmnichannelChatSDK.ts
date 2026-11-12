@@ -3429,12 +3429,6 @@ class OmnichannelChatSDK {
         try {
 
             liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache);
-            this.liveChatConfig = liveChatConfig;
-            this.evaluateAMSAvailability();
-            this.buildConfigurations(liveChatConfig);
-            /* istanbul ignore next */
-            this.debug && console.log(`[OmnichannelChatSDK][getChatConfig][liveChatVersion] ${this.liveChatVersion}`);
-            return this.liveChatConfig;
 
         } catch (error) {
             // Calculate elapsed time locally to avoid concurrency issues
@@ -3449,7 +3443,7 @@ class OmnichannelChatSDK {
             // Fallback on orgUrl which got converted to Core Services orgUrl
             if (isCoreServicesOrgUrlDNSError(error, this.coreServicesOrgUrl, this.dynamicsLocationCode)) {
                 this.omnichannelConfig.orgUrl = this.unqServicesOrgUrl as string;
-                this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(false) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
+                this.OCClient = await OCSDKProvider.getSDK(this.omnichannelConfig as IOmnichannelConfiguration, createOcSDKConfiguration(false, this.chatSDKConfig?.ocUserAgent) as ISDKConfiguration, this.ocSdkLogger as OCSDKLogger);
                 liveChatConfig = await this.OCClient.getChatConfig(this.requestId, bypassCache); // Bubble up error by default to throw ChatConfigRetrievalFailure
             } else {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -3459,6 +3453,11 @@ class OmnichannelChatSDK {
                 throw error // Bubble up error by default to throw ChatConfigRetrievalFailure
             }
         }
+        this.liveChatConfig = liveChatConfig;
+        this.evaluateAMSAvailability();
+        this.buildConfigurations(liveChatConfig);
+        /* istanbul ignore next */
+        this.debug && console.log(`[OmnichannelChatSDK][getChatConfig][liveChatVersion] ${this.liveChatVersion}`);
         return this.liveChatConfig;
     }
 
