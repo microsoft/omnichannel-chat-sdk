@@ -20,6 +20,7 @@ The next release target is **2.1.0** (minor).
 
 ### Fixed
 
+- Applied the full chat configuration after a core-services network error falls back successfully to the original organization URL, and preserved caller-provided user agents on that fallback request.
 - Forwarded same-ID customer message edits, including masking and ordinary corrections, through ACS realtime and polling callbacks while filtering original customer echoes and duplicate or older edit versions.
 - Preserved polling pause/resume and initial history-before-realtime callback ordering while listening for edits during the first poll. Disconnect still stops polling and discards buffered callbacks.
 - Applied the shared ACS 401 recovery policy to real-time signaling configuration as well as REST requests. When recovery is enabled, restoring saved chat context can now renew a credential rejected during signaling setup, before any message is sent. Concurrent REST and signaling failures share the same renewal coordinator rather than starting separate renewals.
