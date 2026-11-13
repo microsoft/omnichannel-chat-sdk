@@ -111,7 +111,7 @@ import loggerUtils from "./utils/loggerUtils";
 import { parseLowerCaseString } from "./utils/parsers";
 import { ChatTokenUnauthorizedRecovery, createChatTokenUnauthorizedRecovery, UnauthorizedRecoveryFailureReason, UnauthorizedRecoverySource } from "./utils/chatTokenUnauthorizedRecovery";
 import { authenticatedNonRetriableStatusCodes, ChatTokenRenewalStoppedDetails, createChatTokenRefresher, defaultNonRetriableStatusCodes, RenewedChatToken } from "./utils/chatTokenRenewal";
-import type { ChatTokenRenewalStopReason } from "./utils/chatTokenRenewal";
+import type { ChatTokenRefresher, ChatTokenRenewalStopReason } from "./utils/chatTokenRenewal";
 import platform from "./utils/platform";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import startPolling from "./commands/startPolling";
@@ -1338,10 +1338,13 @@ class OmnichannelChatSDK {
     }
 
     /**
-     * Subscribes to the end of chat token renewal for the current chat. Renewal stops when the renew API returns a
+     * Subscribes to a stop of automatic chat token renewal. Renewal stops when the renew API returns a
      * status that cannot succeed (reason "NonRetriableStatus"), after repeated HTTP 400/401/403 for an authenticated
      * chat ("AuthRejected"), or after repeated failures of any kind ("MaxFailures"). Renewal keeps the last token;
      * it may already have expired when MaxFailures is reported. This event does not end the chat.
+     * After a failure-limit stop, request recovery for ACS 401 or expired-token access may attempt renewal up to three
+     * more times in total. A different
+     * usable token resets the counters and resumes automatic renewal. Non-retriable status stops cannot be bypassed.
      * Called at most once per chat, and never for an ended or replaced chat. No token is passed.
      * Returns an idempotent unsubscribe function. Listener failures never affect the chat.
      * Subscriptions belong to this SDK instance and survive endChat()/startChat().
@@ -1597,7 +1600,7 @@ class OmnichannelChatSDK {
      * the existing behavior, unless renewal is enabled in the chat config, not disabled in the SDK config and
      * supported by the installed OCSDK. The refresher never throws and falls back to the current token on failure.
      */
-    private createChatTokenRefresher(initialToken: string): (() => Promise<string>) | undefined {
+    private createChatTokenRefresher(initialToken: string): ChatTokenRefresher | undefined {
         try {
             if (this.liveChatVersion !== LiveChatVersion.V2
                 || this.chatSDKConfig?.chatTokenRenewal?.disable === true
@@ -1781,11 +1784,11 @@ class OmnichannelChatSDK {
     }
 
     /**
-     * Creates the recovery for chat requests that fail with 401 while the chat token has not
-     * expired. Returns null, which keeps the existing behavior, unless chat token renewal is enabled and recovery is
+     * Creates request recovery for HTTP 401 and on-demand expired-token access. Returns null, which keeps the
+     * existing behavior, unless chat token renewal is enabled and recovery is
      * not disabled in the SDK config.
      */
-    private createChatTokenUnauthorizedRecovery(initialToken: string, tokenRefresher: (() => Promise<string>) | undefined): ChatTokenUnauthorizedRecovery | null {
+    private createChatTokenUnauthorizedRecovery(initialToken: string, tokenRefresher: ChatTokenRefresher | undefined): ChatTokenUnauthorizedRecovery | null {
         try {
             if (!tokenRefresher
                 || this.chatSDKConfig?.chatTokenRenewal?.disableUnauthorizedRecovery === true
@@ -1800,7 +1803,7 @@ class OmnichannelChatSDK {
 
             return createChatTokenUnauthorizedRecovery({
                 initialToken,
-                refreshToken: tokenRefresher,
+                refreshToken: tokenRefresher.recoverFromUnauthorized,
                 onStart: () => this.scenarioMarker.startScenario(TelemetryEvent.ChatTokenUnauthorizedRecovery, telemetryData),
                 onSuccess: (_source: UnauthorizedRecoverySource, usedExistingToken: boolean) => {
                     if (!usedExistingToken) {

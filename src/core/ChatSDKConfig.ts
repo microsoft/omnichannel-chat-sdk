@@ -28,7 +28,7 @@ interface CreateConversationConfig {
 
 interface ChatTokenRenewalConfig {
     disable: boolean;
-    /** Turns off retrying chat requests that fail with 401 while the token has not expired. */
+    /** Turns off request recovery after HTTP 401 or an on-demand expired-token rejection. */
     disableUnauthorizedRecovery?: boolean;
     /** Renewal stops after this many failures in a row. Default 8. */
     maxConsecutiveFailures?: number;

@@ -12,6 +12,12 @@ export interface RenewedChatToken {
     VoiceVideoCallToken?: unknown;
 }
 
+export interface ChatTokenRefresher {
+    (): Promise<string>;
+    /** Used by bounded request recovery for HTTP 401 or expired-token access, not ordinary credential refreshes. */
+    recoverFromUnauthorized: () => Promise<string>;
+}
+
 export interface ChatTokenRefresherParams {
     initialToken: string;
     chatId: string;
@@ -28,14 +34,14 @@ export interface ChatTokenRefresherParams {
     onSkipped?: () => void;
     /** Returns true when an HTTP status means renewal cannot succeed for this chat. Checked on each failure. */
     isNonRetriableStatus?: (statusCode: number) => boolean;
-    /** Invoked once when renewal stops for this chat. May throw. */
+    /** Invoked at most once per chat when automatic renewal stops. May throw. */
     onStopped?: (details: ChatTokenRenewalStoppedDetails) => void;
     /** Wait while the current token is unexpired. After expiry, later waits double with jitter. */
     retryCooldownInMs?: number;
     maxRetryCooldownInMs?: number;
-    /** Renewal stops after this many failures in a row. */
+    /** Automatic renewal stops after this many failures in a row. */
     maxConsecutiveFailures?: number;
-    /** Renewal stops after this many HTTP 400/401/403 responses in a row that isNonRetriableStatus allows to retry. */
+    /** Automatic renewal stops after this many HTTP 400/401/403 responses in a row that isNonRetriableStatus allows to retry. */
     maxConsecutiveAuthFailures?: number;
     timeoutInMs?: number;
     now?: () => number;
@@ -65,6 +71,7 @@ const minimumTokenLifetimeInMs = 60 * 1000;
 // Waits after the second failure are reduced by up to this fraction so that chats that failed together do not retry together.
 const retryCooldownJitter = 0.2;
 const authFailureStatusCodes = [400, 401, 403];
+const maxUnauthorizedRecoveryAttemptsAfterStop = 3;
 
 // The API is not deployed, renewal is disabled for the org, or the chat cannot be renewed. Retrying will not help.
 export const defaultNonRetriableStatusCodes = [400, 401, 403, 404, 405];
@@ -142,7 +149,7 @@ const getRetryAfterInMs = (error: unknown): number | undefined => {
 const positiveOrDefault = (value: number | undefined, defaultValue: number): number =>
     typeof value === "number" && Number.isFinite(value) && value > 0 ? value : defaultValue;
 
-export const createChatTokenRefresher = (params: ChatTokenRefresherParams): (() => Promise<string>) => {
+export const createChatTokenRefresher = (params: ChatTokenRefresherParams): ChatTokenRefresher => {
     const retryCooldownInMs = params.retryCooldownInMs ?? defaultChatTokenRenewalRetryCooldownInMs;
     const maxRetryCooldownInMs = Math.max(retryCooldownInMs, positiveOrDefault(params.maxRetryCooldownInMs, defaultChatTokenRenewalMaxRetryCooldownInMs));
     const maxConsecutiveFailures = Math.floor(positiveOrDefault(params.maxConsecutiveFailures, defaultChatTokenRenewalMaxConsecutiveFailures)) || 1;
@@ -153,7 +160,11 @@ export const createChatTokenRefresher = (params: ChatTokenRefresherParams): (() 
     const isNonRetriableStatus = params.isNonRetriableStatus ?? ((statusCode: number) => defaultNonRetriableStatusCodes.includes(statusCode));
 
     let latestToken = params.initialToken;
-    let isDisabled = false;
+    let stoppedReason: ChatTokenRenewalStopReason | undefined;
+    let stopNotified = false;
+    let recoveryAttemptsAfterStop = 0;
+    let lastAttemptTime: number | null = null;
+    let retryAfterUntil: number | null = null;
     let lastFailureTime: number | null = null;
     let currentCooldownInMs = retryCooldownInMs;
     let failureCount = 0;
@@ -188,9 +199,12 @@ export const createChatTokenRefresher = (params: ChatTokenRefresherParams): (() 
     };
 
     const stop = (reason: ChatTokenRenewalStopReason, lastFailure: string): void => {
-        isDisabled = true;
-        const details: ChatTokenRenewalStoppedDetails = { reason, failures: failureCount, lastFailure };
-        safeInvoke(() => params.onStopped?.(details));
+        stoppedReason = reason;
+        if (!stopNotified) {
+            stopNotified = true;
+            const details: ChatTokenRenewalStoppedDetails = { reason, failures: failureCount, lastFailure };
+            safeInvoke(() => params.onStopped?.(details));
+        }
     };
 
     const fail = (reason: string, error?: unknown, statusCode?: number): string => {
@@ -198,8 +212,12 @@ export const createChatTokenRefresher = (params: ChatTokenRefresherParams): (() 
         failureCount++;
         authFailureCount = statusCode !== undefined && authFailureStatusCodes.includes(statusCode) ? authFailureCount + 1 : 0;
         if (!isNonRetriable) {
-            currentCooldownInMs = getCooldownInMs(statusCode === 429 ? getRetryAfterInMs(error) : undefined);
+            const retryAfterInMs = statusCode === 429 ? getRetryAfterInMs(error) : undefined;
+            currentCooldownInMs = getCooldownInMs(retryAfterInMs);
             lastFailureTime = now();
+            retryAfterUntil = retryAfterInMs !== undefined
+                ? lastFailureTime + Math.min(retryAfterInMs, maxRetryCooldownInMs)
+                : null;
         }
 
         safeInvoke(() => params.onFailure?.(reason, error));
@@ -221,7 +239,8 @@ export const createChatTokenRefresher = (params: ChatTokenRefresherParams): (() 
         return latestToken;
     };
 
-    const renew = async (): Promise<string> => {
+    const renew = async (isUnauthorizedRecovery: boolean): Promise<string> => {
+        lastAttemptTime = now();
         safeInvoke(params.onStart);
 
         let renewed: RenewedChatToken;
@@ -256,6 +275,10 @@ export const createChatTokenRefresher = (params: ChatTokenRefresherParams): (() 
             return fail("InvalidToken");
         }
 
+        if (isUnauthorizedRecovery && renewed.Token === latestToken) {
+            return fail("UnchangedToken");
+        }
+
         try {
             params.onRenewed(renewed);
         } catch (error) {
@@ -268,33 +291,53 @@ export const createChatTokenRefresher = (params: ChatTokenRefresherParams): (() 
         failureCount = 0;
         postExpiryFailureCount = 0;
         authFailureCount = 0;
+        stoppedReason = undefined;
+        recoveryAttemptsAfterStop = 0;
+        retryAfterUntil = null;
         safeInvoke(params.onSuccess);
         return latestToken;
     };
 
-    return async (): Promise<string> => {
+    const refresh = async (isUnauthorizedRecovery: boolean): Promise<string> => {
         try {
-            if (isDisabled || !params.isChatActive()) {
+            if (!params.isChatActive()
+                || (stoppedReason !== undefined && (!isUnauthorizedRecovery
+                    || stoppedReason === ChatTokenRenewalStopReason.NonRetriableStatus))) {
                 return latestToken;
             }
 
-            if (lastFailureTime !== null && now() - lastFailureTime < currentCooldownInMs) {
+            if (activeRenewal) {
+                return await activeRenewal;
+            }
+
+            if (stoppedReason !== undefined) {
+                if (recoveryAttemptsAfterStop >= maxUnauthorizedRecoveryAttemptsAfterStop
+                    || (lastAttemptTime !== null && now() - lastAttemptTime < retryCooldownInMs)
+                    || (retryAfterUntil !== null && now() < retryAfterUntil)) {
+                    return latestToken;
+                }
+            } else if (lastFailureTime !== null && now() - lastFailureTime < currentCooldownInMs) {
                 return latestToken;
             }
 
-            if (!activeRenewal) {
-                activeRenewal = (async () => {
-                    try {
-                        return await renew();
-                    } finally {
-                        activeRenewal = null;
-                    }
-                })();
+            if (stoppedReason !== undefined) {
+                recoveryAttemptsAfterStop++;
             }
+            activeRenewal = (async () => {
+                try {
+                    return await renew(isUnauthorizedRecovery);
+                } finally {
+                    activeRenewal = null;
+                }
+            })();
 
             return await activeRenewal;
         } catch {
             return latestToken;
         }
     };
+
+    return Object.assign(() => refresh(false), {
+        recoverFromUnauthorized: () => refresh(true)
+    });
 };

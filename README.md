@@ -539,7 +539,13 @@ Token renewal works without a subscription.
 
 While the current token has not expired, failed renewal attempts keep the 60-second retry cooldown so an outage that recovers shortly before expiry can still heal the chat. After expiry, the waits double with jitter, up to 10 minutes. HTTP 429 may extend either wait using `Retry-After` delta-seconds, up to the same maximum; HTTP-date values are not parsed.
 
-Renewal stops for the chat after 8 failures in a row, after 3 HTTP 400/401/403 responses in a row for an authenticated chat, or after a status that cannot succeed. The SDK keeps the last token, but `MaxFailures` can arrive after it has already expired. The notification is not an advance expiry warning and does not itself end the chat. To decide how your application recovers when renewal stops, subscribe with `onChatTokenRenewalStopped`:
+Automatic renewal stops after 8 failures in a row (including before expiry), after 3 HTTP 400/401/403 responses in a row for an authenticated chat, or after a status that cannot succeed. The SDK keeps the last token, but `MaxFailures` can arrive after it has already expired. The notification is not an advance expiry warning and does not itself end the chat.
+
+After a `MaxFailures` or `AuthRejected` stop, explicit request recovery shares at most 3 additional renewal attempts between ACS HTTP 401 and on-demand expired-token access, at least 60 seconds apart and respecting `Retry-After` delta-seconds up to the configured maximum. Expired-token access is included because the Azure credential can reject before an HTTP request is sent. Unrelated credential errors and already-aborted requests do not trigger this recovery.
+
+Recovery still checks the authenticated host token, chat identity, token usability and the existing ACS request-replay/rejected-token protections. Only a different usable token for the same chat resets the stop and counters and resumes automatic renewal. If all 3 recovery attempts fail, renewal remains stopped; no periodic probes or unlimited retries are added. A `NonRetriableStatus` stop cannot be bypassed. The stop notification is emitted at most once per chat even if recovery later resumes renewal. `disableUnauthorizedRecovery` disables both request-recovery paths.
+
+To decide how your application handles a stop, subscribe with `onChatTokenRenewalStopped`:
 
 ```ts
 import { ChatTokenRenewalStopReason } from "@microsoft/omnichannel-chat-sdk";
@@ -552,6 +558,7 @@ const unsubscribe = chatSDK.onChatTokenRenewalStopped(({ reason }) => {
 ```
 
 Set `chatSDKConfig.chatTokenRenewal.maxConsecutiveFailures`, `maxRetryCooldownInMs` or `maxConsecutiveAuthFailures` to change these limits.
+These limits must be finite positive numbers; `0` or `Infinity` does not disable a limit. To disable renewal altogether, set `chatSDKConfig.chatTokenRenewal.disable` to `true`.
 
 ### On Typing Event
 
