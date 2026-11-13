@@ -537,12 +537,17 @@ await chatSDK.startChat();
 The listener remains registered across chats on the same SDK instance; call `unsubscribe()` during cleanup.
 Token renewal works without a subscription.
 
-Renewal waits longer after each failure in a row (60 seconds after the first, then doubling with jitter, up to 10 minutes) and stops for the chat after 8 failures in a row, after 3 HTTP 400/401/403 responses in a row for an authenticated chat, or after a status that cannot succeed. When renewal stops, the chat keeps its current token until it expires. To know when this happens, subscribe with `onChatTokenRenewalStopped`:
+While the current token has not expired, failed renewal attempts keep the 60-second retry cooldown so an outage that recovers shortly before expiry can still heal the chat. After expiry, the waits double with jitter, up to 10 minutes. HTTP 429 may extend either wait using `Retry-After` delta-seconds, up to the same maximum; HTTP-date values are not parsed.
+
+Renewal stops for the chat after 8 failures in a row, after 3 HTTP 400/401/403 responses in a row for an authenticated chat, or after a status that cannot succeed. The SDK keeps the last token, but `MaxFailures` can arrive after it has already expired. The notification is not an advance expiry warning and does not itself end the chat. To decide how your application recovers when renewal stops, subscribe with `onChatTokenRenewalStopped`:
 
 ```ts
+import { ChatTokenRenewalStopReason } from "@microsoft/omnichannel-chat-sdk";
+
 const unsubscribe = chatSDK.onChatTokenRenewalStopped(({ reason }) => {
-    // reason is "NonRetriableStatus", "AuthRejected" or "MaxFailures". No token is passed.
-    // Custom logic, for example plan to start a new chat before the current token expires
+    if (reason === ChatTokenRenewalStopReason.MaxFailures) {
+        // Custom recovery for a chat whose last token may already have expired.
+    }
 });
 ```
 

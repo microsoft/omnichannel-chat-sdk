@@ -611,6 +611,7 @@ describe('Omnichannel Chat SDK, chat token renewal', () => {
             let fail: (error: unknown) => void = () => undefined;
             const pending = new Promise((_, reject) => { fail = reject; });
             const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken: jest.fn().mockReturnValue(pending) });
+            jest.spyOn(chatSDK.scenarioMarker, 'singleRecord');
             const listener = jest.fn();
             chatSDK.onChatTokenRenewalStopped(listener);
             const renewal = tokenRefresher();
@@ -625,6 +626,14 @@ describe('Omnichannel Chat SDK, chat token renewal', () => {
             await expect(renewal).resolves.toBe(initialToken);
 
             expect(listener).not.toHaveBeenCalled();
+            expect(chatSDK.scenarioMarker.singleRecord).not.toHaveBeenCalledWith(
+                TelemetryEvent.ChatTokenRenewalStopped, expect.anything());
+            expect(chatSDK.scenarioMarker.failScenario).not.toHaveBeenCalledWith(
+                TelemetryEvent.RenewChatToken, expect.anything());
+            expect(chatSDK.scenarioMarker.completeScenario).toHaveBeenCalledWith(
+                TelemetryEvent.RenewChatToken, expect.objectContaining({
+                    CustomProperties: JSON.stringify({ reason: 'ChatNotActive' })
+                }));
         });
 
         it('isolates throwing and rejecting subscribers and honors unsubscribe', async () => {

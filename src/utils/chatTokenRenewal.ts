@@ -1,9 +1,8 @@
 /**
  * Fail-safe ACS chat token refresher backed by the Omnichannel renew chat token API.
  *
- * The refresher NEVER throws and NEVER returns an unusable token. On any failure (API not deployed, feature disabled,
- * chat ended, network error, timeout, invalid response, ...) it returns the last known good token, which is exactly
- * what the SDK did before renewal existed, so behavior falls back to the existing flow.
+ * The refresher never throws. On failure it returns the last known good token, which may have expired if renewal
+ * cannot recover. It never installs an unusable token received from the renewal API.
  */
 
 export interface RenewedChatToken {
@@ -25,11 +24,13 @@ export interface ChatTokenRefresherParams {
     onStart?: () => void;
     onSuccess?: () => void;
     onFailure?: (reason: string, error?: unknown) => void;
+    /** Completes an attempt whose chat ended or was replaced, without counting a renewal failure. */
+    onSkipped?: () => void;
     /** Returns true when an HTTP status means renewal cannot succeed for this chat. Checked on each failure. */
     isNonRetriableStatus?: (statusCode: number) => boolean;
     /** Invoked once when renewal stops for this chat. May throw. */
     onStopped?: (details: ChatTokenRenewalStoppedDetails) => void;
-    /** Wait after the first failure. Later waits double, with jitter, up to maxRetryCooldownInMs. */
+    /** Wait while the current token is unexpired. After expiry, later waits double with jitter. */
     retryCooldownInMs?: number;
     maxRetryCooldownInMs?: number;
     /** Renewal stops after this many failures in a row. */
@@ -125,7 +126,7 @@ const getStatusCode = (error: unknown): number | undefined => {
     return typeof status === "number" ? status : undefined;
 };
 
-// Messaging Runtime sends Retry-After in seconds, possibly fractional, with HTTP 429.
+// Accepts Retry-After delta-seconds, including fractional values. HTTP-date values are not parsed.
 const getRetryAfterInMs = (error: unknown): number | undefined => {
     try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -156,6 +157,7 @@ export const createChatTokenRefresher = (params: ChatTokenRefresherParams): (() 
     let lastFailureTime: number | null = null;
     let currentCooldownInMs = retryCooldownInMs;
     let failureCount = 0;
+    let postExpiryFailureCount = 0;
     let authFailureCount = 0;
     let activeRenewal: Promise<string> | null = null;
 
@@ -169,8 +171,10 @@ export const createChatTokenRefresher = (params: ChatTokenRefresherParams): (() 
 
     const getCooldownInMs = (retryAfterInMs?: number): number => {
         let cooldownInMs = retryCooldownInMs;
-        if (failureCount > 1) {
-            const backoffInMs = Math.min(maxRetryCooldownInMs, retryCooldownInMs * Math.pow(2, failureCount - 1));
+        const expiresOnInMs = getChatTokenExpiresOnInMs(latestToken);
+        postExpiryFailureCount = expiresOnInMs !== undefined && expiresOnInMs > now() ? 0 : postExpiryFailureCount + 1;
+        if (postExpiryFailureCount > 1) {
+            const backoffInMs = Math.min(maxRetryCooldownInMs, retryCooldownInMs * Math.pow(2, postExpiryFailureCount - 1));
             let jitter = 0;
             try {
                 jitter = Math.min(Math.max(Number(random()) || 0, 0), 1);
@@ -213,8 +217,7 @@ export const createChatTokenRefresher = (params: ChatTokenRefresherParams): (() 
 
     // The chat ended or was replaced while the API call was in progress. Not a renewal failure.
     const skip = (): string => {
-        lastFailureTime = now();
-        safeInvoke(() => params.onFailure?.("ChatNotActive", undefined));
+        safeInvoke(params.onSkipped);
         return latestToken;
     };
 
@@ -234,6 +237,9 @@ export const createChatTokenRefresher = (params: ChatTokenRefresherParams): (() 
                 clearTimeout(timeoutId);
             }
         } catch (error) {
+            if (!params.isChatActive()) {
+                return skip();
+            }
             const statusCode = getStatusCode(error);
             return fail(statusCode !== undefined ? `HttpStatus${statusCode}` : "RequestFailed", error, statusCode);
         }
@@ -260,6 +266,7 @@ export const createChatTokenRefresher = (params: ChatTokenRefresherParams): (() 
         lastFailureTime = null;
         currentCooldownInMs = retryCooldownInMs;
         failureCount = 0;
+        postExpiryFailureCount = 0;
         authFailureCount = 0;
         safeInvoke(params.onSuccess);
         return latestToken;

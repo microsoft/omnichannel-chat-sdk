@@ -111,6 +111,7 @@ import loggerUtils from "./utils/loggerUtils";
 import { parseLowerCaseString } from "./utils/parsers";
 import { ChatTokenUnauthorizedRecovery, createChatTokenUnauthorizedRecovery, UnauthorizedRecoveryFailureReason, UnauthorizedRecoverySource } from "./utils/chatTokenUnauthorizedRecovery";
 import { authenticatedNonRetriableStatusCodes, ChatTokenRenewalStoppedDetails, createChatTokenRefresher, defaultNonRetriableStatusCodes, RenewedChatToken } from "./utils/chatTokenRenewal";
+import type { ChatTokenRenewalStopReason } from "./utils/chatTokenRenewal";
 import platform from "./utils/platform";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import startPolling from "./commands/startPolling";
@@ -145,7 +146,7 @@ class OmnichannelChatSDK {
     private chatToken: IChatToken;
     private chatTokenUnauthorizedRecovery: ChatTokenUnauthorizedRecovery | null = null;
     private chatTokenRenewedListeners: Set<() => void> = new Set();
-    private chatTokenRenewalStoppedListeners: Set<(details: { reason: string }) => void> = new Set();
+    private chatTokenRenewalStoppedListeners: Set<(details: { reason: ChatTokenRenewalStopReason }) => void> = new Set();
     private liveChatConfig: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private widgetSnippetBaseUrl = '';
     private liveChatVersion: number;
@@ -1339,14 +1340,14 @@ class OmnichannelChatSDK {
     /**
      * Subscribes to the end of chat token renewal for the current chat. Renewal stops when the renew API returns a
      * status that cannot succeed (reason "NonRetriableStatus"), after repeated HTTP 400/401/403 for an authenticated
-     * chat ("AuthRejected"), or after repeated failures of any kind ("MaxFailures"). The chat keeps its current token,
-     * so it ends when that token expires unless the host starts a new chat or reconnects.
+     * chat ("AuthRejected"), or after repeated failures of any kind ("MaxFailures"). Renewal keeps the last token;
+     * it may already have expired when MaxFailures is reported. This event does not end the chat.
      * Called at most once per chat, and never for an ended or replaced chat. No token is passed.
      * Returns an idempotent unsubscribe function. Listener failures never affect the chat.
      * Subscriptions belong to this SDK instance and survive endChat()/startChat().
      */
-    public onChatTokenRenewalStopped(listener: (details: { reason: string }) => void): () => void {
-        const subscription = (details: { reason: string }) => listener(details);
+    public onChatTokenRenewalStopped(listener: (details: { reason: ChatTokenRenewalStopReason }) => void): () => void {
+        const subscription = (details: { reason: ChatTokenRenewalStopReason }) => listener(details);
         this.chatTokenRenewalStoppedListeners.add(subscription);
         return () => { this.chatTokenRenewalStoppedListeners.delete(subscription); };
     }
@@ -1646,6 +1647,10 @@ class OmnichannelChatSDK {
                 },
                 onStart: () => this.scenarioMarker.startScenario(TelemetryEvent.RenewChatToken, telemetryData),
                 onSuccess: () => this.scenarioMarker.completeScenario(TelemetryEvent.RenewChatToken, telemetryData),
+                onSkipped: () => this.scenarioMarker.completeScenario(TelemetryEvent.RenewChatToken, {
+                    ...telemetryData,
+                    CustomProperties: JSON.stringify({ reason: "ChatNotActive" })
+                }),
                 onFailure: (reason: string, error?: unknown) => {
                     const exceptionDetails = {
                         response: reason,
@@ -1679,7 +1684,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    private notifyChatTokenRenewalStopped(requestId: string, chatId: string, reason: string): void {
+    private notifyChatTokenRenewalStopped(requestId: string, chatId: string, reason: ChatTokenRenewalStopReason): void {
         const reportFailure = (response: "ListenerThrew" | "ListenerRejected"): void => {
             try {
                 const telemetryData = { RequestId: requestId, ChatId: chatId };
