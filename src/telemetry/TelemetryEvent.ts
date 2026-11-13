@@ -39,6 +39,8 @@ enum TelemetryEvent {
     UpdateChatToken = "UpdateChatToken",
     RenewChatToken = "RenewChatToken",
     ChatTokenRenewedListener = "ChatTokenRenewedListener",
+    ChatTokenRenewalStopped = "ChatTokenRenewalStopped",
+    ChatTokenRenewalStoppedListener = "ChatTokenRenewalStoppedListener",
     RefreshAttachmentClientToken = "RefreshAttachmentClientToken",
     ChatTokenUnauthorizedRecovery = "ChatTokenUnauthorizedRecovery",
     GetChatReconnectContext = "GetChatReconnectContext",

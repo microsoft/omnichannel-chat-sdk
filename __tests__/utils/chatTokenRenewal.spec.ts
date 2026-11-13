@@ -1,4 +1,6 @@
-import { createChatTokenRefresher, isChatTokenUsable, RenewedChatToken } from "../../src/utils/chatTokenRenewal";
+import { ChatTokenRefresherParams, createChatTokenRefresher, isChatTokenUsable, RenewedChatToken } from "../../src/utils/chatTokenRenewal";
+import { AzureCommunicationTokenCredential } from "@azure/communication-common";
+import { ChatTokenUnauthorizedRecoveryCredential, createChatTokenUnauthorizedRecovery, UnauthorizedRecoverySource } from "../../src/utils/chatTokenUnauthorizedRecovery";
 
 const nowInMs = 1_700_000_000_000;
 
@@ -8,6 +10,7 @@ const createJwt = (payload: Record<string, unknown>): string => {
 };
 
 const initialToken = createJwt({ exp: nowInMs / 1000 + 300 });
+const expiredToken = createJwt({ exp: nowInMs / 1000 - 1 });
 const renewedToken = createJwt({ exp: nowInMs / 1000 + 86400 });
 const chatId = "19:thread@thread.v2";
 
@@ -36,7 +39,7 @@ describe("chatTokenRenewal", () => {
         let currentTime: number;
         let isChatActive: boolean;
 
-        const setup = (renewChatToken: () => Promise<RenewedChatToken>, onRenewed: (renewed: RenewedChatToken) => void = jest.fn(), isNonRetriableStatus?: (statusCode: number) => boolean) => {
+        const setup = (renewChatToken: () => Promise<RenewedChatToken>, onRenewed: (renewed: RenewedChatToken) => void = jest.fn(), isNonRetriableStatus?: (statusCode: number) => boolean, overrides: Partial<ChatTokenRefresherParams> = {}) => {
             const params = {
                 initialToken,
                 chatId,
@@ -46,14 +49,27 @@ describe("chatTokenRenewal", () => {
                 onStart: jest.fn(),
                 onSuccess: jest.fn(),
                 onFailure: jest.fn(),
+                onSkipped: jest.fn(),
                 isNonRetriableStatus,
+                onStopped: jest.fn(),
                 retryCooldownInMs: 60000,
                 timeoutInMs: 1000,
-                now: () => currentTime
+                now: () => currentTime,
+                random: jest.fn(() => 0)
             };
 
-            return { params, refresher: createChatTokenRefresher(params) };
+            return { params, refresher: createChatTokenRefresher({ ...params, ...overrides }) };
         };
+
+        // Calls the refresher after waitInMs and returns how many times the API was called in total.
+        const callAfter = async (refresher: () => Promise<string>, params: { renewChatToken: jest.Mock }, waitInMs: number) => {
+            currentTime += waitInMs;
+            await refresher();
+            return params.renewChatToken.mock.calls.length;
+        };
+
+        const maxCooldownInMs = 10 * 60 * 1000;
+        const rateLimited = (retryAfter: string) => Object.assign(new Error("Request failed with status code 429"), { response: { status: 429, headers: { "retry-after": retryAfter } } });
 
         beforeEach(() => {
             currentTime = nowInMs;
@@ -176,7 +192,8 @@ describe("chatTokenRenewal", () => {
             await expect(refresher()).resolves.toBe(initialToken);
 
             expect(params.onRenewed).not.toHaveBeenCalled();
-            expect(params.onFailure).toHaveBeenCalledWith("ChatNotActive", undefined);
+            expect(params.onFailure).not.toHaveBeenCalled();
+            expect(params.onSkipped).toHaveBeenCalledTimes(1);
         });
 
         it("returns the current token when updating the chat throws", async () => {
@@ -220,6 +237,497 @@ describe("chatTokenRenewal", () => {
 
             await expect(refresher()).resolves.toBe(renewedToken);
             await expect(refresher()).resolves.toBe(renewedToken);
+        });
+
+        describe("retry limits", () => {
+            const serverError = async (): Promise<RenewedChatToken> => { throw httpError(500); };
+
+            it("recovers an actual expired credential on demand after the ordinary refresher stops", async () => {
+                jest.useFakeTimers({ now: nowInMs });
+                const token = createJwt({ exp: nowInMs / 1000 + 600 });
+                const { params, refresher } = setup(serverError, jest.fn(), undefined, {
+                    initialToken: token, now: () => Date.now()
+                });
+                const recovery = createChatTokenUnauthorizedRecovery({
+                    initialToken: token,
+                    refreshToken: refresher.recoverFromUnauthorized,
+                    now: () => Date.now()
+                });
+                const credential = new ChatTokenUnauthorizedRecoveryCredential(
+                    new AzureCommunicationTokenCredential({
+                        token, tokenRefresher: refresher, refreshProactively: false
+                    }),
+                    recovery
+                );
+                try {
+                    // Proactive pull times, followed by the bounded post-expiry attempt times.
+                    for (const elapsed of [0, 300000, 450000, 525000, 590625, 660000, 720000, 840000]) {
+                        jest.setSystemTime(nowInMs + elapsed);
+                        await refresher();
+                    }
+                    expect(params.renewChatToken).toHaveBeenCalledTimes(8);
+                    expect(params.onStopped).toHaveBeenCalledWith({
+                        reason: "MaxFailures", failures: 8, lastFailure: "HttpStatus500"
+                    });
+                    params.renewChatToken.mockResolvedValue({ ChatId: chatId, Token: renewedToken });
+                    jest.setSystemTime(nowInMs + 900000);
+
+                    await expect(credential.getToken()).resolves.toEqual({
+                        token: renewedToken,
+                        expiresOnTimestamp: nowInMs + 86400000
+                    });
+                    expect(params.renewChatToken).toHaveBeenCalledTimes(9);
+                } finally {
+                    credential.dispose();
+                    jest.useRealTimers();
+                }
+            });
+
+            it("shares the three-attempt budget between 401 recovery and expired-credential access", async () => {
+                jest.useFakeTimers({ now: nowInMs });
+                const { params, refresher } = setup(serverError, jest.fn(), undefined, {
+                    initialToken: expiredToken, maxConsecutiveFailures: 1, now: () => Date.now()
+                });
+                const recovery = createChatTokenUnauthorizedRecovery({
+                    initialToken: expiredToken,
+                    refreshToken: refresher.recoverFromUnauthorized,
+                    now: () => Date.now()
+                });
+                const credential = new ChatTokenUnauthorizedRecoveryCredential(
+                    new AzureCommunicationTokenCredential({
+                        token: expiredToken, tokenRefresher: refresher, refreshProactively: false
+                    }),
+                    recovery
+                );
+                try {
+                    await refresher();
+                    jest.setSystemTime(nowInMs + 60000);
+                    await expect(recovery.recover(expiredToken, UnauthorizedRecoverySource.ChatRequest)).resolves.toBeUndefined();
+                    for (const elapsed of [120000, 180000, 240000, 300000]) {
+                        jest.setSystemTime(nowInMs + elapsed);
+                        await expect(credential.getToken()).rejects.toThrow("expired");
+                    }
+
+                    expect(params.renewChatToken).toHaveBeenCalledTimes(4);
+                    expect(params.onStopped).toHaveBeenCalledTimes(1);
+                } finally {
+                    credential.dispose();
+                    jest.useRealTimers();
+                }
+            });
+
+            it("bounds recovery after a soft stop even when the API returns the same usable token", async () => {
+                const { params, refresher } = setup(serverError, jest.fn(), undefined, {
+                    maxConsecutiveFailures: 1, initialToken: renewedToken
+                });
+                await refresher();
+                params.renewChatToken.mockResolvedValue({ ChatId: chatId, Token: renewedToken });
+
+                for (let i = 0; i < 5; i++) {
+                    currentTime += 60000;
+                    await expect(refresher.recoverFromUnauthorized()).resolves.toBe(renewedToken);
+                }
+
+                expect(params.renewChatToken).toHaveBeenCalledTimes(4);
+                expect(params.onSuccess).not.toHaveBeenCalled();
+                expect(params.onStopped).toHaveBeenCalledTimes(1);
+            });
+
+            it.each([400, 401, 403, 404, 405])("never bypasses a terminal HTTP %d stop for recovery", async status => {
+                const { params, refresher } = setup(async () => { throw httpError(status); });
+                await refresher();
+                currentTime += 86400000;
+
+                await expect(refresher.recoverFromUnauthorized()).resolves.toBe(initialToken);
+                expect(params.renewChatToken).toHaveBeenCalledTimes(1);
+                expect(params.onStopped).toHaveBeenCalledTimes(1);
+            });
+
+            it("shares one in-flight recovery attempt after a stop and keeps the minimum interval", async () => {
+                const { params, refresher } = setup(serverError, jest.fn(), undefined, { maxConsecutiveFailures: 1 });
+                await refresher();
+                await refresher.recoverFromUnauthorized();
+                expect(params.renewChatToken).toHaveBeenCalledTimes(1);
+                let complete: (value: RenewedChatToken) => void = () => undefined;
+                params.renewChatToken.mockImplementation(() => new Promise(resolve => { complete = resolve; }));
+                currentTime += 60000;
+
+                const first = refresher.recoverFromUnauthorized();
+                const second = refresher.recoverFromUnauthorized();
+                complete({ ChatId: chatId, Token: renewedToken });
+
+                await expect(Promise.all([first, second])).resolves.toEqual([renewedToken, renewedToken]);
+                expect(params.renewChatToken).toHaveBeenCalledTimes(2);
+                expect(params.onSuccess).toHaveBeenCalledTimes(1);
+            });
+
+            it("honors Retry-After after a soft stop without using the backed-off ordinary cooldown", async () => {
+                const { params, refresher } = setup(async () => { throw rateLimited("150"); }, jest.fn(), undefined, {
+                    maxConsecutiveFailures: 1
+                });
+                await refresher();
+                params.renewChatToken.mockResolvedValue({ ChatId: chatId, Token: renewedToken });
+                currentTime += 149999;
+                await expect(refresher.recoverFromUnauthorized()).resolves.toBe(initialToken);
+                expect(params.renewChatToken).toHaveBeenCalledTimes(1);
+                currentTime++;
+
+                await expect(refresher.recoverFromUnauthorized()).resolves.toBe(renewedToken);
+                expect(params.renewChatToken).toHaveBeenCalledTimes(2);
+            });
+
+            it("resets the failure counts and recovery budget only after a different usable token succeeds", async () => {
+                const secondToken = createJwt({ exp: nowInMs / 1000 + 172800 });
+                const renewal = jest.fn<Promise<RenewedChatToken>, []>()
+                    .mockRejectedValueOnce(httpError(503))
+                    .mockRejectedValueOnce(httpError(503))
+                    .mockResolvedValueOnce({ ChatId: chatId, Token: renewedToken })
+                    .mockRejectedValueOnce(httpError(503))
+                    .mockResolvedValue({ ChatId: chatId, Token: secondToken });
+                const { params, refresher } = setup(renewal, jest.fn(), undefined, { maxConsecutiveFailures: 1 });
+                await refresher();
+                currentTime += 60000;
+                await refresher.recoverFromUnauthorized();
+                currentTime += 60000;
+                await expect(refresher.recoverFromUnauthorized()).resolves.toBe(renewedToken);
+                await expect(refresher()).resolves.toBe(renewedToken);
+                currentTime += 60000;
+
+                await expect(refresher.recoverFromUnauthorized()).resolves.toBe(secondToken);
+                expect(params.renewChatToken).toHaveBeenCalledTimes(5);
+                expect(params.onSuccess).toHaveBeenCalledTimes(2);
+                expect(params.onStopped).toHaveBeenCalledTimes(1);
+            });
+
+            it.each([
+                ["wrong chat", { ChatId: "other-chat", Token: renewedToken }],
+                ["invalid token", { ChatId: chatId, Token: "invalid" }]
+            ])("does not resume after recovery returns %s", async (_, response) => {
+                const { params, refresher } = setup(serverError, jest.fn(), undefined, { maxConsecutiveFailures: 1 });
+                await refresher();
+                params.renewChatToken.mockResolvedValue(response);
+                for (let i = 0; i < 4; i++) {
+                    currentTime += 60000;
+                    await refresher.recoverFromUnauthorized();
+                }
+                currentTime += 86400000;
+                await refresher();
+
+                expect(params.renewChatToken).toHaveBeenCalledTimes(4);
+                expect(params.onSuccess).not.toHaveBeenCalled();
+            });
+
+            it("never recovers an ended chat or updates a replacement chat", async () => {
+                const { params, refresher } = setup(serverError, jest.fn(), undefined, { maxConsecutiveFailures: 1 });
+                await refresher();
+                currentTime += 60000;
+                isChatActive = false;
+                await refresher.recoverFromUnauthorized();
+                expect(params.renewChatToken).toHaveBeenCalledTimes(1);
+                isChatActive = true;
+                params.renewChatToken.mockImplementation(async () => {
+                    isChatActive = false;
+                    return { ChatId: chatId, Token: renewedToken };
+                });
+
+                await expect(refresher.recoverFromUnauthorized()).resolves.toBe(initialToken);
+                expect(params.onRenewed).not.toHaveBeenCalled();
+                expect(params.onSkipped).toHaveBeenCalledTimes(1);
+            });
+
+            it.each([120, 30])("renews before expiry when the outage recovers %d seconds before it", async (recoverySecondsBeforeExpiry) => {
+                const expiresOn = nowInMs + 600000;
+                const token = createJwt({ exp: expiresOn / 1000 });
+                const attempts: number[] = [];
+                const { params, refresher } = setup(async () => {
+                    attempts.push(currentTime - nowInMs);
+                    if (currentTime < expiresOn - recoverySecondsBeforeExpiry * 1000) {
+                        throw httpError(503);
+                    }
+                    return { ChatId: chatId, Token: renewedToken };
+                }, jest.fn(), undefined, { initialToken: token });
+
+                for (const elapsed of [0, 300000, 450000, 525000, 562500, 590625]) {
+                    currentTime = nowInMs + elapsed;
+                    await refresher();
+                    if (params.onRenewed.mock.calls.length > 0) {
+                        break;
+                    }
+                }
+
+                expect(params.onRenewed).toHaveBeenCalledTimes(1);
+                expect(attempts).toEqual(recoverySecondsBeforeExpiry === 120
+                    ? [0, 300000, 450000, 525000]
+                    : [0, 300000, 450000, 525000, 590625]);
+                await expect(refresher()).resolves.toBe(renewedToken);
+            });
+
+            it.each([120, 30])("keeps the real ACS credential valid when the outage recovers %d seconds before expiry", async (recoverySecondsBeforeExpiry) => {
+                jest.useFakeTimers({ now: nowInMs });
+                const expiresOn = nowInMs + 1200000;
+                const token = createJwt({ exp: expiresOn / 1000 });
+                const attempts: number[] = [];
+                const { refresher } = setup(async () => {
+                    attempts.push(Date.now() - nowInMs);
+                    if (Date.now() < expiresOn - recoverySecondsBeforeExpiry * 1000) {
+                        throw httpError(503);
+                    }
+                    return { ChatId: chatId, Token: renewedToken };
+                }, jest.fn(), undefined, { initialToken: token, now: () => Date.now() });
+                const credential = new AzureCommunicationTokenCredential({
+                    token,
+                    tokenRefresher: refresher,
+                    refreshProactively: true
+                });
+
+                try {
+                    await jest.advanceTimersByTimeAsync(1200000);
+
+                    await expect(credential.getToken()).resolves.toEqual({
+                        token: renewedToken,
+                        expiresOnTimestamp: nowInMs + 86400000
+                    });
+                    expect(attempts).toEqual(recoverySecondsBeforeExpiry === 120
+                        ? [600000, 900000, 1050000, 1125000]
+                        : [600000, 900000, 1050000, 1125000, 1190625]);
+                } finally {
+                    credential.dispose();
+                    jest.useRealTimers();
+                }
+            });
+
+            it("starts the post-expiry backoff at the base wait despite earlier proactive failures", async () => {
+                const { params, refresher } = setup(serverError, jest.fn(), undefined, {
+                    maxConsecutiveFailures: 20
+                });
+
+                await refresher();
+                for (let i = 0; i < 4; i++) {
+                    await callAfter(refresher, params, 60000);
+                }
+                expect(await callAfter(refresher, params, 60000)).toBe(6);
+                expect(await callAfter(refresher, params, 59999)).toBe(6);
+                expect(await callAfter(refresher, params, 1)).toBe(7);
+                expect(await callAfter(refresher, params, 119999)).toBe(7);
+                expect(await callAfter(refresher, params, 1)).toBe(8);
+            });
+
+            it("recovers the real ACS credential after an outage crosses expiry without inheriting the pre-expiry backoff", async () => {
+                jest.useFakeTimers({ now: nowInMs });
+                const expiresOn = nowInMs + 1200000;
+                const token = createJwt({ exp: expiresOn / 1000 });
+                const { params, refresher } = setup(async () => {
+                    if (Date.now() < expiresOn + 125000) {
+                        throw httpError(503);
+                    }
+                    return { ChatId: chatId, Token: renewedToken };
+                }, jest.fn(), undefined, { initialToken: token, now: () => Date.now() });
+                // The reactive credential reports an expired fallback to its caller rather than throwing from a timer.
+                const credential = new AzureCommunicationTokenCredential({
+                    token,
+                    tokenRefresher: refresher,
+                    refreshProactively: false
+                });
+
+                try {
+                    for (const elapsed of [600000, 900000, 1050000, 1125000, 1190625]) {
+                        jest.setSystemTime(nowInMs + elapsed);
+                        await refresher();
+                    }
+                    expect(params.renewChatToken).toHaveBeenCalledTimes(5);
+
+                    jest.setSystemTime(expiresOn + 60000);
+                    await expect(credential.getToken()).rejects.toThrow("expired");
+                    expect(params.renewChatToken).toHaveBeenCalledTimes(6);
+                    jest.setSystemTime(expiresOn + 120000);
+                    await expect(credential.getToken()).rejects.toThrow("expired");
+                    expect(params.renewChatToken).toHaveBeenCalledTimes(7);
+                    jest.setSystemTime(expiresOn + 240000);
+
+                    await expect(credential.getToken()).resolves.toEqual({
+                        token: renewedToken,
+                        expiresOnTimestamp: nowInMs + 86400000
+                    });
+                    expect(params.renewChatToken).toHaveBeenCalledTimes(8);
+                    expect(params.onStopped).not.toHaveBeenCalled();
+                } finally {
+                    credential.dispose();
+                    jest.useRealTimers();
+                }
+            });
+
+            it("does not count or stop after a request fails for a chat that ended in flight", async () => {
+                const { params, refresher } = setup(async () => {
+                    isChatActive = false;
+                    throw httpError(404);
+                });
+
+                await expect(refresher()).resolves.toBe(initialToken);
+
+                expect(params.onFailure).not.toHaveBeenCalled();
+                expect(params.onStopped).not.toHaveBeenCalled();
+                expect(params.onSkipped).toHaveBeenCalledTimes(1);
+            });
+
+            it("does not delay a later active call after an in-flight completion was skipped", async () => {
+                const renewChatToken = jest.fn<Promise<RenewedChatToken>, []>()
+                    .mockRejectedValueOnce(httpError(503))
+                    .mockRejectedValueOnce(httpError(503))
+                    .mockImplementationOnce(async () => {
+                        isChatActive = false;
+                        return { ChatId: chatId, Token: renewedToken };
+                    })
+                    .mockResolvedValue({ ChatId: chatId, Token: renewedToken });
+                const { params, refresher } = setup(renewChatToken, jest.fn(), undefined, {
+                    initialToken: expiredToken
+                });
+
+                await refresher();
+                await callAfter(refresher, params, 60000);
+                await callAfter(refresher, params, 120000);
+                isChatActive = true;
+
+                await expect(refresher()).resolves.toBe(renewedToken);
+                expect(params.renewChatToken).toHaveBeenCalledTimes(4);
+                expect(params.onSuccess).toHaveBeenCalledTimes(1);
+            });
+
+            it("keeps the first retry at the base cooldown without jitter and waits longer after later failures", async () => {
+                const { params, refresher } = setup(serverError, jest.fn(), undefined, { random: () => 0.999, initialToken: expiredToken });
+
+                await refresher();
+                expect(await callAfter(refresher, params, 59999)).toBe(1);
+                expect(await callAfter(refresher, params, 1)).toBe(2);
+                expect(await callAfter(refresher, params, 60000)).toBe(2);
+            });
+
+            it("doubles the wait after each failure up to the maximum cooldown", async () => {
+                const { params, refresher } = setup(serverError, jest.fn(), undefined, { maxConsecutiveFailures: 20, initialToken: expiredToken });
+
+                await refresher();
+                let calls = 1;
+                for (const waitInMs of [60000, 120000, 240000, 480000, maxCooldownInMs, maxCooldownInMs]) {
+                    expect(await callAfter(refresher, params, waitInMs - 1)).toBe(calls);
+                    expect(await callAfter(refresher, params, 1)).toBe(++calls);
+                }
+            });
+
+            it("shortens a wait by at most 20 percent and never below the base cooldown", async () => {
+                const { params, refresher } = setup(serverError, jest.fn(), undefined, { random: () => 1, initialToken: expiredToken });
+                await refresher();
+                await callAfter(refresher, params, 60000);
+                expect(await callAfter(refresher, params, 95999)).toBe(2);
+                expect(await callAfter(refresher, params, 1)).toBe(3);
+
+                const capped = setup(serverError, jest.fn(), undefined, { random: () => 1, maxRetryCooldownInMs: 60000, initialToken: expiredToken });
+                await capped.refresher();
+                await callAfter(capped.refresher, capped.params, 60000);
+                expect(await callAfter(capped.refresher, capped.params, 59999)).toBe(2);
+                expect(await callAfter(capped.refresher, capped.params, 1)).toBe(3);
+            });
+
+            it("stops after 8 failures in a row and reports the stop once", async () => {
+                const { params, refresher } = setup(serverError);
+
+                for (let i = 0; i < 10; i++) {
+                    await callAfter(refresher, params, maxCooldownInMs);
+                }
+                currentTime += 24 * 60 * 60 * 1000;
+                await expect(refresher()).resolves.toBe(initialToken);
+
+                expect(params.renewChatToken).toHaveBeenCalledTimes(8);
+                expect(params.onStopped).toHaveBeenCalledTimes(1);
+                expect(params.onStopped).toHaveBeenCalledWith({ reason: "MaxFailures", failures: 8, lastFailure: "HttpStatus500" });
+            });
+
+            it("starts counting again and uses the base cooldown after a success", async () => {
+                const renewChatToken = jest.fn<Promise<RenewedChatToken>, []>()
+                    .mockRejectedValueOnce(httpError(500))
+                    .mockRejectedValueOnce(httpError(500))
+                    .mockResolvedValueOnce({ ChatId: chatId, Token: renewedToken })
+                    .mockRejectedValue(httpError(500));
+                const { params, refresher } = setup(renewChatToken, jest.fn(), undefined, { maxConsecutiveFailures: 3 });
+
+                await refresher();
+                await callAfter(refresher, params, 60000);
+                expect(await callAfter(refresher, params, 120000)).toBe(3);
+                currentTime = nowInMs + 86400000;
+                expect(await callAfter(refresher, params, 0)).toBe(4);
+                expect(await callAfter(refresher, params, 60000)).toBe(5);
+                expect(await callAfter(refresher, params, 60000)).toBe(5);
+                expect(params.onStopped).not.toHaveBeenCalled();
+                expect(await callAfter(refresher, params, 60000)).toBe(6);
+
+                expect(params.onStopped).toHaveBeenCalledWith({ reason: "MaxFailures", failures: 3, lastFailure: "HttpStatus500" });
+            });
+
+            it("stops an authenticated chat after 3 HTTP 400/401/403 in a row, and other failures reset that count", async () => {
+                const renewChatToken = jest.fn<Promise<RenewedChatToken>, []>()
+                    .mockRejectedValueOnce(httpError(401))
+                    .mockRejectedValueOnce(httpError(403))
+                    .mockRejectedValueOnce(httpError(503))
+                    .mockRejectedValueOnce(httpError(401))
+                    .mockRejectedValueOnce(httpError(400))
+                    .mockRejectedValue(httpError(401));
+                const { params, refresher } = setup(renewChatToken, jest.fn(), () => false);
+
+                await refresher();
+                for (let i = 0; i < 7; i++) {
+                    await callAfter(refresher, params, maxCooldownInMs);
+                }
+
+                expect(params.renewChatToken).toHaveBeenCalledTimes(6);
+                expect(params.onStopped).toHaveBeenCalledTimes(1);
+                expect(params.onStopped).toHaveBeenCalledWith({ reason: "AuthRejected", failures: 6, lastFailure: "HttpStatus401" });
+            });
+
+            it("reports a stop on a status that cannot succeed", async () => {
+                const { params, refresher } = setup(async () => { throw httpError(404); });
+
+                await refresher();
+
+                expect(params.onStopped).toHaveBeenCalledWith({ reason: "NonRetriableStatus", failures: 1, lastFailure: "HttpStatus404" });
+            });
+
+            it("does not count a renewal for a chat that ended while the API call was in progress", async () => {
+                let attempt = 0;
+                const { params, refresher } = setup(async () => {
+                    attempt++;
+                    if (attempt === 2) {
+                        isChatActive = false;
+                        return { ChatId: chatId, Token: renewedToken };
+                    }
+                    throw httpError(500);
+                }, jest.fn(), undefined, { maxConsecutiveFailures: 2 });
+
+                await refresher();
+                await callAfter(refresher, params, 60000);
+                isChatActive = true;
+                expect(params.onStopped).not.toHaveBeenCalled();
+                await callAfter(refresher, params, 60000);
+
+                expect(params.onStopped).toHaveBeenCalledWith({ reason: "MaxFailures", failures: 2, lastFailure: "HttpStatus500" });
+            });
+
+            it("waits for Retry-After on HTTP 429, up to the maximum cooldown", async () => {
+                const { params, refresher } = setup(async () => { throw rateLimited("150"); });
+                await refresher();
+                expect(await callAfter(refresher, params, 149999)).toBe(1);
+                expect(await callAfter(refresher, params, 1)).toBe(2);
+
+                const capped = setup(async () => { throw rateLimited("3600"); });
+                await capped.refresher();
+                expect(await callAfter(capped.refresher, capped.params, maxCooldownInMs - 1)).toBe(1);
+                expect(await callAfter(capped.refresher, capped.params, 1)).toBe(2);
+            });
+
+            it("ignores Retry-After on other statuses, so the first retry stays at 60 seconds", async () => {
+                const unavailable = Object.assign(new Error("Request failed with status code 503"), { response: { status: 503, headers: { "retry-after": "120" } } });
+                const { params, refresher } = setup(async () => { throw unavailable; });
+                await refresher();
+                expect(await callAfter(refresher, params, 59999)).toBe(1);
+                expect(await callAfter(refresher, params, 1)).toBe(2);
+            });
         });
     });
 });
