@@ -1,6 +1,5 @@
 /**
- * Recovers ACS chat requests that fail with 401 Unauthorized while the chat token has not expired, for example after
- * the token was revoked.
+ * Recovers ACS chat requests after HTTP 401 or an on-demand expired-token rejection from the credential.
  *
  * Recovery is fail-safe. It never throws, retries a failed request at most once, renews the token at most once per
  * interval for a chat, stops renewing after ACS rejects several renewed tokens in a row, and gives the original 401
@@ -12,7 +11,8 @@ import { CommunicationTokenCredential } from "@azure/communication-common";
 import { getChatTokenExpiresOnInMs, isChatTokenUsable } from "./chatTokenRenewal";
 
 export enum UnauthorizedRecoverySource {
-    ChatRequest = "ChatRequest"
+    ChatRequest = "ChatRequest",
+    TokenExpired = "TokenExpired"
 }
 
 export enum UnauthorizedRecoveryFailureReason {
@@ -239,11 +239,13 @@ export const createChatTokenUnauthorizedRecoveryPolicy = (recovery: ChatTokenUna
 
 /**
  * Credential that gives the newest usable token to ACS, including the real-time notification client, which reads
- * the token from the credential instead of the request pipeline.
+ * the token from the credential instead of the request pipeline. On-demand expiry uses the same recovery coordinator,
+ * because the Azure credential rejects an expired fallback before a request can return HTTP 401.
  */
 export class ChatTokenUnauthorizedRecoveryCredential implements CommunicationTokenCredential {
     private credential: CommunicationTokenCredential;
     private recovery: ChatTokenUnauthorizedRecovery;
+    private disposed = false;
 
     public constructor(credential: CommunicationTokenCredential, recovery: ChatTokenUnauthorizedRecovery) {
         this.credential = credential;
@@ -251,13 +253,32 @@ export class ChatTokenUnauthorizedRecoveryCredential implements CommunicationTok
     }
 
     public async getToken(options?: Parameters<CommunicationTokenCredential["getToken"]>[0]): Promise<Awaited<ReturnType<CommunicationTokenCredential["getToken"]>>> {
-        const accessToken = await this.credential.getToken(options);
+        let accessToken: Awaited<ReturnType<CommunicationTokenCredential["getToken"]>>;
+        try {
+            accessToken = await this.credential.getToken(options);
+        } catch (error) {
+            // The Azure credential rejects an expired fallback before an HTTP request can return 401.
+            if (!(error instanceof Error)
+                || error.message !== "The token returned from the tokenRefresher is expired."
+                || this.disposed
+                || options?.abortSignal?.aborted) {
+                throw error;
+            }
+            const token = await this.recovery.recover(undefined, UnauthorizedRecoverySource.TokenExpired);
+            const expiresOnTimestamp = token ? getChatTokenExpiresOnInMs(token) : undefined;
+            if (!token || expiresOnTimestamp === undefined || !isChatTokenUsable(token)
+                || this.disposed || options?.abortSignal?.aborted) {
+                throw error;
+            }
+            return { token, expiresOnTimestamp };
+        }
         const token = this.recovery.selectToken(accessToken.token);
         const expiresOnTimestamp = token !== accessToken.token ? getChatTokenExpiresOnInMs(token) : undefined;
         return expiresOnTimestamp !== undefined ? { token, expiresOnTimestamp } : accessToken;
     }
 
     public dispose(): void {
+        this.disposed = true;
         this.credential.dispose();
     }
 }

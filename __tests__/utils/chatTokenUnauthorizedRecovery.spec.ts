@@ -285,6 +285,99 @@ describe("chatTokenUnauthorizedRecovery", () => {
     });
 
     describe("ChatTokenUnauthorizedRecoveryCredential", () => {
+        it.each(["Network error", "Invalid token format"])("does not recover unrelated credential errors: %s", async message => {
+            const error = new Error(message);
+            const inner = { getToken: jest.fn(async () => { throw error; }), dispose: jest.fn() };
+            const refreshToken = jest.fn(async () => renewedToken);
+            const recovery = createChatTokenUnauthorizedRecovery({ initialToken, refreshToken, now: () => currentTime });
+            jest.spyOn(recovery, "recover");
+            const credential = new ChatTokenUnauthorizedRecoveryCredential(inner, recovery);
+
+            await expect(credential.getToken()).rejects.toBe(error);
+            expect(refreshToken).not.toHaveBeenCalled();
+            expect(recovery.recover).not.toHaveBeenCalled();
+        });
+
+        it("does not recover an expired credential for an already-aborted request", async () => {
+            const error = new Error("The token returned from the tokenRefresher is expired.");
+            const inner = { getToken: jest.fn(async () => { throw error; }), dispose: jest.fn() };
+            const refreshToken = jest.fn(async () => renewedToken);
+            const recovery = createChatTokenUnauthorizedRecovery({ initialToken, refreshToken, now: () => currentTime });
+            jest.spyOn(recovery, "recover");
+            const credential = new ChatTokenUnauthorizedRecoveryCredential(inner, recovery);
+            const controller = new AbortController();
+            controller.abort();
+
+            await expect(credential.getToken({ abortSignal: controller.signal })).rejects.toBe(error);
+            expect(refreshToken).not.toHaveBeenCalled();
+            expect(recovery.recover).not.toHaveBeenCalled();
+        });
+
+        it("does not recover through a disposed credential", async () => {
+            const error = new Error("The token returned from the tokenRefresher is expired.");
+            const inner = { getToken: jest.fn(async () => { throw error; }), dispose: jest.fn() };
+            const recovery = createChatTokenUnauthorizedRecovery({
+                initialToken, refreshToken: async () => renewedToken, now: () => currentTime
+            });
+            jest.spyOn(recovery, "recover");
+            const credential = new ChatTokenUnauthorizedRecoveryCredential(inner, recovery);
+            credential.dispose();
+
+            await expect(credential.getToken()).rejects.toBe(error);
+            expect(recovery.recover).not.toHaveBeenCalled();
+            expect(inner.dispose).toHaveBeenCalledTimes(1);
+        });
+
+        it.each(["invalid", createJwt(-10)])("preserves the expiry error when recovery returns an unusable token", async token => {
+            const error = new Error("The token returned from the tokenRefresher is expired.");
+            const inner = { getToken: jest.fn(async () => { throw error; }), dispose: jest.fn() };
+            const recovery = {
+                selectToken: (value: string) => value,
+                observeToken: jest.fn(),
+                recover: jest.fn(async () => token),
+                reportTokenResult: jest.fn()
+            };
+            const credential = new ChatTokenUnauthorizedRecoveryCredential(inner, recovery);
+
+            await expect(credential.getToken()).rejects.toBe(error);
+            expect(recovery.recover).toHaveBeenCalledWith(undefined, UnauthorizedRecoverySource.TokenExpired);
+        });
+
+        it.each(["aborted", "disposed"])("does not return a recovered token when the request is %s in flight", async state => {
+            const clock = jest.spyOn(Date, "now").mockImplementation(() => currentTime);
+            const error = new Error("The token returned from the tokenRefresher is expired.");
+            const inner = { getToken: jest.fn(async () => { throw error; }), dispose: jest.fn() };
+            let complete: (token: string) => void = () => undefined;
+            let signalStarted: () => void = () => undefined;
+            const started = new Promise<void>(resolve => { signalStarted = resolve; });
+            const recovery = {
+                selectToken: (value: string) => value,
+                observeToken: jest.fn(),
+                recover: jest.fn(() => {
+                    signalStarted();
+                    return new Promise<string>(resolve => { complete = resolve; });
+                }),
+                reportTokenResult: jest.fn()
+            };
+            const credential = new ChatTokenUnauthorizedRecoveryCredential(inner, recovery);
+            const controller = new AbortController();
+            try {
+                const result = credential.getToken({ abortSignal: controller.signal });
+                await started;
+                if (state === "aborted") {
+                    controller.abort();
+                } else {
+                    credential.dispose();
+                }
+                complete(renewedToken);
+
+                await expect(result).rejects.toBe(error);
+                expect(recovery.recover).toHaveBeenCalledTimes(1);
+            } finally {
+                clock.mockRestore();
+            }
+        });
+
         it("returns the newest token with its expiry", async () => {
             const inner = { getToken: jest.fn(async () => ({ token: initialToken, expiresOnTimestamp: 1 })), dispose: jest.fn() };
             const recovery = createChatTokenUnauthorizedRecovery({ initialToken, refreshToken: async () => renewedToken, now: () => currentTime });

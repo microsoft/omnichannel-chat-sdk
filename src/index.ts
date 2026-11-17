@@ -18,6 +18,7 @@ import OnStreamingMessageOptionalParams from "./core/messaging/OnStreamingMessag
 import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import PolicyViolation from "./core/messaging/PolicyViolation";
 import StreamingMetadata from "./core/messaging/StreamingMetadata";
+import { ChatTokenRenewalStopReason } from "./utils/chatTokenRenewal";
 
 export {
     OmnichannelChatSDK,
@@ -65,6 +66,7 @@ export {
     OnStreamingMessageOptionalParams,
     PolicyViolation,
     StreamingMetadata,
+    ChatTokenRenewalStopReason,
 }
 
 export default {
