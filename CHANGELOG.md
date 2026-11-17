@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-The next release target is **2.1.0** (minor).
+## [2.1.0] - 2026-11-17
 
 ### Added
 
