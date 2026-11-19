@@ -328,6 +328,21 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
             expect(getAuthToken).not.toHaveBeenCalled();
         });
 
+        it('should call the provider once before the first createConversation request when the refresh fails', async () => {
+            const getAuthToken = jest.fn().mockRejectedValue(new Error('Provider unavailable'));
+            const chatSDK = await createChatSDK({ getAuthToken, token: createJwt(30) });
+            mockStartChatDependencies(chatSDK);
+            const request = jest.spyOn(chatSDK.OCClient, 'createConversation').mockImplementation(async () => {
+                expect(getAuthToken).toHaveBeenCalledTimes(1);
+                return { ChatId: 'chatId', Token: 'token', RegionGtms: '{}' };
+            });
+
+            await chatSDK.startChat();
+
+            expect(request).toHaveBeenCalledTimes(1);
+            expect(getAuthToken).toHaveBeenCalledTimes(1);
+        });
+
         it('should refresh and retry sessionInit once after a 401', async () => {
             const staleToken = createJwt(3600);
             const freshToken = createJwt(7200);

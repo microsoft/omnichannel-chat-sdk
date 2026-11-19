@@ -861,7 +861,6 @@ class OmnichannelChatSDK {
             initContext: {} as InitContext
         };
 
-        await this.ensureFreshAuthToken("SessionInit");
         sessionInitOptionalParams = this.populateInitChatOptionalParam(sessionInitOptionalParams, optionalParams, TelemetryEvent.StartChat);
         sessionInitOptionalParams.initContext!.isProactiveChat = !!optionalParams.isProactiveChat;
 
