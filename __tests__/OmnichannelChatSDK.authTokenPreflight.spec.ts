@@ -113,7 +113,8 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
 
     it('should keep the current token when getAuthToken times out', async () => {
         const token = createJwt(30);
-        const getAuthToken = jest.fn().mockReturnValue(new Promise(() => undefined));
+        let resolveLateToken: (token: string) => void = () => undefined;
+        const getAuthToken = jest.fn().mockReturnValue(new Promise<string>((resolve) => { resolveLateToken = resolve; }));
         const chatSDK = await createChatSDK({ getAuthToken, token, authTokenPreflight: { refreshTimeoutInMs: 10 } });
         const failScenario = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
 
@@ -122,6 +123,14 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
         expect(chatSDK["authenticatedUserToken"]).toBe(token);
         expect(failScenario).toHaveBeenCalledWith(TelemetryEvent.EnsureFreshAuthToken, expect.objectContaining({ ExceptionDetails: "Timeout" }));
         expect(chatSDK["authTokenRefreshPromise"]).toBeNull();
+
+        // A result that arrives after the timeout must not replace a newer token
+        const newerToken = createJwt(7200);
+        chatSDK["authenticatedUserToken"] = newerToken;
+        resolveLateToken(createJwt(3600));
+        await Promise.resolve();
+        await Promise.resolve();
+        expect(chatSDK["authenticatedUserToken"]).toBe(newerToken);
     });
 
     it('should not accept an expired token from getAuthToken', async () => {
@@ -307,7 +316,7 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
     describe('pending agent-end check', () => {
         const agentLeftEvent = { participantsRemoved: [{ id: 'agent-id' }] };
 
-        const setupAgentEnd = async (getAuthToken: jest.Mock, token: string, authTokenPreflight?: any) => {
+        const setupAgentEnd = async (getAuthToken: jest.Mock, token: string, authTokenPreflight?: any, lookupError: any = unauthorizedError()) => {
             const chatSDK = await createChatSDK({ getAuthToken, token, authTokenPreflight });
             chatSDK["chatToken"] = { chatId: 'chat-id' };
             const handlers: { onThreadUpdate: any } = { onThreadUpdate: null };
@@ -318,9 +327,9 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
             jest.spyOn(chatSDK, 'stopPolling').mockImplementation(() => undefined);
             const onAgentEndSession = jest.fn();
             await chatSDK.onAgentEndSession(onAgentEndSession);
-            const getLWIDetails = jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockRejectedValue(unauthorizedError());
+            const getLWIDetails = jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockRejectedValue(lookupError);
 
-            // Every status lookup fails because the sign-in expired
+            // Every status lookup fails, by default because the sign-in expired
             const handled = handlers.onThreadUpdate(agentLeftEvent);
             await jest.advanceTimersByTimeAsync(5000);
             await handled;
@@ -406,6 +415,7 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
                 finishClose = () => closeOutcome === 'success' ? resolve() : reject(unauthorizedError());
             }));
 
+            const requestIdBeforeEnd = chatSDK.requestId;
             const endChat = chatSDK.endChat();
             const endChatResult = endChat.then(() => 'resolved', (error: any) => error.message);
             await flushPromises();
@@ -421,7 +431,7 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
             expect(onAgentEndSession).not.toHaveBeenCalled();
             await jest.advanceTimersByTimeAsync(0);
 
-            return { chatSDK, onAgentEndSession, result };
+            return { chatSDK, onAgentEndSession, result, requestIdBeforeEnd };
         };
 
         it('should deliver an agent close seen during endChat once when endChat keeps the session', async () => {
@@ -438,11 +448,56 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
         });
 
         it('should deliver an agent close seen during endChat on a reconnect session that keeps the session', async () => {
-            const { chatSDK, onAgentEndSession, result } = await endChatWhileAgentEndSettles('unauthorized', 'reconnect-id');
+            const { chatSDK, onAgentEndSession, result, requestIdBeforeEnd } = await endChatWhileAgentEndSettles('unauthorized', 'reconnect-id');
 
-            expect(chatSDK.requestId).toBe('reconnect-id');
+            // The kept session keeps its own requestId, so the ACS token refresher still sees the chat as active
+            expect(chatSDK.requestId).toBe(requestIdBeforeEnd);
             expect(result).toBe(ChatSDKErrorName.AuthenticationExpired);
             expect(onAgentEndSession).toHaveBeenCalledTimes(1);
+        });
+
+        it('should end the chat as before when lookups fail for a reason other than an expired sign-in', async () => {
+            const token = createJwt(3600);
+            const { chatSDK, onAgentEndSession, getLWIDetails } = await setupAgentEnd(jest.fn().mockResolvedValue(token), token, undefined, { response: { status: 503 } });
+
+            expect(getLWIDetails).toHaveBeenCalledTimes(3);
+            expect(onAgentEndSession).toHaveBeenCalledTimes(1);
+            expect(chatSDK["pendingAgentEndCheck"]).toBeNull();
+        });
+
+        it('should not let an Active read that started before the check clear it', async () => {
+            const token = createJwt(3600);
+            const { chatSDK, onAgentEndSession, getLWIDetails } = await setupAgentEnd(jest.fn().mockResolvedValue(token), token);
+            const pendingCheck = chatSDK["pendingAgentEndCheck"];
+            chatSDK["pendingAgentEndCheck"] = null;
+            let finishRead: (details: any) => void = () => undefined;
+            getLWIDetails.mockImplementationOnce(() => new Promise((resolve) => { finishRead = resolve; }));
+
+            const staleRead = chatSDK.getConversationDetails();
+            await flushPromises();
+            chatSDK["pendingAgentEndCheck"] = pendingCheck;
+            finishRead({ State: 'Active', ConversationId: 'conversation-id' });
+            await staleRead;
+
+            expect(chatSDK["pendingAgentEndCheck"]).toBe(pendingCheck);
+            expect(onAgentEndSession).not.toHaveBeenCalled();
+
+            getLWIDetails.mockResolvedValue({ State: 'Closed', ConversationId: 'conversation-id' });
+            await chatSDK.getConversationDetails();
+            expect(onAgentEndSession).toHaveBeenCalledTimes(1);
+        });
+
+        it('should settle the pending check after authenticateChat sets a new token', async () => {
+            const token = createJwt(3600);
+            const { chatSDK, onAgentEndSession, getLWIDetails } = await setupAgentEnd(jest.fn().mockResolvedValue(token), token);
+            chatSDK.OCClient.midConversationAuthenticateChat = jest.fn().mockResolvedValue(undefined);
+            getLWIDetails.mockResolvedValue({ State: 'Closed', ConversationId: 'conversation-id' });
+
+            await chatSDK.authenticateChat(createJwt(7200));
+            await flushPromises();
+
+            expect(onAgentEndSession).toHaveBeenCalledTimes(1);
+            expect(chatSDK["pendingAgentEndCheck"]).toBeNull();
         });
 
         it('should discard an agent close seen during endChat when endChat tears the session down', async () => {

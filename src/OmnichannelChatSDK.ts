@@ -1166,6 +1166,8 @@ class OmnichannelChatSDK {
 
         this.isEndingChat = true;
         let keepSessionForAuthRecovery = false;
+        // closeChat() may swap requestId for reconnectId; restore it if the session is kept.
+        const requestIdBeforeClose = this.requestId;
 
         try {
             await this.closeChat(endChatOptionalParams);
@@ -1223,6 +1225,7 @@ class OmnichannelChatSDK {
             exceptionThrowers.throwConversationClosureFailure(error, this.scenarioMarker, TelemetryEvent.EndChat, telemetryData);
         } finally {
             if (keepSessionForAuthRecovery) {
+                this.requestId = requestIdBeforeClose;
                 this.isEndingChat = false;
                 this.deliverDeferredAgentEndSession();
             } else {
@@ -1437,6 +1440,7 @@ class OmnichannelChatSDK {
      * tell a failed lookup apart from a conversation that no longer exists.
      */
     private async fetchConversationDetails(optionalParams: GetConversationDetailsOptionalParams, throwOnLookupFailure: boolean): Promise<LiveWorkItemDetails> {
+        const pendingAgentEndCheckAtStart = this.pendingAgentEndCheck;
         let requestId = this.requestId;
         let chatToken = this.chatToken;
         let chatId = chatToken.chatId as string;
@@ -1518,7 +1522,9 @@ class OmnichannelChatSDK {
                 ChatId: chatId || '',
             });
 
-            if (this.pendingAgentEndCheck && this.isPendingAgentEndCheckFor(requestId, chatId)) {
+            // A read that started before the check was added may be stale, so it can only confirm a closed chat.
+            const isClosedState = state === LiveWorkItemState.WrapUp || state === LiveWorkItemState.Closed;
+            if (this.pendingAgentEndCheck && this.isPendingAgentEndCheckFor(requestId, chatId) && (isClosedState || this.pendingAgentEndCheck === pendingAgentEndCheckAtStart)) {
                 this.pendingAgentEndCheck.settle(state);
             }
 
@@ -2668,17 +2674,31 @@ class OmnichannelChatSDK {
                             continue;
                         }
 
-                        if (treatLookupFailureAsNonTerminal && !this.isEndingChat && requestId === this.requestId) {
-                            this.retainPendingAgentEndCheck(requestId, () => {
-                                if (agentEndSessionFired || this.isEndingChat) {
-                                    return;
-                                }
-                                agentEndSessionFired = true;
-                                onAgentEndSessionCallback(event);
-                                this.stopPolling();
-                            });
+                        if (!treatLookupFailureAsNonTerminal) {
+                            return;
                         }
-                        return;
+
+                        // Only an expired sign-in leaves the result unknown; keep checking until the token is renewed.
+                        if (isUnauthorizedError(error)) {
+                            if (!this.isEndingChat && requestId === this.requestId) {
+                                this.retainPendingAgentEndCheck(requestId, () => {
+                                    if (agentEndSessionFired || this.isEndingChat) {
+                                        return;
+                                    }
+                                    agentEndSessionFired = true;
+                                    onAgentEndSessionCallback(event);
+                                    this.stopPolling();
+                                });
+                            }
+                            return;
+                        }
+
+                        if (error instanceof ChatSDKError && error.message === ChatSDKErrorName.AuthContactIdNotFoundFailure) {
+                            return;
+                        }
+
+                        // Other failures end the chat, as before.
+                        liveWorkItemDetails = {} as LiveWorkItemDetails;
                     }
 
                     if (Object.keys(liveWorkItemDetails).length === 0 || liveWorkItemDetails.state == LiveWorkItemState.WrapUp || liveWorkItemDetails.state == LiveWorkItemState.Closed) {
@@ -3465,7 +3485,11 @@ class OmnichannelChatSDK {
             });
 
             // Persist token
+            const previousToken = this.authenticatedUserToken;
             this.authenticatedUserToken = token;
+            if (token !== previousToken) {
+                this.reconcilePendingAgentEndCheck();
+            }
 
             // Refresh chat token so subsequent calls use authenticated endpoints
             if (optionalParams.refreshChatToken) {
