@@ -133,9 +133,43 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
         const getAuthToken = jest.fn().mockResolvedValue(createJwt(-10));
         const chatSDK = await createChatSDK({ getAuthToken, token, authTokenPreflight: { enable: true } });
 
+        const failScenario = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
         await chatSDK["ensureFreshAuthToken"]("Test");
 
         expect(chatSDK["authenticatedUserToken"]).toBe(token);
+        expect(failScenario).toHaveBeenCalledWith(TelemetryEvent.EnsureFreshAuthToken, expect.objectContaining({
+            TokenChanged: "true",
+            ReturnedTokenExpired: "true",
+            ReturnedTokenSecondsToExpiryBucket: "expired"
+        }));
+    });
+
+    it('should report when getAuthToken returns the same expired token without logging it', async () => {
+        const token = createJwt(-10);
+        const getAuthToken = jest.fn().mockResolvedValue(token);
+        const chatSDK = await createChatSDK({ getAuthToken, token, authTokenPreflight: { enable: true } });
+        const failScenario = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+        await chatSDK["ensureFreshAuthToken"]("Test");
+
+        const data = failScenario.mock.calls[0][1] as Record<string, string>;
+        expect(data).toEqual(expect.objectContaining({ TokenChanged: "false", ReturnedTokenExpired: "true" }));
+        expect(JSON.stringify(data)).not.toContain(token);
+    });
+
+    it('should report a changed, valid token on success', async () => {
+        const getAuthToken = jest.fn().mockResolvedValue(createJwt(3600));
+        const chatSDK = await createChatSDK({ getAuthToken, authTokenPreflight: { enable: true } });
+        const completeScenario = jest.spyOn(chatSDK.scenarioMarker, 'completeScenario');
+
+        await chatSDK["ensureFreshAuthToken"]("Test");
+
+        expect(completeScenario).toHaveBeenCalledWith(TelemetryEvent.EnsureFreshAuthToken, expect.objectContaining({
+            TokenChanged: "true",
+            ReturnedTokenExpired: "false",
+            ReturnedTokenSecondsToExpiryBucket: ">300s"
+        }));
     });
 
     it('should retry once with a new token after HTTP 401', async () => {

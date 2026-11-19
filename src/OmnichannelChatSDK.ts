@@ -112,7 +112,7 @@ import { parseLowerCaseString } from "./utils/parsers";
 import { ChatTokenUnauthorizedRecovery, createChatTokenUnauthorizedRecovery, UnauthorizedRecoveryFailureReason, UnauthorizedRecoverySource } from "./utils/chatTokenUnauthorizedRecovery";
 import { authenticatedNonRetriableStatusCodes, ChatTokenRenewalStoppedDetails, createChatTokenRefresher, defaultNonRetriableStatusCodes, RenewedChatToken } from "./utils/chatTokenRenewal";
 import type { ChatTokenRefresher, ChatTokenRenewalStopReason } from "./utils/chatTokenRenewal";
-import { defaultAuthTokenRefreshMarginInMs, defaultAuthTokenRefreshTimeoutInMs, getSecondsToExpiryBucket, isAuthTokenNearExpiry, isUnauthorizedError, positiveOrDefault, withTimeout } from "./utils/authTokenPreflight";
+import { defaultAuthTokenRefreshMarginInMs, defaultAuthTokenRefreshTimeoutInMs, getReturnedAuthTokenTelemetry, getSecondsToExpiryBucket, isAuthTokenNearExpiry, isUnauthorizedError, positiveOrDefault, withTimeout } from "./utils/authTokenPreflight";
 import platform from "./utils/platform";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import startPolling from "./commands/startPolling";
@@ -1945,6 +1945,7 @@ class OmnichannelChatSDK {
         };
 
         this.scenarioMarker.startScenario(TelemetryEvent.EnsureFreshAuthToken, telemetryData);
+        let returnedTokenData = {};
 
         try {
             const timeoutInMs = positiveOrDefault(this.chatSDKConfig.authTokenPreflight?.refreshTimeoutInMs, defaultAuthTokenRefreshTimeoutInMs);
@@ -1952,6 +1953,9 @@ class OmnichannelChatSDK {
             if (typeof token !== "string" || token.trim().length === 0) {
                 throw new Error(ChatSDKErrorName.UndefinedAuthToken);
             }
+
+            // Describes what the provider returned without logging the token, e.g. the same expired token again
+            returnedTokenData = getReturnedAuthTokenTelemetry(previousToken, token);
 
             if (isAuthTokenNearExpiry(token, 0)) {
                 throw new Error("ExpiredAuthToken");
@@ -1964,13 +1968,14 @@ class OmnichannelChatSDK {
 
             this.scenarioMarker.completeScenario(TelemetryEvent.EnsureFreshAuthToken, {
                 ...telemetryData,
-                TokenChanged: String(token !== previousToken),
+                ...returnedTokenData,
                 ElapsedTimeInMilliseconds: Date.now() - startTime
             });
         } catch (error) {
             this.scenarioMarker.failScenario(TelemetryEvent.EnsureFreshAuthToken, {
                 ...telemetryData,
                 TokenChanged: "false",
+                ...returnedTokenData,
                 ElapsedTimeInMilliseconds: Date.now() - startTime,
                 ExceptionDetails: JSON.stringify({ message: (error as Error)?.message || "Unknown error" })
             });

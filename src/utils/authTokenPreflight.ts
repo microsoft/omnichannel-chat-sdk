@@ -38,6 +38,16 @@ export const getSecondsToExpiryBucket = (token: unknown, nowInMs: number = Date.
     return ">300s";
 };
 
+/**
+ * Describes the token returned by getAuthToken compared with the previous one, using only booleans and buckets.
+ * Shows whether the provider keeps returning the same or an expired token without logging the token or a hash of it.
+ */
+export const getReturnedAuthTokenTelemetry = (previousToken: unknown, returnedToken: unknown, nowInMs: number = Date.now()): { [key: string]: string } => ({
+    TokenChanged: String(returnedToken !== previousToken),
+    ReturnedTokenExpired: String(isAuthTokenNearExpiry(returnedToken, 0, nowInMs)),
+    ReturnedTokenSecondsToExpiryBucket: getSecondsToExpiryBucket(returnedToken, nowInMs)
+});
+
 export const isUnauthorizedError = (error: unknown): boolean => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (error as any)?.response?.status === 401;
