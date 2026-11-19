@@ -889,7 +889,7 @@ class OmnichannelChatSDK {
             // Skip session init when there's a valid live chat context
             if (!optionalParams.liveChatContext) {
                 try {
-                    await this.OCClient.sessionInit(this.requestId, sessionInitOptionalParams);
+                    await this.withAuthTokenRetry("SessionInit", (authenticatedUserToken: string | null) => this.OCClient.sessionInit(this.requestId, this.withAuthenticatedUserToken(sessionInitOptionalParams, authenticatedUserToken)));
                 } catch (error) {
                     const telemetryData = {
                         RequestId: this.requestId,
@@ -910,7 +910,7 @@ class OmnichannelChatSDK {
             // Skip session init when there's a valid live chat context
             if (!optionalParams.liveChatContext) {
                 try {
-                    const chatToken = await this.OCClient.createConversation(this.requestId, sessionInitOptionalParams);
+                    const chatToken = await this.withAuthTokenRetry("CreateConversation", (authenticatedUserToken: string | null) => this.OCClient.createConversation(this.requestId, this.withAuthenticatedUserToken(sessionInitOptionalParams, authenticatedUserToken)));
                     if (chatToken) {
                         this.setChatToken(chatToken);
                         loggerUtils.setChatId(this.chatToken.chatId || '', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
@@ -2006,6 +2006,10 @@ class OmnichannelChatSDK {
 
             return await request(this.authenticatedUserToken);
         }
+    }
+
+    private withAuthenticatedUserToken<T extends { authenticatedUserToken?: string }>(params: T, authenticatedUserToken: string | null): T {
+        return authenticatedUserToken ? { ...params, authenticatedUserToken } : params;
     }
 
     /**

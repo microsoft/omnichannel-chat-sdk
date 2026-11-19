@@ -32,10 +32,11 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
         }
     });
 
-    const createChatSDK = async (options: { authTokenPreflight?: any, getAuthToken?: any, token?: string } = {}) => {
+    const createChatSDK = async (options: { authTokenPreflight?: any, getAuthToken?: any, token?: string, useCreateConversation?: any } = {}) => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
             getAuthToken: options.getAuthToken,
-            authTokenPreflight: options.authTokenPreflight
+            authTokenPreflight: options.authTokenPreflight,
+            useCreateConversation: options.useCreateConversation
         });
         chatSDK.getChatConfig = jest.fn();
         chatSDK["isAMSClientAllowed"] = false;
@@ -277,5 +278,69 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
 
         expect(chatSDK.requestId).not.toBe(requestId);
         expect(chatSDK["chatToken"]).toEqual({});
+    });
+
+    describe('startChat', () => {
+        const mockStartChatDependencies = (chatSDK: any) => {
+            chatSDK.authSettings = {};
+            jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue({ ChatId: 'chatId', Token: 'token', RegionGtms: '{}' });
+            jest.spyOn(chatSDK.ACSClient, 'initialize').mockResolvedValue(undefined);
+            jest.spyOn(chatSDK.ACSClient, 'joinConversation').mockResolvedValue({});
+        };
+
+        const sentTokens = (mock: jest.Mock) => mock.mock.calls.map((call: any[]) => call[1].authenticatedUserToken);
+
+        it('should refresh and retry createConversation once after a 401', async () => {
+            const staleToken = createJwt(3600);
+            const freshToken = createJwt(7200);
+            const getAuthToken = jest.fn().mockResolvedValue(freshToken);
+            const chatSDK = await createChatSDK({ getAuthToken, token: staleToken });
+            mockStartChatDependencies(chatSDK);
+            const createConversation = jest.spyOn(chatSDK.OCClient, 'createConversation')
+                .mockRejectedValueOnce(unauthorizedError())
+                .mockResolvedValue({ ChatId: 'chatId', Token: 'token', RegionGtms: '{}' });
+
+            await chatSDK.startChat();
+
+            expect(sentTokens(createConversation as any)).toEqual([staleToken, freshToken]);
+        });
+
+        it('should fail createConversation without a retry when the provider returns the rejected token', async () => {
+            const staleToken = createJwt(3600);
+            const getAuthToken = jest.fn().mockResolvedValue(staleToken);
+            const chatSDK = await createChatSDK({ getAuthToken, token: staleToken });
+            mockStartChatDependencies(chatSDK);
+            const createConversation = jest.spyOn(chatSDK.OCClient, 'createConversation').mockRejectedValue(unauthorizedError());
+
+            await expect(chatSDK.startChat()).rejects.toMatchObject({ message: ChatSDKErrorName.ConversationInitializationFailure });
+            expect(createConversation).toHaveBeenCalledTimes(1);
+        });
+
+        it('should not retry createConversation on errors other than 401', async () => {
+            const getAuthToken = jest.fn().mockResolvedValue(createJwt(7200));
+            const chatSDK = await createChatSDK({ getAuthToken, token: createJwt(3600) });
+            mockStartChatDependencies(chatSDK);
+            const createConversation = jest.spyOn(chatSDK.OCClient, 'createConversation')
+                .mockRejectedValue(Object.assign(new Error('Server error'), { response: { status: 500 } }));
+
+            await expect(chatSDK.startChat()).rejects.toMatchObject({ message: ChatSDKErrorName.ConversationInitializationFailure });
+            expect(createConversation).toHaveBeenCalledTimes(1);
+            expect(getAuthToken).not.toHaveBeenCalled();
+        });
+
+        it('should refresh and retry sessionInit once after a 401', async () => {
+            const staleToken = createJwt(3600);
+            const freshToken = createJwt(7200);
+            const getAuthToken = jest.fn().mockResolvedValue(freshToken);
+            const chatSDK = await createChatSDK({ getAuthToken, token: staleToken, useCreateConversation: { disable: true } });
+            mockStartChatDependencies(chatSDK);
+            const sessionInit = jest.spyOn(chatSDK.OCClient, 'sessionInit')
+                .mockRejectedValueOnce(unauthorizedError())
+                .mockResolvedValue(undefined);
+
+            await chatSDK.startChat();
+
+            expect(sentTokens(sessionInit as any)).toEqual([staleToken, freshToken]);
+        });
     });
 });
