@@ -40,13 +40,11 @@ interface ChatTokenRenewalConfig {
 
 /**
  * Refreshes the authenticated user token from getAuthToken before authenticated requests and keeps
- * transient conversation lookup failures from ending the chat. Off unless enabled here or by the
- * lcwAuthTokenPreflightEnabled flag in the live chat config.
+ * transient conversation lookup failures from ending the chat. On for authenticated chats that provide
+ * getAuthToken.
  */
 interface AuthTokenPreflightConfig {
-    /** Turns the feature on regardless of the live chat config flag. */
-    enable?: boolean;
-    /** Turns the feature off even when the live chat config flag is on. Takes precedence over enable. */
+    /** Turns the feature off. */
     disable?: boolean;
     /** Refreshes the token when it expires within this many milliseconds. Default 60000. */
     refreshMarginInMs?: number;

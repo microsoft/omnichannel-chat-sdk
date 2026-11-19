@@ -32,7 +32,7 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
         }
     });
 
-    const createChatSDK = async (options: { authTokenPreflight?: any, fcbFlag?: any, getAuthToken?: any, token?: string } = {}) => {
+    const createChatSDK = async (options: { authTokenPreflight?: any, getAuthToken?: any, token?: string } = {}) => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
             getAuthToken: options.getAuthToken,
             authTokenPreflight: options.authTokenPreflight
@@ -42,21 +42,16 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
 
         await chatSDK.initialize();
 
-        chatSDK["liveChatConfig"] = options.fcbFlag === undefined ? {} : {
-            LcwFcbConfiguration: {
-                lcwAuthTokenPreflightEnabled: options.fcbFlag
-            }
-        };
         chatSDK["authenticatedUserToken"] = options.token ?? createJwt(30);
         chatSDK.scenarioMarker.singleRecord = jest.fn();
 
         return chatSDK;
     };
 
-    it('should not call getAuthToken when the preflight is disabled', async () => {
+    it('should not call getAuthToken when the host disables the preflight', async () => {
         const expiredToken = createJwt(-600);
         const getAuthToken = jest.fn().mockResolvedValue(createJwt(3600));
-        const chatSDK = await createChatSDK({ getAuthToken, token: expiredToken });
+        const chatSDK = await createChatSDK({ getAuthToken, token: expiredToken, authTokenPreflight: { disable: true } });
         jest.spyOn(chatSDK.OCClient, 'getUnreadMessageCount').mockRejectedValue(unauthorizedError());
 
         await expect(chatSDK.getUnreadMessageCount()).rejects.toMatchObject({ message: ChatSDKErrorName.UnreadMessageCountRetrievalFailure });
@@ -66,10 +61,10 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
         expect(chatSDK.OCClient.getUnreadMessageCount).toHaveBeenCalledWith(expiredToken);
     });
 
-    it('should refresh a token near expiry before the request when enabled by the live chat config', async () => {
+    it('should refresh a token near expiry before the request by default', async () => {
         const freshToken = createJwt(3600);
         const getAuthToken = jest.fn().mockResolvedValue(freshToken);
-        const chatSDK = await createChatSDK({ getAuthToken, fcbFlag: 'True' });
+        const chatSDK = await createChatSDK({ getAuthToken });
         jest.spyOn(chatSDK.OCClient, 'getUnreadMessageCount').mockResolvedValue({ count: 1 });
 
         await chatSDK.getUnreadMessageCount();
@@ -82,7 +77,7 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
     it('should not refresh a token that is not near expiry', async () => {
         const token = createJwt(3600);
         const getAuthToken = jest.fn();
-        const chatSDK = await createChatSDK({ getAuthToken, authTokenPreflight: { enable: true }, token });
+        const chatSDK = await createChatSDK({ getAuthToken, token });
         jest.spyOn(chatSDK.OCClient, 'getUnreadMessageCount').mockResolvedValue({ count: 1 });
 
         await chatSDK.getUnreadMessageCount();
@@ -91,9 +86,9 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
         expect(chatSDK.OCClient.getUnreadMessageCount).toHaveBeenCalledWith(token);
     });
 
-    it('should let disable override the live chat config', async () => {
+    it('should not refresh when the host disables the preflight', async () => {
         const getAuthToken = jest.fn().mockResolvedValue(createJwt(3600));
-        const chatSDK = await createChatSDK({ getAuthToken, fcbFlag: 'true', authTokenPreflight: { disable: true, enable: true } });
+        const chatSDK = await createChatSDK({ getAuthToken, authTokenPreflight: { disable: true } });
 
         await chatSDK["ensureFreshAuthToken"]("Test");
 
@@ -104,7 +99,7 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
         const freshToken = createJwt(3600);
         let resolveToken: (token: string) => void = () => undefined;
         const getAuthToken = jest.fn().mockReturnValue(new Promise<string>((resolve) => { resolveToken = resolve; }));
-        const chatSDK = await createChatSDK({ getAuthToken, authTokenPreflight: { enable: true } });
+        const chatSDK = await createChatSDK({ getAuthToken });
 
         const first = chatSDK["ensureFreshAuthToken"]("First");
         const second = chatSDK["ensureFreshAuthToken"]("Second");
@@ -118,7 +113,7 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
     it('should keep the current token when getAuthToken times out', async () => {
         const token = createJwt(30);
         const getAuthToken = jest.fn().mockReturnValue(new Promise(() => undefined));
-        const chatSDK = await createChatSDK({ getAuthToken, token, authTokenPreflight: { enable: true, refreshTimeoutInMs: 10 } });
+        const chatSDK = await createChatSDK({ getAuthToken, token, authTokenPreflight: { refreshTimeoutInMs: 10 } });
         const failScenario = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
 
         await chatSDK["ensureFreshAuthToken"]("Test");
@@ -131,7 +126,7 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
     it('should not accept an expired token from getAuthToken', async () => {
         const token = createJwt(30);
         const getAuthToken = jest.fn().mockResolvedValue(createJwt(-10));
-        const chatSDK = await createChatSDK({ getAuthToken, token, authTokenPreflight: { enable: true } });
+        const chatSDK = await createChatSDK({ getAuthToken, token });
 
         const failScenario = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
 
@@ -148,7 +143,7 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
     it('should report when getAuthToken returns the same expired token without logging it', async () => {
         const token = createJwt(-10);
         const getAuthToken = jest.fn().mockResolvedValue(token);
-        const chatSDK = await createChatSDK({ getAuthToken, token, authTokenPreflight: { enable: true } });
+        const chatSDK = await createChatSDK({ getAuthToken, token });
         const failScenario = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
 
         await chatSDK["ensureFreshAuthToken"]("Test");
@@ -160,7 +155,7 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
 
     it('should report a changed, valid token on success', async () => {
         const getAuthToken = jest.fn().mockResolvedValue(createJwt(3600));
-        const chatSDK = await createChatSDK({ getAuthToken, authTokenPreflight: { enable: true } });
+        const chatSDK = await createChatSDK({ getAuthToken });
         const completeScenario = jest.spyOn(chatSDK.scenarioMarker, 'completeScenario');
 
         await chatSDK["ensureFreshAuthToken"]("Test");
@@ -176,7 +171,7 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
         const token = createJwt(3600);
         const freshToken = createJwt(7200);
         const getAuthToken = jest.fn().mockResolvedValue(freshToken);
-        const chatSDK = await createChatSDK({ getAuthToken, token, authTokenPreflight: { enable: true } });
+        const chatSDK = await createChatSDK({ getAuthToken, token });
         jest.spyOn(chatSDK.OCClient, 'getUnreadMessageCount')
             .mockRejectedValueOnce(unauthorizedError())
             .mockResolvedValueOnce({ count: 2 });
@@ -193,7 +188,7 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
     it('should not retry after HTTP 401 when the token cannot be refreshed', async () => {
         const token = createJwt(3600);
         const getAuthToken = jest.fn().mockResolvedValue(token);
-        const chatSDK = await createChatSDK({ getAuthToken, token, authTokenPreflight: { enable: true } });
+        const chatSDK = await createChatSDK({ getAuthToken, token });
         const request = jest.fn().mockRejectedValue(unauthorizedError());
 
         await expect(chatSDK["withAuthTokenRetry"]("Test", request)).rejects.toThrow('Unauthorized');
@@ -203,7 +198,7 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
 
     it('should not retry errors other than HTTP 401', async () => {
         const getAuthToken = jest.fn();
-        const chatSDK = await createChatSDK({ getAuthToken, token: createJwt(3600), authTokenPreflight: { enable: true } });
+        const chatSDK = await createChatSDK({ getAuthToken, token: createJwt(3600) });
         const request = jest.fn().mockRejectedValue(Object.assign(new Error('Server error'), { response: { status: 500 } }));
 
         await expect(chatSDK["withAuthTokenRetry"]("Test", request)).rejects.toThrow('Server error');
@@ -212,9 +207,9 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
         expect(getAuthToken).not.toHaveBeenCalled();
     });
 
-    it('should throw AuthenticationExpired for HTTP 401 only when enabled', async () => {
-        const enabledChatSDK = await createChatSDK({ getAuthToken: jest.fn(), authTokenPreflight: { enable: true } });
-        const disabledChatSDK = await createChatSDK({ getAuthToken: jest.fn() });
+    it('should throw AuthenticationExpired for HTTP 401 unless disabled', async () => {
+        const enabledChatSDK = await createChatSDK({ getAuthToken: jest.fn() });
+        const disabledChatSDK = await createChatSDK({ getAuthToken: jest.fn(), authTokenPreflight: { disable: true } });
 
         expect(() => enabledChatSDK["throwIfAuthenticationExpired"](unauthorizedError(), TelemetryEvent.CloseChatSession)).toThrow(ChatSDKErrorName.AuthenticationExpired);
         expect(() => disabledChatSDK["throwIfAuthenticationExpired"](unauthorizedError(), TelemetryEvent.CloseChatSession)).not.toThrow();
@@ -224,7 +219,7 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
         const token = createJwt(3600);
         const freshToken = createJwt(7200);
         const getAuthToken = jest.fn().mockResolvedValue(token);
-        const chatSDK = await createChatSDK({ getAuthToken, token, authTokenPreflight: { enable: true } });
+        const chatSDK = await createChatSDK({ getAuthToken, token });
         chatSDK["chatToken"] = { chatId: 'chat-id' };
         const requestId = chatSDK.requestId;
         jest.spyOn(chatSDK.OCClient, 'sessionClose').mockRejectedValueOnce(unauthorizedError());
@@ -247,7 +242,7 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
     });
 
     it('should release the session when endChat fails with HTTP 401 and the preflight is disabled', async () => {
-        const chatSDK = await createChatSDK({ getAuthToken: jest.fn() });
+        const chatSDK = await createChatSDK({ getAuthToken: jest.fn(), authTokenPreflight: { disable: true } });
         chatSDK["chatToken"] = { chatId: 'chat-id' };
         const requestId = chatSDK.requestId;
         jest.spyOn(chatSDK.OCClient, 'sessionClose').mockRejectedValueOnce(unauthorizedError());

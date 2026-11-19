@@ -1889,24 +1889,15 @@ class OmnichannelChatSDK {
     }
 
     /**
-     * Whether the authenticated user token is refreshed before authenticated requests. The chat SDK config
-     * overrides the lcwAuthTokenPreflightEnabled flag of the live chat config.
+     * Whether the authenticated user token is refreshed before authenticated requests. On for every
+     * authenticated chat with a getAuthToken callback unless the host sets authTokenPreflight.disable.
      */
     private isAuthTokenPreflightEnabled(): boolean {
         if (!this.authenticatedUserToken || typeof this.chatSDKConfig?.getAuthToken !== "function") {
             return false;
         }
 
-        const config = this.chatSDKConfig.authTokenPreflight;
-        if (config?.disable === true) {
-            return false;
-        }
-
-        if (config?.enable === true) {
-            return true;
-        }
-
-        return parseLowerCaseString(this.liveChatConfig?.LcwFcbConfiguration?.lcwAuthTokenPreflightEnabled) === "true";
+        return this.chatSDKConfig.authTokenPreflight?.disable !== true;
     }
 
     /**
