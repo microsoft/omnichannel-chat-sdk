@@ -50,6 +50,12 @@ interface AuthTokenPreflightConfig {
     refreshMarginInMs?: number;
     /** Longest wait for getAuthToken, in milliseconds. Default 10000. */
     refreshTimeoutInMs?: number;
+    /**
+     * When endChat() gets an HTTP 401 that a fresh token cannot fix, throw AuthenticationExpired and keep the
+     * session so endChat() can be retried after the user signs in again. Default false: endChat() throws
+     * ConversationClosureFailure and releases the session.
+     */
+    retainSessionOnAuthExpired?: boolean;
 }
 
 /**

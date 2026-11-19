@@ -121,6 +121,8 @@ import urlResolvers from "./utils/urlResolvers";
 import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 import validatePrefetchedLiveChatConfig from "./validators/prefetchedConfigValidator";
 
+const maxPendingAgentEndReconcileAttempts = 3;
+
 class OmnichannelChatSDK {
     private debug: boolean;
     public runtimeId: string;
@@ -155,6 +157,9 @@ class OmnichannelChatSDK {
     private authSettings: AuthSettings | null = null;
     private authenticatedUserToken: string | null = null;
     private authTokenRefreshPromise: Promise<void> | null = null;
+    // Agent-end check whose status lookups all failed; settled by a later successful lookup for the same chat
+    private pendingAgentEndCheck: { requestId: string; reconcileAttempts: number; settle: (state: string | undefined) => void } | null = null;
+    private pendingAgentEndReconcilePromise: Promise<void> | null = null;
     private preChatSurvey: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private conversation: IConversation | ACSConversation | null = null;
     private callingOption: CallingOptionsOptionSetNumber = CallingOptionsOptionSetNumber.NoCalling;
@@ -1238,6 +1243,7 @@ class OmnichannelChatSDK {
 
         this.conversation?.disconnect();
         this.conversation = null;
+        this.pendingAgentEndCheck = null;
         this.requestId = uuidv4();
         this.chatToken = {};
         this.chatTokenUnauthorizedRecovery = null;
@@ -1508,6 +1514,10 @@ class OmnichannelChatSDK {
                 RequestId: requestId,
                 ChatId: chatId || '',
             });
+
+            if (this.pendingAgentEndCheck?.requestId === requestId) {
+                this.pendingAgentEndCheck.settle(state);
+            }
 
             return liveWorkItemDetails;
         } catch (error) {
@@ -1954,6 +1964,9 @@ class OmnichannelChatSDK {
             // The provider may resolve after the chat has ended or the token was replaced, e.g. by mid-conversation authentication
             if (this.authenticatedUserToken === previousToken) {
                 this.authenticatedUserToken = token;
+                if (token !== previousToken) {
+                    this.reconcilePendingAgentEndCheck();
+                }
             }
 
             this.scenarioMarker.completeScenario(TelemetryEvent.EnsureFreshAuthToken, {
@@ -2007,16 +2020,45 @@ class OmnichannelChatSDK {
         }
     }
 
+    /**
+     * Retries a pending agent-end check after a new sign-in token arrives. Runs at most a few times per pending check
+     * and never in parallel; fetchConversationDetails applies the result.
+     */
+    private reconcilePendingAgentEndCheck(): void {
+        const pendingCheck = this.pendingAgentEndCheck;
+        if (!pendingCheck || this.pendingAgentEndReconcilePromise || pendingCheck.requestId !== this.requestId) {
+            return;
+        }
+
+        if (pendingCheck.reconcileAttempts >= maxPendingAgentEndReconcileAttempts) {
+            this.pendingAgentEndCheck = null;
+            this.scenarioMarker.singleRecord(TelemetryEvent.PendingAgentEndCheckSettled, {
+                RequestId: pendingCheck.requestId,
+                ChatId: this.chatToken?.chatId as string || "",
+                Outcome: "Abandoned"
+            });
+            return;
+        }
+
+        pendingCheck.reconcileAttempts++;
+        this.pendingAgentEndReconcilePromise = Promise.resolve()
+            .then(() => this.fetchConversationDetails({}, true))
+            .then(() => undefined, () => undefined)
+            .finally(() => {
+                this.pendingAgentEndReconcilePromise = null;
+            });
+    }
+
     private withAuthenticatedUserToken<T extends { authenticatedUserToken?: string }>(params: T, authenticatedUserToken: string | null): T {
         return authenticatedUserToken ? { ...params, authenticatedUserToken } : params;
     }
 
     /**
-     * Throws AuthenticationExpired when the preflight is enabled and the error is an HTTP 401, so that callers can
-     * tell an expired sign-in apart from other failures.
+     * Throws AuthenticationExpired when the host opted in with authTokenPreflight.retainSessionOnAuthExpired and the
+     * error is an HTTP 401, so that callers can tell an expired sign-in apart from other failures.
      */
     private throwIfAuthenticationExpired(error: unknown, telemetryEvent: TelemetryEvent, telemetryData: { [key: string]: string } = {}): void {
-        if (isUnauthorizedError(error) && this.isAuthTokenPreflightEnabled()) {
+        if (isUnauthorizedError(error) && this.isAuthTokenPreflightEnabled() && this.chatSDKConfig.authTokenPreflight?.retainSessionOnAuthExpired === true) {
             exceptionThrowers.throwChatSDKError(ChatSDKErrorName.AuthenticationExpired, error, this.scenarioMarker, telemetryEvent, telemetryData);
         }
     }
@@ -2583,6 +2625,7 @@ class OmnichannelChatSDK {
                     return;
                 }
 
+                const requestId = this.requestId;
                 // Retry: the backend conversation state may lag behind the ACS participantsRemoved event
                 const maxRetries = 3;
                 const retryDelayMs = 2000;
@@ -2607,6 +2650,17 @@ class OmnichannelChatSDK {
                         if (attempt < maxRetries) {
                             await new Promise(resolve => setTimeout(resolve, retryDelayMs));
                             continue;
+                        }
+
+                        if (treatLookupFailureAsNonTerminal && !this.isEndingChat && requestId === this.requestId) {
+                            this.retainPendingAgentEndCheck(requestId, () => {
+                                if (agentEndSessionFired || this.isEndingChat) {
+                                    return;
+                                }
+                                agentEndSessionFired = true;
+                                onAgentEndSessionCallback(event);
+                                this.stopPolling();
+                            });
                         }
                         return;
                     }
@@ -2641,6 +2695,31 @@ class OmnichannelChatSDK {
                 ChatId: this.chatToken.chatId as string
             });
         }
+    }
+
+    private retainPendingAgentEndCheck(requestId: string, fireAgentEndSession: () => void): void {
+        const pendingCheck = {
+            requestId,
+            reconcileAttempts: 0,
+            settle: (state: string | undefined) => {
+                if (this.pendingAgentEndCheck !== pendingCheck) {
+                    return;
+                }
+
+                const isClosed = state === LiveWorkItemState.WrapUp || state === LiveWorkItemState.Closed;
+                this.pendingAgentEndCheck = null;
+                this.scenarioMarker.singleRecord(TelemetryEvent.PendingAgentEndCheckSettled, {
+                    RequestId: requestId,
+                    ChatId: this.chatToken?.chatId as string || "",
+                    Outcome: isClosed ? "Closed" : "Active"
+                });
+
+                if (isClosed) {
+                    fireAgentEndSession();
+                }
+            }
+        };
+        this.pendingAgentEndCheck = pendingCheck;
     }
 
     public async uploadFileAttachment(fileInfo: IFileInfo | File): Promise<UploadFileAttachmentResponse> {

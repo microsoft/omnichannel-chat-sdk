@@ -84,6 +84,7 @@ enum TelemetryEvent {
     EnsureFreshAuthToken = "EnsureFreshAuthToken",
     AuthTokenRejected = "AuthTokenRejected",
     ConversationDetailsLookupFailed = "ConversationDetailsLookupFailed",
+    PendingAgentEndCheckSettled = "PendingAgentEndCheckSettled",
 }
 
 export default TelemetryEvent;

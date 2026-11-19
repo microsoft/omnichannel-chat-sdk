@@ -234,19 +234,43 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
         expect(getAuthToken).not.toHaveBeenCalled();
     });
 
-    it('should throw AuthenticationExpired for HTTP 401 unless disabled', async () => {
-        const enabledChatSDK = await createChatSDK({ getAuthToken: jest.fn() });
-        const disabledChatSDK = await createChatSDK({ getAuthToken: jest.fn(), authTokenPreflight: { disable: true } });
+    it.each([
+        ['missing', {}, false],
+        ['false', { retainSessionOnAuthExpired: false }, false],
+        ['true', { retainSessionOnAuthExpired: true }, true],
+        ['true with disable', { retainSessionOnAuthExpired: true, disable: true }, false]
+    ])('should throw AuthenticationExpired for HTTP 401 only when retainSessionOnAuthExpired is opted in (%s)', async (_name, authTokenPreflight, shouldThrow) => {
+        const chatSDK = await createChatSDK({ getAuthToken: jest.fn(), authTokenPreflight });
+        const action = () => chatSDK["throwIfAuthenticationExpired"](unauthorizedError(), TelemetryEvent.CloseChatSession);
 
-        expect(() => enabledChatSDK["throwIfAuthenticationExpired"](unauthorizedError(), TelemetryEvent.CloseChatSession)).toThrow(ChatSDKErrorName.AuthenticationExpired);
-        expect(() => disabledChatSDK["throwIfAuthenticationExpired"](unauthorizedError(), TelemetryEvent.CloseChatSession)).not.toThrow();
+        if (shouldThrow) {
+            expect(action).toThrow(ChatSDKErrorName.AuthenticationExpired);
+        } else {
+            expect(action).not.toThrow();
+        }
+    });
+
+    it.each([
+        ['JWT', createJwt(3600)],
+        ['opaque', 'opaque-token']
+    ])('should release the session with ConversationClosureFailure by default when endChat gets HTTP 401 (%s token)', async (_name, token) => {
+        const getAuthToken = jest.fn().mockResolvedValue(token);
+        const chatSDK = await createChatSDK({ getAuthToken, token });
+        chatSDK["chatToken"] = { chatId: 'chat-id' };
+        const requestId = chatSDK.requestId;
+        jest.spyOn(chatSDK.OCClient, 'sessionClose').mockRejectedValue(unauthorizedError());
+
+        await expect(chatSDK.endChat()).rejects.toMatchObject({ message: ChatSDKErrorName.ConversationClosureFailure });
+
+        expect(chatSDK.requestId).not.toBe(requestId);
+        expect(chatSDK["chatToken"]).toEqual({});
     });
 
     it('should keep the session when endChat fails because the sign-in expired so it can be retried', async () => {
         const token = createJwt(3600);
         const freshToken = createJwt(7200);
         const getAuthToken = jest.fn().mockResolvedValue(token);
-        const chatSDK = await createChatSDK({ getAuthToken, token });
+        const chatSDK = await createChatSDK({ getAuthToken, token, authTokenPreflight: { retainSessionOnAuthExpired: true } });
         chatSDK["chatToken"] = { chatId: 'chat-id' };
         const requestId = chatSDK.requestId;
         jest.spyOn(chatSDK.OCClient, 'sessionClose').mockRejectedValueOnce(unauthorizedError());
@@ -280,6 +304,127 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
         expect(chatSDK["chatToken"]).toEqual({});
     });
 
+    describe('pending agent-end check', () => {
+        const agentLeftEvent = { participantsRemoved: [{ id: 'agent-id' }] };
+
+        const setupAgentEnd = async (getAuthToken: jest.Mock, token: string) => {
+            const chatSDK = await createChatSDK({ getAuthToken, token });
+            chatSDK["chatToken"] = { chatId: 'chat-id' };
+            const handlers: { onThreadUpdate: any } = { onThreadUpdate: null };
+            chatSDK.conversation = {
+                registerOnThreadUpdate: jest.fn((handler: any) => { handlers.onThreadUpdate = handler; }),
+                disconnect: jest.fn()
+            };
+            jest.spyOn(chatSDK, 'stopPolling').mockImplementation(() => undefined);
+            const onAgentEndSession = jest.fn();
+            await chatSDK.onAgentEndSession(onAgentEndSession);
+            const getLWIDetails = jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockRejectedValue(unauthorizedError());
+
+            // Every status lookup fails because the sign-in expired
+            const handled = handlers.onThreadUpdate(agentLeftEvent);
+            await jest.advanceTimersByTimeAsync(5000);
+            await handled;
+
+            return { chatSDK, onAgentEndSession, getLWIDetails };
+        };
+
+        const flushPromises = async () => {
+            for (let i = 0; i < 10; i++) {
+                await Promise.resolve();
+            }
+        };
+
+        beforeEach(() => {
+            jest.useFakeTimers();
+        });
+
+        afterEach(() => {
+            jest.useRealTimers();
+        });
+
+        it.each([
+            ['Closed', 1],
+            ['WrapUp', 1],
+            ['Active', 0]
+        ])('should settle the pending check after a fresh token arrives (%s)', async (state, expectedCallbacks) => {
+            const token = createJwt(3600);
+            const getAuthToken = jest.fn().mockResolvedValue(token);
+            const { chatSDK, onAgentEndSession, getLWIDetails } = await setupAgentEnd(getAuthToken, token);
+
+            expect(getLWIDetails).toHaveBeenCalledTimes(3);
+            expect(onAgentEndSession).not.toHaveBeenCalled();
+            expect(chatSDK["pendingAgentEndCheck"]).not.toBeNull();
+
+            getAuthToken.mockResolvedValue(createJwt(7200));
+            getLWIDetails.mockResolvedValue({ State: state, ConversationId: 'conversation-id' });
+            await chatSDK["ensureFreshAuthToken"]("Test", true);
+            await flushPromises();
+
+            expect(onAgentEndSession).toHaveBeenCalledTimes(expectedCallbacks);
+            if (expectedCallbacks) {
+                expect(onAgentEndSession).toHaveBeenCalledWith(agentLeftEvent);
+            }
+            expect(chatSDK["pendingAgentEndCheck"]).toBeNull();
+            expect(chatSDK.scenarioMarker.singleRecord).toHaveBeenCalledWith(TelemetryEvent.PendingAgentEndCheckSettled, expect.objectContaining({ Outcome: expectedCallbacks ? 'Closed' : 'Active' }));
+        });
+
+        it('should settle the pending check on the next successful host status lookup and fire only once', async () => {
+            const token = createJwt(3600);
+            const { chatSDK, onAgentEndSession, getLWIDetails } = await setupAgentEnd(jest.fn().mockResolvedValue(token), token);
+
+            getLWIDetails.mockResolvedValue({ State: 'Closed', ConversationId: 'conversation-id' });
+            await chatSDK.getConversationDetails();
+            await chatSDK.getConversationDetails();
+
+            expect(onAgentEndSession).toHaveBeenCalledTimes(1);
+        });
+
+        it('should drop the pending check when the chat ends', async () => {
+            const token = createJwt(3600);
+            const { chatSDK, onAgentEndSession, getLWIDetails } = await setupAgentEnd(jest.fn().mockResolvedValue(token), token);
+            const requestId = chatSDK.requestId;
+
+            chatSDK["releaseEndedChat"]();
+            getLWIDetails.mockResolvedValue({ State: 'Closed', ConversationId: 'conversation-id' });
+            await chatSDK.getConversationDetails({ liveChatContext: { requestId, chatToken: { chatId: 'chat-id' } } });
+
+            expect(chatSDK["pendingAgentEndCheck"]).toBeNull();
+            expect(onAgentEndSession).not.toHaveBeenCalled();
+        });
+
+        it('should give up after a bounded number of reconcile attempts', async () => {
+            const token = createJwt(3600);
+            const getAuthToken = jest.fn().mockResolvedValue(token);
+            const { chatSDK, onAgentEndSession, getLWIDetails } = await setupAgentEnd(getAuthToken, token);
+            getLWIDetails.mockRejectedValue(new Error('network'));
+
+            for (let i = 0; i < 4; i++) {
+                getAuthToken.mockResolvedValue(createJwt(3600 + (i + 1) * 60));
+                await chatSDK["ensureFreshAuthToken"]("Test", true);
+                await flushPromises();
+            }
+
+            expect(getLWIDetails).toHaveBeenCalledTimes(6);
+            expect(chatSDK["pendingAgentEndCheck"]).toBeNull();
+            expect(onAgentEndSession).not.toHaveBeenCalled();
+            expect(chatSDK.scenarioMarker.singleRecord).toHaveBeenCalledWith(TelemetryEvent.PendingAgentEndCheckSettled, expect.objectContaining({ Outcome: 'Abandoned' }));
+        });
+
+        it('should not retain a pending check when the preflight is disabled', async () => {
+            const chatSDK = await createChatSDK({ getAuthToken: jest.fn(), authTokenPreflight: { disable: true } });
+            chatSDK["chatToken"] = { chatId: 'chat-id' };
+            const handlers: { onThreadUpdate: any } = { onThreadUpdate: null };
+            chatSDK.conversation = { registerOnThreadUpdate: jest.fn((handler: any) => { handlers.onThreadUpdate = handler; }) };
+            jest.spyOn(chatSDK, 'getConversationDetails').mockRejectedValue(new Error('network'));
+            await chatSDK.onAgentEndSession(jest.fn());
+
+            const handled = handlers.onThreadUpdate(agentLeftEvent);
+            await jest.advanceTimersByTimeAsync(5000);
+            await handled;
+
+            expect(chatSDK["pendingAgentEndCheck"]).toBeNull();
+        });
+    });
     describe('startChat', () => {
         const mockStartChatDependencies = (chatSDK: any) => {
             chatSDK.authSettings = {};
