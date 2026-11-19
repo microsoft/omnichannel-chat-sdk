@@ -307,8 +307,8 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
     describe('pending agent-end check', () => {
         const agentLeftEvent = { participantsRemoved: [{ id: 'agent-id' }] };
 
-        const setupAgentEnd = async (getAuthToken: jest.Mock, token: string) => {
-            const chatSDK = await createChatSDK({ getAuthToken, token });
+        const setupAgentEnd = async (getAuthToken: jest.Mock, token: string, authTokenPreflight?: any) => {
+            const chatSDK = await createChatSDK({ getAuthToken, token, authTokenPreflight });
             chatSDK["chatToken"] = { chatId: 'chat-id' };
             const handlers: { onThreadUpdate: any } = { onThreadUpdate: null };
             chatSDK.conversation = {
@@ -390,6 +390,67 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
 
             expect(chatSDK["pendingAgentEndCheck"]).toBeNull();
             expect(onAgentEndSession).not.toHaveBeenCalled();
+        });
+
+        const endChatWhileAgentEndSettles = async (closeOutcome: 'unauthorized' | 'success', reconnectId?: string) => {
+            const token = createJwt(3600);
+            const { chatSDK, onAgentEndSession, getLWIDetails } = await setupAgentEnd(jest.fn().mockResolvedValue(token), token, { retainSessionOnAuthExpired: true });
+            if (reconnectId) {
+                chatSDK["chatSDKConfig"].chatReconnect = { disable: false };
+                chatSDK["isChatReconnect"] = true;
+                chatSDK["isPersistentChat"] = false;
+                chatSDK["reconnectId"] = reconnectId;
+            }
+            let finishClose: () => void = () => undefined;
+            jest.spyOn(chatSDK.OCClient, 'sessionClose').mockImplementation(() => new Promise<void>((resolve, reject) => {
+                finishClose = () => closeOutcome === 'success' ? resolve() : reject(unauthorizedError());
+            }));
+
+            const endChat = chatSDK.endChat();
+            const endChatResult = endChat.then(() => 'resolved', (error: any) => error.message);
+            await flushPromises();
+            expect(chatSDK["isEndingChat"]).toBe(true);
+
+            // A host status read reports Closed while endChat() is still running
+            getLWIDetails.mockResolvedValue({ State: 'Closed', ConversationId: 'conversation-id' });
+            await chatSDK.getConversationDetails();
+            expect(onAgentEndSession).not.toHaveBeenCalled();
+
+            finishClose();
+            const result = await endChatResult;
+            expect(onAgentEndSession).not.toHaveBeenCalled();
+            await jest.advanceTimersByTimeAsync(0);
+
+            return { chatSDK, onAgentEndSession, result };
+        };
+
+        it('should deliver an agent close seen during endChat once when endChat keeps the session', async () => {
+            const { chatSDK, onAgentEndSession, result } = await endChatWhileAgentEndSettles('unauthorized');
+
+            expect(result).toBe(ChatSDKErrorName.AuthenticationExpired);
+            expect(onAgentEndSession).toHaveBeenCalledTimes(1);
+            expect(onAgentEndSession).toHaveBeenCalledWith(agentLeftEvent);
+
+            await chatSDK.getConversationDetails();
+            await jest.advanceTimersByTimeAsync(0);
+            expect(onAgentEndSession).toHaveBeenCalledTimes(1);
+            expect(chatSDK["deferredAgentEndSession"]).toBeNull();
+        });
+
+        it('should deliver an agent close seen during endChat on a reconnect session that keeps the session', async () => {
+            const { chatSDK, onAgentEndSession, result } = await endChatWhileAgentEndSettles('unauthorized', 'reconnect-id');
+
+            expect(chatSDK.requestId).toBe('reconnect-id');
+            expect(result).toBe(ChatSDKErrorName.AuthenticationExpired);
+            expect(onAgentEndSession).toHaveBeenCalledTimes(1);
+        });
+
+        it('should discard an agent close seen during endChat when endChat tears the session down', async () => {
+            const { chatSDK, onAgentEndSession, result } = await endChatWhileAgentEndSettles('success');
+
+            expect(result).toBe('resolved');
+            expect(onAgentEndSession).not.toHaveBeenCalled();
+            expect(chatSDK["deferredAgentEndSession"]).toBeNull();
         });
 
         it('should give up after a bounded number of reconcile attempts', async () => {

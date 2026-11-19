@@ -158,8 +158,9 @@ class OmnichannelChatSDK {
     private authenticatedUserToken: string | null = null;
     private authTokenRefreshPromise: Promise<void> | null = null;
     // Agent-end check whose status lookups all failed; settled by a later successful lookup for the same chat
-    private pendingAgentEndCheck: { requestId: string; reconcileAttempts: number; settle: (state: string | undefined) => void } | null = null;
+    private pendingAgentEndCheck: { requestId: string; chatId: string | undefined; reconcileAttempts: number; settle: (state: string | undefined) => void } | null = null;
     private pendingAgentEndReconcilePromise: Promise<void> | null = null;
+    private deferredAgentEndSession: { chatId: string | undefined; fire: () => void } | null = null;
     private preChatSurvey: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private conversation: IConversation | ACSConversation | null = null;
     private callingOption: CallingOptionsOptionSetNumber = CallingOptionsOptionSetNumber.NoCalling;
@@ -1223,6 +1224,7 @@ class OmnichannelChatSDK {
         } finally {
             if (keepSessionForAuthRecovery) {
                 this.isEndingChat = false;
+                this.deliverDeferredAgentEndSession();
             } else {
                 this.releaseEndedChat();
             }
@@ -1244,6 +1246,7 @@ class OmnichannelChatSDK {
         this.conversation?.disconnect();
         this.conversation = null;
         this.pendingAgentEndCheck = null;
+        this.deferredAgentEndSession = null;
         this.requestId = uuidv4();
         this.chatToken = {};
         this.chatTokenUnauthorizedRecovery = null;
@@ -1515,7 +1518,7 @@ class OmnichannelChatSDK {
                 ChatId: chatId || '',
             });
 
-            if (this.pendingAgentEndCheck?.requestId === requestId) {
+            if (this.pendingAgentEndCheck && this.isPendingAgentEndCheckFor(requestId, chatId)) {
                 this.pendingAgentEndCheck.settle(state);
             }
 
@@ -2026,7 +2029,7 @@ class OmnichannelChatSDK {
      */
     private reconcilePendingAgentEndCheck(): void {
         const pendingCheck = this.pendingAgentEndCheck;
-        if (!pendingCheck || this.pendingAgentEndReconcilePromise || pendingCheck.requestId !== this.requestId) {
+        if (!pendingCheck || this.pendingAgentEndReconcilePromise || !this.isPendingAgentEndCheckFor(this.requestId, this.chatToken?.chatId)) {
             return;
         }
 
@@ -2047,6 +2050,19 @@ class OmnichannelChatSDK {
             .finally(() => {
                 this.pendingAgentEndReconcilePromise = null;
             });
+    }
+
+    /**
+     * closeChat() may swap requestId for reconnectId on reconnect sessions, so the chat id also identifies the chat.
+     * The pending check is dropped on teardown, so it never matches a later session.
+     */
+    private isPendingAgentEndCheckFor(requestId: string, chatId: string | undefined): boolean {
+        const pendingCheck = this.pendingAgentEndCheck;
+        if (!pendingCheck) {
+            return false;
+        }
+
+        return pendingCheck.requestId === requestId || (!!chatId && pendingCheck.chatId === chatId);
     }
 
     private withAuthenticatedUserToken<T extends { authenticatedUserToken?: string }>(params: T, authenticatedUserToken: string | null): T {
@@ -2700,6 +2716,7 @@ class OmnichannelChatSDK {
     private retainPendingAgentEndCheck(requestId: string, fireAgentEndSession: () => void): void {
         const pendingCheck = {
             requestId,
+            chatId: this.chatToken?.chatId as string | undefined,
             reconcileAttempts: 0,
             settle: (state: string | undefined) => {
                 if (this.pendingAgentEndCheck !== pendingCheck) {
@@ -2714,12 +2731,46 @@ class OmnichannelChatSDK {
                     Outcome: isClosed ? "Closed" : "Active"
                 });
 
-                if (isClosed) {
-                    fireAgentEndSession();
+                if (!isClosed) {
+                    return;
                 }
+
+                if (this.isEndingChat) {
+                    // endChat() is in flight. Hold the result until it either tears the session down or keeps it.
+                    this.deferredAgentEndSession = { chatId: this.chatToken?.chatId, fire: fireAgentEndSession };
+                    return;
+                }
+
+                fireAgentEndSession();
             }
         };
         this.pendingAgentEndCheck = pendingCheck;
+    }
+
+    /**
+     * Delivers an agent-end result that arrived while endChat() was running, once endChat() has kept the session.
+     * Runs on the next task so the host handles the endChat() rejection first.
+     */
+    private deliverDeferredAgentEndSession(): void {
+        const deferred = this.deferredAgentEndSession;
+        if (!deferred) {
+            return;
+        }
+
+        setTimeout(() => {
+            // Another endChat() started; it delivers or discards the result when it finishes.
+            if (this.deferredAgentEndSession !== deferred || this.isEndingChat) {
+                return;
+            }
+
+            this.deferredAgentEndSession = null;
+            // closeChat() may swap requestId for reconnectId, so match the session by chat id
+            if (!deferred.chatId || deferred.chatId !== this.chatToken?.chatId) {
+                return;
+            }
+
+            deferred.fire();
+        }, 0);
     }
 
     public async uploadFileAttachment(fileInfo: IFileInfo | File): Promise<UploadFileAttachmentResponse> {
