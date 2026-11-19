@@ -185,4 +185,42 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
         expect(() => enabledChatSDK["throwIfAuthenticationExpired"](unauthorizedError(), TelemetryEvent.CloseChatSession)).toThrow(ChatSDKErrorName.AuthenticationExpired);
         expect(() => disabledChatSDK["throwIfAuthenticationExpired"](unauthorizedError(), TelemetryEvent.CloseChatSession)).not.toThrow();
     });
+
+    it('should keep the session when endChat fails because the sign-in expired so it can be retried', async () => {
+        const token = createJwt(3600);
+        const freshToken = createJwt(7200);
+        const getAuthToken = jest.fn().mockResolvedValue(token);
+        const chatSDK = await createChatSDK({ getAuthToken, token, authTokenPreflight: { enable: true } });
+        chatSDK["chatToken"] = { chatId: 'chat-id' };
+        const requestId = chatSDK.requestId;
+        jest.spyOn(chatSDK.OCClient, 'sessionClose').mockRejectedValueOnce(unauthorizedError());
+
+        await expect(chatSDK.endChat()).rejects.toMatchObject({ message: ChatSDKErrorName.AuthenticationExpired });
+
+        expect(chatSDK.requestId).toBe(requestId);
+        expect(chatSDK["chatToken"]).toEqual({ chatId: 'chat-id' });
+        expect(chatSDK["isEndingChat"]).toBe(false);
+
+        getAuthToken.mockResolvedValue(freshToken);
+        chatSDK["authenticatedUserToken"] = freshToken;
+        (chatSDK.OCClient.sessionClose as jest.Mock).mockResolvedValueOnce(undefined);
+
+        await chatSDK.endChat();
+
+        expect(chatSDK.OCClient.sessionClose).toHaveBeenNthCalledWith(2, requestId, expect.objectContaining({ authenticatedUserToken: freshToken }));
+        expect(chatSDK.requestId).not.toBe(requestId);
+        expect(chatSDK["chatToken"]).toEqual({});
+    });
+
+    it('should release the session when endChat fails with HTTP 401 and the preflight is disabled', async () => {
+        const chatSDK = await createChatSDK({ getAuthToken: jest.fn() });
+        chatSDK["chatToken"] = { chatId: 'chat-id' };
+        const requestId = chatSDK.requestId;
+        jest.spyOn(chatSDK.OCClient, 'sessionClose').mockRejectedValueOnce(unauthorizedError());
+
+        await expect(chatSDK.endChat()).rejects.toMatchObject({ message: ChatSDKErrorName.ConversationClosureFailure });
+
+        expect(chatSDK.requestId).not.toBe(requestId);
+        expect(chatSDK["chatToken"]).toEqual({});
+    });
 });

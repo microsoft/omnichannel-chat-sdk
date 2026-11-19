@@ -1160,6 +1160,7 @@ class OmnichannelChatSDK {
         }
 
         this.isEndingChat = true;
+        let keepSessionForAuthRecovery = false;
 
         try {
             await this.closeChat(endChatOptionalParams);
@@ -1202,47 +1203,66 @@ class OmnichannelChatSDK {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string
             };
+            if (error instanceof ChatSDKError && error.message === ChatSDKErrorName.AuthenticationExpired) {
+                // The server session is still open. Keep it so endChat() can be retried after the user signs in again.
+                keepSessionForAuthRecovery = true;
+                this.scenarioMarker.failScenario(TelemetryEvent.EndChat, {
+                    ...telemetryData,
+                    ExceptionDetails: JSON.stringify(error.exceptionDetails)
+                });
+                throw error;
+            }
             if (error instanceof ChatSDKError) {
                 exceptionThrowers.throwConversationClosureFailure(new Error(JSON.stringify(error.exceptionDetails)), this.scenarioMarker, TelemetryEvent.EndChat, telemetryData);
             }
             exceptionThrowers.throwConversationClosureFailure(error, this.scenarioMarker, TelemetryEvent.EndChat, telemetryData);
         } finally {
-            // Cleanup always runs, regardless of success or failure
-            // This ensures resources are released even if closeChat or survey waiting throws
-            const endedChatId = this.chatToken.chatId as string | undefined;
-            const endedSessionId = this.OCClient.sessionId || this.sessionId;
-            // Keep the previous chat's key when this call had no chat to end (for example a second endChat).
-            if (endedChatId && endedSessionId) {
-                this.endedChatSessionKey = { chatId: endedChatId, sessionId: endedSessionId };
+            if (keepSessionForAuthRecovery) {
+                this.isEndingChat = false;
+            } else {
+                this.releaseEndedChat();
             }
-
-            this.conversation?.disconnect();
-            this.conversation = null;
-            this.requestId = uuidv4();
-            this.chatToken = {};
-            this.chatTokenUnauthorizedRecovery = null;
-            this.reconnectId = null;
-
-            if (this.IC3Client) {
-                this.IC3Client.dispose();
-                !platform.isNode() && !platform.isReactNative() && removeElementById(this.IC3Client.id);
-                this.IC3Client = null;
-            }
-
-            if (this.OCClient.sessionId) {
-                this.OCClient.sessionId = null;
-                this.sessionId = null;
-            }
-
-            loggerUtils.setRequestId(this.requestId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
-            loggerUtils.setChatId('', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
-
-            if (this.refreshTokenTimer !== null) {
-                clearInterval(this.refreshTokenTimer);
-                this.refreshTokenTimer = null;
-            }
-            this.isEndingChat = false;
         }
+    }
+
+    /**
+     * Releases the chat session after endChat(). Runs whether or not closing succeeded, except when the sign-in
+     * expired, so resources are freed even if closeChat or survey waiting throws.
+     */
+    private releaseEndedChat(): void {
+        const endedChatId = this.chatToken.chatId as string | undefined;
+        const endedSessionId = this.OCClient.sessionId || this.sessionId;
+        // Keep the previous chat's key when this call had no chat to end (for example a second endChat).
+        if (endedChatId && endedSessionId) {
+            this.endedChatSessionKey = { chatId: endedChatId, sessionId: endedSessionId };
+        }
+
+        this.conversation?.disconnect();
+        this.conversation = null;
+        this.requestId = uuidv4();
+        this.chatToken = {};
+        this.chatTokenUnauthorizedRecovery = null;
+        this.reconnectId = null;
+
+        if (this.IC3Client) {
+            this.IC3Client.dispose();
+            !platform.isNode() && !platform.isReactNative() && removeElementById(this.IC3Client.id);
+            this.IC3Client = null;
+        }
+
+        if (this.OCClient.sessionId) {
+            this.OCClient.sessionId = null;
+            this.sessionId = null;
+        }
+
+        loggerUtils.setRequestId(this.requestId, this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+        loggerUtils.setChatId('', this.ocSdkLogger, this.acsClientLogger, this.acsAdapterLogger, this.callingSdkLogger, this.amsClientLogger, this.ic3ClientLogger);
+
+        if (this.refreshTokenTimer !== null) {
+            clearInterval(this.refreshTokenTimer);
+            this.refreshTokenTimer = null;
+        }
+        this.isEndingChat = false;
     }
 
     /**
