@@ -112,7 +112,7 @@ import { parseLowerCaseString } from "./utils/parsers";
 import { ChatTokenUnauthorizedRecovery, createChatTokenUnauthorizedRecovery, UnauthorizedRecoveryFailureReason, UnauthorizedRecoverySource } from "./utils/chatTokenUnauthorizedRecovery";
 import { authenticatedNonRetriableStatusCodes, ChatTokenRenewalStoppedDetails, createChatTokenRefresher, defaultNonRetriableStatusCodes, RenewedChatToken } from "./utils/chatTokenRenewal";
 import type { ChatTokenRefresher, ChatTokenRenewalStopReason } from "./utils/chatTokenRenewal";
-import { defaultAuthTokenRefreshMarginInMs, defaultAuthTokenRefreshTimeoutInMs, getReturnedAuthTokenTelemetry, getSecondsToExpiryBucket, isAuthTokenNearExpiry, isUnauthorizedError, positiveOrDefault, withTimeout } from "./utils/authTokenPreflight";
+import { authTokenRefreshExpired, defaultAuthTokenRefreshMarginInMs, defaultAuthTokenRefreshTimeoutInMs, getAuthTokenRefreshFailureReason, getReturnedAuthTokenTelemetry, getSecondsToExpiryBucket, isAuthTokenNearExpiry, isUnauthorizedError, positiveOrDefault, withTimeout } from "./utils/authTokenPreflight";
 import platform from "./utils/platform";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import startPolling from "./commands/startPolling";
@@ -1949,7 +1949,7 @@ class OmnichannelChatSDK {
             returnedTokenData = getReturnedAuthTokenTelemetry(previousToken, token);
 
             if (isAuthTokenNearExpiry(token, 0)) {
-                throw new Error("ExpiredAuthToken");
+                throw new Error(authTokenRefreshExpired);
             }
 
             // The provider may resolve after the chat has ended or the token was replaced, e.g. by mid-conversation authentication
@@ -1968,7 +1968,7 @@ class OmnichannelChatSDK {
                 TokenChanged: "false",
                 ...returnedTokenData,
                 ElapsedTimeInMilliseconds: Date.now() - startTime,
-                ExceptionDetails: JSON.stringify({ message: (error as Error)?.message || "Unknown error" })
+                ExceptionDetails: getAuthTokenRefreshFailureReason(error)
             });
         }
     }

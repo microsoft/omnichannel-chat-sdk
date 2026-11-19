@@ -1,3 +1,4 @@
+import { ChatSDKErrorName } from "../core/ChatSDKError";
 import { getChatTokenExpiresOnInMs } from "./chatTokenRenewal";
 
 export const defaultAuthTokenRefreshMarginInMs = 60 * 1000;
@@ -53,13 +54,30 @@ export const isUnauthorizedError = (error: unknown): boolean => {
     return (error as any)?.response?.status === 401;
 };
 
+export const authTokenRefreshTimedOut = "Timed out";
+export const authTokenRefreshExpired = "ExpiredAuthToken";
+
+/**
+ * Maps a token refresh failure to a fixed reason, so telemetry never carries free-form text from the host's provider.
+ */
+export const getAuthTokenRefreshFailureReason = (error: unknown): string => {
+    const message = (error as Error)?.message;
+    if (message === authTokenRefreshTimedOut) {
+        return "Timeout";
+    }
+    if (message === ChatSDKErrorName.UndefinedAuthToken || message === authTokenRefreshExpired) {
+        return message;
+    }
+    return "ProviderError";
+};
+
 /**
  * Resolves with the result of the promise, or rejects when it does not settle within the timeout.
  */
 export const withTimeout = <T>(promise: Promise<T>, timeoutInMs: number): Promise<T> => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const timeout = new Promise<never>((_, reject) => {
-        timer = setTimeout(() => reject(new Error("Timed out")), timeoutInMs);
+        timer = setTimeout(() => reject(new Error(authTokenRefreshTimedOut)), timeoutInMs);
     });
 
     return Promise.race([promise, timeout]).finally(() => {

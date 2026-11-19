@@ -119,7 +119,7 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
         await chatSDK["ensureFreshAuthToken"]("Test");
 
         expect(chatSDK["authenticatedUserToken"]).toBe(token);
-        expect(failScenario).toHaveBeenCalledWith(TelemetryEvent.EnsureFreshAuthToken, expect.anything());
+        expect(failScenario).toHaveBeenCalledWith(TelemetryEvent.EnsureFreshAuthToken, expect.objectContaining({ ExceptionDetails: "Timeout" }));
         expect(chatSDK["authTokenRefreshPromise"]).toBeNull();
     });
 
@@ -136,8 +136,34 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
         expect(failScenario).toHaveBeenCalledWith(TelemetryEvent.EnsureFreshAuthToken, expect.objectContaining({
             TokenChanged: "true",
             ReturnedTokenExpired: "true",
-            ReturnedTokenSecondsToExpiryBucket: "expired"
+            ReturnedTokenSecondsToExpiryBucket: "expired",
+            ExceptionDetails: "ExpiredAuthToken"
         }));
+    });
+
+    it('should report a fixed reason instead of the provider error message', async () => {
+        const token = createJwt(30);
+        const getAuthToken = jest.fn().mockRejectedValue(new Error('user@contoso.com secret-detail'));
+        const chatSDK = await createChatSDK({ getAuthToken, token });
+        const failScenario = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+        await chatSDK["ensureFreshAuthToken"]("Test");
+
+        const data = failScenario.mock.calls[0][1] as Record<string, string>;
+        expect(data.ExceptionDetails).toBe("ProviderError");
+        expect(JSON.stringify(data)).not.toContain('secret-detail');
+    });
+
+    it('should report UndefinedAuthToken when getAuthToken returns no token', async () => {
+        const token = createJwt(30);
+        const getAuthToken = jest.fn().mockResolvedValue(undefined);
+        const chatSDK = await createChatSDK({ getAuthToken, token });
+        const failScenario = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+        await chatSDK["ensureFreshAuthToken"]("Test");
+
+        expect(chatSDK["authenticatedUserToken"]).toBe(token);
+        expect(failScenario).toHaveBeenCalledWith(TelemetryEvent.EnsureFreshAuthToken, expect.objectContaining({ ExceptionDetails: "UndefinedAuthToken" }));
     });
 
     it('should report when getAuthToken returns the same expired token without logging it', async () => {
