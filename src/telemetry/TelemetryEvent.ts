@@ -81,6 +81,10 @@ enum TelemetryEvent {
     StreamingPolicyViolation = "StreamingPolicyViolation",
     PrefetchedLiveChatConfigUsed = "PrefetchedLiveChatConfigUsed",
     PrefetchedLiveChatConfigRejected = "PrefetchedLiveChatConfigRejected",
+    EnsureFreshAuthToken = "EnsureFreshAuthToken",
+    AuthTokenRejected = "AuthTokenRejected",
+    ConversationDetailsLookupFailed = "ConversationDetailsLookupFailed",
+    PendingAgentEndCheckSettled = "PendingAgentEndCheckSettled",
 }
 
 export default TelemetryEvent;

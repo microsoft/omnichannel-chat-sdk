@@ -39,6 +39,26 @@ interface ChatTokenRenewalConfig {
 }
 
 /**
+ * Refreshes the authenticated user token from getAuthToken before authenticated requests and keeps
+ * transient conversation lookup failures from ending the chat. On for authenticated chats that provide
+ * getAuthToken.
+ */
+interface AuthTokenPreflightConfig {
+    /** Turns the feature off. */
+    disable?: boolean;
+    /** Refreshes the token when it expires within this many milliseconds. Default 60000. */
+    refreshMarginInMs?: number;
+    /** Longest wait for getAuthToken, in milliseconds. Default 10000. */
+    refreshTimeoutInMs?: number;
+    /**
+     * When endChat() gets an HTTP 401 that a fresh token cannot fix, throw AuthenticationExpired and keep the
+     * session so endChat() can be retried after the user signs in again. Default false: endChat() throws
+     * ConversationClosureFailure and releases the session.
+     */
+    retainSessionOnAuthExpired?: boolean;
+}
+
+/**
  * Non-backward compatible configurations or experimentals. Subject to change any time. Internal use only.
  * It should not be used by external clients unless explicitly stated in case fallback is needed.
  */
@@ -59,10 +79,12 @@ interface ChatSDKConfig {
     internalConfig?: InternalChatSDKConfig,
     ocUserAgent?: string[],
     useCreateConversation?: CreateConversationConfig,
-    chatTokenRenewal?: ChatTokenRenewalConfig
+    chatTokenRenewal?: ChatTokenRenewalConfig,
+    authTokenPreflight?: AuthTokenPreflightConfig
 }
 
 export {
+    AuthTokenPreflightConfig,
     DataMaskingSDKConfig,
     PersistentChatConfig
 };
