@@ -56,6 +56,8 @@ export enum ChatSDKErrorName {
     GetAuthTokenFailed = "GetAuthTokenFailed",
     /** AuthToken is undefined */
     UndefinedAuthToken = "UndefinedAuthToken",
+    /** The authenticated user token was rejected and a refreshed token from getAuthToken was rejected too */
+    AuthenticationExpired = "AuthenticationExpired",
 
     UnknownAMSLoadState = "UnknownAMSLoadState",
      /** Send message failure */

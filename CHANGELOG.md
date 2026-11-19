@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Added opt-in authenticated-token preflight (`chatSDKConfig.authTokenPreflight`). When enabled (via `enable: true`, or the backend `lcwAuthTokenPreflightEnabled` live chat configuration flag), the SDK calls `getAuthToken` before authenticated Omnichannel calls when the current JWT expires within `refreshMarginInMs` (default 60 seconds; tokens without a readable expiry are left unchanged), and retries once with a fresh token after an HTTP 401. If no fresh token can be obtained, the SDK throws `AuthenticationExpired` instead of reporting the chat as closed. `disable: true` always turns the feature off. When disabled, behavior is unchanged.
+- When `authTokenPreflight` is enabled, a failure to look up conversation details after an agent-end-session event no longer ends the chat; the SDK records `ConversationDetailsLookupFailed` telemetry and keeps polling.
+
 ## [2.1.0] - 2026-11-17
 
 ### Added

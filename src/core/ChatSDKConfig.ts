@@ -39,6 +39,22 @@ interface ChatTokenRenewalConfig {
 }
 
 /**
+ * Refreshes the authenticated user token from getAuthToken before authenticated requests and keeps
+ * transient conversation lookup failures from ending the chat. Off unless enabled here or by the
+ * lcwAuthTokenPreflightEnabled flag in the live chat config.
+ */
+interface AuthTokenPreflightConfig {
+    /** Turns the feature on regardless of the live chat config flag. */
+    enable?: boolean;
+    /** Turns the feature off even when the live chat config flag is on. Takes precedence over enable. */
+    disable?: boolean;
+    /** Refreshes the token when it expires within this many milliseconds. Default 60000. */
+    refreshMarginInMs?: number;
+    /** Longest wait for getAuthToken, in milliseconds. Default 10000. */
+    refreshTimeoutInMs?: number;
+}
+
+/**
  * Non-backward compatible configurations or experimentals. Subject to change any time. Internal use only.
  * It should not be used by external clients unless explicitly stated in case fallback is needed.
  */
@@ -59,10 +75,12 @@ interface ChatSDKConfig {
     internalConfig?: InternalChatSDKConfig,
     ocUserAgent?: string[],
     useCreateConversation?: CreateConversationConfig,
-    chatTokenRenewal?: ChatTokenRenewalConfig
+    chatTokenRenewal?: ChatTokenRenewalConfig,
+    authTokenPreflight?: AuthTokenPreflightConfig
 }
 
 export {
+    AuthTokenPreflightConfig,
     DataMaskingSDKConfig,
     PersistentChatConfig
 };

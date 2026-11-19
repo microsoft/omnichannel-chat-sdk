@@ -112,6 +112,7 @@ import { parseLowerCaseString } from "./utils/parsers";
 import { ChatTokenUnauthorizedRecovery, createChatTokenUnauthorizedRecovery, UnauthorizedRecoveryFailureReason, UnauthorizedRecoverySource } from "./utils/chatTokenUnauthorizedRecovery";
 import { authenticatedNonRetriableStatusCodes, ChatTokenRenewalStoppedDetails, createChatTokenRefresher, defaultNonRetriableStatusCodes, RenewedChatToken } from "./utils/chatTokenRenewal";
 import type { ChatTokenRefresher, ChatTokenRenewalStopReason } from "./utils/chatTokenRenewal";
+import { defaultAuthTokenRefreshMarginInMs, defaultAuthTokenRefreshTimeoutInMs, getSecondsToExpiryBucket, isAuthTokenNearExpiry, isUnauthorizedError, positiveOrDefault, withTimeout } from "./utils/authTokenPreflight";
 import platform from "./utils/platform";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import startPolling from "./commands/startPolling";
@@ -153,6 +154,7 @@ class OmnichannelChatSDK {
     private dataMaskingRules: MaskingRules = { rules: [] };
     private authSettings: AuthSettings | null = null;
     private authenticatedUserToken: string | null = null;
+    private authTokenRefreshPromise: Promise<void> | null = null;
     private preChatSurvey: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     private conversation: IConversation | ACSConversation | null = null;
     private callingOption: CallingOptionsOptionSetNumber = CallingOptionsOptionSetNumber.NoCalling;
@@ -589,7 +591,7 @@ class OmnichannelChatSDK {
                 requestId: this.requestId as string
             }
 
-            const reconnectableChatsResponse = await this.OCClient.getReconnectableChats(reconnectableChatsParams);
+            const reconnectableChatsResponse = await this.withAuthTokenRetry("GetReconnectableChats", (authenticatedUserToken: string | null) => this.OCClient.getReconnectableChats({ ...reconnectableChatsParams, authenticatedUserToken: authenticatedUserToken as string }));
 
             if (reconnectableChatsResponse && reconnectableChatsResponse.reconnectid) {
                 context.reconnectId = reconnectableChatsResponse.reconnectid as string
@@ -742,7 +744,7 @@ class OmnichannelChatSDK {
                     requestId: this.requestId as string
                 }
 
-                const reconnectableChatsResponse = await this.OCClient.getReconnectableChats(reconnectableChatsParams);
+                const reconnectableChatsResponse = await this.withAuthTokenRetry("GetReconnectableChats", (authenticatedUserToken: string | null) => this.OCClient.getReconnectableChats({ ...reconnectableChatsParams, authenticatedUserToken: authenticatedUserToken as string }));
 
                 if (reconnectableChatsResponse && reconnectableChatsResponse.reconnectid) {
                     this.reconnectId = reconnectableChatsResponse.reconnectid;
@@ -824,10 +826,10 @@ class OmnichannelChatSDK {
                     this.requestId = optionalParams.liveChatContext.requestId || uuidv4();
 
                     try {
-                        await this.OCClient.validateAuthChatRecord(this.requestId, {
-                            authenticatedUserToken: this.authenticatedUserToken,
+                        await this.withAuthTokenRetry("ValidateAuthChatRecord", (authenticatedUserToken: string | null) => this.OCClient.validateAuthChatRecord(this.requestId, {
+                            authenticatedUserToken,
                             chatId: this.chatToken.chatId
-                        });
+                        }));
                     } catch (e) {
                         const telemetryData = {
                             RequestId: this.requestId,
@@ -859,6 +861,7 @@ class OmnichannelChatSDK {
             initContext: {} as InitContext
         };
 
+        await this.ensureFreshAuthToken("SessionInit");
         sessionInitOptionalParams = this.populateInitChatOptionalParam(sessionInitOptionalParams, optionalParams, TelemetryEvent.StartChat);
         sessionInitOptionalParams.initContext!.isProactiveChat = !!optionalParams.isProactiveChat;
 
@@ -1107,17 +1110,21 @@ class OmnichannelChatSDK {
                     sessionCloseOptionalParams.isReconnectChat = isChatReconnect;
                 }
 
-                if (this.authenticatedUserToken) {
-                    sessionCloseOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
-                }
+                await this.withAuthTokenRetry("SessionClose", async (authenticatedUserToken: string | null) => {
+                    if (authenticatedUserToken) {
+                        sessionCloseOptionalParams.authenticatedUserToken = authenticatedUserToken;
+                    }
 
-                await this.OCClient.sessionClose(sessionCloseRequestId, sessionCloseOptionalParams);
+                    await this.OCClient.sessionClose(sessionCloseRequestId, sessionCloseOptionalParams);
+                });
 
             } catch (error) {
-                exceptionThrowers.throwConversationClosureFailure(error, this.scenarioMarker, TelemetryEvent.CloseChatSession, {
+                const closureTelemetryData = {
                     ...cleanupMetadata,
                     isSessionEnded: String(!endChatOptionalParams?.isSessionEnded)
-                });
+                };
+                this.throwIfAuthenticationExpired(error, TelemetryEvent.CloseChatSession, closureTelemetryData);
+                exceptionThrowers.throwConversationClosureFailure(error, this.scenarioMarker, TelemetryEvent.CloseChatSession, closureTelemetryData);
             }
             this.scenarioMarker.completeScenario(TelemetryEvent.CloseChatSession, cleanupMetadata);
         }
@@ -1394,6 +1401,14 @@ class OmnichannelChatSDK {
     }
 
     public async getConversationDetails(optionalParams: GetConversationDetailsOptionalParams = {}): Promise<LiveWorkItemDetails> {
+        return this.fetchConversationDetails(optionalParams, false);
+    }
+
+    /**
+     * @param throwOnLookupFailure Rethrows lookup failures instead of returning empty details, so that callers can
+     * tell a failed lookup apart from a conversation that no longer exists.
+     */
+    private async fetchConversationDetails(optionalParams: GetConversationDetailsOptionalParams, throwOnLookupFailure: boolean): Promise<LiveWorkItemDetails> {
         let requestId = this.requestId;
         let chatToken = this.chatToken;
         let chatId = chatToken.chatId as string;
@@ -1439,12 +1454,14 @@ class OmnichannelChatSDK {
             getLWIDetailsOptionalParams.reconnectId = reconnectId as string;
         }
 
-        if (this.authenticatedUserToken) {
-            getLWIDetailsOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
-        }
-
         try {
-            const lwiDetails = await this.OCClient.getLWIDetails(requestId, getLWIDetailsOptionalParams);
+            const lwiDetails = await this.withAuthTokenRetry("GetConversationDetails", (authenticatedUserToken: string | null) => {
+                if (authenticatedUserToken) {
+                    getLWIDetailsOptionalParams.authenticatedUserToken = authenticatedUserToken;
+                }
+
+                return this.OCClient.getLWIDetails(requestId, getLWIDetailsOptionalParams);
+            });
             const { State: state, ConversationId: conversationId, AgentAcceptedOn: agentAcceptedOn, CanRenderPostChat: canRenderPostChat, ParticipantType: participantType } = lwiDetails;
 
             const liveWorkItemDetails: LiveWorkItemDetails = {
@@ -1485,6 +1502,10 @@ class OmnichannelChatSDK {
             }
 
             exceptionSuppressors.suppressConversationDetailsRetrievalFailure(error, this.scenarioMarker, TelemetryEvent.GetConversationDetails, telemetryData);
+
+            if (throwOnLookupFailure) {
+                throw error;
+            }
         }
 
         return {} as LiveWorkItemDetails;
@@ -1524,6 +1545,7 @@ class OmnichannelChatSDK {
 
         if (!cached) {
             try {
+                await this.ensureFreshAuthToken("GetChatToken");
                 const getChatTokenOptionalParams: IGetChatTokenOptionalParams = {};
                 if (this.authenticatedUserToken) {
                     getChatTokenOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
@@ -1844,6 +1866,140 @@ class OmnichannelChatSDK {
         }
 
         return this.authenticatedUserToken;
+    }
+
+    /**
+     * Whether the authenticated user token is refreshed before authenticated requests. The chat SDK config
+     * overrides the lcwAuthTokenPreflightEnabled flag of the live chat config.
+     */
+    private isAuthTokenPreflightEnabled(): boolean {
+        if (!this.authenticatedUserToken || typeof this.chatSDKConfig?.getAuthToken !== "function") {
+            return false;
+        }
+
+        const config = this.chatSDKConfig.authTokenPreflight;
+        if (config?.disable === true) {
+            return false;
+        }
+
+        if (config?.enable === true) {
+            return true;
+        }
+
+        return parseLowerCaseString(this.liveChatConfig?.LcwFcbConfiguration?.lcwAuthTokenPreflightEnabled) === "true";
+    }
+
+    /**
+     * Refreshes the authenticated user token from getAuthToken when it is about to expire, or always when forced.
+     * Concurrent callers share one refresh. Never throws; on failure the current token is kept.
+     */
+    private async ensureFreshAuthToken(operation: string, force = false): Promise<void> {
+        if (!this.isAuthTokenPreflightEnabled()) {
+            return;
+        }
+
+        const marginInMs = positiveOrDefault(this.chatSDKConfig.authTokenPreflight?.refreshMarginInMs, defaultAuthTokenRefreshMarginInMs);
+        if (!force && !this.authTokenRefreshPromise && !isAuthTokenNearExpiry(this.authenticatedUserToken, marginInMs)) {
+            return;
+        }
+
+        if (!this.authTokenRefreshPromise) {
+            this.authTokenRefreshPromise = this.refreshAuthenticatedUserToken(operation, force ? "forced" : "nearExpiry")
+                .finally(() => {
+                    this.authTokenRefreshPromise = null;
+                });
+        }
+
+        await this.authTokenRefreshPromise;
+    }
+
+    private async refreshAuthenticatedUserToken(operation: string, reason: string): Promise<void> {
+        const startTime = Date.now();
+        const previousToken = this.authenticatedUserToken;
+        const telemetryData = {
+            RequestId: this.requestId || "",
+            ChatId: this.chatToken?.chatId as string || "",
+            Operation: operation,
+            Reason: reason,
+            SecondsToExpiryBucket: getSecondsToExpiryBucket(previousToken)
+        };
+
+        this.scenarioMarker.startScenario(TelemetryEvent.EnsureFreshAuthToken, telemetryData);
+
+        try {
+            const timeoutInMs = positiveOrDefault(this.chatSDKConfig.authTokenPreflight?.refreshTimeoutInMs, defaultAuthTokenRefreshTimeoutInMs);
+            const token = await withTimeout(Promise.resolve(this.chatSDKConfig.getAuthToken!()), timeoutInMs);
+            if (typeof token !== "string" || token.trim().length === 0) {
+                throw new Error(ChatSDKErrorName.UndefinedAuthToken);
+            }
+
+            if (isAuthTokenNearExpiry(token, 0)) {
+                throw new Error("ExpiredAuthToken");
+            }
+
+            // The provider may resolve after the chat has ended or the token was replaced, e.g. by mid-conversation authentication
+            if (this.authenticatedUserToken === previousToken) {
+                this.authenticatedUserToken = token;
+            }
+
+            this.scenarioMarker.completeScenario(TelemetryEvent.EnsureFreshAuthToken, {
+                ...telemetryData,
+                TokenChanged: String(token !== previousToken),
+                ElapsedTimeInMilliseconds: Date.now() - startTime
+            });
+        } catch (error) {
+            this.scenarioMarker.failScenario(TelemetryEvent.EnsureFreshAuthToken, {
+                ...telemetryData,
+                TokenChanged: "false",
+                ElapsedTimeInMilliseconds: Date.now() - startTime,
+                ExceptionDetails: JSON.stringify({ message: (error as Error)?.message || "Unknown error" })
+            });
+        }
+    }
+
+    /**
+     * Runs an idempotent request with a fresh authenticated user token. When the preflight is enabled and the request
+     * is rejected with HTTP 401, the token is refreshed and the request is retried once with the new token.
+     * Must not be used for requests that are not safe to replay, like sending a message.
+     */
+    private async withAuthTokenRetry<T>(operation: string, request: (authenticatedUserToken: string | null) => Promise<T> | T): Promise<T> {
+        await this.ensureFreshAuthToken(operation);
+        const usedToken = this.authenticatedUserToken;
+
+        try {
+            return await request(usedToken);
+        } catch (error) {
+            if (!isUnauthorizedError(error) || !this.isAuthTokenPreflightEnabled()) {
+                throw error;
+            }
+
+            this.scenarioMarker.singleRecord(TelemetryEvent.AuthTokenRejected, {
+                RequestId: this.requestId || "",
+                ChatId: this.chatToken?.chatId as string || "",
+                Operation: operation,
+                SecondsToExpiryBucket: getSecondsToExpiryBucket(usedToken)
+            });
+
+            if (this.authenticatedUserToken === usedToken) {
+                await this.ensureFreshAuthToken(operation, true);
+            }
+
+            if (this.authenticatedUserToken === usedToken) {
+                throw error;
+            }
+
+            return await request(this.authenticatedUserToken);
+        }
+    }
+
+    /**
+     * Throws AuthenticationExpired when the preflight is enabled and the error is an HTTP 401, so that callers can
+     * tell an expired sign-in apart from other failures.
+     */
+    private throwIfAuthenticationExpired(error: unknown, telemetryEvent: TelemetryEvent, telemetryData: { [key: string]: string } = {}): void {
+        if (isUnauthorizedError(error) && this.isAuthTokenPreflightEnabled()) {
+            exceptionThrowers.throwChatSDKError(ChatSDKErrorName.AuthenticationExpired, error, this.scenarioMarker, telemetryEvent, telemetryData);
+        }
     }
 
     public async getCallingToken(): Promise<string> {
@@ -2205,7 +2361,7 @@ class OmnichannelChatSDK {
         }
 
         try {
-            const result = await this.OCClient.getUnreadMessageCount(this.authenticatedUserToken);
+            const result = await this.withAuthTokenRetry("GetUnreadMessageCount", (authenticatedUserToken: string | null) => this.OCClient.getUnreadMessageCount(authenticatedUserToken as string));
 
             this.scenarioMarker.completeScenario(TelemetryEvent.GetUnreadMessageCount, telemetryData);
             return result;
@@ -2247,7 +2403,7 @@ class OmnichannelChatSDK {
         try {
             if (this.authenticatedUserToken) {
                 // Authenticated: call MRT which updates NRD and forwards to ACS
-                await this.OCClient.sendReadReceipt(this.requestId, messageId, this.authenticatedUserToken);
+                await this.withAuthTokenRetry("SendReadReceipt", (authenticatedUserToken: string | null) => this.OCClient.sendReadReceipt(this.requestId, messageId, authenticatedUserToken as string));
             } else {
                 // Unauthenticated: call ACS directly (no MRT, no NRD)
                 if (!this.conversation) {
@@ -2411,11 +2567,24 @@ class OmnichannelChatSDK {
                 // Retry: the backend conversation state may lag behind the ACS participantsRemoved event
                 const maxRetries = 3;
                 const retryDelayMs = 2000;
+                const treatLookupFailureAsNonTerminal = this.isAuthTokenPreflightEnabled();
                 for (let attempt = 1; attempt <= maxRetries; attempt++) {
                     let liveWorkItemDetails;
                     try {
-                        liveWorkItemDetails = await this.getConversationDetails();
-                    } catch {
+                        liveWorkItemDetails = treatLookupFailureAsNonTerminal
+                            ? await this.fetchConversationDetails({}, true)
+                            : await this.getConversationDetails();
+                    } catch (error) {
+                        if (treatLookupFailureAsNonTerminal) {
+                            this.scenarioMarker.singleRecord(TelemetryEvent.ConversationDetailsLookupFailed, {
+                                RequestId: this.requestId,
+                                ChatId: this.chatToken?.chatId as string,
+                                Attempt: String(attempt),
+                                StatusCode: String((error as { response?: { status?: number } })?.response?.status ?? ""),
+                                IsFinalAttempt: String(attempt >= maxRetries)
+                            });
+                        }
+
                         if (attempt < maxRetries) {
                             await new Promise(resolve => setTimeout(resolve, retryDelayMs));
                             continue;
@@ -2671,6 +2840,8 @@ class OmnichannelChatSDK {
         }
 
         try {
+            // Emailing is not safe to replay, so the token is only refreshed beforehand
+            await this.ensureFreshAuthToken("EmailLiveChatTranscript");
             if (this.authenticatedUserToken) {
                 emailTranscriptOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
             }
@@ -2739,16 +2910,18 @@ class OmnichannelChatSDK {
         const requestSessionKey = optionalParams.liveChatContext?.sessionId || this.getEndedChatSessionKey(chatId);
 
         try {
-            if (this.authenticatedUserToken) {
-                getChatTranscriptOptionalParams.authenticatedUserToken = this.authenticatedUserToken;
-            }
-
             // by definition, OCSDK returns a string (JSON)
-            const transcriptResponse = await this.withRequestSessionKey<GetLiveChatTranscriptResponse>(requestSessionKey, () => this.OCClient.getChatTranscripts(
-                requestId,
-                chatToken.chatId,
-                chatToken.token,
-                getChatTranscriptOptionalParams));
+            const transcriptResponse = await this.withAuthTokenRetry<GetLiveChatTranscriptResponse>("GetLiveChatTranscript", (authenticatedUserToken: string | null) => {
+                if (authenticatedUserToken) {
+                    getChatTranscriptOptionalParams.authenticatedUserToken = authenticatedUserToken;
+                }
+
+                return this.withRequestSessionKey<GetLiveChatTranscriptResponse>(requestSessionKey, () => this.OCClient.getChatTranscripts(
+                    requestId,
+                    chatToken.chatId,
+                    chatToken.token,
+                    getChatTranscriptOptionalParams));
+            });
 
             this.scenarioMarker.completeScenario(TelemetryEvent.GetLiveChatTranscript, {
                 RequestId: requestId,
@@ -2953,16 +3126,18 @@ class OmnichannelChatSDK {
                     "requestId": this.requestId
                 };
 
-                if (this.authenticatedUserToken) {
-                    optionalParams.authenticatedUserToken = this.authenticatedUserToken;
-                }
+                const [agentSurveyInviteLinkResponse, botSurveyInviteLinkResponse] = await this.withAuthTokenRetry("GetPostChatSurveyContext", (authenticatedUserToken: string | null) => {
+                    if (authenticatedUserToken) {
+                        optionalParams.authenticatedUserToken = authenticatedUserToken;
+                    }
 
-                const [agentSurveyInviteLinkResponse, botSurveyInviteLinkResponse] = await Promise.all([
-                    this.OCClient.getSurveyInviteLink(postConversationSurveyOwnerId, agentSurveyInviteLinkRequest, optionalParams),
-                    (postConversationBotSurveyOwnerId && msfp_botsourcesurveyidentifier)
-                        ? this.OCClient.getSurveyInviteLink(postConversationBotSurveyOwnerId, botSurveyInviteLinkRequest, optionalParams)
-                        : Promise.resolve(null)
-                ]);
+                    return Promise.all([
+                        this.OCClient.getSurveyInviteLink(postConversationSurveyOwnerId, agentSurveyInviteLinkRequest, optionalParams),
+                        (postConversationBotSurveyOwnerId && msfp_botsourcesurveyidentifier)
+                            ? this.OCClient.getSurveyInviteLink(postConversationBotSurveyOwnerId, botSurveyInviteLinkRequest, optionalParams)
+                            : Promise.resolve(null)
+                    ]);
+                });
 
                 let agentSurveyInviteLink, agentFormsProLocale, botSurveyInviteLink, botFormsProLocale;
                 if (agentSurveyInviteLinkResponse != null) {
@@ -3750,10 +3925,10 @@ class OmnichannelChatSDK {
             params.pageSize = getPersistentChatHistoryOptionalParams.pageSize || undefined;
             params.pageToken = getPersistentChatHistoryOptionalParams.pageToken || undefined;
 
-            const result = await this.OCClient.getPersistentChatHistory(this.requestId, {
+            const result = await this.withAuthTokenRetry("GetPersistentChatHistory", (authenticatedUserToken: string | null) => this.OCClient.getPersistentChatHistory(this.requestId, {
                 ...params,
-                authenticatedUserToken: this.authenticatedUserToken
-            });
+                authenticatedUserToken: authenticatedUserToken as string
+            }));
 
             this.scenarioMarker.completeScenario(TelemetryEvent.GetPersistentChatHistory, {
                 RequestId: this.requestId,
