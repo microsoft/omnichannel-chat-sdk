@@ -22,7 +22,7 @@ import validateSDKConfig, { defaultChatSDKConfig } from "./validators/SDKConfigV
 import ACSParticipantDisplayName from "./core/messaging/ACSParticipantDisplayName";
 import ACSRegisterOnNewMessageOptionalParams from "./core/messaging/ACSRegisterOnNewMessageOptionalParams";
 import { AMSClientLoadStates } from "./utils/AMSClientLoadStates";
-import AMSFileManager from "./external/ACSAdapter/AMSFileManager";
+import AMSFileManager, { AMSViewScanStatus } from "./external/ACSAdapter/AMSFileManager";
 import AriaTelemetry from "./telemetry/AriaTelemetry";
 import AuthSettings from "./core/AuthSettings";
 import CallingOptionsOptionSetNumber from "./core/CallingOptionsOptionSetNumber";
@@ -122,6 +122,12 @@ import validateOmnichannelConfig from "./validators/OmnichannelConfigValidator";
 import validatePrefetchedLiveChatConfig from "./validators/prefetchedConfigValidator";
 
 const maxPendingAgentEndReconcileAttempts = 3;
+const attachmentScanPollingInterval = 7000;
+const maxAttachmentScanAttempts = 4;
+const getAttachmentScanStatus = (response: object): unknown => {
+    const scan = "scan" in response ? response.scan : undefined;
+    return scan && typeof scan === "object" && "status" in scan ? scan.status : undefined;
+};
 
 class OmnichannelChatSDK {
     private debug: boolean;
@@ -2922,6 +2928,12 @@ class OmnichannelChatSDK {
         }
     }
 
+    /** Downloads only after AMS confirms this file's scan has passed. */
+    public async downloadScannedFileAttachment(fileMetadata: FileMetadata | IFileMetadata): Promise<Blob> {
+        const metadata = { ...fileMetadata, fileScan: {} };
+        return this.downloadFileAttachment(metadata);
+    }
+
     public async downloadFileAttachment(fileMetadata: FileMetadata | IFileMetadata): Promise<Blob> {
 
         this.scenarioMarker.startScenario(TelemetryEvent.DownloadFileAttachment, {
@@ -2943,14 +2955,43 @@ class OmnichannelChatSDK {
                     });
                     exceptionThrowers.throwFeatureDisabled(this.scenarioMarker, TelemetryEvent.DownloadFileAttachment, "Enable support for attachment upload and receive in the widget configuration.");
                 }
+                const requestId = this.requestId;
+                const chatId = this.chatToken.chatId;
                 const amsClient = await this.getAMSClient();
 
                 if (amsClient === null || amsClient === undefined) {
                     throwAMSLoadFailure(this.scenarioMarker, TelemetryEvent.DownloadFileAttachment, "Attachment handler is null, no action can be performed");
                 }
 
-                const response: any = await amsClient?.getViewStatus(fileMetadata);  // eslint-disable-line @typescript-eslint/no-explicit-any
+                if (this.isEndingChat || this.requestId !== requestId || this.chatToken.chatId !== chatId) {
+                    throw new Error("AttachmentDownloadCancelled");
+                }
+                let response = await amsClient?.getViewStatus(fileMetadata);
+                if (!response) {
+                    throw new Error("AttachmentViewStatusUnavailable");
+                }
+                const scanRequired = "fileScan" in fileMetadata || "scan" in response;
+                for (let attempt = 1;
+                    getAttachmentScanStatus(response) === AMSViewScanStatus.INPROGRESS &&
+                        attempt < maxAttachmentScanAttempts;
+                    attempt++) {
+                    await sleep(attachmentScanPollingInterval);
+                    if (this.isEndingChat || this.requestId !== requestId || this.chatToken.chatId !== chatId) {
+                        throw new Error("AttachmentDownloadCancelled");
+                    }
+                    const nextResponse = await amsClient?.getViewStatus(fileMetadata);
+                    if (!nextResponse) {
+                        throw new Error("AttachmentViewStatusUnavailable");
+                    }
+                    response = nextResponse;
+                }
+                if (this.isEndingChat || this.requestId !== requestId || this.chatToken.chatId !== chatId) {
+                    throw new Error("AttachmentDownloadCancelled");
+                }
                 const { view_location } = response;
+                if (scanRequired && getAttachmentScanStatus(response) !== AMSViewScanStatus.PASSED) {
+                    throw new Error("FileScanNotPassed");
+                }
                 const viewResponse: any = await amsClient?.getView(fileMetadata, view_location);  // eslint-disable-line @typescript-eslint/no-explicit-any
                 this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment, {
                     RequestId: this.requestId,
@@ -2967,6 +3008,9 @@ class OmnichannelChatSDK {
             }
         } else {
             try {
+                if ("fileScan" in fileMetadata) {
+                    throw new Error("FileScanVerificationUnavailable");
+                }
                 const downloadedFile = await (this.conversation as IConversation)!.downloadFile(fileMetadata as IFileMetadata);
                 this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment, {
                     RequestId: this.requestId,

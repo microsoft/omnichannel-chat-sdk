@@ -97,7 +97,52 @@ describe('createOmnichannelMessage', () => {
         ]);
     });
 
-    it("keeps valid attachment pairs when another entry is malformed", () => {
+    it.each(["realtime", "history"])("retains unnamed attachment references in %s messages", source => {
+        const event = {
+            ...newMessage,
+            metadata: {
+                amsMetadata: JSON.stringify([{ contentType: "application/pdf" }]),
+                amsReferences: JSON.stringify(["unnamed"])
+            }
+        };
+        const snapshot: ChatMessage = {
+            ...event, content: { message: event.message }, type: "text", sequenceId: "1"
+        };
+        const input = source === "realtime" ? event : snapshot;
+        const converted = createOmnichannelMessage(input, { liveChatVersion: LiveChatVersion.V2 });
+        expect(converted.fileMetadata).toEqual(expect.objectContaining({
+            id: "unnamed", name: "Unknown file", type: "application/pdf"
+        }));
+        expect(converted.fileMetadataList).toEqual([converted.fileMetadata]);
+    });
+
+    it.each(["realtime", "history"])("binds scan context before filtering %s attachment pairs", source => {
+        const event = {
+            ...newMessage,
+            metadata: {
+                amsMetadata: JSON.stringify([null, { fileName: "blocked.pdf" }, { fileName: "pending.pdf" }]),
+                amsReferences: JSON.stringify(["invalid", "blocked", "pending"])
+            },
+            channelData: { fileScan: [{ status: "clean" }, { status: "malware_detected" }] }
+        };
+        const snapshot: ChatMessage = {
+            ...event, content: { message: event.message }, type: "text", sequenceId: "1"
+        };
+        const input = source === "realtime" ? event : snapshot;
+        const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+        try {
+            const converted = createOmnichannelMessage(input, { liveChatVersion: LiveChatVersion.V2 });
+            expect(converted.fileMetadataList).toEqual([
+                expect.objectContaining({ id: "blocked", fileScan: { status: "malware_detected" } }),
+                expect.objectContaining({ id: "pending", fileScan: {} })
+            ]);
+            expect(converted.fileMetadata).toEqual(converted.fileMetadataList?.[0]);
+        } finally {
+            warn.mockRestore();
+        }
+    });
+
+    it.each([null, []])("keeps valid attachment pairs when another entry is malformed: %j", invalidMetadata => {
         const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
         try {
             const converted = createOmnichannelMessage({
@@ -105,7 +150,7 @@ describe('createOmnichannelMessage', () => {
                 metadata: {
                     amsMetadata: JSON.stringify([
                         { fileName: "first.png", contentType: "image/png" },
-                        null,
+                        invalidMetadata,
                         { fileName: "last.pdf", contentType: "application/pdf" }
                     ]),
                     amsReferences: JSON.stringify(["first", "invalid", "last"])

@@ -491,6 +491,26 @@ The existing `message.fileMetadata` field remains the first file for backward co
 Download each collection entry with `downloadFileAttachment({ id: file.id, type: file.type })`.
 The same collection is returned by `getMessages()` and rehydrated callbacks; keep the original
 message ID and render the files together rather than creating duplicate messages.
+Malformed pairs can be omitted, so collection indices are not source indices. Correlate
+other per-file data by `file.id`, never by the compacted list position. Valid references
+without a filename are retained as `Unknown file`.
+
+If an input supplies `channelData.fileScan`, each surviving file carries its own
+`fileScan` context, bound before filtering. An empty `fileScan` object means a result
+was expected but could not be established; it must not be interpreted as clean.
+Ordinary ACS callbacks do not supply this adapter-specific context. Independently,
+`downloadFileAttachment` checks AMS's status response for that file ID and refuses
+the download when a reported scan is anything other than `passed`. Pending scans
+are rechecked at seven-second intervals, up to four status requests. Polling stops
+if the chat ends or is replaced; malware, unknown results and exhausted retries reject
+without requesting file bytes. Responses without scan context retain the existing
+download behavior.
+
+Consumers recovering an attachment with required pending or unknown scan context
+can call `downloadScannedFileAttachment(fileMetadata)`. It uses the same bounded
+polling but requires an explicit `passed` result for that file ID, rejecting when
+scan verification is unavailable. Never substitute the legacy download method
+when this capability is absent.
 
 ### On Streaming Message
 

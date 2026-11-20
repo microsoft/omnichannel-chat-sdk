@@ -104,23 +104,30 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
                 }
 
                 const files: IFileMetadata[] = [];
+                const scans = (message as { channelData?: { fileScan?: unknown } }).channelData?.fileScan;
                 let invalidMetadata = data.length !== references.length;
                 references.forEach((reference: unknown, index: number) => {
                     const file: unknown = data[index];
                     if (typeof reference !== "string" || !reference ||
-                        typeof file !== "object" || file === null ||
-                        !("fileName" in file) || typeof file.fileName !== "string") {
+                        typeof file !== "object" || file === null || Array.isArray(file)) {
                         invalidMetadata = true;
                         return;
                     }
+                    const scan: unknown = Array.isArray(scans) ? scans[index] : undefined;
                     files.push({
                         fileSharingProtocolType: 0,
                         id: reference,
-                        name: file.fileName,
+                        name: "fileName" in file && typeof file.fileName === "string" ?
+                            file.fileName : "Unknown file",
                         size: 0,
                         type: "contentType" in file && typeof file.contentType === "string" ?
                             file.contentType : defaultAttachmentContentType,
-                        url: ""
+                        url: "",
+                        ...(scans !== undefined && {
+                            fileScan: typeof scan === "object" && scan !== null &&
+                                "status" in scan && typeof scan.status === "string" ?
+                                { status: scan.status } : {}
+                        })
                     });
                 });
 
