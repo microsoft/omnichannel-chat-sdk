@@ -13,6 +13,7 @@ interface CreateOmnichannelMessageOptionalParams {
 }
 
 const invalidAttachmentMetadataWarning = "createOmnichannelMessage: invalid attachment metadata";
+const defaultAttachmentContentType = "application/octet-stream";
 
 const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEvent | ChatMessageEditedEvent | ChatMessage, optionalParams: CreateOmnichannelMessageOptionalParams): OmnichannelMessage => {
     let omnichannelMessage = {} as OmnichannelMessage;
@@ -108,8 +109,7 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
                     const file: unknown = data[index];
                     if (typeof reference !== "string" || !reference ||
                         typeof file !== "object" || file === null ||
-                        !("fileName" in file) || typeof file.fileName !== "string" ||
-                        !("contentType" in file) || typeof file.contentType !== "string") {
+                        !("fileName" in file) || typeof file.fileName !== "string") {
                         invalidMetadata = true;
                         return;
                     }
@@ -118,7 +118,8 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
                         id: reference,
                         name: file.fileName,
                         size: 0,
-                        type: file.contentType,
+                        type: "contentType" in file && typeof file.contentType === "string" ?
+                            file.contentType : defaultAttachmentContentType,
                         url: ""
                     });
                 });

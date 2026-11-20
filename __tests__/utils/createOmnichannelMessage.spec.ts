@@ -64,6 +64,39 @@ describe('createOmnichannelMessage', () => {
         });
     });
 
+    it.each(["realtime", "history"])("retains attachments with omitted MIME metadata in %s messages", source => {
+        const event = {
+            ...newMessage,
+            metadata: {
+                amsMetadata: JSON.stringify([{ fileName: "doc.pdf" }, { fileName: "image.png", contentType: "image/png" }]),
+                amsReferences: JSON.stringify(["document", "image"])
+            }
+        };
+        const snapshot: ChatMessage = {
+            id: event.id,
+            type: "text",
+            sequenceId: "1",
+            version: event.version,
+            sender: event.sender,
+            senderDisplayName: event.senderDisplayName,
+            metadata: event.metadata,
+            createdOn: event.createdOn,
+            content: { message: event.message }
+        };
+
+        const converted = createOmnichannelMessage(source === "realtime" ? event : snapshot, {
+            liveChatVersion: LiveChatVersion.V2
+        });
+
+        expect(converted.fileMetadata).toEqual(expect.objectContaining({
+            id: "document", name: "doc.pdf", type: "application/octet-stream"
+        }));
+        expect(converted.fileMetadataList).toEqual([
+            expect.objectContaining({ id: "document", name: "doc.pdf", type: "application/octet-stream" }),
+            expect.objectContaining({ id: "image", name: "image.png", type: "image/png" })
+        ]);
+    });
+
     it("keeps valid attachment pairs when another entry is malformed", () => {
         const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
         try {

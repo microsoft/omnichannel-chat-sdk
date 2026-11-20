@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Preserved all files in ACS attachment messages through `fileMetadataList`, including live callbacks and message history. The existing `fileMetadata` field still contains the first file; consumers must adopt the collection to display every file.
+- Preserved all files in ACS attachment messages through `fileMetadataList`, including live callbacks and message history. Missing MIME metadata defaults to `application/octet-stream` without dropping the attachment. The existing `fileMetadata` field still contains the first file; consumers must adopt the collection to display every file.
 
 ### Added
 
