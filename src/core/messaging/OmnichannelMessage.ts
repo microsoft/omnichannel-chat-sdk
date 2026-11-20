@@ -77,7 +77,10 @@ interface OmnichannelMessage {
     timestamp: Date;
     properties?: IMessageProperties;
     tags?: string[];
+    /** First attachment, retained for consumers of the single-file contract. */
     fileMetadata?: IFileMetadata;
+    /** All attachments in source order. Populated for ACS attachment messages. */
+    fileMetadataList?: IFileMetadata[];
     resourceType?: ResourceType;
     role?: string;
     customEvent?: {

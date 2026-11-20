@@ -486,6 +486,12 @@ chatSDK.onNewMessage((message) => {
 }, optionalParams);
 ```
 
+For ACS attachment messages, `message.fileMetadataList` contains every file in source order.
+The existing `message.fileMetadata` field remains the first file for backward compatibility.
+Download each collection entry with `downloadFileAttachment({ id: file.id, type: file.type })`.
+The same collection is returned by `getMessages()` and rehydrated callbacks; keep the original
+message ID and render the files together rather than creating duplicate messages.
+
 ### On Streaming Message
 
 It subscribes to progressive ACS bot-message updates.
