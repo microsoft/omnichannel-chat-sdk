@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Distinguished attachment download cancellation, scan rejection and unavailable verification from transport failures in telemetry without changing download errors or exposing exception contents.
 - Preserved all files in ACS attachment messages through `fileMetadataList`, including live callbacks and message history. Missing MIME metadata defaults to `application/octet-stream` without dropping the attachment. The existing `fileMetadata` field still contains the first file; consumers must adopt the collection to display every file.
 - Retained valid attachment references with missing filenames as `Unknown file`. Supplied scan context stays bound to each file ID through filtering, and AMS downloads reject reported scans that have not passed.
 

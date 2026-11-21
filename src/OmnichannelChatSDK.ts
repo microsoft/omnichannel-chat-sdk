@@ -2945,6 +2945,7 @@ class OmnichannelChatSDK {
             exceptionThrowers.throwUninitializedChatSDK(this.scenarioMarker, TelemetryEvent.DownloadFileAttachment);
         }
 
+        let failureReason = "DownloadFileAttachmentFailed";
         if (this.liveChatVersion === LiveChatVersion.V2) {
             try {
                 if (this.isAMSClientAllowed === false) {
@@ -2964,11 +2965,13 @@ class OmnichannelChatSDK {
                 }
 
                 if (this.isEndingChat || this.requestId !== requestId || this.chatToken.chatId !== chatId) {
-                    throw new Error("AttachmentDownloadCancelled");
+                    failureReason = "AttachmentDownloadCancelled";
+                    throw new Error(failureReason);
                 }
                 let response = await amsClient?.getViewStatus(fileMetadata);
                 if (!response) {
-                    throw new Error("AttachmentViewStatusUnavailable");
+                    failureReason = "AttachmentViewStatusUnavailable";
+                    throw new Error(failureReason);
                 }
                 const scanRequired = "fileScan" in fileMetadata || "scan" in response;
                 for (let attempt = 1;
@@ -2977,20 +2980,24 @@ class OmnichannelChatSDK {
                     attempt++) {
                     await sleep(attachmentScanPollingInterval);
                     if (this.isEndingChat || this.requestId !== requestId || this.chatToken.chatId !== chatId) {
-                        throw new Error("AttachmentDownloadCancelled");
+                        failureReason = "AttachmentDownloadCancelled";
+                        throw new Error(failureReason);
                     }
                     const nextResponse = await amsClient?.getViewStatus(fileMetadata);
                     if (!nextResponse) {
-                        throw new Error("AttachmentViewStatusUnavailable");
+                        failureReason = "AttachmentViewStatusUnavailable";
+                        throw new Error(failureReason);
                     }
                     response = nextResponse;
                 }
                 if (this.isEndingChat || this.requestId !== requestId || this.chatToken.chatId !== chatId) {
-                    throw new Error("AttachmentDownloadCancelled");
+                    failureReason = "AttachmentDownloadCancelled";
+                    throw new Error(failureReason);
                 }
                 const { view_location } = response;
                 if (scanRequired && getAttachmentScanStatus(response) !== AMSViewScanStatus.PASSED) {
-                    throw new Error("FileScanNotPassed");
+                    failureReason = "FileScanNotPassed";
+                    throw new Error(failureReason);
                 }
                 const viewResponse: any = await amsClient?.getView(fileMetadata, view_location);  // eslint-disable-line @typescript-eslint/no-explicit-any
                 this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment, {
@@ -3002,14 +3009,16 @@ class OmnichannelChatSDK {
                 console.error(`OmnichannelChatSDK/downloadFileAttachment/error: ${ex}`);
                 this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
                     RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
+                    ChatId: this.chatToken.chatId as string,
+                    ExceptionDetails: JSON.stringify({ response: failureReason })
                 });
                 throw new Error('DownloadFileAttachmentFailed');
             }
         } else {
             try {
                 if ("fileScan" in fileMetadata) {
-                    throw new Error("FileScanVerificationUnavailable");
+                    failureReason = "FileScanVerificationUnavailable";
+                    throw new Error(failureReason);
                 }
                 const downloadedFile = await (this.conversation as IConversation)!.downloadFile(fileMetadata as IFileMetadata);
                 this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment, {
@@ -3021,7 +3030,8 @@ class OmnichannelChatSDK {
                 console.error(`OmnichannelChatSDK/downloadFileAttachment/error: ${error}`);
                 this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
                     RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
+                    ChatId: this.chatToken.chatId as string,
+                    ExceptionDetails: JSON.stringify({ response: failureReason })
                 });
                 throw new Error('DownloadFileAttachmentFailed');
             }

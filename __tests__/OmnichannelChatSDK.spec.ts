@@ -24,6 +24,7 @@ import { SDKProvider } from "@microsoft/ocsdk";
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
 import libraries from "../src/utils/libraries";
 import createOmnichannelMessage from "../src/utils/createOmnichannelMessage";
+import TelemetryEvent from "../src/telemetry/TelemetryEvent";
 
 describe('Omnichannel Chat SDK, Sequential', () => {
     AWTLogManager.initialize = jest.fn();
@@ -3162,6 +3163,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                     getView: jest.fn().mockResolvedValue(blob)
                 };
                 const file = { id: "scan-bound-file", type: "application/pdf" };
+                const failed = jest.spyOn(chatSDK.scenarioMarker, "failScenario");
                 const pause = jest.spyOn(require("../src/utils/WebUtils"), "sleep").mockResolvedValue(undefined);
                 const error = jest.spyOn(console, "error").mockImplementation(() => undefined);
                 try {
@@ -3172,6 +3174,10 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                     } else {
                         await expect(download).rejects.toThrow("DownloadFileAttachmentFailed");
                         expect(chatSDK.AMSClient.getView).not.toHaveBeenCalled();
+                        expect(failed).toHaveBeenCalledWith(TelemetryEvent.DownloadFileAttachment,
+                            expect.objectContaining({
+                                ExceptionDetails: JSON.stringify({ response: "FileScanNotPassed" })
+                            }));
                     }
                     expect(chatSDK.AMSClient.getViewStatus).toHaveBeenCalledWith(file);
                 } finally {
@@ -3205,6 +3211,7 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 });
                 const error = jest.spyOn(console, "error").mockImplementation(() => undefined);
                 const file = { id: "pending-file", type: "application/pdf" };
+                const failed = jest.spyOn(chatSDK.scenarioMarker, "failScenario");
                 try {
                     const download = chatSDK.downloadScannedFileAttachment(file);
                     if (outcome === "passed") {
@@ -3217,6 +3224,12 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                         await expect(download).rejects.toThrow("DownloadFileAttachmentFailed");
                         expect(chatSDK.AMSClient.getView).not.toHaveBeenCalled();
                         expect(getViewStatus).toHaveBeenCalledTimes(outcome === "timeout" ? 4 : 1);
+                        expect(failed).toHaveBeenCalledWith(TelemetryEvent.DownloadFileAttachment,
+                            expect.objectContaining({
+                                ExceptionDetails: JSON.stringify({
+                                    response: outcome === "timeout" ? "FileScanNotPassed" : "AttachmentDownloadCancelled"
+                                })
+                            }));
                     }
                     expect(getViewStatus).toHaveBeenCalledWith({ ...file, fileScan: {} });
                 } finally {
@@ -3289,15 +3302,58 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 chatSDK.conversation = { downloadFile: legacyDownload };
             }
             const error = jest.spyOn(console, "error").mockImplementation(() => undefined);
+            const failed = jest.spyOn(chatSDK.scenarioMarker, "failScenario");
             try {
                 await expect(chatSDK.downloadScannedFileAttachment({ id: "unknown", type: "application/pdf" }))
                     .rejects.toThrow("DownloadFileAttachmentFailed");
                 expect(chatSDK.AMSClient.getView).not.toHaveBeenCalled();
                 expect(legacyDownload).not.toHaveBeenCalled();
+                expect(failed).toHaveBeenCalledWith(TelemetryEvent.DownloadFileAttachment,
+                    expect.objectContaining({
+                        ExceptionDetails: JSON.stringify({
+                            response: transport === "legacy" ? "FileScanVerificationUnavailable" : "FileScanNotPassed"
+                        })
+                    }));
             } finally {
                 error.mockRestore();
             }
         });
+
+        it.each(["status", "view", "legacy", "missing-status"])(
+            "classifies attachment failure at %s without forwarding exception contents",
+            async stage => {
+                const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+                chatSDK.getChatConfig = jest.fn();
+                chatSDK.getChatToken = jest.fn();
+                chatSDK["isAMSClientAllowed"] = true;
+                await chatSDK.initialize();
+                const transportError = new Error("Untrusted transport exception contents");
+                chatSDK.AMSClient = {
+                    getViewStatus: stage === "status" ? jest.fn().mockRejectedValue(transportError) :
+                        jest.fn().mockResolvedValue(stage === "missing-status" ? undefined : { view_location: "view" }),
+                    getView: jest.fn().mockRejectedValue(transportError)
+                };
+                if (stage === "legacy") {
+                    chatSDK.liveChatVersion = LiveChatVersion.V1;
+                    chatSDK.conversation = { downloadFile: jest.fn().mockRejectedValue(transportError) };
+                }
+                const failed = jest.spyOn(chatSDK.scenarioMarker, "failScenario");
+                const error = jest.spyOn(console, "error").mockImplementation(() => undefined);
+                try {
+                    await expect(chatSDK.downloadFileAttachment({ id: "file", type: "application/pdf" }))
+                        .rejects.toThrow("DownloadFileAttachmentFailed");
+                    expect(failed).toHaveBeenCalledWith(TelemetryEvent.DownloadFileAttachment,
+                        expect.objectContaining({
+                            ExceptionDetails: JSON.stringify({
+                                response: stage === "missing-status" ?
+                                    "AttachmentViewStatusUnavailable" : "DownloadFileAttachmentFailed"
+                            })
+                        }));
+                } finally {
+                    error.mockRestore();
+                }
+            }
+        );
 
         it('ChatSDK.emailLiveChatTranscript() should call OCClient.emailTranscript()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
