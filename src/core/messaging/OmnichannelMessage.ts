@@ -54,6 +54,8 @@ export interface IFileMetadata {
     size: number;
     url: string;
     fileSharingProtocolType?: FileSharingProtocolType;
+    /** Scan context bound to this file ID; an empty object means its result is unknown. */
+    fileScan?: { status?: string };
 }
 
 export class ResourceType {
@@ -77,7 +79,10 @@ interface OmnichannelMessage {
     timestamp: Date;
     properties?: IMessageProperties;
     tags?: string[];
+    /** First attachment, retained for consumers of the single-file contract. */
     fileMetadata?: IFileMetadata;
+    /** Valid attachments in source order; correlate per-file data by ID, not list position. */
+    fileMetadataList?: IFileMetadata[];
     resourceType?: ResourceType;
     role?: string;
     customEvent?: {

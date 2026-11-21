@@ -12,6 +12,9 @@ interface CreateOmnichannelMessageOptionalParams {
     debug?: boolean;
 }
 
+const invalidAttachmentMetadataWarning = "createOmnichannelMessage: invalid attachment metadata";
+const defaultAttachmentContentType = "application/octet-stream";
+
 const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEvent | ChatMessageEditedEvent | ChatMessage, optionalParams: CreateOmnichannelMessageOptionalParams): OmnichannelMessage => {
     let omnichannelMessage = {} as OmnichannelMessage;
     omnichannelMessage.liveChatVersion = optionalParams.liveChatVersion || LiveChatVersion.V1;
@@ -92,22 +95,51 @@ const createOmnichannelMessage = (message: IRawMessage | ChatMessageReceivedEven
 
         if (metadata && metadata.amsMetadata && metadata.amsReferences || metadata?.amsreferences) {
             try {
-                const data = JSON.parse(metadata.amsMetadata);
+                const data: unknown = JSON.parse(metadata.amsMetadata);
 
                 // "amsreferences" takes precedence
-                const references = JSON.parse(metadata.amsreferences || metadata?.amsReferences);
-                const { fileName, contentType } = data[0];
+                const references: unknown = JSON.parse(metadata.amsreferences || metadata?.amsReferences);
+                if (!Array.isArray(data) || !Array.isArray(references)) {
+                    throw new TypeError(invalidAttachmentMetadataWarning);
+                }
 
-                // fileMetadata should be defined only when there's an attachment
-                omnichannelMessage.fileMetadata = {} as IFileMetadata; // Backward compatibility
-                omnichannelMessage.fileMetadata.fileSharingProtocolType = 0;
-                omnichannelMessage.fileMetadata.id = references[0];
-                omnichannelMessage.fileMetadata.name = fileName;
-                omnichannelMessage.fileMetadata.size = 0;
-                omnichannelMessage.fileMetadata.type = contentType;
-                omnichannelMessage.fileMetadata.url = '';
+                const files: IFileMetadata[] = [];
+                const scans = (message as { channelData?: { fileScan?: unknown } }).channelData?.fileScan;
+                let invalidMetadata = data.length !== references.length;
+                references.forEach((reference: unknown, index: number) => {
+                    const file: unknown = data[index];
+                    if (typeof reference !== "string" || !reference ||
+                        typeof file !== "object" || file === null || Array.isArray(file)) {
+                        invalidMetadata = true;
+                        return;
+                    }
+                    const scan: unknown = Array.isArray(scans) ? scans[index] : undefined;
+                    files.push({
+                        fileSharingProtocolType: 0,
+                        id: reference,
+                        name: "fileName" in file && typeof file.fileName === "string" ?
+                            file.fileName : "Unknown file",
+                        size: 0,
+                        type: "contentType" in file && typeof file.contentType === "string" ?
+                            file.contentType : defaultAttachmentContentType,
+                        url: "",
+                        ...(scans !== undefined && {
+                            fileScan: typeof scan === "object" && scan !== null &&
+                                "status" in scan && typeof scan.status === "string" ?
+                                { status: scan.status } : {}
+                        })
+                    });
+                });
+
+                if (files.length > 0) {
+                    omnichannelMessage.fileMetadata = files[0];
+                    omnichannelMessage.fileMetadataList = files;
+                }
+                if (invalidMetadata) {
+                    console.warn(invalidAttachmentMetadataWarning);
+                }
             } catch {
-                // Suppress errors to keep chat flowing
+                console.warn(invalidAttachmentMetadataWarning);
             }
         }
 

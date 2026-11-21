@@ -21,6 +21,170 @@ describe('createOmnichannelMessage', () => {
         createdOn: new Date(1720000000000)
     };
 
+    describe.each(["amsReferences", "amsreferences"])("attachments with %s", referenceKey => {
+        it.each(["realtime", "history"])("preserves every file in one %s message", source => {
+            const references = Array.from({ length: 5 }, (_, index) => `file-${index + 1}`);
+            const files = references.map((_, index) => ({
+                fileName: `attachment-${index + 1}.png`,
+                contentType: "image/png"
+            }));
+            const metadata = {
+                amsMetadata: JSON.stringify(files),
+                [referenceKey]: JSON.stringify(references)
+            };
+            const event = { ...newMessage, metadata };
+            const snapshot: ChatMessage = {
+                id: event.id,
+                type: "text",
+                sequenceId: "1",
+                version: event.version,
+                sender: event.sender,
+                senderDisplayName: event.senderDisplayName,
+                metadata,
+                createdOn: event.createdOn,
+                content: { message: event.message }
+            };
+
+            const converted = createOmnichannelMessage(source === "realtime" ? event : snapshot, {
+                liveChatVersion: LiveChatVersion.V2
+            });
+            const expected = references.map((id, index) => ({
+                id,
+                name: files[index].fileName,
+                type: files[index].contentType,
+                size: 0,
+                url: "",
+                fileSharingProtocolType: 0
+            }));
+
+            expect(converted).toHaveProperty("fileMetadataList", expected);
+            expect(converted.fileMetadata).toEqual(expected[0]);
+            expect(converted.id).toBe(event.id);
+            expect(converted.content).toBe(event.message);
+        });
+    });
+
+    it.each(["realtime", "history"])("retains attachments with omitted MIME metadata in %s messages", source => {
+        const event = {
+            ...newMessage,
+            metadata: {
+                amsMetadata: JSON.stringify([{ fileName: "doc.pdf" }, { fileName: "image.png", contentType: "image/png" }]),
+                amsReferences: JSON.stringify(["document", "image"])
+            }
+        };
+        const snapshot: ChatMessage = {
+            id: event.id,
+            type: "text",
+            sequenceId: "1",
+            version: event.version,
+            sender: event.sender,
+            senderDisplayName: event.senderDisplayName,
+            metadata: event.metadata,
+            createdOn: event.createdOn,
+            content: { message: event.message }
+        };
+
+        const converted = createOmnichannelMessage(source === "realtime" ? event : snapshot, {
+            liveChatVersion: LiveChatVersion.V2
+        });
+
+        expect(converted.fileMetadata).toEqual(expect.objectContaining({
+            id: "document", name: "doc.pdf", type: "application/octet-stream"
+        }));
+        expect(converted.fileMetadataList).toEqual([
+            expect.objectContaining({ id: "document", name: "doc.pdf", type: "application/octet-stream" }),
+            expect.objectContaining({ id: "image", name: "image.png", type: "image/png" })
+        ]);
+    });
+
+    it.each(["realtime", "history"])("retains unnamed attachment references in %s messages", source => {
+        const event = {
+            ...newMessage,
+            metadata: {
+                amsMetadata: JSON.stringify([{ contentType: "application/pdf" }]),
+                amsReferences: JSON.stringify(["unnamed"])
+            }
+        };
+        const snapshot: ChatMessage = {
+            ...event, content: { message: event.message }, type: "text", sequenceId: "1"
+        };
+        const input = source === "realtime" ? event : snapshot;
+        const converted = createOmnichannelMessage(input, { liveChatVersion: LiveChatVersion.V2 });
+        expect(converted.fileMetadata).toEqual(expect.objectContaining({
+            id: "unnamed", name: "Unknown file", type: "application/pdf"
+        }));
+        expect(converted.fileMetadataList).toEqual([converted.fileMetadata]);
+    });
+
+    it.each(["realtime", "history"])("binds scan context before filtering %s attachment pairs", source => {
+        const event = {
+            ...newMessage,
+            metadata: {
+                amsMetadata: JSON.stringify([null, { fileName: "blocked.pdf" }, { fileName: "pending.pdf" }]),
+                amsReferences: JSON.stringify(["invalid", "blocked", "pending"])
+            },
+            channelData: { fileScan: [{ status: "clean" }, { status: "malware_detected" }] }
+        };
+        const snapshot: ChatMessage = {
+            ...event, content: { message: event.message }, type: "text", sequenceId: "1"
+        };
+        const input = source === "realtime" ? event : snapshot;
+        const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+        try {
+            const converted = createOmnichannelMessage(input, { liveChatVersion: LiveChatVersion.V2 });
+            expect(converted.fileMetadataList).toEqual([
+                expect.objectContaining({ id: "blocked", fileScan: { status: "malware_detected" } }),
+                expect.objectContaining({ id: "pending", fileScan: {} })
+            ]);
+            expect(converted.fileMetadata).toEqual(converted.fileMetadataList?.[0]);
+        } finally {
+            warn.mockRestore();
+        }
+    });
+
+    it.each([null, []])("keeps valid attachment pairs when another entry is malformed: %j", invalidMetadata => {
+        const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+        try {
+            const converted = createOmnichannelMessage({
+                ...newMessage,
+                metadata: {
+                    amsMetadata: JSON.stringify([
+                        { fileName: "first.png", contentType: "image/png" },
+                        invalidMetadata,
+                        { fileName: "last.pdf", contentType: "application/pdf" }
+                    ]),
+                    amsReferences: JSON.stringify(["first", "invalid", "last"])
+                }
+            }, { liveChatVersion: LiveChatVersion.V2 });
+
+            expect(converted).toHaveProperty("fileMetadataList", [
+                expect.objectContaining({ id: "first", name: "first.png" }),
+                expect.objectContaining({ id: "last", name: "last.pdf" })
+            ]);
+            expect(warn).toHaveBeenCalledWith("createOmnichannelMessage: invalid attachment metadata");
+            expect(converted.content).toBe(newMessage.message);
+        } finally {
+            warn.mockRestore();
+        }
+    });
+
+    it("reports invalid attachment JSON without dropping the text message", () => {
+        const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+        try {
+            const converted = createOmnichannelMessage({
+                ...newMessage,
+                metadata: { amsMetadata: "{", amsReferences: "[]" }
+            }, { liveChatVersion: LiveChatVersion.V2 });
+
+            expect(converted).not.toHaveProperty("fileMetadataList");
+            expect(converted).not.toHaveProperty("fileMetadata");
+            expect(converted.content).toBe(newMessage.message);
+            expect(warn).toHaveBeenCalledWith("createOmnichannelMessage: invalid attachment metadata");
+        } finally {
+            warn.mockRestore();
+        }
+    });
+
     describe.each(["Customer", "Agent", "Bot", "System"])("edit classification for %s", senderDisplayName => {
         it.each(["realtime", "poll/history"])("marks a first-seen %s edit without dropping its content", source => {
             const event: ChatMessageEditedEvent = {

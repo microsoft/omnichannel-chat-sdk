@@ -24,6 +24,7 @@ import { SDKProvider } from "@microsoft/ocsdk";
 import {defaultChatSDKConfig} from "../src/validators/SDKConfigValidators";
 import libraries from "../src/utils/libraries";
 import createOmnichannelMessage from "../src/utils/createOmnichannelMessage";
+import TelemetryEvent from "../src/telemetry/TelemetryEvent";
 
 describe('Omnichannel Chat SDK, Sequential', () => {
     AWTLogManager.initialize = jest.fn();
@@ -3144,6 +3145,215 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.AMSClient.getViewStatus).toHaveBeenCalledTimes(1);
             expect(chatSDK.AMSClient.getView).toHaveBeenCalledTimes(1);
         });
+
+        it.each(["passed", "malware", "in progress", "unknown", undefined])(
+            "checks the file's own AMS scan status %s before downloading",
+            async status => {
+                const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+                chatSDK.getChatConfig = jest.fn();
+                chatSDK.getChatToken = jest.fn();
+                chatSDK["isAMSClientAllowed"] = true;
+                await chatSDK.initialize();
+                const blob = new Blob(["document"]);
+                chatSDK.AMSClient = {
+                    getViewStatus: jest.fn().mockResolvedValue({
+                        view_location: "view-location",
+                        scan: { status }
+                    }),
+                    getView: jest.fn().mockResolvedValue(blob)
+                };
+                const file = { id: "scan-bound-file", type: "application/pdf" };
+                const failed = jest.spyOn(chatSDK.scenarioMarker, "failScenario");
+                const pause = jest.spyOn(require("../src/utils/WebUtils"), "sleep").mockResolvedValue(undefined);
+                const error = jest.spyOn(console, "error").mockImplementation(() => undefined);
+                try {
+                    const download = chatSDK.downloadFileAttachment(file);
+                    if (status === "passed") {
+                        await expect(download).resolves.toBe(blob);
+                        expect(chatSDK.AMSClient.getView).toHaveBeenCalledWith(file, "view-location");
+                    } else {
+                        await expect(download).rejects.toThrow("DownloadFileAttachmentFailed");
+                        expect(chatSDK.AMSClient.getView).not.toHaveBeenCalled();
+                        expect(failed).toHaveBeenCalledWith(TelemetryEvent.DownloadFileAttachment,
+                            expect.objectContaining({
+                                ExceptionDetails: JSON.stringify({ response: "FileScanNotPassed" })
+                            }));
+                    }
+                    expect(chatSDK.AMSClient.getViewStatus).toHaveBeenCalledWith(file);
+                } finally {
+                    pause.mockRestore();
+                    error.mockRestore();
+                }
+            }
+        );
+
+        it.each(["passed", "cancelled", "replaced", "new-request", "timeout"])(
+            "rechecks pending AMS scans until %s without downloading unsafe bytes",
+            async outcome => {
+                const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+                chatSDK.getChatConfig = jest.fn();
+                chatSDK.getChatToken = jest.fn();
+                chatSDK["isAMSClientAllowed"] = true;
+                await chatSDK.initialize();
+                const pending = { view_location: "view-location", scan: { status: "in progress" } };
+                const getViewStatus = jest.fn().mockResolvedValue(pending);
+                const blob = new Blob(["document"]);
+                chatSDK.AMSClient = { getViewStatus, getView: jest.fn().mockResolvedValue(blob) };
+                if (outcome === "passed") {
+                    getViewStatus.mockResolvedValueOnce(pending).mockResolvedValueOnce({
+                        view_location: "clean-view", scan: { status: "passed" }
+                    });
+                }
+                const pause = jest.spyOn(require("../src/utils/WebUtils"), "sleep").mockImplementation(async () => {
+                    if (outcome === "cancelled") chatSDK["isEndingChat"] = true;
+                    if (outcome === "replaced") chatSDK.chatToken = { chatId: "replacement-chat" };
+                    if (outcome === "new-request") chatSDK.requestId = "replacement-request";
+                });
+                const error = jest.spyOn(console, "error").mockImplementation(() => undefined);
+                const file = { id: "pending-file", type: "application/pdf" };
+                const failed = jest.spyOn(chatSDK.scenarioMarker, "failScenario");
+                try {
+                    const download = chatSDK.downloadScannedFileAttachment(file);
+                    if (outcome === "passed") {
+                        await expect(download).resolves.toBe(blob);
+                        expect(chatSDK.AMSClient.getView).toHaveBeenCalledWith(
+                            { ...file, fileScan: {} }, "clean-view"
+                        );
+                        expect(getViewStatus).toHaveBeenCalledTimes(2);
+                    } else {
+                        await expect(download).rejects.toThrow("DownloadFileAttachmentFailed");
+                        expect(chatSDK.AMSClient.getView).not.toHaveBeenCalled();
+                        expect(getViewStatus).toHaveBeenCalledTimes(outcome === "timeout" ? 4 : 1);
+                        expect(failed).toHaveBeenCalledWith(TelemetryEvent.DownloadFileAttachment,
+                            expect.objectContaining({
+                                ExceptionDetails: JSON.stringify({
+                                    response: outcome === "timeout" ? "FileScanNotPassed" : "AttachmentDownloadCancelled"
+                                })
+                            }));
+                    }
+                    expect(getViewStatus).toHaveBeenCalledWith({ ...file, fileScan: {} });
+                } finally {
+                    pause.mockRestore();
+                    error.mockRestore();
+                }
+            }
+        );
+
+        it("retains required scan state when a pending AMS scan disappears", async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            await chatSDK.initialize();
+            chatSDK.AMSClient = {
+                getViewStatus: jest.fn()
+                    .mockResolvedValueOnce({ view_location: "pending", scan: { status: "in progress" } })
+                    .mockResolvedValueOnce({ view_location: "unverified" }),
+                getView: jest.fn().mockResolvedValue(new Blob(["unverified bytes"]))
+            };
+            const pause = jest.spyOn(require("../src/utils/WebUtils"), "sleep").mockResolvedValue(undefined);
+            const error = jest.spyOn(console, "error").mockImplementation(() => undefined);
+            try {
+                await expect(chatSDK.downloadFileAttachment({ id: "pending-file", type: "application/pdf" }))
+                    .rejects.toThrow("DownloadFileAttachmentFailed");
+                expect(chatSDK.AMSClient.getViewStatus).toHaveBeenCalledTimes(2);
+                expect(chatSDK.AMSClient.getView).not.toHaveBeenCalled();
+            } finally {
+                pause.mockRestore();
+                error.mockRestore();
+            }
+        });
+
+        it("cancels a download if the chat changes while the AMS client is loading", async () => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            await chatSDK.initialize();
+            const amsClient = { getViewStatus: jest.fn(), getView: jest.fn() };
+            chatSDK["getAMSClient"] = jest.fn().mockImplementation(async () => {
+                chatSDK.chatToken = { chatId: "replacement-chat" };
+                return amsClient;
+            });
+            const error = jest.spyOn(console, "error").mockImplementation(() => undefined);
+            try {
+                await expect(chatSDK.downloadScannedFileAttachment({ id: "old-file", type: "application/pdf" }))
+                    .rejects.toThrow("DownloadFileAttachmentFailed");
+                expect(amsClient.getViewStatus).not.toHaveBeenCalled();
+                expect(amsClient.getView).not.toHaveBeenCalled();
+            } finally {
+                error.mockRestore();
+            }
+        });
+
+        it.each(["absent", "legacy"])("does not satisfy a required scan with %s verification", async transport => {
+            const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+            chatSDK.getChatConfig = jest.fn();
+            chatSDK.getChatToken = jest.fn();
+            chatSDK["isAMSClientAllowed"] = true;
+            await chatSDK.initialize();
+            chatSDK.AMSClient = {
+                getViewStatus: jest.fn().mockResolvedValue({ view_location: "unverified-view" }),
+                getView: jest.fn()
+            };
+            const legacyDownload = jest.fn();
+            if (transport === "legacy") {
+                chatSDK.liveChatVersion = 1;
+                chatSDK.conversation = { downloadFile: legacyDownload };
+            }
+            const error = jest.spyOn(console, "error").mockImplementation(() => undefined);
+            const failed = jest.spyOn(chatSDK.scenarioMarker, "failScenario");
+            try {
+                await expect(chatSDK.downloadScannedFileAttachment({ id: "unknown", type: "application/pdf" }))
+                    .rejects.toThrow("DownloadFileAttachmentFailed");
+                expect(chatSDK.AMSClient.getView).not.toHaveBeenCalled();
+                expect(legacyDownload).not.toHaveBeenCalled();
+                expect(failed).toHaveBeenCalledWith(TelemetryEvent.DownloadFileAttachment,
+                    expect.objectContaining({
+                        ExceptionDetails: JSON.stringify({
+                            response: transport === "legacy" ? "FileScanVerificationUnavailable" : "FileScanNotPassed"
+                        })
+                    }));
+            } finally {
+                error.mockRestore();
+            }
+        });
+
+        it.each(["status", "view", "legacy", "missing-status"])(
+            "classifies attachment failure at %s without forwarding exception contents",
+            async stage => {
+                const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
+                chatSDK.getChatConfig = jest.fn();
+                chatSDK.getChatToken = jest.fn();
+                chatSDK["isAMSClientAllowed"] = true;
+                await chatSDK.initialize();
+                const transportError = new Error("Untrusted transport exception contents");
+                chatSDK.AMSClient = {
+                    getViewStatus: stage === "status" ? jest.fn().mockRejectedValue(transportError) :
+                        jest.fn().mockResolvedValue(stage === "missing-status" ? undefined : { view_location: "view" }),
+                    getView: jest.fn().mockRejectedValue(transportError)
+                };
+                if (stage === "legacy") {
+                    chatSDK.liveChatVersion = LiveChatVersion.V1;
+                    chatSDK.conversation = { downloadFile: jest.fn().mockRejectedValue(transportError) };
+                }
+                const failed = jest.spyOn(chatSDK.scenarioMarker, "failScenario");
+                const error = jest.spyOn(console, "error").mockImplementation(() => undefined);
+                try {
+                    await expect(chatSDK.downloadFileAttachment({ id: "file", type: "application/pdf" }))
+                        .rejects.toThrow("DownloadFileAttachmentFailed");
+                    expect(failed).toHaveBeenCalledWith(TelemetryEvent.DownloadFileAttachment,
+                        expect.objectContaining({
+                            ExceptionDetails: JSON.stringify({
+                                response: stage === "missing-status" ?
+                                    "AttachmentViewStatusUnavailable" : "DownloadFileAttachmentFailed"
+                            })
+                        }));
+                } finally {
+                    error.mockRestore();
+                }
+            }
+        );
 
         it('ChatSDK.emailLiveChatTranscript() should call OCClient.emailTranscript()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
