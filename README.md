@@ -35,6 +35,7 @@ Please make sure you have a chat widget configured before using this package or 
   - [Send Messages](#send-messages)
   - [On New Message](#on-new-message)
   - [On Streaming Message](#on-streaming-message)
+  - [On Chat Token Renewed](#on-chat-token-renewed)
   - [On Typing Event](#on-typing-event)
   - [On Agent End Session](#on-agent-end-session)
   - [Send Typing Event](#send-typing-event)
@@ -117,6 +118,7 @@ _**Known issue:**_ Versions earlier than 1.11.6 can start duplicate conversation
 
 | Version | Docs | Release Date | End of Support | Deprecated |
 | -- | -- | -- | -- | -- |
+| 2.1.0 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v2.1.0) | Nov 17th 2026 | Nov 17th 2027 | |
 | 2.0.2 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v2.0.2) | Oct 20th 2026 | Oct 20th 2027 | |
 | 2.0.1 | [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v2.0.1) | Oct 1st 2026 | Oct 1st 2027 | |
 | 2.0.0 | [Migration Guide](docs/MIGRATION_2.0.md) / [Release Notes](https://github.com/microsoft/omnichannel-chat-sdk/releases/tag/v2.0.0) | Aug 13th 2026 | Aug 13th 2027 | |
@@ -515,6 +517,49 @@ await chatSDK.onStreamingMessage((message) => {
 `streamingMessageType` can be `start`, `informative`, `streaming`, or `final`. A final message also reaches existing `onNewMessage` handlers.
 
 Calling this method before `startChat()` throws `UninitializedConversation`. If the conversation does not use ACS, this method throws `UnsupportedLiveChatVersion`.
+
+### On Chat Token Renewed
+
+Subscribes to notifications after the SDK renews the chat token and updates the current live chat context.
+If your application caches this context for page refresh or reconnect, save the updated context in the callback
+so subsequent restores use the renewed credentials.
+
+Register before `startChat()` to capture renewals during startup, including when restoring a saved chat.
+
+```ts
+const unsubscribe = chatSDK.onChatTokenRenewed(async () => {
+    const liveChatContext = await chatSDK.getCurrentLiveChatContext();
+    cache.saveChatContext(liveChatContext); // Custom logic to save chat context to cache
+});
+
+await chatSDK.startChat();
+```
+
+The listener remains registered across chats on the same SDK instance; call `unsubscribe()` during cleanup.
+Token renewal works without a subscription.
+
+While the current token has not expired, failed renewal attempts keep the 60-second retry cooldown so an outage that recovers shortly before expiry can still heal the chat. After expiry, the waits double with jitter, up to 10 minutes. HTTP 429 may extend either wait using `Retry-After` delta-seconds, up to the same maximum; HTTP-date values are not parsed.
+
+Automatic renewal stops after 8 failures in a row (including before expiry), after 3 HTTP 400/401/403 responses in a row for an authenticated chat, or after a status that cannot succeed. The SDK keeps the last token, but `MaxFailures` can arrive after it has already expired. The notification is not an advance expiry warning and does not itself end the chat.
+
+After a `MaxFailures` or `AuthRejected` stop, explicit request recovery shares at most 3 additional renewal attempts between ACS HTTP 401 and on-demand expired-token access, at least 60 seconds apart and respecting `Retry-After` delta-seconds up to the configured maximum. Expired-token access is included because the Azure credential can reject before an HTTP request is sent. Unrelated credential errors and already-aborted requests do not trigger this recovery.
+
+Recovery still checks the authenticated host token, chat identity, token usability and the existing ACS request-replay/rejected-token protections. Only a different usable token for the same chat resets the stop and counters and resumes automatic renewal. If all 3 recovery attempts fail, renewal remains stopped; no periodic probes or unlimited retries are added. A `NonRetriableStatus` stop cannot be bypassed. The stop notification is emitted at most once per chat even if recovery later resumes renewal. `disableUnauthorizedRecovery` disables both request-recovery paths.
+
+To decide how your application handles a stop, subscribe with `onChatTokenRenewalStopped`:
+
+```ts
+import { ChatTokenRenewalStopReason } from "@microsoft/omnichannel-chat-sdk";
+
+const unsubscribe = chatSDK.onChatTokenRenewalStopped(({ reason }) => {
+    if (reason === ChatTokenRenewalStopReason.MaxFailures) {
+        // Custom recovery for a chat whose last token may already have expired.
+    }
+});
+```
+
+Set `chatSDKConfig.chatTokenRenewal.maxConsecutiveFailures`, `maxRetryCooldownInMs` or `maxConsecutiveAuthFailures` to change these limits.
+These limits must be finite positive numbers; `0` or `Infinity` does not disable a limit. To disable renewal altogether, set `chatSDKConfig.chatTokenRenewal.disable` to `true`.
 
 ### On Typing Event
 

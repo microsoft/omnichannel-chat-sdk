@@ -6,6 +6,8 @@ import { AMSClientLoadStates } from "../src/utils/AMSClientLoadStates";
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
 import LiveChatVersion from "../src/core/LiveChatVersion";
 import TelemetryEvent from "../src/telemetry/TelemetryEvent";
+import { AzureCommunicationTokenCredential } from "@azure/communication-common";
+import { ChatTokenUnauthorizedRecoveryCredential } from "../src/utils/chatTokenUnauthorizedRecovery";
 
 describe('Omnichannel Chat SDK, chat token renewal', () => {
     AWTLogManager.initialize = jest.fn();
@@ -35,7 +37,7 @@ describe('Omnichannel Chat SDK, chat token renewal', () => {
         }
     });
 
-    const startChat = async (options: { chatSDKConfig?: any, renewalEnabled?: any, renewChatToken?: any, authenticatedUserToken?: string, reconnectId?: string } = {}) => {
+    const startChat = async (options: { chatSDKConfig?: any, renewalEnabled?: any, renewChatToken?: any, authenticatedUserToken?: string, reconnectId?: string, initialToken?: string } = {}) => {
         const chatSDK = new OmnichannelChatSDK(omnichannelConfig, {
             useCreateConversation: {
                 disable: true,
@@ -63,7 +65,7 @@ describe('Omnichannel Chat SDK, chat token renewal', () => {
 
         jest.spyOn(chatSDK.OCClient, 'getChatToken').mockResolvedValue({
             ChatId: chatId,
-            Token: initialToken,
+            Token: options.initialToken ?? initialToken,
             RegionGtms: '{}',
             ExpiresIn: '300',
             VisitorId: 'visitorId',
@@ -302,6 +304,104 @@ describe('Omnichannel Chat SDK, chat token renewal', () => {
         });
     });
 
+    describe('renewal subscriptions', () => {
+        it('notifies without a payload after updating the current context and preserves session fields', async () => {
+            const renewedToken = createJwt(86400);
+            const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken: jest.fn().mockResolvedValue({ ChatId: chatId, Token: renewedToken }) });
+            const before = await chatSDK.getCurrentLiveChatContext();
+            let context: any;
+            const listener = jest.fn(async () => { context = await chatSDK.getCurrentLiveChatContext(); });
+            chatSDK.onChatTokenRenewed(listener);
+
+            await expect(tokenRefresher()).resolves.toBe(renewedToken);
+
+            expect(listener).toHaveBeenCalledWith();
+            expect(context).toEqual({ ...before, chatToken: { ...before.chatToken, token: renewedToken } });
+        });
+
+        it('returns an idempotent unsubscribe and keeps other subscribers registered', async () => {
+            const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken: jest.fn().mockResolvedValue({ ChatId: chatId, Token: createJwt(86400) }) });
+            const removed = jest.fn();
+            const remaining = jest.fn();
+            const unsubscribe = chatSDK.onChatTokenRenewed(removed);
+            chatSDK.onChatTokenRenewed(remaining);
+            unsubscribe();
+            unsubscribe();
+            await tokenRefresher();
+            expect(removed).not.toHaveBeenCalled();
+            expect(remaining).toHaveBeenCalledTimes(1);
+        });
+
+        it('keeps duplicate registrations independent and isolates telemetry failures', async () => {
+            const renewedToken = createJwt(86400);
+            const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken: jest.fn().mockResolvedValue({ ChatId: chatId, Token: renewedToken }) });
+            const listener = jest.fn();
+            const unsubscribe = chatSDK.onChatTokenRenewed(listener);
+            chatSDK.onChatTokenRenewed(listener);
+            unsubscribe();
+            chatSDK.onChatTokenRenewed(() => { throw new Error('private-listener-error'); });
+            chatSDK.onChatTokenRenewed(async () => { throw new Error('private-listener-error'); });
+            chatSDK.scenarioMarker.failScenario.mockImplementation(() => { throw new Error('telemetry'); });
+
+            await expect(tokenRefresher()).resolves.toBe(renewedToken);
+            await new Promise(resolve => setTimeout(resolve, 0));
+            expect(listener).toHaveBeenCalledTimes(1);
+            expect((await chatSDK.getChatToken()).token).toBe(renewedToken);
+            expect(chatSDK.scenarioMarker.completeScenario).toHaveBeenCalledWith(TelemetryEvent.RenewChatToken, expect.anything());
+        });
+
+        it('isolates throwing and rejecting subscribers and logs only sanitized categories separately', async () => {
+            const renewedToken = createJwt(86400);
+            const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken: jest.fn().mockResolvedValue({ ChatId: chatId, Token: renewedToken }) });
+            const secret = 'subscriber-private-error';
+            const remaining = jest.fn();
+            chatSDK.onChatTokenRenewed(() => { throw new Error(secret); });
+            chatSDK.onChatTokenRenewed(async () => { throw new Error(secret); });
+            chatSDK.onChatTokenRenewed(remaining);
+
+            await expect(tokenRefresher()).resolves.toBe(renewedToken);
+            await new Promise(resolve => setTimeout(resolve, 0));
+
+            expect(remaining).toHaveBeenCalledTimes(1);
+            expect((await chatSDK.getCurrentLiveChatContext()).chatToken.token).toBe(renewedToken);
+            expect(chatSDK.scenarioMarker.completeScenario).toHaveBeenCalledWith(TelemetryEvent.RenewChatToken, expect.anything());
+            expect(chatSDK.scenarioMarker.failScenario).toHaveBeenCalledWith('ChatTokenRenewedListener', expect.objectContaining({ ExceptionDetails: JSON.stringify({ response: 'ListenerThrew' }) }));
+            expect(chatSDK.scenarioMarker.failScenario).toHaveBeenCalledWith('ChatTokenRenewedListener', expect.objectContaining({ ExceptionDetails: JSON.stringify({ response: 'ListenerRejected' }) }));
+            expect(JSON.stringify(chatSDK.scenarioMarker.failScenario.mock.calls)).not.toContain(secret);
+            expect(JSON.stringify(chatSDK.scenarioMarker.failScenario.mock.calls)).not.toContain(renewedToken);
+            expect(chatSDK.scenarioMarker.failScenario).not.toHaveBeenCalledWith(TelemetryEvent.RenewChatToken, expect.anything());
+        });
+
+        it.each(['ending', 'ended', 'replaced'])('suppresses an in-flight completion when the chat is %s', async state => {
+            let complete: (value: any) => void = () => undefined;
+            const pending = new Promise(resolve => { complete = resolve; });
+            const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken: jest.fn().mockReturnValue(pending) });
+            const listener = jest.fn();
+            chatSDK.onChatTokenRenewed(listener);
+            const renewal = tokenRefresher();
+            await Promise.resolve();
+            if (state === 'ending') {
+                chatSDK['isEndingChat'] = true;
+            } else {
+                chatSDK.requestId = 'replacement-request';
+                chatSDK['chatToken'] = state === 'ended' ? {} : { chatId: 'replacement-chat', token: 'replacement-token' };
+            }
+            const expected = { ...chatSDK['chatToken'] };
+            complete({ ChatId: chatId, Token: createJwt(86400) });
+            await expect(renewal).resolves.toBe(initialToken);
+            expect(chatSDK['chatToken']).toEqual(expected);
+            expect(listener).not.toHaveBeenCalled();
+        });
+
+        it('does not notify after a failed or unusable renewal', async () => {
+            const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken: jest.fn().mockResolvedValue({ ChatId: chatId, Token: 'invalid' }) });
+            const listener = jest.fn();
+            chatSDK.onChatTokenRenewed(listener);
+            await expect(tokenRefresher()).resolves.toBe(initialToken);
+            expect(listener).not.toHaveBeenCalled();
+        });
+    });
+
     describe('attachment client', () => {
         const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -434,6 +534,253 @@ describe('Omnichannel Chat SDK, chat token renewal', () => {
                 ChatId: chatId,
                 ExceptionDetails: JSON.stringify({ response: 'NoNewToken', source: 'ChatRequest' })
             });
+        });
+    });
+
+    describe('when renewal stops', () => {
+        const httpError = (status: number) => Object.assign(new Error(`Request failed with status code ${status}`), { response: { status } });
+        const maxCooldownInMs = 10 * 60 * 1000;
+        let currentTime: number;
+
+        beforeEach(() => {
+            currentTime = Date.now();
+            jest.spyOn(Date, 'now').mockImplementation(() => currentTime);
+        });
+
+        afterEach(() => {
+            jest.restoreAllMocks();
+        });
+
+        it('recovers from an ACS 401 after renewal reaches its failure limit and the API recovers', async () => {
+            const token = createJwt(10800);
+            const renewChatToken = jest.fn().mockRejectedValue(httpError(503));
+            const { chatSDK, tokenRefresher } = await startChat({
+                renewalEnabled: 'true', renewChatToken, initialToken: token
+            });
+            const listener = jest.fn();
+            chatSDK.onChatTokenRenewalStopped(listener);
+
+            for (let i = 0; i < 8; i++) {
+                await expect(tokenRefresher()).resolves.toBe(token);
+                currentTime += 60000;
+            }
+            expect(renewChatToken).toHaveBeenCalledTimes(8);
+            expect(listener).toHaveBeenCalledWith({ reason: 'MaxFailures' });
+
+            const renewedToken = createJwt(86400);
+            renewChatToken.mockResolvedValue({ ChatId: chatId, Token: renewedToken });
+            const recovery = (chatSDK.ACSClient.initialize as jest.Mock).mock.calls[0][0].unauthorizedRecovery;
+
+            await expect(recovery.recover(token, 'ChatRequest')).resolves.toBe(renewedToken);
+            recovery.reportTokenResult(renewedToken, true);
+            await expect(tokenRefresher()).resolves.toBe(renewedToken);
+            expect(renewChatToken).toHaveBeenCalledTimes(10);
+        });
+
+        it('resumes recovery and renewal after authenticated rejections when the host token changes', async () => {
+            const token = createJwt(10800);
+            const provider = jest.fn().mockResolvedValue('rejected-host-token');
+            const renewChatToken = jest.fn().mockRejectedValue(httpError(401));
+            const { chatSDK, tokenRefresher } = await startChat({
+                renewalEnabled: 'true', renewChatToken, initialToken: token,
+                authenticatedUserToken: 'rejected-host-token',
+                chatSDKConfig: { getAuthToken: provider }
+            });
+            const listener = jest.fn();
+            chatSDK.onChatTokenRenewalStopped(listener);
+
+            for (let i = 0; i < 3; i++) {
+                await expect(tokenRefresher()).resolves.toBe(token);
+                currentTime += 60000;
+            }
+            expect(listener).toHaveBeenCalledWith({ reason: 'AuthRejected' });
+            const renewedToken = createJwt(86400);
+            provider.mockResolvedValue('refreshed-host-token');
+            renewChatToken.mockResolvedValue({ ChatId: chatId, Token: renewedToken });
+            const recovery = (chatSDK.ACSClient.initialize as jest.Mock).mock.calls[0][0].unauthorizedRecovery;
+
+            await expect(recovery.recover(token, 'ChatRequest')).resolves.toBe(renewedToken);
+            expect(renewChatToken).toHaveBeenLastCalledWith(
+                chatSDK.requestId, { authenticatedUserToken: 'refreshed-host-token' });
+            recovery.reportTokenResult(renewedToken, true);
+            await expect(tokenRefresher()).resolves.toBe(renewedToken);
+            expect(renewChatToken).toHaveBeenCalledTimes(5);
+        });
+
+        it('allows at most 3 unsuccessful explicit recovery attempts after the ordinary failure cap', async () => {
+            const token = createJwt(10800);
+            const renewChatToken = jest.fn().mockRejectedValue(httpError(503));
+            const { chatSDK, tokenRefresher } = await startChat({
+                renewalEnabled: 'true', renewChatToken, initialToken: token
+            });
+            const listener = jest.fn();
+            chatSDK.onChatTokenRenewalStopped(listener);
+            for (let i = 0; i < 8; i++) {
+                await tokenRefresher();
+                currentTime += 60000;
+            }
+            const recovery = (chatSDK.ACSClient.initialize as jest.Mock).mock.calls[0][0].unauthorizedRecovery;
+            for (let i = 0; i < 5; i++) {
+                await expect(recovery.recover(token, 'ChatRequest')).resolves.toBeUndefined();
+                currentTime += 60000;
+            }
+            await tokenRefresher();
+
+            expect(renewChatToken).toHaveBeenCalledTimes(11);
+            expect(listener).toHaveBeenCalledTimes(1);
+        });
+
+        it('recovers actual expired-token access after authenticated proactive renewal stops and the host token refreshes', async () => {
+            const startedAt = currentTime;
+            const token = createJwt(1200);
+            const provider = jest.fn().mockResolvedValue('rejected-host-token');
+            const renewChatToken = jest.fn().mockRejectedValue(httpError(401));
+            const { chatSDK, tokenRefresher } = await startChat({
+                renewalEnabled: 'true', renewChatToken, initialToken: token,
+                authenticatedUserToken: 'rejected-host-token',
+                chatSDKConfig: { getAuthToken: provider }
+            });
+            const listener = jest.fn();
+            chatSDK.onChatTokenRenewalStopped(listener);
+            const recovery = (chatSDK.ACSClient.initialize as jest.Mock).mock.calls[0][0].unauthorizedRecovery;
+            const credential = new ChatTokenUnauthorizedRecoveryCredential(
+                new AzureCommunicationTokenCredential({
+                    token, tokenRefresher, refreshProactively: false
+                }),
+                recovery
+            );
+            try {
+                for (const elapsed of [600000, 900000, 1050000]) {
+                    currentTime = startedAt + elapsed;
+                    await tokenRefresher();
+                }
+                expect(listener).toHaveBeenCalledWith({ reason: 'AuthRejected' });
+                expect(renewChatToken).toHaveBeenCalledTimes(3);
+                currentTime = startedAt + 1260000;
+                const renewedToken = createJwt(86400);
+                provider.mockResolvedValue('refreshed-host-token');
+                renewChatToken.mockResolvedValue({ ChatId: chatId, Token: renewedToken });
+
+                await expect(credential.getToken()).resolves.toEqual({
+                    token: renewedToken,
+                    expiresOnTimestamp: Math.floor(currentTime / 1000) * 1000 + 86400000
+                });
+                expect(renewChatToken).toHaveBeenLastCalledWith(
+                    chatSDK.requestId, { authenticatedUserToken: 'refreshed-host-token' });
+                expect(renewChatToken).toHaveBeenCalledTimes(4);
+                expect(listener).toHaveBeenCalledTimes(1);
+            } finally {
+                credential.dispose();
+            }
+        });
+
+        it('notifies subscribers once with only the reason and records telemetry without the token', async () => {
+            const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken: jest.fn().mockRejectedValue(httpError(404)) });
+            jest.spyOn(chatSDK.scenarioMarker, 'singleRecord');
+            const listener = jest.fn();
+            chatSDK.onChatTokenRenewalStopped(listener);
+
+            await expect(tokenRefresher()).resolves.toBe(initialToken);
+            currentTime += 24 * 60 * 60 * 1000;
+            await expect(tokenRefresher()).resolves.toBe(initialToken);
+
+            expect(listener).toHaveBeenCalledTimes(1);
+            expect(listener).toHaveBeenCalledWith({ reason: 'NonRetriableStatus' });
+            expect(chatSDK.scenarioMarker.singleRecord).toHaveBeenCalledWith('ChatTokenRenewalStopped', {
+                RequestId: chatSDK.requestId,
+                ChatId: chatId,
+                CustomProperties: JSON.stringify({ reason: 'NonRetriableStatus', failures: 1, lastFailure: 'HttpStatus404' })
+            });
+            expect(JSON.stringify(chatSDK.scenarioMarker.singleRecord.mock.calls)).not.toContain(initialToken);
+        });
+
+        it('stops ordinary authenticated renewal after 3 rejections while permitting bounded 401 recovery', async () => {
+            const renewChatToken = jest.fn().mockRejectedValue(httpError(401));
+            const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken, authenticatedUserToken: 'startToken' });
+            const listener = jest.fn();
+            chatSDK.onChatTokenRenewalStopped(listener);
+
+            for (let i = 0; i < 5; i++) {
+                await expect(tokenRefresher()).resolves.toBe(initialToken);
+                currentTime += maxCooldownInMs;
+            }
+            const recovery = (chatSDK.ACSClient.initialize as jest.Mock).mock.calls[0][0].unauthorizedRecovery;
+            await expect(recovery.recover(initialToken, 'ChatRequest')).resolves.toBeUndefined();
+
+            expect(renewChatToken).toHaveBeenCalledTimes(4);
+            expect(listener).toHaveBeenCalledWith({ reason: 'AuthRejected' });
+            expect(chatSDK.scenarioMarker.failScenario).toHaveBeenCalledWith(TelemetryEvent.ChatTokenUnauthorizedRecovery, expect.objectContaining({
+                ExceptionDetails: JSON.stringify({ response: 'NoNewToken', source: 'ChatRequest' })
+            }));
+        });
+
+        it('applies the limits from the SDK config', async () => {
+            const renewChatToken = jest.fn().mockRejectedValue(httpError(500));
+            const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken, chatSDKConfig: { chatTokenRenewal: { maxConsecutiveFailures: 3, maxRetryCooldownInMs: 90000 } } });
+            const listener = jest.fn();
+            chatSDK.onChatTokenRenewalStopped(listener);
+
+            await tokenRefresher();
+            currentTime += 60000;
+            await tokenRefresher();
+            currentTime += 90000;
+            await tokenRefresher();
+            currentTime += maxCooldownInMs;
+            await tokenRefresher();
+
+            expect(renewChatToken).toHaveBeenCalledTimes(3);
+            expect(listener).toHaveBeenCalledWith({ reason: 'MaxFailures' });
+        });
+
+        it.each(['ending', 'ended', 'replaced'])('does not notify when the chat is %s', async state => {
+            let fail: (error: unknown) => void = () => undefined;
+            const pending = new Promise((_, reject) => { fail = reject; });
+            const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken: jest.fn().mockReturnValue(pending) });
+            jest.spyOn(chatSDK.scenarioMarker, 'singleRecord');
+            const listener = jest.fn();
+            chatSDK.onChatTokenRenewalStopped(listener);
+            const renewal = tokenRefresher();
+            await Promise.resolve();
+            if (state === 'ending') {
+                chatSDK['isEndingChat'] = true;
+            } else {
+                chatSDK.requestId = 'replacement-request';
+                chatSDK['chatToken'] = state === 'ended' ? {} : { chatId: 'replacement-chat', token: 'replacement-token' };
+            }
+            fail(httpError(404));
+            await expect(renewal).resolves.toBe(initialToken);
+
+            expect(listener).not.toHaveBeenCalled();
+            expect(chatSDK.scenarioMarker.singleRecord).not.toHaveBeenCalledWith(
+                TelemetryEvent.ChatTokenRenewalStopped, expect.anything());
+            expect(chatSDK.scenarioMarker.failScenario).not.toHaveBeenCalledWith(
+                TelemetryEvent.RenewChatToken, expect.anything());
+            expect(chatSDK.scenarioMarker.completeScenario).toHaveBeenCalledWith(
+                TelemetryEvent.RenewChatToken, expect.objectContaining({
+                    CustomProperties: JSON.stringify({ reason: 'ChatNotActive' })
+                }));
+        });
+
+        it('isolates throwing and rejecting subscribers and honors unsubscribe', async () => {
+            const { chatSDK, tokenRefresher } = await startChat({ renewalEnabled: 'true', renewChatToken: jest.fn().mockRejectedValue(httpError(404)) });
+            const secret = 'subscriber-private-error';
+            const removed = jest.fn();
+            const remaining = jest.fn();
+            const unsubscribe = chatSDK.onChatTokenRenewalStopped(removed);
+            chatSDK.onChatTokenRenewalStopped(() => { throw new Error(secret); });
+            chatSDK.onChatTokenRenewalStopped(async () => { throw new Error(secret); });
+            chatSDK.onChatTokenRenewalStopped(remaining);
+            unsubscribe();
+            unsubscribe();
+
+            await expect(tokenRefresher()).resolves.toBe(initialToken);
+            await new Promise(resolve => setTimeout(resolve, 0));
+
+            expect(removed).not.toHaveBeenCalled();
+            expect(remaining).toHaveBeenCalledTimes(1);
+            expect(chatSDK.scenarioMarker.failScenario).toHaveBeenCalledWith('ChatTokenRenewalStoppedListener', expect.objectContaining({ ExceptionDetails: JSON.stringify({ response: 'ListenerThrew' }) }));
+            expect(chatSDK.scenarioMarker.failScenario).toHaveBeenCalledWith('ChatTokenRenewalStoppedListener', expect.objectContaining({ ExceptionDetails: JSON.stringify({ response: 'ListenerRejected' }) }));
+            expect(JSON.stringify(chatSDK.scenarioMarker.failScenario.mock.calls)).not.toContain(secret);
         });
     });
 });

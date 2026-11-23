@@ -17,6 +17,11 @@ const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 
 import LiveChatVersion from "../src/core/LiveChatVersion";
 import { SDKProvider } from "@microsoft/ocsdk";
+import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
+
+// Config adoption does not require Aria's background stats collection.
+const telemetryInitialization = jest.spyOn(AWTLogManager, 'initialize').mockImplementation(jest.fn());
+afterAll(() => telemetryInitialization.mockRestore());
 
 describe('Prefetched live chat config adoption', () => {
     const omnichannelConfig = {

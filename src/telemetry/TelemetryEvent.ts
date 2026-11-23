@@ -38,6 +38,9 @@ enum TelemetryEvent {
     OnCallDisconnected = "OnCallDisconnected",
     UpdateChatToken = "UpdateChatToken",
     RenewChatToken = "RenewChatToken",
+    ChatTokenRenewedListener = "ChatTokenRenewedListener",
+    ChatTokenRenewalStopped = "ChatTokenRenewalStopped",
+    ChatTokenRenewalStoppedListener = "ChatTokenRenewalStoppedListener",
     RefreshAttachmentClientToken = "RefreshAttachmentClientToken",
     ChatTokenUnauthorizedRecovery = "ChatTokenUnauthorizedRecovery",
     GetChatReconnectContext = "GetChatReconnectContext",
@@ -78,6 +81,10 @@ enum TelemetryEvent {
     StreamingPolicyViolation = "StreamingPolicyViolation",
     PrefetchedLiveChatConfigUsed = "PrefetchedLiveChatConfigUsed",
     PrefetchedLiveChatConfigRejected = "PrefetchedLiveChatConfigRejected",
+    EnsureFreshAuthToken = "EnsureFreshAuthToken",
+    AuthTokenRejected = "AuthTokenRejected",
+    ConversationDetailsLookupFailed = "ConversationDetailsLookupFailed",
+    PendingAgentEndCheckSettled = "PendingAgentEndCheckSettled",
 }
 
 export default TelemetryEvent;

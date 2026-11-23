@@ -10,13 +10,51 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Added automatic ACS chat token renewal for long-running Live Chat V2 conversations. Renewal only runs when the org's live chat config enables `LcwFcbConfiguration.lcwChatTokenRenewalEnabled` and the installed `@microsoft/ocsdk` exposes `renewChatToken`. If the renewal API is not deployed, returns an error, times out, or returns an invalid token, the SDK keeps the current token and the existing flow is unchanged. Reconnected chats are renewed by their reconnect id. Authenticated chats retry renewal after an authentication failure (HTTP 400, 401 or 403) once the retry cooldown passes, and renew only when `getAuthToken` returns a valid token at renewal time. Set `chatSDKConfig.chatTokenRenewal.disable` to `true` to turn renewal off.
+- Added authenticated-token preflight. For authenticated chats that provide `getAuthToken`, the SDK calls `getAuthToken` before authenticated Omnichannel calls when the current JWT expires within `chatSDKConfig.authTokenPreflight.refreshMarginInMs` (default 60 seconds; tokens without a readable expiry are left unchanged). After an HTTP 401, these calls are sent once more with a fresh token: `createConversation`, `sessionInit`, `sessionClose`, `getReconnectableChats`, `validateAuthChatRecord`, `getConversationDetails`, `getUnreadMessageCount`, `sendReadReceipt`, post-chat survey links and persistent chat history. `getChatToken` and `emailLiveChatTranscript` refresh before the request but are not retried. Hosts that set `authTokenPreflight.retainSessionOnAuthExpired: true` get `AuthenticationExpired` from `endChat` when it gets a 401 and no fresh token can be obtained, and the session is kept so `endChat` can be retried after sign-in; otherwise `endChat` keeps throwing `ConversationClosureFailure`. If an agent leaves and every status lookup fails with HTTP 401, the SDK keeps one pending check for that chat and fires `onAgentEndSession` only if a later successful lookup (or up to 3 retries after a new token arrives, including from `authenticateChat`) reports the conversation as closed; other lookup failures fire `onAgentEndSession` as before. If that closed result arrives while `endChat` is running and `endChat` then keeps the session, `onAgentEndSession` fires once after `endChat` rejects; if `endChat` ends the session, the result is discarded. Hosts can opt out with `authTokenPreflight.disable: true`.
+- For authenticated chats (unless `authTokenPreflight.disable` is set), a failure to look up conversation details after an agent-end-session event no longer ends the chat; the SDK records `ConversationDetailsLookupFailed` telemetry and keeps polling.
+
+## [2.1.0] - 2026-11-17
+
+### Added
+
+- Added `onChatTokenRenewed(listener)` to notify host applications after the active chat context is updated with a renewed token. Notifications contain no tokens or credentials, and the method returns an unsubscribe function. Listener failures do not interrupt renewal; ended or replaced sessions do not notify listeners.
+- Added automatic ACS chat token renewal for long-running Live Chat V2 conversations using `renewChatToken` from `@microsoft/ocsdk`. If the renewal API is not deployed, returns an error, times out, or returns an invalid token, the SDK keeps the current token and the existing flow is unchanged. Reconnected chats are renewed by their reconnect id. Authenticated chats retry renewal after an authentication failure (HTTP 400, 401 or 403) once the retry cooldown passes, and renew only when `getAuthToken` returns a valid token at renewal time. Set `chatSDKConfig.chatTokenRenewal.disable` to `true` to turn renewal off.
 - After a chat token renewal, the attachment client now uses the renewed token, so file uploads and downloads keep working after the original token expires. If updating the attachment client fails, attachments keep using the previous token.
+- Added `onChatTokenRenewalStopped(listener)` and the exported `ChatTokenRenewalStopReason` enum. A stop records `ChatTokenRenewalStopped` telemetry and notifies listeners once with `{ reason }` only (`NonRetriableStatus`, `AuthRejected` or `MaxFailures`); ended or replaced chats do not report a renewal failure or stop.
 - When chat token renewal is enabled, ACS chat requests that fail with `401 Unauthorized` before the token expires (for example, after the token was revoked) now get a renewed token and are sent once more. This applies to sending and polling messages and real-time notifications. Attachment uploads and downloads aren't retried, but they use the renewed token once it is in place. Renewal after a `401` runs at most once a minute per chat and stops for the chat after ACS rejects 3 renewed tokens in a row. When no new token is available, the original `401` is returned unchanged. Recovery is reported as successful only after ACS accepts the renewed token. Set `chatSDKConfig.chatTokenRenewal.disableUnauthorizedRecovery` to `true` to turn this off.
 
 ### Changed
 
+- Automatic chat token renewal no longer retries indefinitely: it stops after 8 failures in a row, or after 3 HTTP 400/401/403 responses in a row for an authenticated chat. After either failure-limit stop, ACS HTTP 401 and on-demand expired-token access share at most 3 additional recovery attempts, at least 60 seconds apart and respecting capped `Retry-After`. A different usable token for the same chat resets the stop and counts and resumes automatic renewal; hard non-retriable stops remain final. No periodic probes are added. Failures keep the 60-second cooldown while the current token is unexpired; after expiry, later waits double with up to 20% jitter, to a maximum of 10 minutes. `MaxFailures` may be reported after the token expires. Set `chatSDKConfig.chatTokenRenewal.maxConsecutiveFailures`, `maxRetryCooldownInMs` or `maxConsecutiveAuthFailures` to change the finite limits.
+- ACS `onNewMessage` now delivers customer-message edits without an opt-in. All ACS message edits, including agent edits and edited polling/history snapshots, carry the existing `resourceType: "MessageUpdate"` marker. Custom consumers must upsert by message ID, inserting a first-seen edited message in timestamp order when necessary, without generating new-message notifications, sounds, or unread increments.
 - Updated `@microsoft/ocsdk` to `0.6.0-main.316a2fa`, which adds `renewChatToken` for ACS chat token renewal. This version also includes two earlier `@microsoft/ocsdk` changes: `getChatConfig` now retries HTTP 429 responses by default with jittered backoff, and default headers are copied per request, so headers such as `Oc-Sessionid` or `AuthenticatedUserToken` set by an earlier call are no longer re-sent on later calls.
+
+### Fixed
+
+- Applied the full chat configuration after a core-services network error falls back successfully to the original organization URL, and preserved caller-provided user agents on that fallback request.
+- Forwarded same-ID customer message edits, including masking and ordinary corrections, through ACS realtime and polling callbacks while filtering original customer echoes and duplicate or older edit versions.
+- Preserved polling pause/resume and initial history-before-realtime callback ordering while listening for edits during the first poll. Disconnect still stops polling and discards buffered callbacks.
+- Applied the shared ACS 401 recovery policy to real-time signaling configuration as well as REST requests. When recovery is enabled, restoring saved chat context can now renew a credential rejected during signaling setup, before any message is sent. Concurrent REST and signaling failures share the same renewal coordinator rather than starting separate renewals.
+- Failed real-time starts now reset Azure's notification startup state through its public stop API, so a later start attempts to establish notifications instead of incorrectly appearing to succeed. Cleanup preserves the original startup error, and no automatic startup retry loop is added. Existing startup behavior is preserved when recovery is disabled.
+- `getLiveChatTranscript` and `emailLiveChatTranscript` after `endChat` now send the ended chat's session key (`Oc-Sessionid`) when `liveChatContext` has no `sessionId`. Since `@microsoft/ocsdk` `0.6.0-main.316a2fa`, these calls sent no key, and the service returned `401 Unauthorized` when session key validation is on. The key is sent only for the ended chat's `chatId`, only on that request (it is not left on the shared client while the request waits), and is cleared when the next chat starts. A `sessionId` passed in `liveChatContext` also applies to that request only.
+- The voice and video call-ended event sent after a call disconnects no longer causes an unhandled promise rejection when the request fails (for example, `401` after `endChat`). The failure is logged and reported in telemetry.
+- When an authenticated persistent chat is restored with `startChat({ liveChatContext })` (for example, after a page reload), the SDK now restores the chat's session key from `liveChatContext.sessionId`. Before, this path restored the chat token and request ID but not the key, so `getLiveChatTranscript` and `emailLiveChatTranscript` sent no `Oc-Sessionid` and the service returned `401 Unauthorized` when session key validation is on. `getCurrentLiveChatContext` now also returns the key again, so it survives a second reload.
+
+### Upgrade guidance
+
+Existing `startChat()` and `endChat()` usage remains unchanged. Applications that do not persist live chat
+context need no new subscription for automatic token renewal.
+
+Applications that cache live chat context for page refresh or reconnect should subscribe to
+`onChatTokenRenewed` before `startChat()`, including when restoring saved context, to capture renewals during
+startup. In the callback, read `getCurrentLiveChatContext()` and save the complete result through the existing
+cache writer, preserving the application's storage expiration policy. The SDK updates its in-memory context,
+not application-owned storage; upgrading alone does not update previously saved context.
+
+Register once per SDK instance. The listener remains registered across `endChat()` and subsequent
+`startChat()` calls on that instance. Call the returned unsubscribe function during host teardown or before
+replacing the listener; this removes only the listener and does not disable renewal.
+See the [token renewal example](README.md#on-chat-token-renewed).
 
 ## [2.0.2] - 2026-10-20
 

@@ -28,8 +28,34 @@ interface CreateConversationConfig {
 
 interface ChatTokenRenewalConfig {
     disable: boolean;
-    /** Turns off retrying chat requests that fail with 401 while the token has not expired. */
+    /** Turns off request recovery after HTTP 401 or an on-demand expired-token rejection. */
     disableUnauthorizedRecovery?: boolean;
+    /** Renewal stops after this many failures in a row. Default 8. */
+    maxConsecutiveFailures?: number;
+    /** Longest wait between renewal attempts after failures, in milliseconds. Default 600000 (10 minutes). */
+    maxRetryCooldownInMs?: number;
+    /** Renewal of an authenticated chat stops after this many HTTP 400/401/403 responses in a row. Default 3. */
+    maxConsecutiveAuthFailures?: number;
+}
+
+/**
+ * Refreshes the authenticated user token from getAuthToken before authenticated requests and keeps
+ * transient conversation lookup failures from ending the chat. On for authenticated chats that provide
+ * getAuthToken.
+ */
+interface AuthTokenPreflightConfig {
+    /** Turns the feature off. */
+    disable?: boolean;
+    /** Refreshes the token when it expires within this many milliseconds. Default 60000. */
+    refreshMarginInMs?: number;
+    /** Longest wait for getAuthToken, in milliseconds. Default 10000. */
+    refreshTimeoutInMs?: number;
+    /**
+     * When endChat() gets an HTTP 401 that a fresh token cannot fix, throw AuthenticationExpired and keep the
+     * session so endChat() can be retried after the user signs in again. Default false: endChat() throws
+     * ConversationClosureFailure and releases the session.
+     */
+    retainSessionOnAuthExpired?: boolean;
 }
 
 /**
@@ -53,10 +79,12 @@ interface ChatSDKConfig {
     internalConfig?: InternalChatSDKConfig,
     ocUserAgent?: string[],
     useCreateConversation?: CreateConversationConfig,
-    chatTokenRenewal?: ChatTokenRenewalConfig
+    chatTokenRenewal?: ChatTokenRenewalConfig,
+    authTokenPreflight?: AuthTokenPreflightConfig
 }
 
 export {
+    AuthTokenPreflightConfig,
     DataMaskingSDKConfig,
     PersistentChatConfig
 };

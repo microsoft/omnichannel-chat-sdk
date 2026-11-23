@@ -1,11 +1,77 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { ChatMessage } from '@azure/communication-chat';
+import { ChatMessageEditedEvent, ChatMessageReceivedEvent } from '@azure/communication-signaling';
 import LiveChatVersion from '../../src/core/LiveChatVersion';
-import { MessageType } from '../../src/core/messaging/OmnichannelMessage';
+import { MessageType, ResourceType } from '../../src/core/messaging/OmnichannelMessage';
 import PersonType from '@microsoft/omnichannel-ic3core/lib/model/PersonType';
 import createOmnichannelMessage from '../../src/utils/createOmnichannelMessage';
 
 describe('createOmnichannelMessage', () => {
+    const newMessage: ChatMessageReceivedEvent = {
+        id: "synthetic-message",
+        threadId: "synthetic-thread",
+        sender: { kind: "communicationUser", communicationUserId: "synthetic-sender" },
+        recipient: { kind: "communicationUser", communicationUserId: "synthetic-customer" },
+        senderDisplayName: "Agent",
+        type: "Text",
+        message: "Synthetic content",
+        metadata: { tags: "public" },
+        version: "1720000000000",
+        createdOn: new Date(1720000000000)
+    };
+
+    describe.each(["Customer", "Agent", "Bot", "System"])("edit classification for %s", senderDisplayName => {
+        it.each(["realtime", "poll/history"])("marks a first-seen %s edit without dropping its content", source => {
+            const event: ChatMessageEditedEvent = {
+                ...newMessage,
+                senderDisplayName,
+                message: "Synthetic correction",
+                editedOn: new Date(1720000000001),
+                version: "1720000000001"
+            };
+            const snapshot: ChatMessage = {
+                id: event.id,
+                type: "text",
+                sequenceId: "1",
+                version: event.version,
+                sender: event.sender,
+                senderDisplayName,
+                metadata: event.metadata,
+                createdOn: event.createdOn,
+                editedOn: event.editedOn,
+                content: { message: event.message }
+            };
+
+            const converted = createOmnichannelMessage(source === "realtime" ? event : snapshot, {
+                liveChatVersion: LiveChatVersion.V2
+            });
+
+            expect(converted.resourceType).toBe(ResourceType.MessageUpdate);
+            expect(converted.content).toBe(event.message);
+            expect(converted.id).toBe(event.id);
+            expect(converted.timestamp).toBe(event.editedOn);
+        });
+    });
+
+    it("preserves the new-message contract without adding an edit marker", () => {
+        const converted = createOmnichannelMessage(newMessage, { liveChatVersion: LiveChatVersion.V2 });
+
+        expect(converted).not.toHaveProperty("resourceType");
+        expect(converted.content).toBe(newMessage.message);
+    });
+
+    it.each([undefined, null, new Date(NaN), "2026-01-01T00:00:00Z"])(
+        "does not mark an invalid edit timestamp %p",
+        editedOn => {
+            const event = { ...newMessage };
+            Reflect.set(event, "editedOn", editedOn);
+
+            expect(createOmnichannelMessage(event, { liveChatVersion: LiveChatVersion.V2 }))
+                .not.toHaveProperty("resourceType");
+        }
+    );
+
     it('createOmnichannelMessage with LiveChatV2 messaging contracts should return OmnichannelMessage contracts', () => {
         const amsReferences = ['id'];
         const amsMetadata = [{fileName: 'fileName.ext', size: 0, contentType: 'type'}]

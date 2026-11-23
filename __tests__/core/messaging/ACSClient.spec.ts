@@ -2,7 +2,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import ACSClient from "../../../src/core/messaging/ACSClient";
-import { ChatTokenUnauthorizedRecoveryCredential, chatTokenUnauthorizedRecoveryPolicyName } from "../../../src/utils/chatTokenUnauthorizedRecovery";
+import { ChatTokenUnauthorizedRecoveryCredential, chatTokenUnauthorizedRecoveryPolicyName, createChatTokenUnauthorizedRecovery } from "../../../src/utils/chatTokenUnauthorizedRecovery";
+import { execFile } from "child_process";
+import { join } from "path";
+import { promisify } from "util";
 
 jest.mock('@azure/communication-common');
 jest.mock('@azure/communication-chat');
@@ -90,6 +93,122 @@ describe('ACSClient', () => {
             expect(args[0]).toBe('url');
             expect(args[1]).toBeInstanceOf(ChatTokenUnauthorizedRecoveryCredential);
             expect(args[2].additionalPolicies).toEqual([expect.objectContaining({ position: 'perRetry', policy: expect.objectContaining({ name: chatTokenUnauthorizedRecoveryPolicyName }) })]);
+            expect(args[2].signalingClientOptions.additionalPolicies).toEqual(args[2].additionalPolicies);
+        });
+
+        const createJwt = (seconds: number) => `header.${Buffer.from(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + seconds })).toString('base64')}.signature`;
+
+        it('recovers simultaneous signaling and REST 401s with one shared renewal', async () => {
+            const initialToken = createJwt(3600);
+            const renewedToken = createJwt(86400);
+            const refreshToken = jest.fn().mockResolvedValue(renewedToken);
+            const unauthorizedRecovery = createChatTokenUnauthorizedRecovery({ initialToken, refreshToken });
+            const { args } = await createChatClient({ token: initialToken, environmentUrl: 'https://example.invalid', unauthorizedRecovery });
+            const request = () => {
+                const headers = new Map([['Authorization', `Bearer ${initialToken}`]]);
+                return { headers: { get: (name: string) => headers.get(name), set: (name: string, value: string) => headers.set(name, value) } };
+            };
+            const restNext = jest.fn(async (req: any) => ({ status: req.headers.get('Authorization') === `Bearer ${renewedToken}` ? 200 : 401 }));
+            const signalingNext = jest.fn(restNext.getMockImplementation());
+
+            const results = await Promise.all([
+                args[2].additionalPolicies[0].policy.sendRequest(request(), restNext),
+                args[2].signalingClientOptions?.additionalPolicies[0].policy.sendRequest(request(), signalingNext)
+            ]);
+
+            expect(results.map(result => result?.status)).toEqual([200, 200]);
+            expect(refreshToken).toHaveBeenCalledTimes(1);
+            expect(restNext).toHaveBeenCalledTimes(2);
+            expect(signalingNext).toHaveBeenCalledTimes(2);
+        });
+
+        it('bounds signaling replay and failed renewal without changing the original 401', async () => {
+            const initialToken = createJwt(3600);
+            const refreshToken = jest.fn().mockResolvedValue(initialToken);
+            const unauthorizedRecovery = createChatTokenUnauthorizedRecovery({ initialToken, refreshToken });
+            const { args } = await createChatClient({ token: initialToken, environmentUrl: 'https://example.invalid', unauthorizedRecovery });
+            const policy = args[2].signalingClientOptions?.additionalPolicies[0].policy;
+            expect(policy).toBeDefined();
+            const response = { status: 401 };
+            const next = jest.fn().mockResolvedValue(response);
+            const request = { headers: { get: () => `Bearer ${initialToken}`, set: jest.fn() } };
+
+            await expect(policy.sendRequest(request, next)).resolves.toBe(response);
+            await expect(policy.sendRequest(request, next)).resolves.toBe(response);
+            expect(next).toHaveBeenCalledTimes(2);
+            expect(refreshToken).toHaveBeenCalledTimes(1);
+        });
+
+        it.each([true, false])('runs the installed Azure signaling configuration pipeline with recovery %s', async enabled => {
+            const initialToken = createJwt(3600);
+            const renewedToken = createJwt(86400);
+            const refreshToken = jest.fn().mockResolvedValue(renewedToken);
+            const unauthorizedRecovery = enabled ? createChatTokenUnauthorizedRecovery({ initialToken, refreshToken }) : undefined;
+            const { args } = await createChatClient({ token: initialToken, environmentUrl: 'https://example.invalid/', unauthorizedRecovery });
+            const { CommunicationSignalingClient } = jest.requireActual('@azure/communication-signaling');
+            const sentTokens: string[] = [];
+            const transport = {
+                position: 'perRetry',
+                policy: {
+                    name: 'TestSignalingTransport',
+                    sendRequest: async (request: any) => {
+                        expect(request.url).toContain('/chat/config/realTimeNotifications?api-version=');
+                        const token = request.headers.get('Authorization');
+                        sentTokens.push(token);
+                        return {
+                            request,
+                            headers: jest.requireActual('@azure/core-rest-pipeline').createHttpHeaders(),
+                            status: token === `Bearer ${renewedToken}` ? 200 : 401,
+                            // Stop after the real config pipeline, before opening a Trouter connection.
+                            bodyAsText: '{}'
+                        };
+                    }
+                }
+            };
+            const credential = { getToken: async () => ({ token: initialToken, expiresOnTimestamp: Date.now() + 3600000 }) };
+            const signaling = new CommunicationSignalingClient(credential, { verbose: jest.fn(), info: jest.fn(), warning: jest.fn(), error: jest.fn() }, {
+                resourceEndpoint: args[0],
+                additionalPolicies: [...(args[2]?.signalingClientOptions?.additionalPolicies ?? []), transport]
+            });
+            if (enabled) {
+                await expect(signaling.start()).rejects.toThrow('required fields are missing');
+                expect(sentTokens).toEqual([`Bearer ${initialToken}`, `Bearer ${renewedToken}`]);
+                expect(refreshToken).toHaveBeenCalledTimes(1);
+            } else {
+                await expect(signaling.start()).rejects.toThrow('Status: 401');
+                expect(sentTokens).toEqual([`Bearer ${initialToken}`]);
+                expect(refreshToken).not.toHaveBeenCalled();
+            }
+        });
+
+        it('forwards the installed signaling recovery policy through the real ChatClient browser build', async () => {
+            const unauthorizedRecovery = createChatTokenUnauthorizedRecovery({ initialToken: createJwt(3600), refreshToken: jest.fn() });
+            const { args } = await createChatClient({ token: createJwt(3600), environmentUrl: 'https://example.invalid', unauthorizedRecovery });
+            const { stdout } = await promisify(execFile)(process.execPath, [
+                '--conditions=browser',
+                join(__dirname, 'fixtures', 'chatClientBrowser.mjs'),
+                JSON.stringify(args[2]),
+                chatTokenUnauthorizedRecoveryPolicyName
+            ], { encoding: 'utf8', timeout: 10000 });
+
+            expect(JSON.parse(stdout)).toEqual({ browserBuild: true, signalingPolicyReached: true });
+        }, 15000);
+
+        it.each([false, true])('resets a failed realtime start through the supported stop API even if cleanup rejects: %s', async cleanupRejects => {
+            const unauthorizedRecovery = createChatTokenUnauthorizedRecovery({ initialToken: createJwt(3600), refreshToken: jest.fn() });
+            const { client } = await createChatClient({ token: createJwt(3600), environmentUrl: 'https://example.invalid', unauthorizedRecovery });
+            const chatClient = client.getChatClient();
+            chatClient.getChatThreadClient = jest.fn().mockReturnValue({});
+            chatClient.startRealtimeNotifications = jest.fn().mockRejectedValueOnce(new Error('401')).mockResolvedValueOnce(undefined);
+            chatClient.stopRealtimeNotifications = cleanupRejects
+                ? jest.fn().mockRejectedValue(new Error('cleanup'))
+                : jest.fn().mockResolvedValue(undefined);
+            const session = { id: 'id', threadId: 'thread', pollingInterval: 1000 };
+
+            await expect(client.joinConversation(session)).rejects.toThrow('StartRealtimeNotificationsFailed');
+            expect(chatClient.stopRealtimeNotifications).toHaveBeenCalledTimes(1);
+            await expect(client.joinConversation(session)).resolves.toBeDefined();
+            expect(chatClient.startRealtimeNotifications).toHaveBeenCalledTimes(2);
         });
     });
 
@@ -176,6 +295,7 @@ describe('ACSClient', () => {
         client.chatClient = {};
         client.chatClient.getChatThreadClient = jest.fn(() => chatThreadClient);
         client.chatClient.startRealtimeNotifications = jest.fn(() => Promise.reject());
+        client.chatClient.stopRealtimeNotifications = jest.fn();
 
         try {
             await client.joinConversation({
@@ -186,6 +306,7 @@ describe('ACSClient', () => {
         } catch (error : any ) {
             expect(error.message).toContain('StartRealtimeNotificationsFailed');
         }
+        expect(client.chatClient.stopRealtimeNotifications).not.toHaveBeenCalled();
     });
 
     it('ACSClient.conversation.getMessages() should call ChatThreadClient.listMessages()', async () => {
