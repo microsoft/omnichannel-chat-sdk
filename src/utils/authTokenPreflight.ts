@@ -54,12 +54,14 @@ export const isUnauthorizedError = (error: unknown): boolean => {
     return (error as any)?.response?.status === 401;
 };
 
-// 424: MRT's planned status for a public-key endpoint failure (replacing today's 400 text below).
+// 424: the backend service's planned status for a public-key endpoint failure (replacing today's 400 text below).
 const retryableCloseStatusCodes = [401, 408, 424, 429, 499];
+// Axios errors with no response that a retry cannot fix: a cancelled request or a bad request setup.
+const nonRetryableAxiosErrorCodes = ["ERR_CANCELED", "ERR_INVALID_URL", "ERR_BAD_OPTION", "ERR_BAD_OPTION_VALUE"];
 // ocsdk rejects timed-out requests with a plain Error whose message starts with this name.
 const ocsdkTimeoutErrorName = "ClientHTTPTimeoutError";
-// MRT AuthTokenValidationAttribute returns this text as the HTTP 400 body for every InvalidPublicKeyException (endpoint failure or key configuration error). There is no fault code; keep this text in sync.
-// Temporary: remove this 400 match once MRT returns 424 for public-key endpoint failures in all regions.
+// The backend service returns this text as the HTTP 400 body for every public-key failure (endpoint failure or key configuration error). There is no fault code; keep this text in sync.
+// Temporary: remove this 400 match once the backend service returns 424 for public-key endpoint failures in all regions.
 const publicKeyConfigurationErrorText = "invalid public key configuration";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -82,7 +84,7 @@ export const isRetryableCloseError = (error: unknown): boolean => {
     }
 
     if (httpError?.isAxiosError === true || httpError?.request !== undefined) {
-        return true;
+        return !nonRetryableAxiosErrorCodes.includes(httpError?.code);
     }
 
     return typeof httpError?.message === "string" && httpError.message.startsWith(ocsdkTimeoutErrorName);

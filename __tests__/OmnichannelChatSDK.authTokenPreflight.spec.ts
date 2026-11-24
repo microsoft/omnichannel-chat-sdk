@@ -355,6 +355,8 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
             ['HTTP 403 when opted in', { retainSessionOnRetryableCloseFailure: true }, httpError(403)],
             ['HTTP 404 when opted in', { retainSessionOnRetryableCloseFailure: true }, httpError(404)],
             ['a non-HTTP error when opted in', { retainSessionOnRetryableCloseFailure: true }, new TypeError('bug')],
+            ['a cancelled request when opted in', { retainSessionOnRetryableCloseFailure: true }, Object.assign(new Error('canceled'), { isAxiosError: true, request: {}, code: 'ERR_CANCELED' })],
+            ['an invalid URL when opted in', { retainSessionOnRetryableCloseFailure: true }, Object.assign(new Error('Invalid URL'), { isAxiosError: true, code: 'ERR_INVALID_URL' })],
             ['HTTP 500 when not opted in', {}, httpError(500)],
             ['HTTP 500 when the preflight is disabled', { retainSessionOnRetryableCloseFailure: true, disable: true }, httpError(500)]
         ])('should release the session with ConversationClosureFailure on %s', async (_name, authTokenPreflight, closeError) => {
