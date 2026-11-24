@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Retain renewed ACS chat tokens regardless of their expiry relative to the previous token.
+
 ### Added
 
 - Added authenticated-token preflight. For authenticated chats that provide `getAuthToken`, the SDK calls `getAuthToken` before authenticated Omnichannel calls when the current JWT expires within `chatSDKConfig.authTokenPreflight.refreshMarginInMs` (default 60 seconds; tokens without a readable expiry are left unchanged). After an HTTP 401, these calls are sent once more with a fresh token: `createConversation`, `sessionInit`, `sessionClose`, `getReconnectableChats`, `validateAuthChatRecord`, `getConversationDetails`, `getUnreadMessageCount`, `sendReadReceipt`, post-chat survey links and persistent chat history. `getChatToken` and `emailLiveChatTranscript` refresh before the request but are not retried. Hosts that set `authTokenPreflight.retainSessionOnAuthExpired: true` get `AuthenticationExpired` from `endChat` when it gets a 401 and no fresh token can be obtained, and the session is kept so `endChat` can be retried after sign-in; otherwise `endChat` keeps throwing `ConversationClosureFailure`. If an agent leaves and every status lookup fails with HTTP 401, the SDK keeps one pending check for that chat and fires `onAgentEndSession` only if a later successful lookup (or up to 3 retries after a new token arrives, including from `authenticateChat`) reports the conversation as closed; other lookup failures fire `onAgentEndSession` as before. If that closed result arrives while `endChat` is running and `endChat` then keeps the session, `onAgentEndSession` fires once after `endChat` rejects; if `endChat` ends the session, the result is discarded. Hosts can opt out with `authTokenPreflight.disable: true`.
