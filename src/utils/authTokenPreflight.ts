@@ -54,10 +54,12 @@ export const isUnauthorizedError = (error: unknown): boolean => {
     return (error as any)?.response?.status === 401;
 };
 
-const retryableCloseStatusCodes = [401, 408, 429, 499];
+// 424: MRT's planned status for a public-key endpoint failure (replacing today's 400 text below).
+const retryableCloseStatusCodes = [401, 408, 424, 429, 499];
 // ocsdk rejects timed-out requests with a plain Error whose message starts with this name.
 const ocsdkTimeoutErrorName = "ClientHTTPTimeoutError";
-// The service returns this 400 when it cannot fetch the customer's public key, which is a temporary failure.
+// MRT AuthTokenValidationAttribute returns this text as the HTTP 400 body for every InvalidPublicKeyException (endpoint failure or key configuration error). There is no fault code; keep this text in sync.
+// Temporary: remove this 400 match once MRT returns 424 for public-key endpoint failures in all regions.
 const publicKeyConfigurationErrorText = "invalid public key configuration";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -68,7 +70,7 @@ const isPublicKeyConfigurationError = (data: any): boolean => {
 
 /**
  * Whether a failed session close may succeed if sent again with the same request id: no response (network error
- * or timeout), HTTP 401, 408, 429, 499, 5xx, or a 400 saying the public key configuration is invalid.
+ * or timeout), HTTP 401, 408, 424, 429, 499, 5xx, or a 400 saying the public key configuration is invalid.
  */
 export const isRetryableCloseError = (error: unknown): boolean => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

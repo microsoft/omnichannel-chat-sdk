@@ -3,7 +3,7 @@
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
-import { ChatSDKErrorName } from "../src/core/ChatSDKError";
+import { ChatSDKError, ChatSDKErrorName } from "../src/core/ChatSDKError";
 import TelemetryEvent from "../src/telemetry/TelemetryEvent";
 
 describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
@@ -328,6 +328,7 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
         it.each([
             ['HTTP 401', httpError(401)],
             ['HTTP 408', httpError(408)],
+            ['HTTP 424', httpError(424)],
             ['HTTP 429', httpError(429)],
             ['HTTP 499', httpError(499)],
             ['HTTP 500', httpError(500)],
@@ -370,6 +371,17 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
             const chatSDK = await createClosingChatSDK({ retainSessionOnAuthExpired: true, retainSessionOnRetryableCloseFailure: true }, httpError(401));
 
             await expect(chatSDK.endChat()).rejects.toMatchObject({ message: ChatSDKErrorName.AuthenticationExpired });
+        });
+
+        it('should release the session when join-failure cleanup gets a retryable close failure', async () => {
+            const chatSDK = await createClosingChatSDK({ retainSessionOnRetryableCloseFailure: true }, httpError(503));
+            const requestId = chatSDK.requestId;
+
+            await chatSDK["handleConversationJoinFailure"](new ChatSDKError(ChatSDKErrorName.MessagingClientConversationJoinFailure), {});
+
+            expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(1);
+            expect(chatSDK.requestId).not.toBe(requestId);
+            expect(chatSDK["chatToken"]).toEqual({});
         });
 
         it('should close with the same request id when endChat is retried', async () => {
