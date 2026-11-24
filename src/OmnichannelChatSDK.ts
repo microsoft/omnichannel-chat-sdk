@@ -112,7 +112,7 @@ import { parseLowerCaseString } from "./utils/parsers";
 import { ChatTokenUnauthorizedRecovery, createChatTokenUnauthorizedRecovery, UnauthorizedRecoveryFailureReason, UnauthorizedRecoverySource } from "./utils/chatTokenUnauthorizedRecovery";
 import { authenticatedNonRetriableStatusCodes, ChatTokenRenewalStoppedDetails, createChatTokenRefresher, defaultNonRetriableStatusCodes, RenewedChatToken } from "./utils/chatTokenRenewal";
 import type { ChatTokenRefresher, ChatTokenRenewalStopReason } from "./utils/chatTokenRenewal";
-import { authTokenRefreshExpired, defaultAuthTokenRefreshMarginInMs, defaultAuthTokenRefreshTimeoutInMs, getAuthTokenRefreshFailureReason, getReturnedAuthTokenTelemetry, getSecondsToExpiryBucket, isAuthTokenNearExpiry, isUnauthorizedError, positiveOrDefault, withTimeout } from "./utils/authTokenPreflight";
+import { authTokenRefreshExpired, defaultAuthTokenRefreshMarginInMs, defaultAuthTokenRefreshTimeoutInMs, getAuthTokenRefreshFailureReason, getHttpStatusForTelemetry, getReturnedAuthTokenTelemetry, getSecondsToExpiryBucket, isAuthTokenNearExpiry, isRetryableCloseError, isUnauthorizedError, positiveOrDefault, withTimeout } from "./utils/authTokenPreflight";
 import platform from "./utils/platform";
 import retrieveCollectorUri from "./telemetry/retrieveCollectorUri";
 import startPolling from "./commands/startPolling";
@@ -1129,6 +1129,7 @@ class OmnichannelChatSDK {
                     isSessionEnded: String(!endChatOptionalParams?.isSessionEnded)
                 };
                 this.throwIfAuthenticationExpired(error, TelemetryEvent.CloseChatSession, closureTelemetryData);
+                this.throwIfClosureRetryable(error, TelemetryEvent.CloseChatSession, closureTelemetryData);
                 exceptionThrowers.throwConversationClosureFailure(error, this.scenarioMarker, TelemetryEvent.CloseChatSession, closureTelemetryData);
             }
             this.scenarioMarker.completeScenario(TelemetryEvent.CloseChatSession, cleanupMetadata);
@@ -1151,7 +1152,7 @@ class OmnichannelChatSDK {
         return this.executeWithLock(() => this.internalEndChat(endChatOptionalParams));
     }
 
-    private async internalEndChat(endChatOptionalParams: EndChatOptionalParams = {}): Promise<void> {
+    private async internalEndChat(endChatOptionalParams: EndChatOptionalParams = {}, alwaysRelease = false): Promise<void> {
 
         const cleanupMetadata = {
             RequestId: this.requestId,
@@ -1165,7 +1166,7 @@ class OmnichannelChatSDK {
         }
 
         this.isEndingChat = true;
-        let keepSessionForAuthRecovery = false;
+        let keepSessionForRetry = false;
         // closeChat() may swap requestId for reconnectId; restore it if the session is kept.
         const requestIdBeforeClose = this.requestId;
 
@@ -1210,9 +1211,9 @@ class OmnichannelChatSDK {
                 RequestId: this.requestId,
                 ChatId: this.chatToken.chatId as string
             };
-            if (error instanceof ChatSDKError && error.message === ChatSDKErrorName.AuthenticationExpired) {
-                // The server session is still open. Keep it so endChat() can be retried after the user signs in again.
-                keepSessionForAuthRecovery = true;
+            if (error instanceof ChatSDKError && (error.message === ChatSDKErrorName.AuthenticationExpired || error.message === ChatSDKErrorName.ConversationClosureRetryable)) {
+                // The server session is still open. Keep it so endChat() can be retried with the same request id.
+                keepSessionForRetry = !alwaysRelease;
                 this.scenarioMarker.failScenario(TelemetryEvent.EndChat, {
                     ...telemetryData,
                     ExceptionDetails: JSON.stringify(error.exceptionDetails)
@@ -1224,7 +1225,7 @@ class OmnichannelChatSDK {
             }
             exceptionThrowers.throwConversationClosureFailure(error, this.scenarioMarker, TelemetryEvent.EndChat, telemetryData);
         } finally {
-            if (keepSessionForAuthRecovery) {
+            if (keepSessionForRetry) {
                 this.requestId = requestIdBeforeClose;
                 this.isEndingChat = false;
                 this.deliverDeferredAgentEndSession();
@@ -1235,8 +1236,9 @@ class OmnichannelChatSDK {
     }
 
     /**
-     * Releases the chat session after endChat(). Runs whether or not closing succeeded, except when the sign-in
-     * expired, so resources are freed even if closeChat or survey waiting throws.
+     * Releases the chat session after endChat(). Runs whether or not closing succeeded, except when the session is
+     * kept for a retry (AuthenticationExpired or ConversationClosureRetryable), so resources are freed even if
+     * closeChat or survey waiting throws.
      */
     private releaseEndedChat(): void {
         const endedChatId = this.chatToken.chatId as string | undefined;
@@ -2082,6 +2084,19 @@ class OmnichannelChatSDK {
     private throwIfAuthenticationExpired(error: unknown, telemetryEvent: TelemetryEvent, telemetryData: { [key: string]: string } = {}): void {
         if (isUnauthorizedError(error) && this.isAuthTokenPreflightEnabled() && this.chatSDKConfig.authTokenPreflight?.retainSessionOnAuthExpired === true) {
             exceptionThrowers.throwChatSDKError(ChatSDKErrorName.AuthenticationExpired, error, this.scenarioMarker, telemetryEvent, telemetryData);
+        }
+    }
+
+    /**
+     * Throws ConversationClosureRetryable when the host opted in with
+     * authTokenPreflight.retainSessionOnRetryableCloseFailure and closing the session may succeed if retried.
+     */
+    private throwIfClosureRetryable(error: unknown, telemetryEvent: TelemetryEvent, telemetryData: { [key: string]: string } = {}): void {
+        if (this.isAuthTokenPreflightEnabled() && this.chatSDKConfig.authTokenPreflight?.retainSessionOnRetryableCloseFailure === true && isRetryableCloseError(error)) {
+            exceptionThrowers.throwChatSDKError(ChatSDKErrorName.ConversationClosureRetryable, error, this.scenarioMarker, telemetryEvent, {
+                ...telemetryData,
+                HttpStatus: getHttpStatusForTelemetry(error)
+            });
         }
     }
 
@@ -4052,7 +4067,7 @@ class OmnichannelChatSDK {
                  * and ensure a retry in startChat won't be affected with
                  * data from a failed session
                  */
-                await this.internalEndChat();
+                await this.internalEndChat({}, true);
             } catch (cleanupError) {
                 // Don't let cleanup errors mask the original error
                 this.debug && console.error('Failed to cleanup conversation after join failure:', cleanupError);

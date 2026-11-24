@@ -54,6 +54,35 @@ export const isUnauthorizedError = (error: unknown): boolean => {
     return (error as any)?.response?.status === 401;
 };
 
+const retryableCloseStatusCodes = [401, 408, 429, 499];
+// ocsdk rejects timed-out requests with a plain Error whose message starts with this name.
+const ocsdkTimeoutErrorName = "ClientHTTPTimeoutError";
+
+/**
+ * Whether a failed session close may succeed if sent again with the same request id: no response (network error
+ * or timeout), HTTP 401, 408, 429, 499 or 5xx.
+ */
+export const isRetryableCloseError = (error: unknown): boolean => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const httpError = error as any;
+    const status = httpError?.response?.status;
+    if (typeof status === "number") {
+        return retryableCloseStatusCodes.includes(status) || (status >= 500 && status <= 599);
+    }
+
+    if (httpError?.isAxiosError === true || httpError?.request !== undefined) {
+        return true;
+    }
+
+    return typeof httpError?.message === "string" && httpError.message.startsWith(ocsdkTimeoutErrorName);
+};
+
+export const getHttpStatusForTelemetry = (error: unknown): string => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const status = (error as any)?.response?.status;
+    return typeof status === "number" ? String(status) : "None";
+};
+
 export const authTokenRefreshTimedOut = "Timed out";
 export const authTokenRefreshExpired = "ExpiredAuthToken";
 

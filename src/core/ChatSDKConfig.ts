@@ -56,6 +56,13 @@ interface AuthTokenPreflightConfig {
      * ConversationClosureFailure and releases the session.
      */
     retainSessionOnAuthExpired?: boolean;
+    /**
+     * When endChat() fails to close the session with no response (network error or timeout) or HTTP 401, 408, 429,
+     * 499 or 5xx, throw ConversationClosureRetryable and keep the session so endChat() can be retried with the
+     * same request id. An HTTP 401 throws AuthenticationExpired instead when retainSessionOnAuthExpired is set.
+     * Default false: endChat() throws ConversationClosureFailure and releases the session.
+     */
+    retainSessionOnRetryableCloseFailure?: boolean;
 }
 
 /**
