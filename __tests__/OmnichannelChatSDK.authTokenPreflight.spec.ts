@@ -314,7 +314,7 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
     });
 
     describe('retryable close failure', () => {
-        const httpError = (status: number) => Object.assign(new Error(`HTTP ${status}`), { response: { status } });
+        const httpError = (status: number, data?: unknown) => Object.assign(new Error(`HTTP ${status}`), { response: { status, data } });
         const networkError = () => Object.assign(new Error('Network Error'), { isAxiosError: true, request: {} });
         const timeoutError = () => new Error('ClientHTTPTimeoutError: Server took too long to respond');
 
@@ -332,6 +332,8 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
             ['HTTP 499', httpError(499)],
             ['HTTP 500', httpError(500)],
             ['HTTP 503', httpError(503)],
+            ['HTTP 400 public key configuration (string body)', httpError(400, 'Invalid public key configuration.')],
+            ['HTTP 400 public key configuration (message body)', httpError(400, { message: 'Invalid public key configuration' })],
             ['network error', networkError()],
             ['ocsdk timeout', timeoutError()]
         ])('should keep the session and throw ConversationClosureRetryable on %s when opted in', async (_name, closeError) => {
@@ -347,6 +349,8 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
 
         it.each([
             ['HTTP 400 when opted in', { retainSessionOnRetryableCloseFailure: true }, httpError(400)],
+            ['HTTP 400 with another message when opted in', { retainSessionOnRetryableCloseFailure: true }, httpError(400, 'OrgId and WidgetAppId must be valid GUID')],
+            ['HTTP 400 public key configuration when not opted in', {}, httpError(400, 'Invalid public key configuration.')],
             ['HTTP 403 when opted in', { retainSessionOnRetryableCloseFailure: true }, httpError(403)],
             ['HTTP 404 when opted in', { retainSessionOnRetryableCloseFailure: true }, httpError(404)],
             ['a non-HTTP error when opted in', { retainSessionOnRetryableCloseFailure: true }, new TypeError('bug')],

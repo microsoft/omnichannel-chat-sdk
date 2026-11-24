@@ -57,8 +57,9 @@ interface AuthTokenPreflightConfig {
      */
     retainSessionOnAuthExpired?: boolean;
     /**
-     * When endChat() fails to close the session with no response (network error or timeout) or HTTP 401, 408, 429,
-     * 499 or 5xx, throw ConversationClosureRetryable and keep the session so endChat() can be retried with the
+     * When endChat() fails to close the session with no response (network error or timeout), HTTP 401, 408, 429,
+     * 499, 5xx, or HTTP 400 "Invalid public key configuration" (the service could not fetch the customer's public
+     * key), throw ConversationClosureRetryable and keep the session so endChat() can be retried with the
      * same request id. An HTTP 401 throws AuthenticationExpired instead when retainSessionOnAuthExpired is set.
      * Default false: endChat() throws ConversationClosureFailure and releases the session.
      */

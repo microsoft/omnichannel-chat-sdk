@@ -57,17 +57,26 @@ export const isUnauthorizedError = (error: unknown): boolean => {
 const retryableCloseStatusCodes = [401, 408, 429, 499];
 // ocsdk rejects timed-out requests with a plain Error whose message starts with this name.
 const ocsdkTimeoutErrorName = "ClientHTTPTimeoutError";
+// The service returns this 400 when it cannot fetch the customer's public key, which is a temporary failure.
+const publicKeyConfigurationErrorText = "invalid public key configuration";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const isPublicKeyConfigurationError = (data: any): boolean => {
+    const text = typeof data === "string" ? data : data?.message;
+    return typeof text === "string" && text.toLowerCase().includes(publicKeyConfigurationErrorText);
+};
 
 /**
  * Whether a failed session close may succeed if sent again with the same request id: no response (network error
- * or timeout), HTTP 401, 408, 429, 499 or 5xx.
+ * or timeout), HTTP 401, 408, 429, 499, 5xx, or a 400 saying the public key configuration is invalid.
  */
 export const isRetryableCloseError = (error: unknown): boolean => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const httpError = error as any;
     const status = httpError?.response?.status;
     if (typeof status === "number") {
-        return retryableCloseStatusCodes.includes(status) || (status >= 500 && status <= 599);
+        return retryableCloseStatusCodes.includes(status) || (status >= 500 && status <= 599)
+            || (status === 400 && isPublicKeyConfigurationError(httpError.response.data));
     }
 
     if (httpError?.isAxiosError === true || httpError?.request !== undefined) {
