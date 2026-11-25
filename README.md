@@ -653,7 +653,7 @@ const blobResponse = await chatsdk.downloadFileAttachment(message.fileMetadata, 
 
 The SDK uses the scan verdict and view URL from the same status response. Only `scan.status === 'passed'` permits the download. Malware, in-progress, absent, and unknown verdicts reject without a file request. The status read and file request are not atomic.
 
-Live Chat V1 cannot provide this verdict. With `requireScanVerdict: true`, V1 rejects with `FileScanVerdictMissing` before downloading bytes.
+Live Chat V1 cannot provide this verdict. With `requireScanVerdict: true`, V1 rejects with message `DownloadFileAttachmentFailed` and reason `FileScanVerdictMissing` before downloading bytes.
 
 Failures keep the message `DownloadFileAttachmentFailed`. Scan failures also expose `reason`: `FileScanMalwareDetected`, `FileScanInProgress`, or `FileScanVerdictMissing`. The exported `FileScanFailureReason` const and `FileScanFailureReasonValue` type define these values.
 

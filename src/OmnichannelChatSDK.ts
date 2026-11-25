@@ -2979,7 +2979,8 @@ class OmnichannelChatSDK {
                 console.error(`OmnichannelChatSDK/downloadFileAttachment/error: ${ex}`);
                 this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
                     RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
+                    ChatId: this.chatToken.chatId as string,
+                    ...(scanFailureReason ? { ExceptionDetails: scanFailureReason } : {})
                 });
                 const error: FileAttachmentDownloadError = new Error('DownloadFileAttachmentFailed');
                 if (scanFailureReason) {
@@ -2994,7 +2995,8 @@ class OmnichannelChatSDK {
             if (options.requireScanVerdict) {
                 this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
                     RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
+                    ChatId: this.chatToken.chatId as string,
+                    ExceptionDetails: FileScanFailureReason.VerdictMissing
                 });
                 const cause = new Error(FileScanFailureReason.VerdictMissing);
                 cause.name = FileScanFailureReason.VerdictMissing;

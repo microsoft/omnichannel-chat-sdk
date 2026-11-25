@@ -3204,6 +3204,11 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 expect(amsClient.getViewStatus).toHaveBeenCalledTimes(1);
                 expect(amsClient.getView).not.toHaveBeenCalled();
                 expect(sdk.scenarioMarker.failScenario).toHaveBeenCalledTimes(1);
+                expect(sdk.scenarioMarker.failScenario).toHaveBeenCalledWith('DownloadFileAttachment', {
+                    RequestId: sdk.requestId,
+                    ChatId: 'fixture-chat',
+                    ExceptionDetails: reason
+                });
                 expect(sdk.scenarioMarker.completeScenario).not.toHaveBeenCalled();
             });
 
@@ -3215,19 +3220,29 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                         : await sdk.downloadFileAttachment(metadata, { requireScanVerdict });
                     expect(result).toBe(blob);
                     expect(amsClient.getView).toHaveBeenCalledTimes(1);
+                    expect(sdk.scenarioMarker.failScenario).not.toHaveBeenCalled();
                 }
             });
 
             it.each(['getViewStatus', 'getView'] as const)('does not label an ordinary %s failure as a scan failure', async (operation) => {
-                const { sdk, amsClient } = downloadFixture({ status: 'passed' });
-                amsClient[operation].mockRejectedValue(new Error('network fixture'));
+                for (const requireScanVerdict of [undefined, false, true]) {
+                    const { sdk, amsClient } = downloadFixture({ status: 'passed' });
+                    amsClient[operation].mockRejectedValue(new Error('network fixture'));
 
-                const error = await sdk.downloadFileAttachment(metadata, { requireScanVerdict: true }).catch((failure: unknown) => failure);
+                    const request = requireScanVerdict === undefined
+                        ? sdk.downloadFileAttachment(metadata)
+                        : sdk.downloadFileAttachment(metadata, { requireScanVerdict });
+                    const error = await request.catch((failure: unknown) => failure);
 
-                expect(error).toBeInstanceOf(Error);
-                expect(error.message).toBe('DownloadFileAttachmentFailed');
-                expect(error).not.toHaveProperty('reason');
-                expect(sdk.scenarioMarker.failScenario).toHaveBeenCalledTimes(1);
+                    expect(error).toBeInstanceOf(Error);
+                    expect(error.message).toBe('DownloadFileAttachmentFailed');
+                    expect(error).not.toHaveProperty('reason');
+                    expect(sdk.scenarioMarker.failScenario).toHaveBeenCalledTimes(1);
+                    expect(sdk.scenarioMarker.failScenario).toHaveBeenCalledWith('DownloadFileAttachment', {
+                        RequestId: sdk.requestId,
+                        ChatId: 'fixture-chat'
+                    });
+                }
             });
 
             it('fails closed on V1 when a scan verdict is required', async () => {
@@ -3248,7 +3263,32 @@ describe('Omnichannel Chat SDK, Sequential', () => {
                 expect(amsClient.getViewStatus).not.toHaveBeenCalled();
                 expect(amsClient.getView).not.toHaveBeenCalled();
                 expect(sdk.scenarioMarker.failScenario).toHaveBeenCalledTimes(1);
+                expect(sdk.scenarioMarker.failScenario).toHaveBeenCalledWith('DownloadFileAttachment', {
+                    RequestId: sdk.requestId,
+                    ChatId: 'fixture-chat',
+                    ExceptionDetails: 'FileScanVerdictMissing'
+                });
                 expect(sdk.scenarioMarker.completeScenario).not.toHaveBeenCalled();
+            });
+
+            it.each([undefined, false])('keeps V1 failure telemetry unchanged when requireScanVerdict is %p', async (requireScanVerdict) => {
+                const { sdk } = downloadFixture(undefined);
+                sdk.liveChatVersion = LiveChatVersion.V1;
+                sdk.conversation = { downloadFile: jest.fn().mockRejectedValue(new Error('network fixture')) };
+                const request = requireScanVerdict === undefined
+                    ? sdk.downloadFileAttachment(metadata)
+                    : sdk.downloadFileAttachment(metadata, { requireScanVerdict });
+
+                const error = await request.catch((failure: unknown) => failure);
+
+                expect(error).toBeInstanceOf(Error);
+                expect(error.message).toBe('DownloadFileAttachmentFailed');
+                expect(error).not.toHaveProperty('reason');
+                expect(sdk.scenarioMarker.failScenario).toHaveBeenCalledTimes(1);
+                expect(sdk.scenarioMarker.failScenario).toHaveBeenCalledWith('DownloadFileAttachment', {
+                    RequestId: sdk.requestId,
+                    ChatId: 'fixture-chat'
+                });
             });
 
             it.each([undefined, false])('keeps V1 downloads unchanged when requireScanVerdict is %p', async (requireScanVerdict) => {
