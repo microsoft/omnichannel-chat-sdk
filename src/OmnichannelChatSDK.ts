@@ -1126,7 +1126,8 @@ class OmnichannelChatSDK {
             } catch (error) {
                 const closureTelemetryData = {
                     ...cleanupMetadata,
-                    isSessionEnded: String(!endChatOptionalParams?.isSessionEnded)
+                    isSessionEnded: String(!endChatOptionalParams?.isSessionEnded),
+                    HttpStatus: getHttpStatusForTelemetry(error)
                 };
                 this.throwIfAuthenticationExpired(error, TelemetryEvent.CloseChatSession, closureTelemetryData);
                 this.throwIfClosureRetryable(error, TelemetryEvent.CloseChatSession, closureTelemetryData);
@@ -2093,10 +2094,7 @@ class OmnichannelChatSDK {
      */
     private throwIfClosureRetryable(error: unknown, telemetryEvent: TelemetryEvent, telemetryData: { [key: string]: string } = {}): void {
         if (this.isAuthTokenPreflightEnabled() && this.chatSDKConfig.authTokenPreflight?.retainSessionOnRetryableCloseFailure === true && isRetryableCloseError(error)) {
-            exceptionThrowers.throwChatSDKError(ChatSDKErrorName.ConversationClosureRetryable, error, this.scenarioMarker, telemetryEvent, {
-                ...telemetryData,
-                HttpStatus: getHttpStatusForTelemetry(error)
-            });
+            exceptionThrowers.throwChatSDKError(ChatSDKErrorName.ConversationClosureRetryable, error, this.scenarioMarker, telemetryEvent, telemetryData);
         }
     }
 
@@ -2653,12 +2651,14 @@ class OmnichannelChatSDK {
         }
         try {
             let agentEndSessionFired = false;
-            (this.conversation as ACSConversation).registerOnThreadUpdate(async (event: ParticipantsRemovedEvent) => {
-                if (this.isEndingChat) {
+            const checkAgentEndSession = async (event: ParticipantsRemovedEvent): Promise<void> => {
+                if (agentEndSessionFired) {
                     return;
                 }
 
-                if (agentEndSessionFired) {
+                if (this.isEndingChat) {
+                    // Re-check only if endChat() keeps this session; a torn-down session drops it.
+                    this.deferAgentEndRecheck(() => { void checkAgentEndSession(event); });
                     return;
                 }
 
@@ -2730,11 +2730,13 @@ class OmnichannelChatSDK {
                         await new Promise(resolve => setTimeout(resolve, retryDelayMs));
 
                         if (this.isEndingChat) {
+                            this.deferAgentEndRecheck(() => { void checkAgentEndSession(event); });
                             return;
                         }
                     }
                 }
-            });
+            };
+            (this.conversation as ACSConversation).registerOnThreadUpdate(checkAgentEndSession);
 
             this.scenarioMarker.completeScenario(TelemetryEvent.OnAgentEndSession, {
                 RequestId: this.requestId,
@@ -2780,6 +2782,17 @@ class OmnichannelChatSDK {
             }
         };
         this.pendingAgentEndCheck = pendingCheck;
+    }
+
+    /**
+     * Records that an agent-end event arrived while endChat() was running, so the status check runs again if
+     * endChat() keeps the session. A closed result already held from a pending check takes precedence.
+     */
+    private deferAgentEndRecheck(recheck: () => void): void {
+        if (this.deferredAgentEndSession) {
+            return;
+        }
+        this.deferredAgentEndSession = { chatId: this.chatToken?.chatId as string | undefined, fire: recheck };
     }
 
     /**

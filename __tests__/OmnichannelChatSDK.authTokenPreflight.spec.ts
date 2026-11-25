@@ -386,6 +386,21 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
             expect(chatSDK["chatToken"]).toEqual({});
         });
 
+        it.each([
+            ['a retryable failure when opted in', { retainSessionOnRetryableCloseFailure: true }, httpError(503), '503'],
+            ['a retryable failure when not opted in', {}, httpError(503), '503'],
+            ['a non-retryable failure', { retainSessionOnRetryableCloseFailure: true }, httpError(403), '403'],
+            ['an expired sign-in', { retainSessionOnAuthExpired: true }, httpError(401), '401'],
+            ['a non-HTTP error', { retainSessionOnRetryableCloseFailure: true }, new TypeError('bug'), 'None']
+        ])('should record HttpStatus on CloseChatSession failure telemetry for %s', async (_name, authTokenPreflight, closeError, expectedStatus) => {
+            const chatSDK = await createClosingChatSDK(authTokenPreflight, closeError);
+            const failScenario = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+            await expect(chatSDK.endChat()).rejects.toBeDefined();
+
+            expect(failScenario).toHaveBeenCalledWith(TelemetryEvent.CloseChatSession, expect.objectContaining({ HttpStatus: expectedStatus }));
+        });
+
         it('should close with the same request id when endChat is retried', async () => {
             const chatSDK = await createClosingChatSDK({ retainSessionOnRetryableCloseFailure: true }, httpError(503));
             const requestId = chatSDK.requestId;
@@ -592,6 +607,66 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
             const { chatSDK, onAgentEndSession, result } = await endChatWhileAgentEndSettles('success');
 
             expect(result).toBe('resolved');
+            expect(onAgentEndSession).not.toHaveBeenCalled();
+            expect(chatSDK["deferredAgentEndSession"]).toBeNull();
+        });
+
+        const agentLeavesDuringEndChat = async (closeOutcome: 'retryable' | 'success', state = 'Closed') => {
+            const chatSDK = await createChatSDK({ getAuthToken: jest.fn().mockResolvedValue(createJwt(3600)), token: createJwt(3600), authTokenPreflight: { retainSessionOnRetryableCloseFailure: true } });
+            chatSDK["chatToken"] = { chatId: 'chat-id' };
+            const handlers: { onThreadUpdate: any } = { onThreadUpdate: null };
+            chatSDK.conversation = {
+                registerOnThreadUpdate: jest.fn((handler: any) => { handlers.onThreadUpdate = handler; }),
+                disconnect: jest.fn()
+            };
+            jest.spyOn(chatSDK, 'stopPolling').mockImplementation(() => undefined);
+            const onAgentEndSession = jest.fn();
+            await chatSDK.onAgentEndSession(onAgentEndSession);
+            const getLWIDetails = jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue({ State: state, ConversationId: 'conversation-id' });
+            let finishClose: () => void = () => undefined;
+            jest.spyOn(chatSDK.OCClient, 'sessionClose').mockImplementation(() => new Promise<void>((resolve, reject) => {
+                finishClose = () => closeOutcome === 'success' ? resolve() : reject(Object.assign(new Error('HTTP 503'), { response: { status: 503 } }));
+            }));
+
+            const endChatResult = chatSDK.endChat().then(() => 'resolved', (error: any) => error.message);
+            await flushPromises();
+            expect(chatSDK["isEndingChat"]).toBe(true);
+
+            await handlers.onThreadUpdate(agentLeftEvent);
+            expect(getLWIDetails).not.toHaveBeenCalled();
+
+            finishClose();
+            const result = await endChatResult;
+            await jest.advanceTimersByTimeAsync(0);
+            await flushPromises();
+
+            return { chatSDK, onAgentEndSession, getLWIDetails, result };
+        };
+
+        it('should re-check an agent-end event seen during endChat when endChat keeps the session', async () => {
+            const { chatSDK, onAgentEndSession, getLWIDetails, result } = await agentLeavesDuringEndChat('retryable');
+
+            expect(result).toBe(ChatSDKErrorName.ConversationClosureRetryable);
+            expect(getLWIDetails).toHaveBeenCalledTimes(1);
+            expect(onAgentEndSession).toHaveBeenCalledTimes(1);
+            expect(onAgentEndSession).toHaveBeenCalledWith(agentLeftEvent);
+            expect(chatSDK["deferredAgentEndSession"]).toBeNull();
+        });
+
+        it('should not fire the agent-end callback when the re-check finds the chat still active', async () => {
+            const { onAgentEndSession, getLWIDetails, result } = await agentLeavesDuringEndChat('retryable', 'Active');
+            await jest.advanceTimersByTimeAsync(5000);
+
+            expect(result).toBe(ChatSDKErrorName.ConversationClosureRetryable);
+            expect(getLWIDetails).toHaveBeenCalledTimes(3);
+            expect(onAgentEndSession).not.toHaveBeenCalled();
+        });
+
+        it('should drop an agent-end event seen during endChat when endChat tears the session down', async () => {
+            const { chatSDK, onAgentEndSession, getLWIDetails, result } = await agentLeavesDuringEndChat('success');
+
+            expect(result).toBe('resolved');
+            expect(getLWIDetails).not.toHaveBeenCalled();
             expect(onAgentEndSession).not.toHaveBeenCalled();
             expect(chatSDK["deferredAgentEndSession"]).toBeNull();
         });
