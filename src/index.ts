@@ -19,6 +19,8 @@ import PersonType from "@microsoft/omnichannel-ic3core/lib/model/PersonType";
 import PolicyViolation from "./core/messaging/PolicyViolation";
 import StreamingMetadata from "./core/messaging/StreamingMetadata";
 import { ChatTokenRenewalStopReason } from "./utils/chatTokenRenewal";
+export { FileScanFailureReason } from "./core/FileAttachmentDownload";
+export type { DownloadFileAttachmentOptions, FileAttachmentDownloadError, FileScanFailureReasonValue } from "./core/FileAttachmentDownload";
 
 export {
     OmnichannelChatSDK,

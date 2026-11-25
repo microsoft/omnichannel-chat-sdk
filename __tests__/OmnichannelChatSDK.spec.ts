@@ -3145,6 +3145,128 @@ describe('Omnichannel Chat SDK, Sequential', () => {
             expect(chatSDK.AMSClient.getView).toHaveBeenCalledTimes(1);
         });
 
+        describe('downloadFileAttachment scan verdict', () => {
+            const metadata = { id: 'file-id', type: 'image/png' };
+            const verdicts: [unknown, string][] = [
+                [{ status: 'malware' }, 'FileScanMalwareDetected'],
+                [{ status: 'in progress' }, 'FileScanInProgress'],
+                [undefined, 'FileScanVerdictMissing'],
+                [{ status: 'unknown' }, 'FileScanVerdictMissing'],
+                [{}, 'FileScanVerdictMissing']
+            ];
+
+            function downloadFixture(scan: unknown) {
+                const sdk = new OmnichannelChatSDK(omnichannelConfig);
+                const blob = new Blob(['image fixture'], { type: 'image/png' });
+                const amsClient = {
+                    getViewStatus: jest.fn().mockResolvedValue({ view_location: 'fixture-view', scan }),
+                    getView: jest.fn().mockResolvedValue(blob)
+                };
+                sdk.isInitialized = true;
+                sdk.liveChatVersion = LiveChatVersion.V2;
+                sdk.chatToken = { chatId: 'fixture-chat' };
+                sdk.isAMSClientAllowed = true;
+                sdk.getAMSClient = jest.fn().mockResolvedValue(amsClient);
+                sdk.scenarioMarker = {
+                    startScenario: jest.fn(),
+                    completeScenario: jest.fn(),
+                    failScenario: jest.fn()
+                };
+                return { sdk, amsClient, blob };
+            }
+
+            it('uses the same passed status response to download the typed Blob', async () => {
+                const { sdk, amsClient, blob } = downloadFixture({ status: 'passed' });
+                amsClient.getViewStatus.mockResolvedValueOnce({ view_location: 'passed-view', scan: { status: 'passed' } })
+                    .mockResolvedValue({ view_location: 'later-view', scan: { status: 'malware' } });
+
+                await expect(sdk.downloadFileAttachment(metadata, { requireScanVerdict: true })).resolves.toBe(blob);
+
+                expect(blob.type).toBe('image/png');
+                expect(amsClient.getViewStatus).toHaveBeenCalledTimes(1);
+                expect(amsClient.getView).toHaveBeenCalledWith(metadata, 'passed-view');
+                expect(sdk.scenarioMarker.completeScenario).toHaveBeenCalledTimes(1);
+                expect(sdk.scenarioMarker.failScenario).not.toHaveBeenCalled();
+            });
+
+            it.each(verdicts)('blocks scan %p without fetching file bytes', async (scan, reason) => {
+                const { sdk, amsClient } = downloadFixture(scan);
+
+                const error = await sdk.downloadFileAttachment(metadata, { requireScanVerdict: true }).catch((failure: unknown) => failure);
+
+                expect(error).toBeInstanceOf(Error);
+                expect(error).toMatchObject({
+                    message: 'DownloadFileAttachmentFailed',
+                    reason,
+                    cause: expect.objectContaining({ name: reason })
+                });
+                expect(error.cause).toBeInstanceOf(Error);
+                expect(amsClient.getViewStatus).toHaveBeenCalledTimes(1);
+                expect(amsClient.getView).not.toHaveBeenCalled();
+                expect(sdk.scenarioMarker.failScenario).toHaveBeenCalledTimes(1);
+                expect(sdk.scenarioMarker.completeScenario).not.toHaveBeenCalled();
+            });
+
+            it.each([undefined, false])('keeps live downloads unchanged when requireScanVerdict is %p', async (requireScanVerdict) => {
+                for (const scan of [{ status: 'passed' }, ...verdicts.map(([scan]) => scan)]) {
+                    const { sdk, amsClient, blob } = downloadFixture(scan);
+                    const result = requireScanVerdict === undefined
+                        ? await sdk.downloadFileAttachment(metadata)
+                        : await sdk.downloadFileAttachment(metadata, { requireScanVerdict });
+                    expect(result).toBe(blob);
+                    expect(amsClient.getView).toHaveBeenCalledTimes(1);
+                }
+            });
+
+            it.each(['getViewStatus', 'getView'] as const)('does not label an ordinary %s failure as a scan failure', async (operation) => {
+                const { sdk, amsClient } = downloadFixture({ status: 'passed' });
+                amsClient[operation].mockRejectedValue(new Error('network fixture'));
+
+                const error = await sdk.downloadFileAttachment(metadata, { requireScanVerdict: true }).catch((failure: unknown) => failure);
+
+                expect(error).toBeInstanceOf(Error);
+                expect(error.message).toBe('DownloadFileAttachmentFailed');
+                expect(error).not.toHaveProperty('reason');
+                expect(sdk.scenarioMarker.failScenario).toHaveBeenCalledTimes(1);
+            });
+
+            it('fails closed on V1 when a scan verdict is required', async () => {
+                const { sdk, amsClient, blob } = downloadFixture(undefined);
+                sdk.liveChatVersion = LiveChatVersion.V1;
+                sdk.conversation = { downloadFile: jest.fn().mockResolvedValue(blob) };
+
+                const error = await sdk.downloadFileAttachment(metadata, { requireScanVerdict: true }).catch((failure: unknown) => failure);
+
+                expect(error).toBeInstanceOf(Error);
+                expect(error).toMatchObject({
+                    message: 'DownloadFileAttachmentFailed',
+                    reason: 'FileScanVerdictMissing',
+                    cause: expect.objectContaining({ name: 'FileScanVerdictMissing' })
+                });
+                expect(error.cause).toBeInstanceOf(Error);
+                expect(sdk.conversation.downloadFile).not.toHaveBeenCalled();
+                expect(amsClient.getViewStatus).not.toHaveBeenCalled();
+                expect(amsClient.getView).not.toHaveBeenCalled();
+                expect(sdk.scenarioMarker.failScenario).toHaveBeenCalledTimes(1);
+                expect(sdk.scenarioMarker.completeScenario).not.toHaveBeenCalled();
+            });
+
+            it.each([undefined, false])('keeps V1 downloads unchanged when requireScanVerdict is %p', async (requireScanVerdict) => {
+                const { sdk, blob } = downloadFixture(undefined);
+                sdk.liveChatVersion = LiveChatVersion.V1;
+                sdk.conversation = { downloadFile: jest.fn().mockResolvedValue(blob) };
+
+                const result = requireScanVerdict === undefined
+                    ? await sdk.downloadFileAttachment(metadata)
+                    : await sdk.downloadFileAttachment(metadata, { requireScanVerdict });
+
+                expect(result).toBe(blob);
+                expect(sdk.conversation.downloadFile).toHaveBeenCalledWith(metadata);
+                expect(sdk.scenarioMarker.completeScenario).toHaveBeenCalledTimes(1);
+                expect(sdk.scenarioMarker.failScenario).not.toHaveBeenCalled();
+            });
+        });
+
         it('ChatSDK.emailLiveChatTranscript() should call OCClient.emailTranscript()', async () => {
             const chatSDK = new OmnichannelChatSDK(omnichannelConfig);
             chatSDK.getChatConfig = jest.fn();
