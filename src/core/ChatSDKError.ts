@@ -58,6 +58,8 @@ export enum ChatSDKErrorName {
     UndefinedAuthToken = "UndefinedAuthToken",
     /** The authenticated user token was rejected and a refreshed token from getAuthToken was rejected too */
     AuthenticationExpired = "AuthenticationExpired",
+    /** Closing the session failed for a reason that may clear on retry; the session was kept so endChat() can be retried */
+    ConversationClosureRetryable = "ConversationClosureRetryable",
 
     UnknownAMSLoadState = "UnknownAMSLoadState",
      /** Send message failure */

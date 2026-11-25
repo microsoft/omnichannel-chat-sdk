@@ -54,6 +54,52 @@ export const isUnauthorizedError = (error: unknown): boolean => {
     return (error as any)?.response?.status === 401;
 };
 
+// 424: the backend service's planned status for a transient public-key endpoint failure (replacing today's 400 text below).
+// An endpoint outage can last a long time, so a 424 can repeat on every retry; hosts must bound retries.
+const retryableCloseStatusCodes = [401, 408, 424, 429, 499];
+// Axios errors with no response that a retry cannot fix: a cancelled request or a bad request setup.
+const nonRetryableAxiosErrorCodes = ["ERR_CANCELED", "ERR_INVALID_URL", "ERR_BAD_OPTION", "ERR_BAD_OPTION_VALUE"];
+// ocsdk rejects timed-out requests with a plain Error whose message starts with this name.
+const ocsdkTimeoutErrorName = "ClientHTTPTimeoutError";
+// The backend service returns this text as the HTTP 400 body for public-key failures it does not answer with 424 (key
+// configuration errors, permanent endpoint 4xx, or any endpoint failure while its kill switch is off). There is no fault
+// code; keep this text in sync.
+// Temporary: remove this 400 match only after the backend service returns 424 for public-key endpoint failures in all
+// regions and removes its kill switch; until then an endpoint failure can still return this 400.
+const publicKeyConfigurationErrorText = "invalid public key configuration";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const isPublicKeyConfigurationError = (data: any): boolean => {
+    const text = typeof data === "string" ? data : data?.message;
+    return typeof text === "string" && text.toLowerCase().includes(publicKeyConfigurationErrorText);
+};
+
+/**
+ * Whether a failed session close may succeed if sent again with the same request id: no response (network error
+ * or timeout), HTTP 401, 408, 424, 429, 499, 5xx, or a 400 saying the public key configuration is invalid.
+ */
+export const isRetryableCloseError = (error: unknown): boolean => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const httpError = error as any;
+    const status = httpError?.response?.status;
+    if (typeof status === "number") {
+        return retryableCloseStatusCodes.includes(status) || (status >= 500 && status <= 599)
+            || (status === 400 && isPublicKeyConfigurationError(httpError.response.data));
+    }
+
+    if (httpError?.isAxiosError === true || httpError?.request !== undefined) {
+        return !nonRetryableAxiosErrorCodes.includes(httpError?.code);
+    }
+
+    return typeof httpError?.message === "string" && httpError.message.startsWith(ocsdkTimeoutErrorName);
+};
+
+export const getHttpStatusForTelemetry = (error: unknown): string => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const status = (error as any)?.response?.status;
+    return typeof status === "number" ? String(status) : "None";
+};
+
 export const authTokenRefreshTimedOut = "Timed out";
 export const authTokenRefreshExpired = "ExpiredAuthToken";
 

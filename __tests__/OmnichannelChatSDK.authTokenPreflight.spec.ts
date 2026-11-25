@@ -3,7 +3,7 @@
 const OmnichannelChatSDK = require('../src/OmnichannelChatSDK').default;
 
 import { AWTLogManager } from "../src/external/aria/webjs/AriaSDK";
-import { ChatSDKErrorName } from "../src/core/ChatSDKError";
+import { ChatSDKError, ChatSDKErrorName } from "../src/core/ChatSDKError";
 import TelemetryEvent from "../src/telemetry/TelemetryEvent";
 
 describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
@@ -313,6 +313,109 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
         expect(chatSDK["chatToken"]).toEqual({});
     });
 
+    describe('retryable close failure', () => {
+        const httpError = (status: number, data?: unknown) => Object.assign(new Error(`HTTP ${status}`), { response: { status, data } });
+        const networkError = () => Object.assign(new Error('Network Error'), { isAxiosError: true, request: {} });
+        const timeoutError = () => new Error('ClientHTTPTimeoutError: Server took too long to respond');
+
+        const createClosingChatSDK = async (authTokenPreflight: any, closeError: unknown) => {
+            const chatSDK = await createChatSDK({ getAuthToken: jest.fn().mockResolvedValue(createJwt(3600)), token: createJwt(3600), authTokenPreflight });
+            chatSDK["chatToken"] = { chatId: 'chat-id' };
+            jest.spyOn(chatSDK.OCClient, 'sessionClose').mockRejectedValue(closeError);
+            return chatSDK;
+        };
+
+        it.each([
+            ['HTTP 401', httpError(401)],
+            ['HTTP 408', httpError(408)],
+            ['HTTP 424', httpError(424)],
+            ['HTTP 429', httpError(429)],
+            ['HTTP 499', httpError(499)],
+            ['HTTP 500', httpError(500)],
+            ['HTTP 503', httpError(503)],
+            ['HTTP 400 public key configuration (string body)', httpError(400, 'Invalid public key configuration.')],
+            ['HTTP 400 public key configuration (message body)', httpError(400, { message: 'Invalid public key configuration' })],
+            ['network error', networkError()],
+            ['ocsdk timeout', timeoutError()]
+        ])('should keep the session and throw ConversationClosureRetryable on %s when opted in', async (_name, closeError) => {
+            const chatSDK = await createClosingChatSDK({ retainSessionOnRetryableCloseFailure: true }, closeError);
+            const requestId = chatSDK.requestId;
+
+            await expect(chatSDK.endChat()).rejects.toMatchObject({ message: ChatSDKErrorName.ConversationClosureRetryable });
+
+            expect(chatSDK.requestId).toBe(requestId);
+            expect(chatSDK["chatToken"]).toEqual({ chatId: 'chat-id' });
+            expect(chatSDK["isEndingChat"]).toBe(false);
+        });
+
+        it.each([
+            ['HTTP 400 when opted in', { retainSessionOnRetryableCloseFailure: true }, httpError(400)],
+            ['HTTP 400 with another message when opted in', { retainSessionOnRetryableCloseFailure: true }, httpError(400, 'OrgId and WidgetAppId must be valid GUID')],
+            ['HTTP 400 public key configuration when not opted in', {}, httpError(400, 'Invalid public key configuration.')],
+            ['HTTP 403 when opted in', { retainSessionOnRetryableCloseFailure: true }, httpError(403)],
+            ['HTTP 404 when opted in', { retainSessionOnRetryableCloseFailure: true }, httpError(404)],
+            ['a non-HTTP error when opted in', { retainSessionOnRetryableCloseFailure: true }, new TypeError('bug')],
+            ['a cancelled request when opted in', { retainSessionOnRetryableCloseFailure: true }, Object.assign(new Error('canceled'), { isAxiosError: true, request: {}, code: 'ERR_CANCELED' })],
+            ['an invalid URL when opted in', { retainSessionOnRetryableCloseFailure: true }, Object.assign(new Error('Invalid URL'), { isAxiosError: true, code: 'ERR_INVALID_URL' })],
+            ['HTTP 500 when not opted in', {}, httpError(500)],
+            ['HTTP 500 when the preflight is disabled', { retainSessionOnRetryableCloseFailure: true, disable: true }, httpError(500)]
+        ])('should release the session with ConversationClosureFailure on %s', async (_name, authTokenPreflight, closeError) => {
+            const chatSDK = await createClosingChatSDK(authTokenPreflight, closeError);
+            const requestId = chatSDK.requestId;
+
+            await expect(chatSDK.endChat()).rejects.toMatchObject({ message: ChatSDKErrorName.ConversationClosureFailure });
+
+            expect(chatSDK.requestId).not.toBe(requestId);
+            expect(chatSDK["chatToken"]).toEqual({});
+        });
+
+        it('should throw AuthenticationExpired for HTTP 401 when both options are set', async () => {
+            const chatSDK = await createClosingChatSDK({ retainSessionOnAuthExpired: true, retainSessionOnRetryableCloseFailure: true }, httpError(401));
+
+            await expect(chatSDK.endChat()).rejects.toMatchObject({ message: ChatSDKErrorName.AuthenticationExpired });
+        });
+
+        it('should release the session when join-failure cleanup gets a retryable close failure', async () => {
+            const chatSDK = await createClosingChatSDK({ retainSessionOnRetryableCloseFailure: true }, httpError(503));
+            const requestId = chatSDK.requestId;
+
+            await chatSDK["handleConversationJoinFailure"](new ChatSDKError(ChatSDKErrorName.MessagingClientConversationJoinFailure), {});
+
+            expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(1);
+            expect(chatSDK.requestId).not.toBe(requestId);
+            expect(chatSDK["chatToken"]).toEqual({});
+        });
+
+        it.each([
+            ['a retryable failure when opted in', { retainSessionOnRetryableCloseFailure: true }, httpError(503), '503'],
+            ['a retryable failure when not opted in', {}, httpError(503), '503'],
+            ['a non-retryable failure', { retainSessionOnRetryableCloseFailure: true }, httpError(403), '403'],
+            ['an expired sign-in', { retainSessionOnAuthExpired: true }, httpError(401), '401'],
+            ['a non-HTTP error', { retainSessionOnRetryableCloseFailure: true }, new TypeError('bug'), 'None']
+        ])('should record HttpStatus on CloseChatSession failure telemetry for %s', async (_name, authTokenPreflight, closeError, expectedStatus) => {
+            const chatSDK = await createClosingChatSDK(authTokenPreflight, closeError);
+            const failScenario = jest.spyOn(chatSDK.scenarioMarker, 'failScenario');
+
+            await expect(chatSDK.endChat()).rejects.toBeDefined();
+
+            expect(failScenario).toHaveBeenCalledWith(TelemetryEvent.CloseChatSession, expect.objectContaining({ HttpStatus: expectedStatus }));
+        });
+
+        it('should close with the same request id when endChat is retried', async () => {
+            const chatSDK = await createClosingChatSDK({ retainSessionOnRetryableCloseFailure: true }, httpError(503));
+            const requestId = chatSDK.requestId;
+
+            await expect(chatSDK.endChat()).rejects.toMatchObject({ message: ChatSDKErrorName.ConversationClosureRetryable });
+            (chatSDK.OCClient.sessionClose as jest.Mock).mockResolvedValueOnce(undefined);
+            await chatSDK.endChat();
+
+            expect(chatSDK.OCClient.sessionClose).toHaveBeenCalledTimes(2);
+            expect((chatSDK.OCClient.sessionClose as jest.Mock).mock.calls[1][0]).toBe(requestId);
+            expect(chatSDK.requestId).not.toBe(requestId);
+            expect(chatSDK["chatToken"]).toEqual({});
+        });
+    });
+
     describe('pending agent-end check', () => {
         const agentLeftEvent = { participantsRemoved: [{ id: 'agent-id' }] };
 
@@ -504,6 +607,66 @@ describe('Omnichannel Chat SDK, authenticated user token preflight', () => {
             const { chatSDK, onAgentEndSession, result } = await endChatWhileAgentEndSettles('success');
 
             expect(result).toBe('resolved');
+            expect(onAgentEndSession).not.toHaveBeenCalled();
+            expect(chatSDK["deferredAgentEndSession"]).toBeNull();
+        });
+
+        const agentLeavesDuringEndChat = async (closeOutcome: 'retryable' | 'success', state = 'Closed') => {
+            const chatSDK = await createChatSDK({ getAuthToken: jest.fn().mockResolvedValue(createJwt(3600)), token: createJwt(3600), authTokenPreflight: { retainSessionOnRetryableCloseFailure: true } });
+            chatSDK["chatToken"] = { chatId: 'chat-id' };
+            const handlers: { onThreadUpdate: any } = { onThreadUpdate: null };
+            chatSDK.conversation = {
+                registerOnThreadUpdate: jest.fn((handler: any) => { handlers.onThreadUpdate = handler; }),
+                disconnect: jest.fn()
+            };
+            jest.spyOn(chatSDK, 'stopPolling').mockImplementation(() => undefined);
+            const onAgentEndSession = jest.fn();
+            await chatSDK.onAgentEndSession(onAgentEndSession);
+            const getLWIDetails = jest.spyOn(chatSDK.OCClient, 'getLWIDetails').mockResolvedValue({ State: state, ConversationId: 'conversation-id' });
+            let finishClose: () => void = () => undefined;
+            jest.spyOn(chatSDK.OCClient, 'sessionClose').mockImplementation(() => new Promise<void>((resolve, reject) => {
+                finishClose = () => closeOutcome === 'success' ? resolve() : reject(Object.assign(new Error('HTTP 503'), { response: { status: 503 } }));
+            }));
+
+            const endChatResult = chatSDK.endChat().then(() => 'resolved', (error: any) => error.message);
+            await flushPromises();
+            expect(chatSDK["isEndingChat"]).toBe(true);
+
+            await handlers.onThreadUpdate(agentLeftEvent);
+            expect(getLWIDetails).not.toHaveBeenCalled();
+
+            finishClose();
+            const result = await endChatResult;
+            await jest.advanceTimersByTimeAsync(0);
+            await flushPromises();
+
+            return { chatSDK, onAgentEndSession, getLWIDetails, result };
+        };
+
+        it('should re-check an agent-end event seen during endChat when endChat keeps the session', async () => {
+            const { chatSDK, onAgentEndSession, getLWIDetails, result } = await agentLeavesDuringEndChat('retryable');
+
+            expect(result).toBe(ChatSDKErrorName.ConversationClosureRetryable);
+            expect(getLWIDetails).toHaveBeenCalledTimes(1);
+            expect(onAgentEndSession).toHaveBeenCalledTimes(1);
+            expect(onAgentEndSession).toHaveBeenCalledWith(agentLeftEvent);
+            expect(chatSDK["deferredAgentEndSession"]).toBeNull();
+        });
+
+        it('should not fire the agent-end callback when the re-check finds the chat still active', async () => {
+            const { onAgentEndSession, getLWIDetails, result } = await agentLeavesDuringEndChat('retryable', 'Active');
+            await jest.advanceTimersByTimeAsync(5000);
+
+            expect(result).toBe(ChatSDKErrorName.ConversationClosureRetryable);
+            expect(getLWIDetails).toHaveBeenCalledTimes(3);
+            expect(onAgentEndSession).not.toHaveBeenCalled();
+        });
+
+        it('should drop an agent-end event seen during endChat when endChat tears the session down', async () => {
+            const { chatSDK, onAgentEndSession, getLWIDetails, result } = await agentLeavesDuringEndChat('success');
+
+            expect(result).toBe('resolved');
+            expect(getLWIDetails).not.toHaveBeenCalled();
             expect(onAgentEndSession).not.toHaveBeenCalled();
             expect(chatSDK["deferredAgentEndSession"]).toBeNull();
         });
