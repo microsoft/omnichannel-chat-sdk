@@ -22,7 +22,7 @@ import validateSDKConfig, { defaultChatSDKConfig } from "./validators/SDKConfigV
 import ACSParticipantDisplayName from "./core/messaging/ACSParticipantDisplayName";
 import ACSRegisterOnNewMessageOptionalParams from "./core/messaging/ACSRegisterOnNewMessageOptionalParams";
 import { AMSClientLoadStates } from "./utils/AMSClientLoadStates";
-import AMSFileManager from "./external/ACSAdapter/AMSFileManager";
+import AMSFileManager, { AMSViewScanStatus } from "./external/ACSAdapter/AMSFileManager";
 import AriaTelemetry from "./telemetry/AriaTelemetry";
 import AuthSettings from "./core/AuthSettings";
 import CallingOptionsOptionSetNumber from "./core/CallingOptionsOptionSetNumber";
@@ -42,6 +42,8 @@ import EmailLiveChatTranscriptOptionaParams from "./core/EmailLiveChatTranscript
 import EndChatOptionalParams from "./core/EndChatOptionalParams";
 import FetchChatTokenResponse from "@microsoft/ocsdk/lib/Model/FetchChatTokenResponse";
 import FileMetadata from "@microsoft/omnichannel-amsclient/lib/FileMetadata";
+import { FileScanFailureReason } from "./core/FileAttachmentDownload";
+import type { DownloadFileAttachmentOptions, FileAttachmentDownloadError, FileScanFailureReasonValue } from "./core/FileAttachmentDownload";
 import FileSharingProtocolType from "@microsoft/omnichannel-ic3core/lib/model/FileSharingProtocolType";
 import FramedClient from "@microsoft/omnichannel-amsclient/lib/FramedClient";
 import FramedlessClient from "@microsoft/omnichannel-amsclient/lib/FramedlessClient";
@@ -2922,7 +2924,7 @@ class OmnichannelChatSDK {
         }
     }
 
-    public async downloadFileAttachment(fileMetadata: FileMetadata | IFileMetadata): Promise<Blob> {
+    public async downloadFileAttachment(fileMetadata: FileMetadata | IFileMetadata, options: DownloadFileAttachmentOptions = {}): Promise<Blob> {
 
         this.scenarioMarker.startScenario(TelemetryEvent.DownloadFileAttachment, {
             RequestId: this.requestId,
@@ -2934,6 +2936,7 @@ class OmnichannelChatSDK {
         }
 
         if (this.liveChatVersion === LiveChatVersion.V2) {
+            let scanFailureReason: FileScanFailureReasonValue | undefined;
             try {
                 if (this.isAMSClientAllowed === false) {
                     this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
@@ -2951,6 +2954,21 @@ class OmnichannelChatSDK {
 
                 const response: any = await amsClient?.getViewStatus(fileMetadata);  // eslint-disable-line @typescript-eslint/no-explicit-any
                 const { view_location } = response;
+                if (options.requireScanVerdict && response.scan?.status !== AMSViewScanStatus.PASSED) {
+                    switch (response.scan?.status) {
+                    case AMSViewScanStatus.MALWARE:
+                        scanFailureReason = FileScanFailureReason.MalwareDetected;
+                        break;
+                    case AMSViewScanStatus.INPROGRESS:
+                        scanFailureReason = FileScanFailureReason.InProgress;
+                        break;
+                    default:
+                        scanFailureReason = FileScanFailureReason.VerdictMissing;
+                    }
+                    const cause = new Error(scanFailureReason);
+                    cause.name = scanFailureReason;
+                    throw cause;
+                }
                 const viewResponse: any = await amsClient?.getView(fileMetadata, view_location);  // eslint-disable-line @typescript-eslint/no-explicit-any
                 this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment, {
                     RequestId: this.requestId,
@@ -2961,11 +2979,32 @@ class OmnichannelChatSDK {
                 console.error(`OmnichannelChatSDK/downloadFileAttachment/error: ${ex}`);
                 this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
                     RequestId: this.requestId,
-                    ChatId: this.chatToken.chatId as string
+                    ChatId: this.chatToken.chatId as string,
+                    ...(scanFailureReason ? { ExceptionDetails: scanFailureReason } : {})
                 });
-                throw new Error('DownloadFileAttachmentFailed');
+                const error: FileAttachmentDownloadError = new Error('DownloadFileAttachmentFailed');
+                if (scanFailureReason) {
+                    error.reason = scanFailureReason;
+                    if (ex instanceof Error) {
+                        error.cause = ex;
+                    }
+                }
+                throw error;
             }
         } else {
+            if (options.requireScanVerdict) {
+                this.scenarioMarker.failScenario(TelemetryEvent.DownloadFileAttachment, {
+                    RequestId: this.requestId,
+                    ChatId: this.chatToken.chatId as string,
+                    ExceptionDetails: FileScanFailureReason.VerdictMissing
+                });
+                const cause = new Error(FileScanFailureReason.VerdictMissing);
+                cause.name = FileScanFailureReason.VerdictMissing;
+                const error: FileAttachmentDownloadError = new Error('DownloadFileAttachmentFailed');
+                error.reason = FileScanFailureReason.VerdictMissing;
+                error.cause = cause;
+                throw error;
+            }
             try {
                 const downloadedFile = await (this.conversation as IConversation)!.downloadFile(fileMetadata as IFileMetadata);
                 this.scenarioMarker.completeScenario(TelemetryEvent.DownloadFileAttachment, {
