@@ -54,14 +54,18 @@ export const isUnauthorizedError = (error: unknown): boolean => {
     return (error as any)?.response?.status === 401;
 };
 
-// 424: the backend service's planned status for a public-key endpoint failure (replacing today's 400 text below).
+// 424: the backend service's planned status for a transient public-key endpoint failure (replacing today's 400 text below).
+// An endpoint outage can last a long time, so a 424 can repeat on every retry; hosts must bound retries.
 const retryableCloseStatusCodes = [401, 408, 424, 429, 499];
 // Axios errors with no response that a retry cannot fix: a cancelled request or a bad request setup.
 const nonRetryableAxiosErrorCodes = ["ERR_CANCELED", "ERR_INVALID_URL", "ERR_BAD_OPTION", "ERR_BAD_OPTION_VALUE"];
 // ocsdk rejects timed-out requests with a plain Error whose message starts with this name.
 const ocsdkTimeoutErrorName = "ClientHTTPTimeoutError";
-// The backend service returns this text as the HTTP 400 body for every public-key failure (endpoint failure or key configuration error). There is no fault code; keep this text in sync.
-// Temporary: remove this 400 match once the backend service returns 424 for public-key endpoint failures in all regions.
+// The backend service returns this text as the HTTP 400 body for public-key failures it does not answer with 424 (key
+// configuration errors, permanent endpoint 4xx, or any endpoint failure while its kill switch is off). There is no fault
+// code; keep this text in sync.
+// Temporary: remove this 400 match only after the backend service returns 424 for public-key endpoint failures in all
+// regions and removes its kill switch; until then an endpoint failure can still return this 400.
 const publicKeyConfigurationErrorText = "invalid public key configuration";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
